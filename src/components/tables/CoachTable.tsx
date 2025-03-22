@@ -104,14 +104,15 @@ const CoachTable: React.FC<CoachTableProps> = ({   data = [],
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                   Sport
                 </TableCell>
-                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                  Status
-                </TableCell>
+                
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                   Earnings
                 </TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                   Evaluations
+                </TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                  Status
                 </TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                   Actions
@@ -141,13 +142,14 @@ const CoachTable: React.FC<CoachTableProps> = ({   data = [],
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{coach.gender}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{coach.sport}</TableCell>
+                  
+                  <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{coach.earnings || 0}</TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{coach.evaluations || 0}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                     <Badge color={coach.status === "Active" ? "success" : coach.status === "Pending" ? "warning" : "error"}>
                       {coach.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{coach.earnings || 0}</TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{coach.evaluations || 0}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                     <div className="flex gap-3">
                       <button onClick={() => handleEdit(coach.id)} className="p-2 text-green-500 hover:text-green-600">
