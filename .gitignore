@@ -1,0 +1,5 @@
+node_modules/
+.next
+Archive.zip
+app/api/auth/[...nextauth]/route.ts
+app/api/auth/[...nextauth]/route.ts.DS_Store
