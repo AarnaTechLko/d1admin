@@ -2,7 +2,8 @@
 import React, { useEffect, useRef, useState,useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import LL from "@/public/images/logo/LL.png"; 
+import { MoreHorizontal } from "lucide-react";
+
 
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
@@ -11,12 +12,12 @@ import {
 
   ChevronDownIcon,
   GridIcon,
-  HorizontaLDots,
+  // HorizontaLDots,
   ListIcon,
 
   TableIcon,
   UserCircleIcon,
-} from "../icons/index";
+} from "lucide-react";
 // import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
@@ -286,22 +287,22 @@ const AppSidebar: React.FC = () => {
             <>
               <Image
                 className="dark:hidden"
-                src={LL} 
+                src="/images/user/user-01.jpg" 
                 alt="Logo123"
-                width={80}
+                width={150}
                 height={40}
               />
               <Image
                 className="hidden dark:block"
-                src={LL}
+                src="/images/logo/logo-dark.svg"
                 alt="Logo2"
-                width={80}
+                width={150}
                 height={40}
               />
             </>
           ) : (
             <Image
-              src={LL}
+              src="/images/logo/logo-icon.svg"
               alt="Logo3"
               width={32}
               height={32}
@@ -323,7 +324,7 @@ const AppSidebar: React.FC = () => {
                 {isExpanded || isHovered || isMobileOpen ? (
                   "Menu"
                 ) : (
-                  <HorizontaLDots />
+<MoreHorizontal />
                 )}
               </h2>
               {renderMenuItems(navItems, "main")}
@@ -340,7 +341,7 @@ const AppSidebar: React.FC = () => {
                 {isExpanded || isHovered || isMobileOpen ? (
                   "Others"
                 ) : (
-                  <HorizontaLDots />
+<MoreHorizontal />
                 )}
               </h2>
               {/* {renderMenuItems(othersItems, "others")} */}
