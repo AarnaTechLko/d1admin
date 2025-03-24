@@ -42,3 +42,9 @@ export default function Ecommerce() {
     </div>
   );
 }
+
+// import SignInForm from "@/app/auth/SignInForm"; // Import the SignIn page component
+
+// export default function Home() {
+//   return <SignInForm />; // Render SignIn page directly
+// }

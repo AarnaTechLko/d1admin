@@ -1,170 +1,167 @@
 import { NextRequest, NextResponse } from 'next/server';
 // import { hash } from 'bcryptjs';
 import { db } from '@/lib/db';
-import {  users } from '@/lib/schema';
+import {   licenses,enterprises ,users,coaches,teams} from '@/lib/schema';
 // import debug from 'debug';
 // import jwt from 'jsonwebtoken';
 // import { SECRET_KEY } from '@/lib/constants';
-import { eq, and, not, ilike, sql,count,or } from 'drizzle-orm';
+import { eq, ilike, or, count, desc,sql,and } from 'drizzle-orm';
 // import { sendEmail } from '@/lib/helpers';
+ 
+
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const country = searchParams.get('country') || ''; // Keep the search as a string
-  const state = searchParams.get('state') || '';
-  const city = searchParams.get('city') || '';
-  const graduation = searchParams.get('graduation') || '';
-  const birthyear = searchParams.get('birthyear') || '';
-  const position = searchParams.get('position') || '';
-  //const url = new URL(req.url);
-  const search = searchParams.get('search')?.trim() || '';  
-  const page = parseInt(searchParams.get('page') || '1', 10);
-  const limit = parseInt(searchParams.get('limit') || '10', 10);
-
-
+  const url = new URL(req.url);
+  const search = url.searchParams.get('search')?.trim() || '';  
+  const page = parseInt(url.searchParams.get('page') || '1', 10);
+  const limit = parseInt(url.searchParams.get('limit') || '10', 10);
+  
   try {
-    const conditions = [and(
-      eq(users.status, 'Active'),
-      not(eq(users.first_name, '')),
-      eq(users.visibility, 'on')
-    )];
+    const offset = (page - 1) * limit;
 
-   /// conditions.push(isNull(users.parent_id));
-
-
-    if (country) {
-      conditions.push(eq(users.country, country));
-    }
-    if (state) {
-      conditions.push(eq(users.state, state));
-    }
-    if (city) {
-      conditions.push(ilike(users.city, city));
-    }
-    if (graduation) {
-      conditions.push(ilike(users.graduation, graduation));
-    }
-    if (position && Array.isArray(position) && position.length > 0) {
-      const positionConditions = position.map(pos => ilike(users.position, pos));
-      conditions.push(...positionConditions);
-    } else if (position) {
-      conditions.push(ilike(users.position, position));
-    }
-
-    if (birthyear) {
-      conditions.push(
-        sql`EXTRACT(YEAR FROM ${users.birthday}) = ${birthyear}`
-      );
-    }
-
-
- const whereClause = search
+    // Updated WHERE clause to include more fields
+    const whereClause = search
       ? or(
-          ilike(users.first_name, `%${search}%`),
-          ilike(users.last_name, `%${search}%`),
-          ilike(users.email, `%${search}%`),
-          // ilike(users.phoneNumber, `%${search}%`),
-          ilike(users.sport, `%${search}%`),  // Allow searching by sport
-          ilike(users.status, `%${search}%`)  // Allow searching by status
+          ilike(enterprises.organizationName, `%${search}%`),
+          ilike(enterprises.email, `%${search}%`),
+          ilike(enterprises.state, `%${search}%`),
+          ilike(enterprises.mobileNumber, `%${search}%`),
+          ilike(enterprises.country, `%${search}%`),  // Allow searching by sport
+          ilike(enterprises.status, `%${search}%`)  // Allow searching by status
         )
       : undefined;
 
-    const query = db
+    const enterprisesData = await db
       .select({
-        first_name: users.first_name,
-        last_name: users.last_name,
-        slug: users.slug,
-        id: users.id,
-        image: users.image,
-        position: users.position,
-        grade_level: users.grade_level,
-        location: users.location,
-        height: users.height,
-        jersey: users.jersey,
-        weight: users.weight,
-        birthday: users.birthday,
-        graduation: users.graduation,
-        facebook: users.facebook,
-        instagram: users.instagram,
-        linkedin: users.linkedin,
-        birth_year: users.birth_year,
-        age_group: users.age_group,
-        xlink: users.xlink,
-        youtube: users.youtube,
-        coachName: sql`coa."firstName"`.as("coachName"),
-        coachLastName: sql`coa."lastName"`.as("coachLastName"),
-        enterpriseName: sql`ent."organizationName"`.as("enterpriseName"),
+        organizationName: enterprises.organizationName,
+        contactPerson: enterprises.contactPerson,
+        owner_name: enterprises. owner_name,
+        package_id: enterprises. package_id,
+        id: enterprises.id,
+        email: enterprises.email,
+        mobileNumber: enterprises.mobileNumber,
+        countryCodes: enterprises.countryCodes,
+        address: enterprises.address,
+        country: enterprises.country,
+        state: enterprises.state,
+        status:enterprises.status,
+        
       })
-      .from(users)
-      .leftJoin(
-        sql`enterprises AS ent`, // Alias defined here
-        sql`NULLIF(${users.enterprise_id}, '')::integer = ent.id`
-      )
-      .leftJoin(
-        sql`coaches AS coa`, // Alias defined here
-        sql`NULLIF(${users.coach_id}, '')::integer = coa.id`
-      )
+      .from(enterprises)
+      // .leftJoin(licenses, sql`${licenses.assigned_to} = ${enterprises.id}`)
+      // .leftJoin(coachaccount, sql`${coachaccount.coach_id} = ${enterprises.id}`)
+      // .leftJoin(playerEvaluation, sql`${playerEvaluation.coach_id} = ${enterprises.id}`)
       .where(whereClause)
-      // .where(and(...conditions)).orderBy(desc(users.id));
+      .groupBy(
+        enterprises.id, enterprises.organizationName, enterprises.contactPerson, enterprises.owner_name, enterprises.package_id,
+        enterprises.email, enterprises.mobileNumber, enterprises.countryCodes, enterprises.address, enterprises.country,
+        enterprises.state, enterprises.status
+      )
+      .orderBy(desc(enterprises.createdAt))
+      .offset(offset)
+      .limit(limit);
 
-    const result = await query.execute();
-
-
-    // const formattedCoachList = result.map(coach => ({
-    //   coachName: `${coach.coachName} ${coach.coachLastName}`,
-    //   enterpriseName: coach.enterpriseName,
-    //   firstName: users.first_name,
-    //   lastName: users.last_name,
-    //   slug: users.slug,
-    //   id: users.id,
-    //   image: users.image,
-    //   position: users.position,
-    //   jersey: users.jersey,
-    //   grade_level: users.grade_level,
-    //   location: users.location,
-    //   height: users.height,
-    //   weight: users.weight,
-    //   graduation: users.graduation,
-    //   birthday: users.birthday,
-    //   facebook: coach.facebook,
-    //   instagram: coach.instagram,
-    //   linkedin: coach.linkedin,
-    //   xlink: coach.xlink,
-    //   youtube: coach.youtube,
-    //   birth_year: coach.birth_year,
-    //   age_group: coach.age_group,
-    // }));
-    // Return the coach list as a JSON response
-    // return NextResponse.json(formattedCoachList);
     const totalCount = await db
-          .select({ count: count() })
-          .from(users)
-          .where(whereClause)
-          .then((result) => result[0]?.count || 0);
+      .select({ count: count() })
+      .from(enterprises)
+      .where(whereClause)
+      .then((result) => result[0]?.count || 0);
+
     const totalPages = Math.ceil(totalCount / limit);
+
     return NextResponse.json({
-      coaches: result,
+      enterprises: enterprisesData,
       currentPage: page,
       totalPages: totalPages,
       hasNextPage: page < totalPages,
       hasPrevPage: page > 1
     });
 
-  } catch (error) {
-    if (error instanceof Error) {
-        console.error("Database Query Error:", error);
 
-        return NextResponse.json(
-            { message: "Failed to fetch coaches", error: error.message, stack: error.stack },
-            { status: 500 }
-        );
+    
+
+  } catch (error) {
+    return NextResponse.json(
+      {
+        message: 'Failed to fetch organization',
+        error: error instanceof Error ? error.message : String(error)
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const url = new URL(req.url);
+    const organizationId = url.searchParams.get("id");
+
+    if (!organizationId) {
+      return NextResponse.json({ message: "Organization ID is required" }, { status: 400 });
     }
 
-    // Handle unknown errors (non-Error objects)
-    console.error("Unknown Error:", error);
+    const organizationIdNumber = Number(organizationId);
+    if (isNaN(organizationIdNumber)) {
+      return NextResponse.json({ message: "Invalid Organization ID" }, { status: 400 });
+    }
+
+    // Delete the coach by ID
+    await db.delete(enterprises).where(eq(enterprises.id, organizationIdNumber));
+
+    return NextResponse.json({ message: "Organization deleted successfully" });
+  } catch (error) {
     return NextResponse.json(
-        { message: "Failed to fetch coaches", error: "Unknown error occurred" },
-        { status: 500 }
+      { message: "Failed to delete organization", error: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
     );
+  }
 }
+
+
+
+export async function POST(req: NextRequest) {
+  const { enterprise_id } = await req.json();
+
+  const consumeLicensesResult = await db
+    .select({ count: count() })
+    .from(licenses)
+    .where(
+      and(
+        eq(licenses.enterprise_id, enterprise_id),
+        eq(licenses.status, 'Consumed')
+      )
+    );
+  const consumeLicenses = consumeLicensesResult[0]?.count || 0;
+
+  const activeLicensesResult = await db
+    .select({ count: count() })
+    .from(licenses)
+    .where(
+      and(
+        eq(licenses.enterprise_id, enterprise_id),
+        eq(licenses.status, 'Free')
+      )
+    );
+  const activeLicenses = activeLicensesResult[0]?.count || 0;
+
+  const totalCoachesResult = await db
+    .select({ count: count() })
+    .from(coaches)
+    .where(eq(coaches.enterprise_id, enterprise_id));
+  const totalCoaches = totalCoachesResult[0]?.count || 0;
+
+  const totalPlayersResult = await db
+    .select({ count: count() })
+    .from(users)
+    .where(eq(users.enterprise_id, enterprise_id)); // Ensure the `coaches` table is correct here
+  const totalPlayers = totalPlayersResult[0]?.count || 0;
+
+  const totalTeamsResult=await db.select({count:count()}).from(teams).where(and(eq(teams.created_by,'Enterprise'), eq(teams.club_id,enterprise_id)));
+
+  const totalTeams=totalTeamsResult[0]?.count || 0;
+  return NextResponse.json(
+    { consumeLicenses, activeLicenses, totalCoaches, totalPlayers, totalTeams },
+    { status: 200 }
+  );
 }
+

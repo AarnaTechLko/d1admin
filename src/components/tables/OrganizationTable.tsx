@@ -2,24 +2,33 @@
 import React from "react";
 import { Pencil, Trash } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
-// import Badge from "../ui/badge/Badge";
-// import Image from "next/image";
+import Badge from "../ui/badge/Badge";
+import { Facebook, Instagram, Youtube,  Linkedin } from "lucide-react";
+import Image from "next/image";
 
 interface Organization {
   id: string;
-  first_name: string;
-  last_name: string;
-  image: string;
-  position: string;
-  height: string;
-  jersey: string;
-weight:string;
-graduation:string;
-  sport: string;
+  organizationName: string;
+  contactPerson: string;
+  owner_name: string;
+  package_id: string;
+  email: string;
+  mobileNumber: string;
+  countryCodes: string;
+  address: string;
+  country: string;
+  state: string;
+  city: string;
+  logo: string;
   status: string;
-  earnings: number;
-  age_group:string;
-  grade_level:string;
+  coach: string;
+  player: string;
+  team: string;
+  facebook: string;
+    instagram: string;
+    linkedin: string;
+    xlink: string;
+    youtube: string;
 }
 
 interface OrganizationTableProps {
@@ -29,19 +38,19 @@ interface OrganizationTableProps {
   setCurrentPage: (page: number) => void;
 }
 
-const OrganizationTable: React.FC<OrganizationTableProps> = ({ data = [],
+const CoachTable: React.FC<OrganizationTableProps> = ({ data = [],
   currentPage = 1,
   totalPages = 1,
   setCurrentPage = () => { }, }) => {
-  const handleEdit = (organizationId: string) => {
-    console.log("Edit organization with ID:", organizationId);
+  const handleEdit = (coachId: string) => {
+    console.log("Edit organization with ID:", coachId);
   };
 
-  const handleDelete = async (organizationId: string) => {
+  const handleDelete = async (coachId: string) => {
     if (!window.confirm("Are you sure you want to delete this organization?")) return;
 
     try {
-      const response = await fetch(`/api/organization?id=${organizationId}`, { method: "DELETE" });
+      const response = await fetch(`/api/organization?id=${coachId}`, { method: "DELETE" });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -54,6 +63,10 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ data = [],
       console.error("Error deleting organization:", error);
     }
   };
+
+
+
+  
 
   return (
     <>
@@ -75,8 +88,8 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ data = [],
               key={pageNumber}
               onClick={() => setCurrentPage(pageNumber)}
               className={`px-3 py-2 rounded-md ${currentPage === pageNumber
-                ? "bg-blue-500 text-white"
-                : "text-blue-500 hover:bg-gray-200"
+                  ? "bg-blue-500 text-white"
+                  : "text-blue-500 hover:bg-gray-200"
                 }`}
             >
               {pageNumber}
@@ -100,33 +113,24 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ data = [],
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Organization
+                    Organization Name
                   </TableCell>
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Positions
+                    Address
+                  </TableCell>
+                 
+
+                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                    Organization Data
                   </TableCell>
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Grade Level
-                  </TableCell>
-                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Age
-                  </TableCell>
-                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Height
-                  </TableCell>
-                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Weight
-                  </TableCell>
-                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Jersey
-                  </TableCell>
-                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Graduation
+                    Social Links
                   </TableCell>
 
-                 
-                 
-                 
+
+                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                    Status
+                  </TableCell>
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                     Actions
                   </TableCell>
@@ -139,34 +143,65 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ data = [],
                     <TableCell className="px-5 py-4 sm:px-6 text-start">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 overflow-hidden rounded-full">
-                          {/* <Image
+                          <Image
                             width={40}
                             height={40}
-                            src={organization.image && organization.image.startsWith("http") ? organization.image : "/images/default-avatar.png"}
-                            alt={`${organization.first_name} ${organization.last_name}`}
-                            onError={(e) => (e.currentTarget.src = "/images/default-avatar.png")} // Fallback image
-                          /> */}
-
+                            src={organization.logo || "/images/signin/d1.png"}
+                            alt={`${organization.organizationName} `}
+                          />
                         </div>
                         <div>
                           <span className="block font-medium text-gray-800 dark:text-white/90">
-                            {organization.first_name} {organization.last_name}
+                            {organization.organizationName}
                           </span>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{organization.position}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{organization.grade_level}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{organization.age_group}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{organization.height}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{organization.weight}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{organization.jersey}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{organization.graduation}</TableCell>
-                  
+                    {/* <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{organization.contactPerson}</TableCell> */}
 
-                   
-                   
-                 
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      {organization.address || "N/A"}, {organization.city || "N/A"}, {organization.state || "N/A"}, {organization.country || "N/A"}
+                      <br />
+                      <span className="text-blue-500">{organization.email || "N/A"}</span>
+                      <br />
+                      <span className="font-medium">{organization.mobileNumber || "N/A"}</span>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{organization.coach || 0}
+                      <br/>
+                      <span className="text-blue-500">{organization.player || "0"}</span>
+                      <br />
+                      <span className="font-medium">{organization.team || "0"}</span>
+                    </TableCell>
+
+<TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 flex items-center gap-3">
+  {/* Facebook */}
+  <a href={organization.facebook || "#"} target="_blank" rel="noopener noreferrer">
+    <Facebook className="w-5 h-5 text-blue-600 hover:text-blue-700" />
+  </a>
+
+  {/* Instagram */}
+  <a href={organization.instagram || "#"} target="_blank" rel="noopener noreferrer">
+    <Instagram className="w-5 h-5 text-blue-600 hover:text-pink-600" />
+  </a>
+
+  {/* YouTube */}
+  <a href={organization.youtube || "#"} target="_blank" rel="noopener noreferrer">
+    <Youtube className="w-5 h-5 text-blue-600 hover:text-red-700" />
+  </a>
+
+ 
+
+  {/* LinkedIn */}
+  <a href={organization.linkedin || "#"} target="_blank" rel="noopener noreferrer">
+    <Linkedin className="w-5 h-5 text-blue-600  hover:text-blue-800" />
+  </a>
+</TableCell>
+               
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      <Badge color={organization.status === "Active" ? "success" : organization.status === "Pending" ? "warning" : "error"}>
+                        {organization.status}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       <div className="flex gap-3">
                         <button onClick={() => handleEdit(organization.id)} className="p-2 text-green-500 hover:text-green-600">
@@ -200,8 +235,8 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ data = [],
                     key={pageNumber}
                     onClick={() => setCurrentPage(pageNumber)}
                     className={`px-3 py-2 rounded-md ${currentPage === pageNumber
-                      ? "bg-blue-500 text-white"
-                      : "text-blue-500 hover:bg-gray-200"
+                        ? "bg-blue-500 text-white"
+                        : "text-blue-500 hover:bg-gray-200"
                       }`}
                   >
                     {pageNumber}
@@ -225,4 +260,4 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({ data = [],
   );
 };
 
-export default OrganizationTable;
+export default CoachTable;

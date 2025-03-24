@@ -4,6 +4,8 @@ import { Pencil, Trash } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 // import Badge from "../ui/badge/Badge";
 import Image from "next/image";
+import d1 from "@/public/images/signin/d1.png";
+
 
 interface Player {
   id: string;
@@ -142,7 +144,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                           <Image
                             width={40}
                             height={40}
-                            src={player.image && player.image.startsWith("http") ? player.image : "/images/default-avatar.png"}
+                            src={player.image && player.image.startsWith("http") ? player.image : d1}
                             alt={`${player.first_name} ${player.last_name}`}
                             onError={(e) => (e.currentTarget.src = "/images/default-avatar.png")} // Fallback image
                           />

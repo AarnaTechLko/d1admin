@@ -6,19 +6,19 @@ import OrganizationTable from "@/components/tables/OrganizationTable";
 
 interface Organization {
   id: string;
-  first_name: string;
-  last_name: string;
-  image: string;
-  position: string;
-  height: string;
-  jersey: string;
-weight:string;
-graduation:string;
-  sport: string;
-  status: string;
-  earnings: number;
-  age_group:string;
-  grade_level:string
+  organizationName: string;
+  contactPerson: string;
+  owner_name: string;
+  package_id: string;
+  email: string;
+  mobileNumbe: string;
+  countryCodes: string;
+  address: string;
+  country: string;
+    state: string;
+    city: string;
+    logo: string;
+    status:string;
 }
 
 const OrganizationsPage = () => {
@@ -37,12 +37,11 @@ const OrganizationsPage = () => {
         const response = await fetch(
           `/api/organization?search=${searchQuery}&page=${currentPage}&limit=10`
         );
-    
+
         if (!response.ok) throw new Error("Failed to fetch data");
-    
+
         const data = await response.json();
-        console.log("API Response:", data); // ✅ Check if data is correct
-        setOrganizations(data.organizations);
+        setOrganizations(data.enterprises);
         setTotalPages(data.totalPages);
       } catch (err) {
         setError((err as Error).message);
@@ -50,15 +49,15 @@ const OrganizationsPage = () => {
         setLoading(false);
       }
     };
-    
+
     fetchOrganizations();
   }, [searchQuery, currentPage]);
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Organizations" onSearch={setSearchQuery} />
+      <PageBreadcrumb pageTitle="Organization" onSearch={setSearchQuery} />
       
-      {/* {loading && <p className="text-center py-5">Loading...</p>}
+      {loading && <p className="text-center py-5">Loading...</p>}
       {error && <p className="text-center py-5 text-red-500">{error}</p>}
       
       {!loading && !error && (
@@ -68,19 +67,7 @@ const OrganizationsPage = () => {
           totalPages={totalPages}
           setCurrentPage={setCurrentPage}
         />
-      )} */}
-      {!loading && !error && (
-  <>
-    <pre>{JSON.stringify(organizations, null, 2)}</pre> {/* ✅ Debug */}
-    <OrganizationTable
-      data={organizations}
-      currentPage={currentPage}
-      totalPages={totalPages}
-      setCurrentPage={setCurrentPage}
-    />
-  </>
-)}
-
+      )}
     </div>
   );
 };

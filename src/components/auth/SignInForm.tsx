@@ -1,13 +1,17 @@
 "use client";
+import { useRouter } from "next/navigation";
 import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
-import { EyeCloseIcon, EyeIcon } from "@/icons";
+// import { EyeCloseIcon, EyeIcon } from "@/icons";
+import { Eye, EyeOff } from "lucide-react"; // Lucide React icons
+
 import Link from "next/link";
 import React, { useState } from "react";
 
 export default function SignInForm() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false); // "Keep me logged in"
   const [formData, setFormData] = useState({
@@ -50,7 +54,7 @@ export default function SignInForm() {
         }
 
         setTimeout(() => {
-          window.location.href = "/profile"; // Redirect to profile page
+          router.push("/dashboard"); // Redirect to profile page
         }, 2000);
       }
     } catch (err) {
@@ -60,7 +64,7 @@ export default function SignInForm() {
   };
 
   return (
-    <div className="flex flex-col flex-1 lg:w-1/2 w-full">
+    <div className="flex flex-col flex-1 mt-5 w-full">
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
         <div>
           <div className="mb-5 sm:mb-8">
@@ -100,14 +104,14 @@ export default function SignInForm() {
                     className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
                   >
                     {showPassword ? (
-                      <EyeIcon className="fill-gray-500 dark:fill-gray-400" />
+                      <Eye className="fill-gray-500 dark:fill-gray-400" />
                     ) : (
-                      <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400" />
+                      <EyeOff className="fill-gray-500 dark:fill-gray-400" />
                     )}
                   </span>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
+              {/* <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Checkbox
                     checked={isChecked}
@@ -120,7 +124,7 @@ export default function SignInForm() {
                 <Link href="/reset-password" className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400">
                   Forgot password?
                 </Link>
-              </div>
+              </div> */}
 
               {/* Display Error Message */}
               {error && <p className="text-error-500">{error}</p>}
@@ -134,14 +138,14 @@ export default function SignInForm() {
             </div>
           </form>
 
-          <div className="mt-5">
+          {/* <div className="mt-5">
             <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
               Don&apos;t have an account?{" "}
-              <Link href="/signup" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
+              <Link href="/SignUpForm" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
                 Sign Up
               </Link>
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
