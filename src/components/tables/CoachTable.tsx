@@ -10,6 +10,7 @@ interface Coach {
   firstName: string;
   lastName: string;
   image: string;
+  
   gender: string;
   sport: string;
   evaluations: string;

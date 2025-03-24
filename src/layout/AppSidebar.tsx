@@ -44,18 +44,19 @@ const navItems: NavItem[] = [
   {
     name: "Players",
     icon: <  UserCircleIcon/>,
-    subItems: [{ name: "View Player ", path: "/basic-tables", pro: false }],
-  },
-  {
-    name: "Teams",
-    icon: <ListIcon />,
-    subItems: [{ name: "View Team ", path: "/team", pro: false }],
+    subItems: [{ name: "View Player ", path: "/player", pro: false }],
   },
   {
     name: "Organizations",
     icon: <TableIcon />,
     subItems: [{ name: "View Organizations", path: "/organization", pro: false }],
   },
+  {
+    name: "Teams",
+    icon: <ListIcon />,
+    subItems: [{ name: "View Team ", path: "/team", pro: false }],
+  },
+ 
   // {
   //   name: "Pages",
   //   icon: <PageIcon />,
