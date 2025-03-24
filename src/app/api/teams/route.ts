@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { teams } from '@/lib/schema';
 import { enterprises } from '@/lib/schema'; // Assuming you have a schema for enterprises
-import { eq, ilike, or, count, desc, sql } from 'drizzle-orm';
+import { eq, ilike, or, count, desc, } from 'drizzle-orm';
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
