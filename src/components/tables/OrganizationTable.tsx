@@ -1,9 +1,9 @@
 "use client";
-import React, { useEffect } from "react";
+import React from "react";
 import { Pencil, Trash } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 // import Badge from "../ui/badge/Badge";
-import Image from "next/image";
+// import Image from "next/image";
 
 interface Organization {
   id: string;
