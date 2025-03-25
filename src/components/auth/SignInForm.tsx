@@ -1,19 +1,19 @@
 "use client";
 import { useRouter } from "next/navigation";
-import Checkbox from "@/components/form/input/Checkbox";
+// import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 // import { EyeCloseIcon, EyeIcon } from "@/icons";
 import { Eye, EyeOff } from "lucide-react"; // Lucide React icons
 
-import Link from "next/link";
+// import Link from "next/link";
 import React, { useState } from "react";
 
 export default function SignInForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [isChecked, setIsChecked] = useState(false); // "Keep me logged in"
+  // const [isChecked, setIsChecked] = useState(false); // "Keep me logged in"
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -47,11 +47,11 @@ export default function SignInForm() {
         setSuccess("Login successful! Redirecting...");
 
         // ✅ Store JWT token
-        if (isChecked) {
-          localStorage.setItem("session_token", data.token); // Persist even after closing browser
-        } else {
-          sessionStorage.setItem("session_token", data.token); // Remove after session ends
-        }
+        // if (isChecked) {
+        //   localStorage.setItem("session_token", data.token); // Persist even after closing browser
+        // } else {
+        //   sessionStorage.setItem("session_token", data.token); // Remove after session ends
+        // }
 
         setTimeout(() => {
           router.push("/dashboard"); // Redirect to profile page
