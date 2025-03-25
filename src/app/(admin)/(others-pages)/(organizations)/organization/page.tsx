@@ -19,14 +19,14 @@ interface Organization {
   city: string;
   logo: string;
   status: string;
-  coach: string;
-  player: string;
-  team: string;
+  totalPlayers: number;
+  totalCoaches: number;
+  totalTeams: number;
   facebook: string;
-    instagram: string;
-    linkedin: string;
-    xlink: string;
-    youtube: string;
+  instagram: string;
+  linkedin: string;
+  xlink: string;
+  youtube: string;
 }
 
 const OrganizationsPage = () => {

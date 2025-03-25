@@ -7,7 +7,6 @@ import Button from "@/components/ui/button/Button";
 // import { EyeCloseIcon, EyeIcon } from "@/icons";
 import { Eye, EyeOff } from "lucide-react"; // Lucide React icons
 
-// import Link from "next/link";
 import React, { useState } from "react";
 
 export default function SignInForm() {
@@ -138,14 +137,7 @@ export default function SignInForm() {
             </div>
           </form>
 
-          {/* <div className="mt-5">
-            <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
-              Don&apos;t have an account?{" "}
-              <Link href="/SignUpForm" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
-                Sign Up
-              </Link>
-            </p>
-          </div> */}
+          
         </div>
       </div>
     </div>

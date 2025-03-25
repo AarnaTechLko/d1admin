@@ -32,7 +32,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch }) => {
   };
 
   return (
-    <div className="flex flex-wrap items-center  gap-3 mb-6">
+    <div className="flex flex-wrap items-center  gap-3 ">
       <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
         {pageTitle}
       </h2>

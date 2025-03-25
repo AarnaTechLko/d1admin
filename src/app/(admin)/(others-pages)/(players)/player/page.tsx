@@ -55,7 +55,7 @@ const PlayersPage = () => {
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="players" onSearch={setSearchQuery} />
+      <PageBreadcrumb pageTitle="Players" onSearch={setSearchQuery} />
       
       {loading && <p className="text-center py-5">Loading...</p>}
       {error && <p className="text-center py-5 text-red-500">{error}</p>}
