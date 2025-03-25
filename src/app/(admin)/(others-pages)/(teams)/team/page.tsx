@@ -16,6 +16,8 @@ interface Team {
   created_by: string;
   team_year: string;
   coach_id: string;
+  totalPlayers: number;
+  totalCoaches : number;
   club_id: string;
   status: string;
   organisation_name: string;
@@ -114,7 +116,10 @@ const TeamsPage = () => {
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow className="bg-gray-100">
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">Logo</TableCell>
-                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">Organization Name</TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400"> Name</TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400"> Player</TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400"> Coach</TableCell>
+  
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">Type</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">Year</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">Status</TableCell>
@@ -143,6 +148,8 @@ const TeamsPage = () => {
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 ps-10">
                     {team.organisation_name || "No Organization"}
                   </TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{team.totalPlayers}</TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{team.totalCoaches }</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{team.team_type}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{team.team_year}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
