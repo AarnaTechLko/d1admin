@@ -13,7 +13,7 @@ interface Coach {
   
   gender: string;
   sport: string;
-  evaluations: string;
+  totalEvaluations: string;
   status: string;
   earnings: number;
 }
@@ -53,8 +53,8 @@ const CoachTable: React.FC<CoachTableProps> = ({   data = [],
 
   return (
     <>
-    <div className="flex justify-end items-center gap-2 p-4 border-t border-gray-200 dark:border-white/[0.05]">
-  {/* Previous Button */}
+           <div className="flex justify-end items-center gap-2 p-2">
+           {/* Previous Button */}
   {/* <button
     onClick={() => setCurrentPage(currentPage - 1)}
     disabled={currentPage === 1}
@@ -70,7 +70,7 @@ const CoachTable: React.FC<CoachTableProps> = ({   data = [],
       <button
         key={pageNumber}
         onClick={() => setCurrentPage(pageNumber)}
-        className={`px-3 py-2 rounded-md ${
+        className={`px-3 py-1 rounded-md ${
           currentPage === pageNumber
             ? "bg-blue-500 text-white"
             : "text-blue-500 hover:bg-gray-200"
@@ -145,7 +145,7 @@ const CoachTable: React.FC<CoachTableProps> = ({   data = [],
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{coach.sport}</TableCell>
                   
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{coach.earnings || 0}</TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{coach.evaluations || 0}</TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{coach.totalEvaluations || 0}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                     <Badge color={coach.status === "Active" ? "success" : coach.status === "Pending" ? "warning" : "error"}>
                       {coach.status}
@@ -183,7 +183,7 @@ const CoachTable: React.FC<CoachTableProps> = ({   data = [],
       <button
         key={pageNumber}
         onClick={() => setCurrentPage(pageNumber)}
-        className={`px-3 py-2 rounded-md ${
+        className={`px-3 py-1 rounded-md ${
           currentPage === pageNumber
             ? "bg-blue-500 text-white"
             : "text-blue-500 hover:bg-gray-200"

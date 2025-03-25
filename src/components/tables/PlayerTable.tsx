@@ -59,17 +59,8 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
   return (
     <>
-      <div className="flex justify-end items-center gap-2 p-4 border-t border-gray-200 dark:border-white/[0.05]">
-        {/* Previous Button */}
-        {/* <button
-    onClick={() => setCurrentPage(currentPage - 1)}
-    disabled={currentPage === 1}
-    className={`px-4 py-2 rounded-lg text-blue-500 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:text-blue-600"}`}
-  >
-    Previous
-  </button> */}
-
-        {/* Numbered Pagination */}
+      <div className="flex justify-end items-center gap-2 p-2">
+   
         {[...Array(totalPages)].map((_, index) => {
           const pageNumber = index + 1;
           return (
@@ -86,14 +77,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
           );
         })}
 
-        {/* Next Button */}
-        {/* <button
-    onClick={() => setCurrentPage(currentPage + 1)}
-    disabled={currentPage === totalPages}
-    className={`px-4 py-2 rounded-lg text-blue-500 ${currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:text-blue-600"}`}
-  >
-    Next
-  </button> */}
+       
       </div>
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
@@ -140,10 +124,11 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                   <TableRow key={player.id}>
                     <TableCell className="px-5 py-4 sm:px-6 text-start">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 overflow-hidden rounded-full">
+                        <div className="w-10 h-10 overflow-hidden ">
                           <Image
-                            width={40}
-                            height={40}
+                            width={50}
+                            height={50}
+                            className="rounded-full"
                             src={player.image && player.image.startsWith("http") ? player.image : d1}
                             alt={`${player.first_name} ${player.last_name}`}
                             onError={(e) => (e.currentTarget.src = "/images/default-avatar.png")} // Fallback image
@@ -183,43 +168,27 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                 ))}
               </TableBody>
             </Table>
-            {/* Pagination Controls */}
             <div className="flex justify-end items-center gap-2 p-4 border-t border-gray-200 dark:border-white/[0.05]">
-              {/* Previous Button */}
-              {/* <button
-    onClick={() => setCurrentPage(currentPage - 1)}
-    disabled={currentPage === 1}
-    className={`px-4 py-2 rounded-lg text-blue-500 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:text-blue-600"}`}
-  >
-    Previous
-  </button> */}
+ 
+  {[...Array(totalPages)].map((_, index) => {
+    const pageNumber = index + 1;
+    return (
+      <button
+        key={pageNumber}
+        onClick={() => setCurrentPage(pageNumber)}
+        className={`px-3 py-1 rounded-md ${
+          currentPage === pageNumber
+            ? "bg-blue-500 text-white"
+            : "text-blue-500 hover:bg-gray-200"
+        }`}
+      >
+        {pageNumber}
+      </button>
+    );
+  })}
 
-              {/* Numbered Pagination */}
-              {[...Array(totalPages)].map((_, index) => {
-                const pageNumber = index + 1;
-                return (
-                  <button
-                    key={pageNumber}
-                    onClick={() => setCurrentPage(pageNumber)}
-                    className={`px-3 py-2 rounded-md ${currentPage === pageNumber
-                      ? "bg-blue-500 text-white"
-                      : "text-blue-500 hover:bg-gray-200"
-                      }`}
-                  >
-                    {pageNumber}
-                  </button>
-                );
-              })}
-
-              {/* Next Button */}
-              {/* <button
-    onClick={() => setCurrentPage(currentPage + 1)}
-    disabled={currentPage === totalPages}
-    className={`px-4 py-2 rounded-lg text-blue-500 ${currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:text-blue-600"}`}
-  >
-    Next
-  </button> */}
-            </div>
+ 
+</div>
           </div>
         </div>
       </div>

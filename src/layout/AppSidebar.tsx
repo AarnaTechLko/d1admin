@@ -3,7 +3,10 @@ import React, { useEffect, useRef, useState,useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
-
+import d1 from "@/public/images/signin/d1.png"
+import logo from "@/public/images/logo1/logo.webp"
+// import user from "@/public/images/user/user-01.jpg"
+// import LL from "@/public/images/logo/LL.png"
 
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
@@ -31,7 +34,7 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    path: "/",
+    path: "/dashboard",
   },
 
 
@@ -286,16 +289,19 @@ const AppSidebar: React.FC = () => {
         <Link href="/">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
+              {/* <div className="w-40 h-40 overflow-hidden "> */}
               <Image
                 className="dark:hidden"
-                src="/images/user/user-01.jpg" 
+                src={logo}
                 alt="Logo123"
-                width={150}
+                width={140}
+                
                 height={40}
               />
+              {/* </div> */}
               <Image
                 className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
+                src={d1}
                 alt="Logo2"
                 width={150}
                 height={40}
@@ -303,7 +309,7 @@ const AppSidebar: React.FC = () => {
             </>
           ) : (
             <Image
-              src="/images/logo/logo-icon.svg"
+              src={d1}
               alt="Logo3"
               width={32}
               height={32}
