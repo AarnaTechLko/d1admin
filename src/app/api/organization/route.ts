@@ -5,7 +5,7 @@ import {   licenses,enterprises ,users,coaches,teams} from '@/lib/schema';
 // import debug from 'debug';
 // import jwt from 'jsonwebtoken';
 // import { SECRET_KEY } from '@/lib/constants';
-import { eq, ilike, or, count, desc,sql,and } from 'drizzle-orm';
+import { eq, ilike, or, count, desc,and } from 'drizzle-orm';
 // import { sendEmail } from '@/lib/helpers';
  
 

@@ -11,14 +11,22 @@ interface Organization {
   owner_name: string;
   package_id: string;
   email: string;
-  mobileNumbe: string;
+  mobileNumber: string;
   countryCodes: string;
   address: string;
   country: string;
-    state: string;
-    city: string;
-    logo: string;
-    status:string;
+  state: string;
+  city: string;
+  logo: string;
+  status: string;
+  coach: string;
+  player: string;
+  team: string;
+  facebook: string;
+    instagram: string;
+    linkedin: string;
+    xlink: string;
+    youtube: string;
 }
 
 const OrganizationsPage = () => {

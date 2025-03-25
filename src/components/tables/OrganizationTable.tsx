@@ -6,6 +6,8 @@ import Badge from "../ui/badge/Badge";
 import { Facebook, Instagram, Youtube,  Linkedin } from "lucide-react";
 import Image from "next/image";
 
+
+
 interface Organization {
   id: string;
   organizationName: string;
