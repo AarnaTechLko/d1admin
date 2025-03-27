@@ -59,15 +59,15 @@ const navItems: NavItem[] = [
     icon: <ListIcon />,
     subItems: [{ name: "View Team ", path: "/team", pro: false }],
   },
+  {
+    name:"Subadmin",
+    icon:<UserCircleIcon/>,
+    subItems:[{name:"Add",path:"/subadmin",pro:false},{name:"View",path:"/view",pro:false},
+      {name:"View1",path:"/view1",pro:false}],
+  
+  },
  
-  // {
-  //   name: "Pages",
-  //   icon: <PageIcon />,
-  //   subItems: [
-  //     { name: "Blank Page", path: "/blank", pro: false },
-  //     { name: "404 Error", path: "/error-404", pro: false },
-  //   ],
-  // },
+ 
 ];
 
 
