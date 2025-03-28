@@ -33,7 +33,7 @@ export async function POST(req: Request) {
             role,
         });
 
-        return NextResponse.json({ message: "Signup successful" }, { status: 201 });
+        return NextResponse.json({ message: "Add successful" }, { status: 201 });
     } catch (error) {
         return NextResponse.json({ message: "Internal server error", error }, { status: 500 });
     }
