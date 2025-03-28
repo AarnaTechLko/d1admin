@@ -41,7 +41,7 @@ const navItems: NavItem[] = [
   {
     name: "Coaches",
     icon: <ListIcon />,
-    subItems: [{ name: "View Coach ", path: "/coach", pro: false }],
+    subItems: [{ name: "View Coach ", path: "/coach", pro: false },{name:"View1",path:"/view1",pro:false}],
   },
 
   {
@@ -62,8 +62,13 @@ const navItems: NavItem[] = [
   {
     name:"Subadmin",
     icon:<UserCircleIcon/>,
-    subItems:[{name:"Add",path:"/subadmin",pro:false},{name:"View",path:"/view",pro:false},
-      {name:"View1",path:"/view1",pro:false}],
+    subItems:[{name:"Add",path:"/subadmin",pro:false},{name:"View",path:"/view",pro:false}],
+  
+  },
+  {
+    name:"Ticket",
+    icon:<UserCircleIcon/>,
+    subItems:[{name:"View Ticket",path:"/ticket",pro:false}],
   
   },
  

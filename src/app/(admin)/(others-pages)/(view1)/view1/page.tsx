@@ -41,41 +41,44 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+ 
   useEffect(() => {
     const fetchCoachData = async () => {
       setLoading(true);
       setError(null);
-
+  
       try {
-        // Retrieve loggeInUser from localStorage (if applicable)
-        let loggeInUser = 1; // Default user ID
-        if (typeof window !== "undefined") {
-          const storedUser = localStorage.getItem("userId");
-          loggeInUser = storedUser ? Number(storedUser) : 1;
-        }
-
-        
-        const response = await fetch("/api/view", {
+        const response = await fetch("/api/view1", {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
-        
+  
+      
+  
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data: ${response.status}`);
+      }
 
-        const data = await response.json();
+      
+      const data = await response.json();
+      console.log("API Response:", data); // Debugging step ✅
 
-        // if (!response.ok) {
-        //   throw new Error(Failed to fetch data: ${data.message || "Unknown error"});
-        // }
-        if(!response.ok){
-            console.log("Failed to fetch data ")
-        }
+      if (!data || typeof data !== "object") {
+        throw new Error("Invalid response format from API");
+      }
 
+      if (!data.coachdata) {
+        throw new Error("coachdata field is missing in API response");
+      }
+
+  
         setCoachData(data.coachdata);
         setEvaluationList(data.evaluationlist || []);
         setEvaluationCharges(data.evaluationCharges || []);
         setIsRequested(data.isRequested === 1); // Convert to boolean
         setTotalLicenses(data.totalLicenses || "not available");
-      }catch (error) {
+  
+      } catch (error) {
         if (error instanceof Error) {
           console.error("Error fetching data:", error.message);
           setError(error.message);
@@ -83,29 +86,34 @@ export default function ProfilePage() {
           console.error("An unknown error occurred:", error);
           setError("An unknown error occurred.");
         }
+      } finally {
+        setLoading(false);  // ✅ Ensure loading state is updated
       }
-      
     };
-
+  
     fetchCoachData();
+    
   }, []);
+ 
+
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-red-600">Error: {error}</p>;
   if (!coachData) return <p>No data found</p>;
+  
 
   return (
     <div className="container mx-auto p-6">
       {/* Profile Section */}
       <div className="flex items-center gap-6">
-        <Image
-          src={coachData.image || "/profile-image.jpg"}
-          alt="Profile Picture"
-          width={100}
-          height={100}  
-          
-          className="rounded-full"
-        />
+      <Image
+  src={coachData.image ? coachData.image : "/profile-image.jpg"} // Ensure the fallback works
+  alt="Profile Picture"
+  width={100}
+  height={100}  
+  className="rounded-full"
+/>
+
         <div>
           <h1 className="text-2xl font-bold">
             {coachData.firstName} {coachData.lastName}
@@ -193,13 +201,13 @@ export default function ProfilePage() {
           {evaluationList.length > 0 ? (
             evaluationList.map((review) => (
               <div key={review.firstName + review.lastName} className="border-b py-2 flex items-center gap-4">
-                <Image
+                {/* <Image
                   src={review.image || "/default-user.jpg"}
                   width={40}
                   height={40}
                   alt="User"
                   className="rounded-full"
-                />
+                /> */}
                 <p>{review.firstName} {review.lastName}</p>
                 <span className="ml-auto">Rating: ⭐{review.rating} / 5</span>
               </div>
