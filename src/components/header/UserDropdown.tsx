@@ -5,9 +5,10 @@ import React, { useState, useEffect } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import LL from "@/public/images/logo/LL.png"; 
+
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
+  const router = useRouter(); // ✅ Define useRouter inside the component body
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -18,17 +19,20 @@ export default function UserDropdown() {
     }
   }, []);
 
-  const handleLogout = () => {
-    // Clear authentication data
-    localStorage.removeItem("token");
-    sessionStorage.removeItem("token");
-    
-    // Clear authentication cookies (if used)
-    document.cookie =
-      "session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
 
-    // Redirect to sign-in page and prevent going back
-    router.replace("/signin"); // This replaces the current history entry
+      // ✅ Clear authentication tokens
+      localStorage.removeItem("session_token");
+      sessionStorage.removeItem("session_token");
+
+      // ✅ Redirect after logout
+      router.push("/signin"); // Use push instead of replace
+      window.location.href = "/signin"; // Force reload to ensure session is cleared
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
   };
 
   return (
@@ -49,7 +53,6 @@ export default function UserDropdown() {
           height="20"
           viewBox="0 0 18 20"
           fill="none"
-          // xmlns="http://www.w3.org/2000/svg"
         >
           <path
             d="M4.3125 8.65625L9 13.3437L13.6875 8.65625"

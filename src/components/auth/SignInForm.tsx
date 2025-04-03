@@ -1,18 +1,14 @@
 "use client";
 import { useRouter } from "next/navigation";
-// import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
-// import { EyeCloseIcon, EyeIcon } from "@/icons";
 import { Eye, EyeOff } from "lucide-react"; // Lucide React icons
-
 import React, { useState } from "react";
 
 export default function SignInForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  // const [isChecked, setIsChecked] = useState(false); // "Keep me logged in"
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -32,35 +28,47 @@ export default function SignInForm() {
     setSuccess(null);
 
     try {
-      const res = await fetch("/api/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+        const res = await fetch("/api/signin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData),
+            credentials: "include", // ✅ Ensures cookies are sent
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!res.ok) {
-        setError(data.error || "Invalid credentials");
-      } else {
+        if (!res.ok) {
+            throw new Error(data.error || "Invalid credentials");
+        }
+
+        if (!data.token || !data.user_id) {
+            throw new Error("Authentication failed. Please try again.");
+        }
+
         setSuccess("Login successful! Redirecting...");
 
-        // ✅ Store JWT token
-        // if (isChecked) {
-        //   localStorage.setItem("session_token", data.token); // Persist even after closing browser
-        // } else {
-        //   sessionStorage.setItem("session_token", data.token); // Remove after session ends
-        // }
+        // ✅ Store token & user_id securely
+    
+            sessionStorage.setItem("session_token", data.token); // Session-based login
+            sessionStorage.setItem("user_id", data.user_id);
+        
 
+        // ✅ Redirect after short delay
         setTimeout(() => {
-          router.push("/dashboard"); // Redirect to profile page
+            router.push("/dashboard");
         }, 2000);
-      }
-    } catch (err) {
-      console.error("Signin error:", err);
-      setError("Network error, please try again.");
+
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+            console.error("Signin error:", err.message);
+            setError(err.message);
+        } else {
+            setError("An unknown error occurred.");
+        }
     }
-  };
+};
+
+
 
   return (
     <div className="flex flex-col flex-1 mt-5 w-full">

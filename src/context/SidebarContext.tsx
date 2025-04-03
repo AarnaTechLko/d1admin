@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // ✅ Import useRouter
 
 type SidebarContextType = {
   isExpanded: boolean;
@@ -33,6 +34,16 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [activeItem, setActiveItem] = useState<string | null>(null);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const router = useRouter(); // ✅ Use useRouter for navigation
+
+  useEffect(() => {
+    // ✅ Check if the user is logged in
+    const token = localStorage.getItem("session_token") || sessionStorage.getItem("session_token");
+
+    if (!token) {
+      router.push("/signin"); // ✅ Redirect to signin if no token found
+    }
+  }, [router]);
 
   useEffect(() => {
     const handleResize = () => {
