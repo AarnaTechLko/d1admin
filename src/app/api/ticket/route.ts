@@ -35,7 +35,6 @@ export async function GET(req: Request) {
     
     const offset = (page - 1) * limit;
 
-    // Dynamic search conditions across multiple fields
     const whereClause = search
       ? or(
           ilike(ticket.name, `%${search}%`),
@@ -45,7 +44,6 @@ export async function GET(req: Request) {
         )
       : undefined;
 
-    // Query to fetch tickets with additional aggregations (optional)
     const ticketsData = await db
       .select({
         id: ticket.id,
@@ -53,20 +51,19 @@ export async function GET(req: Request) {
         email: ticket.email,
         subject: ticket.subject,
         message: ticket.message,
-        assign_to:ticket.assign_to,
-        status:ticket.status,
+        assign_to: ticket.assign_to,
+        status: ticket.status,
         assignToUsername: admin.username,
         createdAt: ticket.createdAt,
-        ticketCount: sql<number>`COUNT(*) OVER()`, // Get total count without separate query
+        ticketCount: sql<number>`COUNT(*) OVER()`, 
       })
       .from(ticket)
-      .leftJoin(admin, eq(ticket.assign_to, admin.id)) // Join with the admin table
+      .leftJoin(admin, eq(ticket.assign_to, admin.id))
       .where(whereClause)
       .orderBy(desc(ticket.createdAt))
       .offset(offset)
       .limit(limit);
 
-    // Get total ticket count for pagination
     const totalCount = await db
       .select({ count: count() })
       .from(ticket)
@@ -90,10 +87,18 @@ export async function GET(req: Request) {
         message: 'Failed to fetch tickets',
         error: error instanceof Error ? error.message : String(error)
       },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        }
+      }
     );
   }
 }
+
 
 export async function DELETE(req:Request) {
   try {
