@@ -9,6 +9,7 @@ import {
   uniqueIndex,
   date,
   decimal,
+  boolean,
   // pgEnum,
   integer 
 } from "drizzle-orm/pg-core";
@@ -63,6 +64,7 @@ export const users = pgTable(
     status: varchar("status").default("Pending"),
     visibility: varchar("visibility").default("off"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
+    isCompletedProfile: boolean("isCompletedProfile").default(false)
   },
   (users) => {
     return {
@@ -115,6 +117,7 @@ export const coaches = pgTable(
     license:text("license"),
     status: varchar("status").default("Pending"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
+    isCompletedProfile: boolean("isCompletedProfile").default(false)
   },
   (coaches) => {
     return {
@@ -552,11 +555,28 @@ export const admin = pgTable("admin", {
 });
 
 export const ticket = pgTable("ticket", {
-  id: text("id").primaryKey().$default(() => crypto.randomUUID()),
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull(),
   subject: text("subject").notNull(),
+  assign_to: integer('assign_to').default(0), // Ensure this is defined
+
   message: text("message").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+export const ticket_messages = pgTable("ticket_messages", {
+  id: serial("id").primaryKey(),
+  ticket_id: integer("ticket_id").notNull(),
+  replied_by: text("replied_by").notNull(),
+  message: text("message").notNull(),
+  status: varchar("status").default("Pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
+
+export const userOrgStatus = pgTable("userOrgStatus",{
+	org_user_id:integer("org_user_id"),
+	enterprise_id:integer("enterprise_id").references(() => enterprises.id),
+	status:text("status").default("Pending").notNull(),
+	role:text("text")
+})
