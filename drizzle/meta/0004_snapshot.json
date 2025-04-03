@@ -1,6 +1,11 @@
 {
+<<<<<<< HEAD
   "id": "4e9c9ae6-2fc7-47a3-88d1-6790d25c7eae",
   "prevId": "0ef2ce35-4f1b-4d74-8081-f704a6c68d8f",
+=======
+  "id": "c97e68d1-7e47-4d4d-88c0-91faeeb0dfde",
+  "prevId": "05a192a7-d7aa-4794-8cac-db3ca343d71d",
+>>>>>>> 1176212890f95b571e2eb78b4fbeb3be51c41990
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -537,6 +542,16 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+<<<<<<< HEAD
+=======
+        },
+        "isCompletedProfile": {
+          "name": "isCompletedProfile",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+>>>>>>> 1176212890f95b571e2eb78b4fbeb3be51c41990
         }
       },
       "indexes": {
@@ -2440,6 +2455,112 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+<<<<<<< HEAD
+=======
+    "public.ticket_messages": {
+      "name": "ticket_messages",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "ticket_id": {
+          "name": "ticket_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "replied_by": {
+          "name": "replied_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Pending'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.userOrgStatus": {
+      "name": "userOrgStatus",
+      "schema": "",
+      "columns": {
+        "org_user_id": {
+          "name": "org_user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "enterprise_id": {
+          "name": "enterprise_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Pending'"
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "userOrgStatus_enterprise_id_enterprises_id_fk": {
+          "name": "userOrgStatus_enterprise_id_enterprises_id_fk",
+          "tableFrom": "userOrgStatus",
+          "tableTo": "enterprises",
+          "columnsFrom": [
+            "enterprise_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+>>>>>>> 1176212890f95b571e2eb78b4fbeb3be51c41990
     "public.users": {
       "name": "users",
       "schema": "",
@@ -2710,6 +2831,16 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+<<<<<<< HEAD
+=======
+        },
+        "isCompletedProfile": {
+          "name": "isCompletedProfile",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+>>>>>>> 1176212890f95b571e2eb78b4fbeb3be51c41990
         }
       },
       "indexes": {
