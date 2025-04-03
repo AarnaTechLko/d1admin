@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "id": "0ef2ce35-4f1b-4d74-8081-f704a6c68d8f",
+=======
+  "id": "05a192a7-d7aa-4794-8cac-db3ca343d71d",
+>>>>>>> 1176212890f95b571e2eb78b4fbeb3be51c41990
   "prevId": "cb72a968-d71a-47ef-b42a-8e8343100229",
   "version": "7",
   "dialect": "postgresql",
@@ -2411,12 +2415,15 @@
           "primaryKey": false,
           "notNull": true
         },
+<<<<<<< HEAD
         "assign_to": {
           "name": "assign_to",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
+=======
+>>>>>>> 1176212890f95b571e2eb78b4fbeb3be51c41990
         "message": {
           "name": "message",
           "type": "text",
@@ -2439,6 +2446,61 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+<<<<<<< HEAD
+=======
+    "public.userOrgStatus": {
+      "name": "userOrgStatus",
+      "schema": "",
+      "columns": {
+        "org_user_id": {
+          "name": "org_user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "enterprise_id": {
+          "name": "enterprise_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Pending'"
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "userOrgStatus_enterprise_id_enterprises_id_fk": {
+          "name": "userOrgStatus_enterprise_id_enterprises_id_fk",
+          "tableFrom": "userOrgStatus",
+          "tableTo": "enterprises",
+          "columnsFrom": [
+            "enterprise_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+>>>>>>> 1176212890f95b571e2eb78b4fbeb3be51c41990
     "public.users": {
       "name": "users",
       "schema": "",

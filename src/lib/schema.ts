@@ -9,6 +9,7 @@ import {
   uniqueIndex,
   date,
   decimal,
+  boolean,
   // pgEnum,
   integer 
 } from "drizzle-orm/pg-core";
@@ -63,6 +64,7 @@ export const users = pgTable(
     status: varchar("status").default("Pending"),
     visibility: varchar("visibility").default("off"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
+    isCompletedProfile: boolean("isCompletedProfile").default(false)
   },
   (users) => {
     return {
@@ -115,6 +117,7 @@ export const coaches = pgTable(
     license:text("license"),
     status: varchar("status").default("Pending"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
+    isCompletedProfile: boolean("isCompletedProfile").default(false)
   },
   (coaches) => {
     return {
@@ -571,3 +574,9 @@ export const ticket_messages = pgTable("ticket_messages", {
 });
 
 
+export const userOrgStatus = pgTable("userOrgStatus",{
+	org_user_id:integer("org_user_id"),
+	enterprise_id:integer("enterprise_id").references(() => enterprises.id),
+	status:text("status").default("Pending").notNull(),
+	role:text("text")
+})
