@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 
 type User = {
   id: string;
@@ -12,7 +12,7 @@ type User = {
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null); // ✅ Specify type
-  const router = useRouter();
+  // const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -29,15 +29,26 @@ export const useAuth = () => {
     fetchUser();
   }, []);
 
-  const logout = async () => {
+  
+
+  /* const logout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" }); // Invalidate session
+      await fetch("/api/auth/logout", { method: "POST" }); // ✅ Call server logout
+  
+      // ✅ Remove any session-related data
+      localStorage.removeItem("session_token");
+      sessionStorage.removeItem("session_token");
+      
+      // ✅ Force page reload to clear session state
       setUser(null);
       router.push("/login");
+      window.location.reload(); // ✅ Ensures session expires completely
     } catch (err) {
-      console.error("Logout failed:", err); // ✅ Keep error here for debugging
+      console.error("Logout failed:", err);
     }
+    
   };
 
-  return { user, logout };
+  return { user, logout }; */
+  return{user};
 };

@@ -1,16 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
+
+
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
-    const token = req.cookies.get("token")?.value;
+    const token = req.cookies.get("session_token")?.value; // Read token from cookies
 
-    // If no token and trying to access a protected page, redirect to login
-    if (!token && req.nextUrl.pathname.startsWith("/profile")) {
+    if (!token && req.nextUrl.pathname.startsWith("/dashboard")) {
+        // Redirect to signin if user tries to access dashboard without login
         return NextResponse.redirect(new URL("/signin", req.url));
     }
 
     return NextResponse.next();
 }
 
+// Apply middleware to dashboard routes only
 export const config = {
-    matcher: ["/profile/:path*"], // Protect dashboard routes
+    matcher: ["/dashboard/:path*"],
 };
+

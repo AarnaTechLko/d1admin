@@ -71,6 +71,12 @@ const navItems: NavItem[] = [
     subItems:[{name:"View Ticket",path:"/ticket",pro:false}],
   
   },
+  {
+    name:"Ticket Message",
+    icon:<UserCircleIcon/>,
+    subItems:[{name:"View Ticket_message",path:"/ticket_messages",pro:false}],
+  
+  },
  
  
 ];
