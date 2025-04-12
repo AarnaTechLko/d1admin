@@ -116,4 +116,31 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
+export async function PUT(req: NextRequest) {
+  try {
+    const { coachId, newStatus } = await req.json();
+
+    if (!coachId || !newStatus) {
+      return NextResponse.json({ message: "Coach ID and new status are required" }, { status: 400 });
+    }
+
+    if (newStatus !== "Active" && newStatus !== "Inactive") {
+      return NextResponse.json({ message: "Invalid status. Only Active or Inactive are allowed." }, { status: 400 });
+    }
+
+    // Update coach's status
+    await db
+      .update(coaches)
+      .set({ status: newStatus })
+      .where(eq(coaches.id, coachId));
+
+    return NextResponse.json({ message: "Status updated successfully" });
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Failed to update status", error: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
+  }
+}
+
 

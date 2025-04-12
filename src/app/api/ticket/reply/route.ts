@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 // POST: Reply to a ticket
 export async function POST(req: Request) {
   try {
+    
     const body = await req.json();
     const { ticketId, repliedBy, message, status } = body;
 
@@ -31,7 +32,9 @@ export async function POST(req: Request) {
   // Update ticket status to match the latest ticket message status
   await db
   .update(ticket)
-  .set({ status })
+  .set({ status,
+    message,
+   })
   .where(eq(ticket.id, Number(ticketId)));
 
 

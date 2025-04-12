@@ -1,12 +1,131 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 // import Badge from "../ui/badge/Badge";
 // import { ArrowDownIcon, ArrowUpIcon, BoxIconLine, GroupIcon } from "@/icons";
 import { GroupIcon } from "lucide-react";
+// import { useRouter } from "next/navigation";
+
+
+interface Team {
+  id: string;
+}
+
+interface Coach {
+  id: string;
+  
+}
+interface player {
+  id: string;
+  
+}
+
+interface Organization {
+  id: string;
+ 
+}
+
+
 
 export const EcommerceMetrics = () => {
+    const [teams, setTeams] = useState<Team[]>([]);
+    const [organizations, setOrganizations] = useState<Organization[]>([]);
+     const [players, setplayers] = useState<player[]>([]);
+    const [coaches, setCoaches] = useState<Coach[]>([]);
+  
+
+    {/**teams api data */}
+    useEffect(() => {
+      const fetchTeams = async () => {
+     
+        try {
+          const id = "someId"; // Set your id here
+          const response = await fetch(`/api/teams?id=${id}`);
+          
+          const data = await response.json();
+    
+          console.log("API Response:", data); // ✅ Debugging line
+          setTeams(data.teams || []);
+
+        }  catch (err) {
+          console.error("Error fetching teams:", err);
+        }
+      };
+    
+      fetchTeams();
+    }, []);
+    {/*teams api data end here */}
+
+    {/**coaches api data */}
+    useEffect(() => {
+      const fetchCoaches = async () => {
+       
+        try {
+          const id = "someId"; // Set your id here
+          const response = await fetch(`/api/coach?id=${id}`);
+          
+          const data = await response.json();
+    
+          console.log("API Response:", data); // ✅ Debugging line
+          setCoaches(data.coaches || []);
+
+        }  catch (err) {
+          console.error("Error fetching teams:", err);
+        }
+      };
+    
+      fetchCoaches();
+    }, []);
+    {/**coaches api data end here */}
+
+     {/**player api data */}
+
+     useEffect(() => {
+      const fetchplayers = async () => {
+       
+        try {
+          const id = "someId"; // Set your id here
+          const response = await fetch(`/api/player?id=${id}`);
+          
+          const data = await response.json();
+    
+          console.log("API Response:", data); // ✅ Debugging line
+          setplayers(data.coaches || []);
+
+        }  catch (err) {
+          console.error("Error fetching teams:", err);
+        }
+      };
+    
+      fetchplayers();
+    }, []);
+    {/*player api data end here */}    
+
+    {/**ORGANIZATION api data */}
+
+    useEffect(() => {
+      const fetchOrganizations = async () => {
+      
+        try {
+          const id = "someId"; // Set your id here
+          const response = await fetch(`/api/organization?id=${id}`);
+          
+          const data = await response.json();
+    
+          console.log("API Response:", data); // ✅ Debugging line
+          setOrganizations(data.enterprises || []);
+
+        }  catch (err) {
+          console.error("Error fetching teams:", err);
+        }
+      };
+    
+      fetchOrganizations();
+    }, []);
+    {/**ORGANIZATION api data end here */}
+
   return (
     <div className=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-[1000px]">
+
       {/* <!-- Metric Item Start --> */}
       <div className="rounded-2xl border border-gray-200 bg-sky-100 p-4 dark:border-gray-800 dark:bg-sky-900 md:p-6" >
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
@@ -19,7 +138,7 @@ export const EcommerceMetrics = () => {
               Coches
             </span>
             <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
-              3,782
+            {coaches.length}
             </h4>
           </div>
           {/* <Badge color="success">
@@ -41,7 +160,7 @@ export const EcommerceMetrics = () => {
               player
             </span>
             <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
-              5,359
+            {players.length}
             </h4>
           </div>
 
@@ -60,13 +179,13 @@ export const EcommerceMetrics = () => {
               Organization
             </span>
             <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
-              1,782
+            {organizations.length}
             </h4>
           </div>
          
         </div>
       </div>
-{/* <!-- Metric Item End --> */}
+      {/* <!-- Metric Item End --> */}
 
       {/* <!-- Metric Item Start --> */}
 
@@ -81,7 +200,7 @@ export const EcommerceMetrics = () => {
               Teams
             </span>
             <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
-              8,782
+            {teams.length}
             </h4>
           </div>
           

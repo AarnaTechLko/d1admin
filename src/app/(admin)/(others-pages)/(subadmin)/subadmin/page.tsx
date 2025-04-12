@@ -1,5 +1,5 @@
 "use client";
-// import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 // import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
@@ -21,6 +21,7 @@ export default function SignInForm() {
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const router = useRouter();
 
   // Handle input change
 
@@ -48,7 +49,7 @@ export default function SignInForm() {
         setError(data.error || "Invalid credentials");
       } else {
         setSuccess("Add successful! Redirecting...");
-
+        router.push("/view")
         // ✅ Store JWT token
         // if (isChecked) {
         //   localStorage.setItem("session_token", data.token); // Persist even after closing browser
