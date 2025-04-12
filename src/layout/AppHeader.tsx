@@ -7,10 +7,12 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState ,useEffect,useRef} from "react";
 import LL from "@/public/images/logo/LL.png"; 
+import { useRouter } from "next/navigation";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
-
+  // const [userId, setUserId] = useState<string | null>(null);
+  const router = useRouter();
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
 
   const handleToggle = () => {
@@ -40,6 +42,15 @@ const AppHeader: React.FC = () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+  useEffect(() => {
+    // ✅ Try retrieving user_id from localStorage or sessionStorage
+    const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
+
+    if (!storedUserId) {
+        // 🔴 If no user_id, redirect to signin page
+        router.push("/signin");
+    } 
+}, [router]);
 
   return (
     <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
@@ -83,7 +94,7 @@ const AppHeader: React.FC = () => {
             )}
             {/* Cross Icon */}
           </button>
-
+        
           <Link href="/" className="lg:hidden">
             <Image
               width={32}
