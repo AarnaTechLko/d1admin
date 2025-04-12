@@ -1,10 +1,14 @@
 "use client";
-import React from "react";
+import React, {useState} from "react";
 import { Pencil, Trash } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 // import Badge from "../ui/badge/Badge";
 import Image from "next/image";
 import d1 from "@/public/images/signin/d1.png";
+import Button from "../ui/button/Button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import Badge from "../ui/badge/Badge";
+import Link from "next/link";
 
 
 interface Player {
@@ -16,6 +20,7 @@ interface Player {
   height: string;
   jersey: string;
   weight: string;
+  history?: string;
   graduation: string;
   sport: string;
   status: string;
@@ -32,10 +37,23 @@ interface PlayerTableProps {
 }
 
 const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
-  currentPage = 1,
-  totalPages = 1,
-  setCurrentPage = () => { }, }) => {
-  const handleEdit = (playerId: string) => {
+  // currentPage = 1,
+  // totalPages = 1,
+  // setCurrentPage = () => { },
+   }) => {
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [open, setOpen] = useState(false); // State for modal visibility
+  const [showConfirmation, setShowConfirmation] = useState(false); // State for confirmation modal visibility
+  const [confirmationCallback, setConfirmationCallback] = useState<() => void>(() => () => {}); // Callback for confirmation
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);  
+
+
+    const handleEdit = (playerId: string) => {
     console.log("Edit player with ID:", playerId);
   };
 
@@ -57,6 +75,54 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
     }
   };
 
+
+  const getBadgeColor = (status: string) => {
+    switch (status) {
+      case "Active":
+        return "success";
+      case "Inactive":
+        return "error";
+      case "Pending":
+        return "warning";
+      default:
+        return undefined;
+    }
+  };
+
+   // Function to handle status change after confirmation
+   const handleStatusChange = async () => {
+    if (!selectedPlayer) return;
+
+    try {
+      const response = await fetch("/api/player", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          playerId: selectedPlayer.id,
+          newStatus: status,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update status");
+
+      setOpen(false); // Close the popup after saving
+      window.location.reload(); // Refresh the table to show updated status
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Error updating status. Please try again.");
+    }
+  };
+
+  const confirmChange = () => {
+    setShowConfirmation(true); // Show the confirmation dialog
+    setConfirmationCallback(() => handleStatusChange); // Set the confirmation callback
+  };
+
+
+
+
+
+
   return (
     <>
       <div className="flex justify-end items-center gap-2 p-2">
@@ -76,9 +142,43 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
             </button>
           );
         })}
-
-       
       </div>
+
+
+      {/* Confirmation Dialog */}
+      {showConfirmation && (
+        <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+          <DialogContent className="max-w-sm rounded-lg p-6 bg-white shadow-lg fixed top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-semibold">Confirm Status Change</DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              <p>Are you sure you want to change the status to {status}?</p>
+            </div>
+            <div className="flex justify-end gap-4 mt-4">
+              <Button
+                onClick={() => {
+                  setShowConfirmation(false); // Close the confirmation dialog
+                }}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md"
+              >
+                No
+              </Button>
+              <Button
+                onClick={() => {
+                  confirmationCallback(); // Proceed with the status change
+                  setShowConfirmation(false); // Close the confirmation dialog
+                }}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md"
+              >
+                Yes
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
           <div className="min-w-[1000px]">
@@ -104,10 +204,10 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                     Weight
                   </TableCell>
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Jersey
+                    Status
                   </TableCell>
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Graduation
+                    History
                   </TableCell>
 
 
@@ -120,7 +220,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
               </TableHeader>
 
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {data.map((player) => (
+                {paginatedData.map((player) => (
                   <TableRow key={player.id}>
                     <TableCell className="px-5 py-4 sm:px-6 text-start">
                       <div className="flex items-center gap-3">
@@ -147,12 +247,63 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.age_group}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.height}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.weight}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.jersey}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.graduation}</TableCell>
+
+
+
+                    {/* Clickable Status Badge */}
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 background-overlay">
+                      <Dialog open={open} onOpenChange={setOpen}>
+                        <DialogTrigger asChild>
+                          <button
+                            onClick={() => { setSelectedPlayer(player); setStatus(player.status); }}
+                          >
+                            <Badge color={getBadgeColor(player.status) ?? undefined} >
+                              {player.status}
+                            </Badge>
+                          </button>
+                        </DialogTrigger>
+
+                        {selectedPlayer && (
+                          <DialogContent className="max-w-sm rounded-lg p-6 bg-white shadow-lg fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 backdrop-blur-md ">
+                            <DialogHeader>
+                              <DialogTitle className="text-lg font-semibold">Change Status</DialogTitle>
+                            </DialogHeader>
+
+                            {selectedPlayer.status === "Pending" ? (
+                              <p className="text-red-500">Pending status cannot be changed.</p>
+                            ) : (
+                              <div>
+                                <select
+                                  value={status ?? selectedPlayer.status}
+                                  onChange={(e) => setStatus(e.target.value)}
+                                  className="w-full p-2 border rounded-md text-gray-700"
+                                >
+                                  <option value="Active">Active</option>
+                                  <option value="Inactive">Inactive</option>
+                                </select>
+
+                                <div className="flex justify-center mt-4">
+                                  <Button onClick={confirmChange} className="bg-blue-500  text-white px-4 py-2 rounded-md">
+                                    Save
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </DialogContent>
+                        )}
+                      </Dialog>
+                    </TableCell>
 
 
 
 
+
+                     {/** palyer history */}
+                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      <Link href={`/player/${player.id}`}>
+                        <Button>Open</Button>
+                      </Link>
+                    </TableCell>
 
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       <div className="flex gap-3">
@@ -186,8 +337,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
       </button>
     );
   })}
-
- 
 </div>
           </div>
         </div>

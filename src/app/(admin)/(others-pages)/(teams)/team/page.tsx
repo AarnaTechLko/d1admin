@@ -7,6 +7,8 @@ import Badge from "@/components/ui/badge/Badge";
 import { Pencil, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import Button from "@/components/ui/button/Button";
 
 interface Team {
   id: string;
@@ -26,12 +28,65 @@ interface Team {
 const TeamsPage = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [teams, setTeams] = useState<Team[]>([]);
+
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [open, setOpen] = useState(false); // State for modal visibility
+  const [showConfirmation, setShowConfirmation] = useState(false); // State for confirmation modal visibility
+  const [confirmationCallback, setConfirmationCallback] = useState<() => void>(() => () => {}); // Callback for confirmation
+  
+
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
+
+
+  const getBadgeColor = (status: string) => {
+    switch (status) {
+      case "Active":
+        return "success";
+      case "Inactive":
+        return "error";
+      case "Pending":
+        return "warning";
+      default:
+        return undefined;
+    }
+  };
+
+  // Function to handle status change after confirmation
+  const handleStatusChange = async () => {
+    if (!selectedTeam) return;
+
+    try {
+      const response = await fetch("/api/teams", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teamId: selectedTeam.id,
+          newStatus: status,
+        }),
+      });
+
+    if (!response.ok) throw new Error("Failed to update status");
+
+      setOpen(false); // Close the popup after saving
+      window.location.reload(); // Refresh the table to show updated status
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Error updating status. Please try again.");
+    }
+  };
+
+  const confirmChange = () => {
+    setShowConfirmation(true); // Show the confirmation dialog
+    setConfirmationCallback(() => handleStatusChange); // Set the confirmation callback
+  };
+
+
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -93,24 +148,67 @@ const TeamsPage = () => {
       {!loading && !error && (
         <>
            <div className="flex justify-end items-center gap-2 p-2">
-           {[...Array(totalPages)].map((_, index) => (
-             <button
-               key={index}
-               onClick={() => setCurrentPage(index + 1)}
-               className={`px-3 py-1 rounded-md ${
-                 currentPage === index + 1 ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"
-               }`}
-             >
-               {index + 1}
-             </button>
-           ))}
+           {[...Array(totalPages)].map((_, index) => {
+             const pageNumber = index + 1;
+             return (
+               <button
+                 key={pageNumber}
+                 onClick={() => setCurrentPage(pageNumber)}
+                 className={`px-3 py-1 rounded-md ${
+                   currentPage === pageNumber ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"
+                 }`}
+               >
+                 {pageNumber}
+               </button>
+             );
+           })}
+           
+             
          </div>
+
+         {/* Confirmation Dialog */}
+      {showConfirmation && (
+        <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+          <DialogContent className="max-w-sm rounded-lg p-6 bg-white shadow-lg fixed top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-semibold">Confirm Status Change</DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              <p>Are you sure you want to change the status to {status}?</p>
+            </div>
+            <div className="flex justify-end gap-4 mt-4">
+              <Button
+                onClick={() => {
+                  setShowConfirmation(false); // Close the confirmation dialog
+                }}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md"
+              >
+                No
+              </Button>
+              <Button
+                onClick={() => {
+                  confirmationCallback(); // Proceed with the status change
+                  setShowConfirmation(false); // Close the confirmation dialog
+                }}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md"
+              >
+                Yes
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+
+
+
+
 
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
           {/* Team Count */}
-          <div className="p-4 text-gray-700 dark:text-gray-300">
+          {/* <div className="p-4 text-gray-700 dark:text-gray-300">
             Total Teams: {teams.length}
-          </div>
+          </div> */}
 
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
@@ -152,19 +250,49 @@ const TeamsPage = () => {
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{team.totalCoaches }</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{team.team_type}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{team.team_year}</TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                    <Badge
-                      color={
-                        team.status === "Active"
-                          ? "success"
-                          : team.status === "Pending"
-                          ? "warning"
-                          : "error"
-                      }
-                    >
-                      {team.status}
-                    </Badge>
-                  </TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 background-overlay">
+                      <Dialog open={open} onOpenChange={setOpen}>
+                        <DialogTrigger asChild>
+                          <button
+                            onClick={() => { setSelectedTeam(team); setStatus(team.status); }}
+                          >
+                            <Badge color={getBadgeColor(team.status) ?? undefined} >
+                              {team.status}
+                            </Badge>
+                          </button>
+                        </DialogTrigger>
+
+                        {selectedTeam
+                         && (
+                          <DialogContent className="max-w-sm rounded-lg p-6 bg-white shadow-lg fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 backdrop-blur-md ">
+                            <DialogHeader>
+                              <DialogTitle className="text-lg font-semibold">Change Status</DialogTitle>
+                            </DialogHeader>
+
+                            {selectedTeam.status === "Pending" ? (
+                              <p className="text-red-500">Pending status cannot be changed.</p>
+                            ) : (
+                              <div>
+                                <select
+                                  value={status ?? selectedTeam.status}
+                                  onChange={(e) => setStatus(e.target.value)}
+                                  className="w-full p-2 border rounded-md text-gray-700"
+                                >
+                                  <option value="Active">Active</option>
+                                  <option value="Inactive">Inactive</option>
+                                </select>
+
+                                <div className="flex justify-center mt-4">
+                                  <Button onClick={confirmChange} className="bg-blue-500  text-white px-4 py-2 rounded-md">
+                                    Save
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </DialogContent>
+                        )}
+                      </Dialog>
+                    </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                     <div className="flex gap-3">
                       <button onClick={() => handleEdit(team.id)} className="p-2 text-green-500 hover:text-green-600">

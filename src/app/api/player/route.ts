@@ -58,6 +58,8 @@ export async function GET(req: NextRequest) {
         graduation: users.graduation,
         birth_year: users.birth_year,
         age_group: users.age_group,
+        status: users.status,
+
         coachName: sql`coa."firstName"`.as("coachName"),
         coachLastName: sql`coa."lastName"`.as("coachLastName"),
         enterpriseName: sql`ent."organizationName"`.as("enterpriseName")
@@ -85,10 +87,65 @@ export async function GET(req: NextRequest) {
       hasPrevPage: page > 1
     });
   } catch (error) {
-    console.error("Error fetching coaches:", error);
+    console.error("Error fetching player:", error);
     return NextResponse.json({
-      message: "Failed to fetch coaches",
+      message: "Failed to fetch player",
       error: error instanceof Error ? error.message : "Unknown error"
     }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const url = new URL(req.url);
+    const playerId = url.searchParams.get("id");
+
+    if (!playerId) {
+      return NextResponse.json({ message: "Player ID is required" }, { status: 400 });
+    }
+
+    const playerIdNumber = Number(playerId);
+    if (isNaN(playerIdNumber)) {
+      return NextResponse.json({ message: "Invalid Player ID" }, { status: 400 });
+    }
+
+    // Delete the player by ID
+    await db.delete(users).where(eq(users.id, playerIdNumber));
+
+    return NextResponse.json({ message: "Player deleted successfully" });
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Failed to delete player", error: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const { playerId, newStatus } = await req.json();
+
+    if (!playerId || !newStatus) {
+      return NextResponse.json({ message: "Player ID and new status are required" }, { status: 400 });
+    }
+
+    if (newStatus !== "Active" && newStatus !== "Inactive") {
+      return NextResponse.json({ message: "Invalid status. Only Active or Inactive are allowed." }, { status: 400 });
+    }
+
+    await db
+      .update(users)
+      .set({ status: newStatus })
+      .where(eq(users.id, playerId));
+
+    return NextResponse.json({ message: "Status updated successfully" });
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Failed to update status", error: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
+  }
+}
+
+
+

@@ -178,3 +178,35 @@ export async function POST(req: NextRequest) {
 }
 
 
+
+
+
+
+
+
+export async function PUT(req: NextRequest) {
+  try {
+    const { organizationId, newStatus } = await req.json();
+
+    if (!organizationId || !newStatus) {
+      return NextResponse.json({ message: "organization ID and new status are required" }, { status: 400 });
+    }
+
+    if (newStatus !== "Active" && newStatus !== "Inactive") {
+      return NextResponse.json({ message: "Invalid status. Only Active or Inactive are allowed." }, { status: 400 });
+    }
+
+    // Update org's status
+    await db
+      .update(enterprises)
+      .set({ status: newStatus })
+      .where(eq(enterprises.id, organizationId));
+
+    return NextResponse.json({ message: "Status updated successfully" });
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Failed to update status", error: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
+  }
+}
