@@ -560,7 +560,9 @@ export const ticket = pgTable("ticket", {
   email: text("email").notNull(),
   subject: text("subject").notNull(),
   assign_to: integer('assign_to').default(0), // Ensure this is defined
+  ticket_from: integer('ticket_from').default(0), // Ensure this is defined
   status: varchar("status").default("Pending"),
+  role: varchar("role"),
   message: text("message").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });

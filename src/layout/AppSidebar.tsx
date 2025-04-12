@@ -71,12 +71,7 @@ const navItems: NavItem[] = [
     subItems:[{name:"View Ticket",path:"/ticket",pro:false}],
   
   },
-  {
-    name:"Ticket Message",
-    icon:<UserCircleIcon/>,
-    subItems:[{name:"View Ticket_message",path:"/ticket_messages",pro:false}],
   
-  },
  
  
 ];
@@ -272,6 +267,7 @@ const AppSidebar: React.FC = () => {
         prevOpenSubmenu.index === index
       ) {
         return null;
+        
       }
       return { type: menuType, index };
     });

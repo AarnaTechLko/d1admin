@@ -1,11 +1,8 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil, Trash } from "lucide-react";
-import { useRouter } from "next/navigation";
-
+import { Trash } from "lucide-react";
 interface Admin {
   id: number;
   username: string;
@@ -20,8 +17,6 @@ const AdminListPage = () => {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  const router = useRouter();
 
   useEffect(() => {
     const fetchAdmins = async () => {
@@ -45,11 +40,6 @@ const AdminListPage = () => {
 
     fetchAdmins();
   }, [searchQuery, currentPage]);
-
-  // Handle Edit Function
-  const handleEdit = (adminID: number) => {
-    router.push(`/admins/edit/${adminID}`);
-  };
 
   // Handle Delete Function
   const handleDelete = async (adminID: number) => {
@@ -119,9 +109,6 @@ const AdminListPage = () => {
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{admin.role}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       <div className="flex gap-3">
-                        <button onClick={() => handleEdit(admin.id)} className="p-2 text-green-500 hover:text-green-600">
-                          <Pencil size={18} />
-                        </button>
                         <button onClick={() => handleDelete(admin.id)} className="p-2 text-red-500 hover:text-red-600">
                           <Trash size={18} />
                         </button>
