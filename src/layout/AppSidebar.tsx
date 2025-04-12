@@ -41,7 +41,7 @@ const navItems: NavItem[] = [
   {
     name: "Coaches",
     icon: <ListIcon />,
-    subItems: [{ name: "View Coach ", path: "/coach", pro: false },{name:"View1",path:"/view1",pro:false}],
+    subItems: [{ name: "View Coach ", path: "/coach", pro: false }],
   },
 
   {

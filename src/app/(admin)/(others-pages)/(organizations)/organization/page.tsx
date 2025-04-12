@@ -22,6 +22,7 @@ interface Organization {
   totalPlayers: number;
   totalCoaches: number;
   totalTeams: number;
+  history?: string;
   facebook: string;
   instagram: string;
   linkedin: string;

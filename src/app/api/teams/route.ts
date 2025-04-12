@@ -74,6 +74,7 @@ export async function GET(req: NextRequest) {
       teams: teamsWithCounts,
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),
+      totalCount,
       hasNextPage: page < Math.ceil(totalCount / limit),
       hasPrevPage: page > 1,
     });
@@ -112,6 +113,63 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { message: "Failed to fetch data", error: String(error) },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const url = new URL(req.url);
+    const teamId = url.searchParams.get("id");
+
+    if (!teamId) {
+      return NextResponse.json({ message: "Team ID is required" }, { status: 400 });
+    }
+
+    const teamIdNumber = Number(teamId);
+    if (isNaN(teamIdNumber)) {
+      return NextResponse.json({ message: "Invalid Team ID" }, { status: 400 });
+    }
+
+    // Delete the coach by ID
+    await db.delete(teams).where(eq(teams.id, teamIdNumber));
+
+    return NextResponse.json({ message: "Teams deleted successfully" });
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Failed to delete team", error: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
+  }
+}
+
+
+
+
+
+export async function PUT(req: NextRequest) {
+  try {
+    const { teamId, newStatus } = await req.json();
+
+    if (!teamId || !newStatus) {
+      return NextResponse.json({ message: "Team ID and new status are required" }, { status: 400 });
+    }
+
+    if (newStatus !== "Active" && newStatus !== "Inactive") {
+      return NextResponse.json({ message: "Invalid status. Only Active or Inactive are allowed." }, { status: 400 });
+    }
+
+    // Update Team's status
+    await db
+      .update(teams)
+      .set({ status: newStatus })
+      .where(eq(teams.id, teamId));
+
+    return NextResponse.json({ message: "Status updated successfully" });
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Failed to update status", error: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
