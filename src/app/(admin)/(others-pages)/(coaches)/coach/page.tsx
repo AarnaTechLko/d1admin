@@ -11,6 +11,7 @@ interface Coach {
   image: string;
   gender: string;
   sport: string;
+  history?: string;
   totalEvaluations: string;
   status: string;
   earnings: number;

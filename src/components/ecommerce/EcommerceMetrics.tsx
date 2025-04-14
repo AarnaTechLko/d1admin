@@ -6,9 +6,9 @@ import { GroupIcon } from "lucide-react";
 // import { useRouter } from "next/navigation";
 
 
-interface Team {
-  id: string;
-}
+// interface Team {
+//   id: string;
+// }
 
 interface Coach {
   id: string;
@@ -27,38 +27,47 @@ interface Organization {
 
 
 export const EcommerceMetrics = () => {
-    const [teams, setTeams] = useState<Team[]>([]);
+    // const [teams, setTeams] = useState<Team[]>([]);
+    // const [totalPages, setTotalPages] = useState<number>(1);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
+    const [totalCount, setTotalCount] = useState<number>(0);
      const [players, setplayers] = useState<player[]>([]);
     const [coaches, setCoaches] = useState<Coach[]>([]);
-  
+    // const [error, setError] = useState<string | null>(null);
+    // const [loading, setLoading] = useState<boolean>(true);
+    // const router = useRouter();
 
     {/**teams api data */}
     useEffect(() => {
       const fetchTeams = async () => {
-     
+        // setLoading(true);
+        // setError(null);
         try {
-          const id = "someId"; // Set your id here
-          const response = await fetch(`/api/teams?id=${id}`);
-          
+          const response = await fetch(`/api/teams?page=1&limit=10`);
           const data = await response.json();
     
-          console.log("API Response:", data); // ✅ Debugging line
-          setTeams(data.teams || []);
-
-        }  catch (err) {
-          console.error("Error fetching teams:", err);
+          console.log("API Response:", data);
+          // setTeams(data.teams || []);
+          // setTotalPages(data.totalPages);
+          setTotalCount(data.totalCount); // ✅ Save the actual total
+        } catch (err) {
+          console.log(err);
+          // setError((err as Error).message);
+        } finally {
+          // setLoading(false);
         }
       };
     
       fetchTeams();
     }, []);
+    
     {/*teams api data end here */}
 
     {/**coaches api data */}
     useEffect(() => {
       const fetchCoaches = async () => {
-       
+        // setLoading(true);
+        // setError(null);
         try {
           const id = "someId"; // Set your id here
           const response = await fetch(`/api/coach?id=${id}`);
@@ -68,8 +77,11 @@ export const EcommerceMetrics = () => {
           console.log("API Response:", data); // ✅ Debugging line
           setCoaches(data.coaches || []);
 
-        }  catch (err) {
-          console.error("Error fetching teams:", err);
+        } catch (err) {
+          console.log("error",err);
+          // setError((err as Error).message);
+        } finally {
+          // setLoading(false);
         }
       };
     
@@ -81,7 +93,8 @@ export const EcommerceMetrics = () => {
 
      useEffect(() => {
       const fetchplayers = async () => {
-       
+        // setLoading(true);
+        // setError(null);
         try {
           const id = "someId"; // Set your id here
           const response = await fetch(`/api/player?id=${id}`);
@@ -91,8 +104,11 @@ export const EcommerceMetrics = () => {
           console.log("API Response:", data); // ✅ Debugging line
           setplayers(data.coaches || []);
 
-        }  catch (err) {
-          console.error("Error fetching teams:", err);
+        } catch (err) {
+          console.error('err',err);
+          // setError((err as Error).message);
+        } finally {
+          // setLoading(false);
         }
       };
     
@@ -104,7 +120,8 @@ export const EcommerceMetrics = () => {
 
     useEffect(() => {
       const fetchOrganizations = async () => {
-      
+        // setLoading(true);
+        // setError(null);
         try {
           const id = "someId"; // Set your id here
           const response = await fetch(`/api/organization?id=${id}`);
@@ -114,8 +131,11 @@ export const EcommerceMetrics = () => {
           console.log("API Response:", data); // ✅ Debugging line
           setOrganizations(data.enterprises || []);
 
-        }  catch (err) {
-          console.error("Error fetching teams:", err);
+        } catch (err) {
+          console.error("error", err);
+          // setError((err as Error).message);
+        } finally {
+          // setLoading(false);
         }
       };
     
@@ -124,10 +144,10 @@ export const EcommerceMetrics = () => {
     {/**ORGANIZATION api data end here */}
 
   return (
-    <div className=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-[1000px]">
+    <div className="flex justify-between grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-[1000px]">
 
       {/* <!-- Metric Item Start --> */}
-      <div className="rounded-2xl border border-gray-200 bg-sky-100 p-4 dark:border-gray-800 dark:bg-sky-900 md:p-6" >
+      <div className=" flex rounded-2xl border border-gray-200 bg-sky-100 p-4 dark:border-gray-800 dark:bg-sky-900 md:p-6" >
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
           <GroupIcon className="text-gray-800 size-6 dark:text-white/90" />
         </div>
@@ -200,7 +220,7 @@ export const EcommerceMetrics = () => {
               Teams
             </span>
             <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
-            {teams.length}
+             {totalCount}
             </h4>
           </div>
           
