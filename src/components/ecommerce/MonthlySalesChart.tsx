@@ -38,8 +38,8 @@ export default function MonthlySalesChart() {
         setSalesData(sales);
         setLoading(false);
       } catch (err) {
+        console.log("error",err);
         setError("Error fetching data");
-        console.log("Error",err)
         setLoading(false);
       }
     }

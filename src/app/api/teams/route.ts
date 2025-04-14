@@ -74,6 +74,7 @@ export async function GET(req: NextRequest) {
       teams: teamsWithCounts,
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),
+      totalCount,
       hasNextPage: page < Math.ceil(totalCount / limit),
       hasPrevPage: page > 1,
     });

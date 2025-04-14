@@ -6,6 +6,7 @@ import Badge from "../ui/badge/Badge";
 import Image from "next/image";
 import Button from "../ui/button/Button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import Link from "next/link";
 
 interface Coach {
   id: string;
@@ -16,6 +17,7 @@ interface Coach {
   sport: string;
   totalEvaluations: string;
   status: string;
+  history?: string;
   earnings: number;
 }
 
@@ -32,7 +34,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [] }) => {
   const [status, setStatus] = useState<string | null>(null);
   const [open, setOpen] = useState(false); // State for modal visibility
   const [showConfirmation, setShowConfirmation] = useState(false); // State for confirmation modal visibility
-  const [confirmationCallback, setConfirmationCallback] = useState<() => void>(() => () => {}); // Callback for confirmation
+  const [confirmationCallback, setConfirmationCallback] = useState<() => void>(() => () => { }); // Callback for confirmation
 
   const itemsPerPage = 10;
   const totalPages = Math.ceil(data.length / itemsPerPage);
@@ -40,7 +42,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [] }) => {
   const handleEdit = (coachId: string) => {
     console.log("Edit coach with ID:", coachId);
   };
-  
+
   const handleDelete = async (coachId: string) => {
     if (!window.confirm("Are you sure you want to delete this coach?")) return;
 
@@ -102,15 +104,14 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [] }) => {
     <>
       {/* Pagination Controls */}
       <div className="flex justify-end items-center gap-2 p-2 backdrop-blur-sm">
-      {[...Array(totalPages)].map((_, index) => {
+        {[...Array(totalPages)].map((_, index) => {
           const pageNumber = index + 1;
           return (
             <button
               key={pageNumber}
               onClick={() => setCurrentPage(pageNumber)}
-              className={`px-3 py-1 rounded-md ${
-                currentPage === pageNumber ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"
-              }`}
+              className={`px-3 py-1 rounded-md ${currentPage === pageNumber ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"
+                }`}
             >
               {pageNumber}
             </button>
@@ -163,6 +164,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [] }) => {
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">Earnings</TableCell>
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">Evaluations</TableCell>
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">Status</TableCell>
+                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">History</TableCell>
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">Actions</TableCell>
                 </TableRow>
               </TableHeader>
@@ -228,7 +230,14 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [] }) => {
                         )}
                       </Dialog>
                     </TableCell>
-                    
+
+                    {/** coaches history */}
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      <Link href={`/coach/${coach.id}`}>
+                        <Button>Open</Button>
+                      </Link>
+                    </TableCell>
+
 
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       <div className="flex gap-3">
