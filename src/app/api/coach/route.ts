@@ -5,7 +5,17 @@ import { coaches, licenses, coachaccount, playerEvaluation } from '@/lib/schema'
 // import debug from 'debug';
 // import jwt from 'jsonwebtoken';
 // import { SECRET_KEY } from '@/lib/constants';
-import { eq, ilike, or, count, desc,sql } from 'drizzle-orm';
+import {
+  eq,
+  ilike,
+  or,
+  and,
+  isNotNull,
+  ne,
+  count,
+  desc,
+  sql
+} from 'drizzle-orm';
 // import { sendEmail } from '@/lib/helpers';
  
 
@@ -17,19 +27,26 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(url.searchParams.get('limit') || '10', 10);
   
   try {
-    const offset = (page - 1) * limit;
+    // Ensure firstName is not null and not an empty string
+    const baseCondition = and(
+      isNotNull(coaches.firstName),
+      ne(coaches.firstName, '')
+    );
 
-    // Updated WHERE clause to include more fields
+    // Search clause combined with base condition
     const whereClause = search
-      ? or(
-          ilike(coaches.firstName, `%${search}%`),
-          ilike(coaches.lastName, `%${search}%`),
-          ilike(coaches.email, `%${search}%`),
-          ilike(coaches.phoneNumber, `%${search}%`),
-          ilike(coaches.sport, `%${search}%`),  // Allow searching by sport
-          ilike(coaches.status, `%${search}%`)  // Allow searching by status
+      ? and(
+          baseCondition,
+          or(
+            ilike(coaches.firstName, `%${search}%`),
+            ilike(coaches.lastName, `%${search}%`),
+            ilike(coaches.email, `%${search}%`),
+            ilike(coaches.phoneNumber, `%${search}%`),
+            ilike(coaches.sport, `%${search}%`),
+            ilike(coaches.status, `%${search}%`)
+          )
         )
-      : undefined;
+      : baseCondition;
 
     const coachesData = await db
       .select({
@@ -60,8 +77,7 @@ export async function GET(req: NextRequest) {
         coaches.qualifications, coaches.status
       )
       .orderBy(desc(coaches.createdAt))
-      .offset(offset)
-      .limit(limit);
+     
 
     const totalCount = await db
       .select({ count: count() })
@@ -81,7 +97,7 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     return NextResponse.json(
-      {
+      { 
         message: 'Failed to fetch coaches',
         error: error instanceof Error ? error.message : String(error)
       },
