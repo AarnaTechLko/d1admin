@@ -150,7 +150,7 @@ useEffect(() => {
       if (!response.ok) throw new Error("Failed to fetch tickets");
 
       const data = await response.json();
-      setTickets(data.ticket ?? []);
+      setTickets(data.tickets ?? []);
       setTotalPages(data.totalPages);
     } catch (err) {
       setError((err as Error).message);

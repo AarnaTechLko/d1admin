@@ -6,6 +6,10 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table"
 import Badge from "../ui/badge/Badge";
 import Image from "next/image";
 import d1 from "@/public/images/signin/d1.png";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import Button from "../ui/button/Button";
+// import { enterprises } from "@/lib/schema";
+import Link from "next/link";
 
 
 interface Organization {
@@ -296,18 +300,54 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                     </TableCell> */}
 
                     {/* Status */}
+                    {/* Clickable Status Badge */}
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 background-overlay">
+                      <Dialog open={open} onOpenChange={setOpen}>
+                        <DialogTrigger asChild>
+                          <button
+                            onClick={() => { setSelectedOrganization(organization); setStatus(organization.status); }}
+                          >
+                            <Badge color={getBadgeColor(organization.status) ?? undefined} >
+                              {organization.status}
+                            </Badge>
+                          </button>
+                        </DialogTrigger>
+
+                        {selectedOrganization && (
+                          <DialogContent className="max-w-sm rounded-lg p-6 bg-white shadow-lg fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 backdrop-blur-md ">
+                            <DialogHeader>
+                              <DialogTitle className="text-lg font-semibold">Change Status</DialogTitle>
+                            </DialogHeader>
+
+                            {selectedOrganization.status === "Pending" ? (
+                              <p className="text-red-500">Pending status cannot be changed.</p>
+                            ) : (
+                              <div>
+                                <select
+                                  value={status ?? selectedOrganization.status}
+                                  onChange={(e) => setStatus(e.target.value)}
+                                  className="w-full p-2 border rounded-md text-gray-700"
+                                >
+                                  <option value="Active">Active</option>
+                                  <option value="Inactive">Inactive</option>
+                                </select>
+
+                                <div className="flex justify-center mt-4">
+                                  <Button onClick={confirmChange} className="bg-blue-500  text-white px-4 py-2 rounded-md">
+                                    Save
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </DialogContent>
+                        )}
+                      </Dialog>
+                    </TableCell>
+                    {/** history */}
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      <Badge
-                        color={
-                          organization.status === "Active"
-                            ? "success"
-                            : organization.status === "Pending"
-                              ? "warning"
-                              : "error"
-                        }
-                      >
-                        {organization.status}
-                      </Badge>
+                      <Link href={`/organization/${organization.id}`}>
+                        <Button>Open</Button>
+                      </Link>
                     </TableCell>
 
                     {/* Actions */}

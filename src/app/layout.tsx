@@ -40,7 +40,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} dark:bg-gray-900`}>
+      <body className={`${outfit.variable} dark:bg-gray-900 z-40`}>
         <SessionProvider> {/* ✅ Wrap children with SessionProvider */}
           <SidebarProvider>{children}</SidebarProvider>
         </SessionProvider>
