@@ -456,7 +456,7 @@ export const chatfriend=pgTable("chatfriend",{
   chattoname:text("chattoname"),
   chattotype:text("chattotype"),
   club_id:integer("club_id"),
-  
+
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 })
 
@@ -552,6 +552,17 @@ export const admin = pgTable("admin", {
   role: text("role", { enum: ["customer_support", "executive"] }).notNull(),
   password_hash: text("password_hash").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
+
+});
+
+export const admins = pgTable("admin", {
+  id: serial("id").primaryKey(),
+  username: varchar("username", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  role: text("role", { enum: ["customer_support", "executive"] }).notNull(),
+  password_hash: text("password_hash").notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  is_deleted: boolean("is_deleted").default(false), // ✅ Add this line
 });
 
 export const ticket = pgTable("ticket", {
