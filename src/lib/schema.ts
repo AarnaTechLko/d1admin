@@ -457,7 +457,7 @@ export const chatfriend=pgTable("chatfriend",{
   chattoname:text("chattoname"),
   chattotype:text("chattotype"),
   club_id:integer("club_id"),
-  
+
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 })
 
@@ -555,6 +555,8 @@ export const admin = pgTable("admin", {
   created_at: timestamp("created_at").defaultNow().notNull(),
 
 });
+
+
 
 export const admins = pgTable("admin", {
   id: serial("id").primaryKey(),

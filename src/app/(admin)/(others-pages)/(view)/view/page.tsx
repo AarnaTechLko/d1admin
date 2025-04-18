@@ -2,16 +2,24 @@
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+<<<<<<< HEAD
 import { Trash } from "lucide-react";
+=======
+import { Pencil, Trash } from "lucide-react";
+import { redirect, useRouter } from "next/navigation";
+
+>>>>>>> b2908e05742ec6a849537103bcf262cf1b37d6d7
 interface Admin {
   id: number;
   username: string;
   email: string;
   role: string;
+  is_deleted?: boolean;
 }
 
 const AdminListPage = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [deletedAdminIds, setDeletedAdminIds] = useState<number[]>([]);
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -44,24 +52,26 @@ const AdminListPage = () => {
   // Handle Delete Function
   const handleDelete = async (adminID: number) => {
     if (!window.confirm("Are you sure you want to delete this admin?")) return;
-  
+
     try {
       const response = await fetch(`/api/subadmin?id=${adminID}`, {
         method: "DELETE",
       });
-  
+
       if (!response.ok) {
         const text = await response.text(); // Read response safely
         throw new Error(text || "Failed to delete admin");
       }
-  
-      setAdmins((prevAdmins) => prevAdmins.filter((admin) => admin.id !== adminID));
+
+      setDeletedAdminIds((prev) => [...prev, adminID]);
+
+      window.location.reload();
     } catch (error) {
       console.error("Error deleting admin:", error);
       alert(`Failed to delete admin: ${error}`);
     }
   };
-  
+
 
   return (
     <div>
@@ -77,9 +87,8 @@ const AdminListPage = () => {
               <button
                 key={index}
                 onClick={() => setCurrentPage(index + 1)}
-                className={`px-3 py-1 rounded-md ${
-                  currentPage === index + 1 ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"
-                }`}
+                className={`px-3 py-1 rounded-md ${currentPage === index + 1 ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"
+                  }`}
               >
                 {index + 1}
               </button>
@@ -103,17 +112,35 @@ const AdminListPage = () => {
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {admins.map((admin) => (
-                  <TableRow key={admin.id}>
+                  <TableRow key={admin.id}
+                  className={admin.is_deleted ? "bg-red-50 opacity-60" : ""}
+                  >
                     <TableCell className="px-4 py-3 text-gray-800 dark:text-white/90">{admin.username}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{admin.email}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{admin.role}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+<<<<<<< HEAD
                       <div className="flex gap-3">
                         <button onClick={() => handleDelete(admin.id)} className="p-2 text-red-500 hover:text-red-600">
                           <Trash size={18} />
                         </button>
                       </div>
+=======
+                    {admin.is_deleted ? (
+                        <span className="text-red-500 font-medium">Deleted</span>
+                      ) : (
+                        <div className="flex gap-3">
+                          <button onClick={() => handleEdit(admin.id)} className="p-2 text-green-500 hover:text-green-600">
+                            <Pencil size={18} />
+                          </button>
+                          <button onClick={() => handleDelete(admin.id)} className="p-2 text-red-500 hover:text-red-600">
+                            <Trash size={18} />
+                          </button>
+                        </div>
+                      )}
+>>>>>>> b2908e05742ec6a849537103bcf262cf1b37d6d7
                     </TableCell>
+
                   </TableRow>
                 ))}
               </TableBody>
@@ -126,11 +153,10 @@ const AdminListPage = () => {
                   <button
                     key={pageNumber}
                     onClick={() => setCurrentPage(pageNumber)}
-                    className={`px-3 py-1 rounded-md ${
-                      currentPage === pageNumber
+                    className={`px-3 py-1 rounded-md ${currentPage === pageNumber
                         ? "bg-blue-500 text-white"
                         : "text-blue-500 hover:bg-gray-200"
-                    }`}
+                      }`}
                   >
                     {pageNumber}
                   </button>

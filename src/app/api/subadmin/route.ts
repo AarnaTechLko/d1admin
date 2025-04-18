@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db"; // Ensure db is correctly set up
-import { admin } from "@/lib/schema"; // Import your schema
-import { eq, or,desc,count, ilike } from "drizzle-orm"; // Import eq for queries
+import { admins } from "@/lib/schema"; // Import your schema
+import { eq, or,desc,count, ilike, and } from "drizzle-orm"; // Import eq for queries
 import bcrypt from "bcryptjs";
 
 // Create a new admin
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
         }
 
         // Check if email already exists
-        const existingAdmin = await db.select().from(admin).where(eq(admin.email, email));
+        const existingAdmin = await db.select().from(admins).where(eq(admins.email, email));
         if (existingAdmin.length > 0) {
             return NextResponse.json({ message: "Email already in use" }, { status: 400 });
         }
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         // Insert admin into database with role
-        await db.insert(admin).values({
+        await db.insert(admins).values({
             username,
             email,
             password_hash: hashedPassword,
@@ -49,33 +49,38 @@ export async function GET(req: Request) {
         const offset = (page - 1) * limit;
 
         // Apply search filter across multiple fields
-        const whereClause = search
+        const whereClause =
+        //  and(
+        //     eq(admin.is_deleted, false),
+        
+        search
             ? or(
-                  ilike(admin.username, `%${search}%`),
-                  ilike(admin.email, `%${search}%`),
-                  ilike(admin.role, `%${search}%`)
+                  ilike(admins.username, `%${search}%`),
+                  ilike(admins.email, `%${search}%`),
+                  ilike(admins.role, `%${search}%`)
               )
-            : undefined;
-
+            : undefined
+            // );
         // Fetch paginated results with search filter
         const adminsData = await db
             .select({
-                id: admin.id,
-                username: admin.username,
-                email: admin.email,
-                role: admin.role,
-                created_at: admin.created_at,
+                id: admins.id,
+                username: admins.username,
+                email: admins.email,
+                role: admins.role,
+                created_at: admins.created_at,
+                is_deleted: admins.is_deleted,
             })
-            .from(admin)
+            .from(admins)
             .where(whereClause)
-            .orderBy(desc(admin.created_at))
+            .orderBy(desc(admins.created_at))
             .offset(offset)
             .limit(limit);
 
         // Fetch total count
         const totalCount = await db
             .select({ count: count() })
-            .from(admin)
+            .from(admins)
             .where(whereClause)
             .then((result) => result[0]?.count || 0);
 
@@ -118,13 +123,14 @@ export async function DELETE(req: Request) {
         }
 
         // Check if the admin exists
-        const existingAdmin = await db.select().from(admin).where(eq(admin.id, adminIdNumber));
+        const existingAdmin = await db.select().from(admins).where(eq(admins.id, adminIdNumber));
         if (existingAdmin.length === 0) {
             return NextResponse.json({ message: "Admin not found" }, { status: 404 });
         }
 
         // Delete the admin
-        await db.delete(admin).where(eq(admin.id, adminIdNumber));
+        // await db.delete(admin).where(eq(admin.id, adminIdNumber));
+        await db.update(admins).set({ is_deleted: true }).where(eq(admins.id, adminIdNumber));
 
         return NextResponse.json({ message: "Admin deleted successfully" }, { status: 200 });
     } catch (error) {
