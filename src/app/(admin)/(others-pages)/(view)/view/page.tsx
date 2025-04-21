@@ -2,13 +2,8 @@
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-<<<<<<< HEAD
 import { Trash } from "lucide-react";
-=======
-import { Pencil, Trash } from "lucide-react";
-import { redirect, useRouter } from "next/navigation";
 
->>>>>>> b2908e05742ec6a849537103bcf262cf1b37d6d7
 interface Admin {
   id: number;
   username: string;
@@ -49,7 +44,6 @@ const AdminListPage = () => {
     fetchAdmins();
   }, [searchQuery, currentPage]);
 
-  // Handle Delete Function
   const handleDelete = async (adminID: number) => {
     if (!window.confirm("Are you sure you want to delete this admin?")) return;
 
@@ -59,19 +53,16 @@ const AdminListPage = () => {
       });
 
       if (!response.ok) {
-        const text = await response.text(); // Read response safely
+        const text = await response.text();
         throw new Error(text || "Failed to delete admin");
       }
 
       setDeletedAdminIds((prev) => [...prev, adminID]);
-
-      window.location.reload();
     } catch (error) {
       console.error("Error deleting admin:", error);
       alert(`Failed to delete admin: ${error}`);
     }
   };
-
 
   return (
     <div>
@@ -96,7 +87,6 @@ const AdminListPage = () => {
           </div>
 
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-            {/* Admin Count */}
             <div className="p-4 text-gray-700 dark:text-gray-300">
               Total Admins: {admins.length}
             </div>
@@ -111,38 +101,28 @@ const AdminListPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {admins.map((admin) => (
-                  <TableRow key={admin.id}
-                  className={admin.is_deleted ? "bg-red-50 opacity-60" : ""}
-                  >
-                    <TableCell className="px-4 py-3 text-gray-800 dark:text-white/90">{admin.username}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{admin.email}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{admin.role}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-<<<<<<< HEAD
-                      <div className="flex gap-3">
-                        <button onClick={() => handleDelete(admin.id)} className="p-2 text-red-500 hover:text-red-600">
-                          <Trash size={18} />
-                        </button>
-                      </div>
-=======
-                    {admin.is_deleted ? (
-                        <span className="text-red-500 font-medium">Deleted</span>
-                      ) : (
+                {admins.map((admin) => {
+                  const isDeleted = deletedAdminIds.includes(admin.id) || admin.is_deleted;
+
+                  return (
+                    <TableRow key={admin.id} className={isDeleted ? "bg-red-50 opacity-60 pointer-events-none" : ""}>
+                      <TableCell className="px-4 py-3 text-gray-800 dark:text-white/90">{admin.username}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{admin.email}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{admin.role}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                         <div className="flex gap-3">
-                          <button onClick={() => handleEdit(admin.id)} className="p-2 text-green-500 hover:text-green-600">
-                            <Pencil size={18} />
-                          </button>
-                          <button onClick={() => handleDelete(admin.id)} className="p-2 text-red-500 hover:text-red-600">
+                          <button
+                            onClick={() => handleDelete(admin.id)}
+                            className="p-2 text-red-500 hover:text-red-600 disabled:opacity-30"
+                            disabled={isDeleted}
+                          >
                             <Trash size={18} />
                           </button>
                         </div>
-                      )}
->>>>>>> b2908e05742ec6a849537103bcf262cf1b37d6d7
-                    </TableCell>
-
-                  </TableRow>
-                ))}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
 
