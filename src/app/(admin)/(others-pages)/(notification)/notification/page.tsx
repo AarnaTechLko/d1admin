@@ -248,7 +248,7 @@ export default function NotificationPage() {
                 {matchingEntities.length > 0 && (
                     <div className="bg-gray-50 p-4 rounded-md border text-sm text-gray-700">
                         <p className="font-semibold mb-2">
-                            Select {type} name's to receive the notification:
+                            Select {type} names to receive the notification:
                         </p>
 
                         

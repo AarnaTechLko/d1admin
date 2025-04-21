@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { db } from "@/lib/db";
 import { ticket,admin } from '@/lib/schema';
-import { ilike, desc, sql,and, count,or,eq } from 'drizzle-orm';
+import { ilike, desc, and,sql, count,or,eq } from 'drizzle-orm';
 const ADMIN_ID = 9; // Can be configured or fetched dynamically
+
 
 // POST: Create a new ticket
 export async function POST(req: Request) {
@@ -111,9 +112,10 @@ console.log("userId");
     }
   
     const offset = (page - 1) * limit;
+    const isAdmin = userId === ADMIN_ID;
 
     // Dynamic search conditions across multiple fields
-    const whereClause = search
+    const searchCondition = search
       ? or(
           ilike(ticket.name, `%${search}%`),
           ilike(ticket.email, `%${search}%`),
@@ -121,7 +123,11 @@ console.log("userId");
           ilike(ticket.message, `%${search}%`)
         )
       : undefined;
-
+      const whereClause = !isAdmin
+      ? searchCondition
+        ? and(eq(ticket.assign_to, userId), searchCondition)
+        : eq(ticket.assign_to, userId)
+      : searchCondition;
     // Query to fetch tickets with additional aggregations (optional)
     const ticketsData = await db
       .select({

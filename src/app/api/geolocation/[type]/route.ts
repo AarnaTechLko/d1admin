@@ -5,12 +5,18 @@ import { coaches } from '@/lib/schema';
 import { enterprises } from '@/lib/schema';
 import { and, isNotNull, ne } from 'drizzle-orm';
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ type: string }> }
-) {
-  const type = (await params).type;
-  let data: any[] = [];
+// Define a type for your response data
+interface LocationData {
+  id: string;
+  name: string;
+  country: string | null;
+  state: string | null;
+  city: string | null;
+}
+
+export async function GET(req: NextRequest, context: { params: { type: string } }) {
+  const { type } = context.params; // Extract type from context.params
+  let data: LocationData[] = [];
 
   if (type === 'player') {
     const players = await db
@@ -24,7 +30,7 @@ export async function GET(
       );
 
     data = players.map((item) => ({
-      id: item.id,
+      id: String(item.id), // Convert to string
       name: `${item.first_name} ${item.last_name}`,
       country: item.country,
       state: item.state,
@@ -42,7 +48,7 @@ export async function GET(
       );
 
     data = coachesList.map((item) => ({
-      id: item.id,
+      id: String(item.id),
       name: `${item.firstName} ${item.lastName}`,
       country: item.country,
       state: item.state,
@@ -60,7 +66,7 @@ export async function GET(
       );
 
     data = organizations.map((item) => ({
-      id: item.id,
+      id: String(item.id), // Convert number to string
       name: item.organizationName,
       country: item.country,
       state: item.state,
