@@ -5,12 +5,21 @@ import { coaches } from '@/lib/schema';
 import { enterprises } from '@/lib/schema';
 import { and, isNotNull, ne } from 'drizzle-orm';
 
+// Define proper type instead of using "any"
+type LocationItem = {
+  id: string | number;
+  name: string;
+  country: string | null;
+  state: string | null;
+  city: string | null;
+};
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ type: string }> }
 ) {
   const type = (await params).type;
-  let data: any[] = [];
+  let data: LocationItem[] = [];
 
   if (type === 'player') {
     const players = await db

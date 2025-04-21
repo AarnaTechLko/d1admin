@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 // import { ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -83,10 +84,12 @@ export default function PlayerSearchPage() {
       {data?.player && (
         <div className="bg-white shadow-xl rounded-2xl p-6">
           <div className="flex items-center gap-6 mb-4">
-            <img
+            <Image
               src={data.player.image || '/default-avatar.png'}
               alt="Player"
-              className="w-32 h-32 object-cover rounded-xl border"
+              width={128}
+              height={128}
+              className="object-cover rounded-xl border"
             />
             <div>
               <h2 className="text-2xl font-semibold text-gray-800">
