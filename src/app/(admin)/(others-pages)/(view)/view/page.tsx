@@ -3,6 +3,12 @@ import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Trash } from "lucide-react";
+<<<<<<< HEAD
+=======
+=======
+import { Pencil, Trash } from "lucide-react";
+import {  useRouter } from "next/navigation";
+>>>>>>> 945044c3eed5c3969a98e0a876144039f19d171c
 
 interface Admin {
   id: number;
@@ -14,7 +20,7 @@ interface Admin {
 
 const AdminListPage = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [deletedAdminIds, setDeletedAdminIds] = useState<number[]>([]);
+
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -46,23 +52,32 @@ const AdminListPage = () => {
 
   const handleDelete = async (adminID: number) => {
     if (!window.confirm("Are you sure you want to delete this admin?")) return;
-
+  
     try {
       const response = await fetch(`/api/subadmin?id=${adminID}`, {
         method: "DELETE",
       });
-
+  
       if (!response.ok) {
         const text = await response.text();
         throw new Error(text || "Failed to delete admin");
       }
+<<<<<<< HEAD
 
       setDeletedAdminIds((prev) => [...prev, adminID]);
+=======
+  
+      // Remove the deleted admin from the state
+      setAdmins((prev) => prev.filter(admin => admin.id !== adminID));
+>>>>>>> 945044c3eed5c3969a98e0a876144039f19d171c
     } catch (error) {
       console.error("Error deleting admin:", error);
       alert(`Failed to delete admin: ${error}`);
+    }finally{
+      window.location.reload();
     }
   };
+  
 
   return (
     <div>

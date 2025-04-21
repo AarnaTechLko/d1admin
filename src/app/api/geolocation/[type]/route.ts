@@ -5,18 +5,21 @@ import { coaches } from '@/lib/schema';
 import { enterprises } from '@/lib/schema';
 import { and, isNotNull, ne } from 'drizzle-orm';
 
-// Define a type for your response data
-interface LocationData {
-  id: string;
+// Define proper type instead of using "any"
+type LocationItem = {
+  id: string | number;
   name: string;
   country: string | null;
   state: string | null;
   city: string | null;
-}
+};
 
-export async function GET(req: NextRequest, context: { params: { type: string } }) {
-  const { type } = context.params; // Extract type from context.params
-  let data: LocationData[] = [];
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ type: string }> }
+) {
+  const type = (await params).type;
+  let data: LocationItem[] = [];
 
   if (type === 'player') {
     const players = await db
