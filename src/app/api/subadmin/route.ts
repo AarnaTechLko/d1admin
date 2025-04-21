@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db"; // Ensure db is correctly set up
 import { admins } from "@/lib/schema"; // Import your schema
-import { eq, or,desc,count, ilike, and } from "drizzle-orm"; // Import eq for queries
+import { eq, or,desc,count, ilike } from "drizzle-orm"; // Import eq for queries
 import bcrypt from "bcryptjs";
 
 // Create a new admin

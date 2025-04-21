@@ -32,67 +32,69 @@ export default function NotificationPage() {
     const [selectedIds, setSelectedIds] = useState<string[]>([])
 
     // Fetch entities based on type
-    useEffect(() => {
-        if (!type) return
-
-        const fetchData = async () => {
-            const res = await axios.get(`/api/geolocation/${type}`)
-            const data = res.data as Entity[]
-            setEntities(data)
-
-            const uniqueCountries = [
-                ...new Set(data.map((item) => item.country).filter(Boolean)),
-            ] as string[]
-            setFilteredCountries(uniqueCountries)
-
-            setCountry('')
-            setState('')
-            setCity('')
-            setFilteredStates([])
-            setFilteredCities([])
-            setSelectedIds([])
-        }
-
-        fetchData()
-    }, [type])
-
-    // Update states based on selected country
-    useEffect(() => {
-        if (!country) {
-            setFilteredStates([])
-            return
-        }
-
-        const states = [
-            ...new Set(
-                entities.filter((item) => item.country === country).map((item) => item.state)
-            ),
-        ].filter(Boolean) as string[]
-
-        setFilteredStates(states)
-        setState('')
-        setCity('')
-        setFilteredCities([])
-    }, [country])
-
-    // Update cities based on selected state
-    useEffect(() => {
-        if (!state) {
-            setFilteredCities([])
-            return
-        }
-
-        const cities = [
-            ...new Set(
-                entities
-                    .filter((item) => item.country === country && item.state === state)
-                    .map((item) => item.city)
-            ),
-        ].filter(Boolean) as string[]
-
-        setFilteredCities(cities)
-        setCity('')
-    }, [state])
+    // Fetch entities based on type
+useEffect(() => {
+    if (!type) return;
+  
+    const fetchData = async () => {
+      const res = await axios.get(`/api/geolocation/${type}`);
+      const data = res.data as Entity[];
+      setEntities(data);
+  
+      const uniqueCountries = [
+        ...new Set(data.map((item) => item.country).filter(Boolean)),
+      ] as string[];
+      setFilteredCountries(uniqueCountries);
+  
+      setCountry('');
+      setState('');
+      setCity('');
+      setFilteredStates([]);
+      setFilteredCities([]);
+      setSelectedIds([]);
+    };
+  
+    fetchData();
+  }, [type]);
+  
+  // ✅ Add `entities` as dependency
+  useEffect(() => {
+    if (!country) {
+      setFilteredStates([]);
+      return;
+    }
+  
+    const states = [
+      ...new Set(
+        entities.filter((item) => item.country === country).map((item) => item.state)
+      ),
+    ].filter(Boolean) as string[];
+  
+    setFilteredStates(states);
+    setState('');
+    setCity('');
+    setFilteredCities([]);
+  }, [country, entities]);
+  
+  // ✅ Add `entities`, `country`, and `state` as dependencies
+  useEffect(() => {
+    if (!state) {
+      setFilteredCities([]);
+      return;
+    }
+  
+    const cities = [
+      ...new Set(
+        entities
+          .filter((item) => item.country === country && item.state === state)
+          .map((item) => item.city)
+      ),
+    ].filter(Boolean) as string[];
+  
+    setFilteredCities(cities);
+    setCity('');
+  }, [state, country, entities]);
+  
 
     const handleCheckboxChange = (id: string) => {
         setSelectedIds((prev) => {
@@ -248,7 +250,7 @@ export default function NotificationPage() {
                 {matchingEntities.length > 0 && (
                     <div className="bg-gray-50 p-4 rounded-md border text-sm text-gray-700">
                         <p className="font-semibold mb-2">
-                            Select {type} name's to receive the notification:
+                            Select {type} name&#39;s to receive the notification:
                         </p>
 
                         
