@@ -12,5 +12,13 @@ export async function POST() {
         path: "/", // ✅ Ensure the cookie is cleared globally
     });
 
+    response.cookies.set("user_id", "", {
+        expires: new Date(0), // Expire immediately
+        httpOnly: true,      // Set httpOnly if that was the original configuration
+        secure: true,
+        sameSite: "strict",
+        path: "/",           // Clear the cookie globally
+      });
+
     return response;
 }

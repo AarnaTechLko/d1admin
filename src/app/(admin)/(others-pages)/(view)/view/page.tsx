@@ -1,11 +1,14 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+<<<<<<< HEAD
+import { Trash } from "lucide-react";
+=======
 import { Pencil, Trash } from "lucide-react";
 import {  useRouter } from "next/navigation";
 
+>>>>>>> b2908e05742ec6a849537103bcf262cf1b37d6d7
 interface Admin {
   id: number;
   username: string;
@@ -22,8 +25,6 @@ const AdminListPage = () => {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  const router = useRouter();
 
   useEffect(() => {
     const fetchAdmins = async () => {
@@ -47,11 +48,6 @@ const AdminListPage = () => {
 
     fetchAdmins();
   }, [searchQuery, currentPage]);
-
-  // Handle Edit Function
-  const handleEdit = (adminID: number) => {
-    router.push(`/admins/edit/${adminID}`);
-  };
 
   // Handle Delete Function
   const handleDelete = async (adminID: number) => {
@@ -125,6 +121,13 @@ const AdminListPage = () => {
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{admin.email}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{admin.role}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+<<<<<<< HEAD
+                      <div className="flex gap-3">
+                        <button onClick={() => handleDelete(admin.id)} className="p-2 text-red-500 hover:text-red-600">
+                          <Trash size={18} />
+                        </button>
+                      </div>
+=======
                     {admin.is_deleted ? (
                         <span className="text-red-500 font-medium">Deleted</span>
                       ) : (
@@ -137,6 +140,7 @@ const AdminListPage = () => {
                           </button>
                         </div>
                       )}
+>>>>>>> b2908e05742ec6a849537103bcf262cf1b37d6d7
                     </TableCell>
 
                   </TableRow>

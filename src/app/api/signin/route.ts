@@ -9,6 +9,8 @@ const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key";
 
 export async function POST(req: Request) {
     try {
+
+        
         const { email, password } = await req.json();
 
         // Check if user exists

@@ -1,49 +1,3 @@
-// import { NextResponse } from 'next/server';
-// import { db } from "@/lib/db";
-// import { ticket } from '@/lib/schema';
-// import { eq } from 'drizzle-orm'; // Ensure eq is imported correctly
-
-// export async function POST(req: Request) {
-//   try {
-//     const { ticketId, assignTo } = await req.json();
-
-//     // Validate the input data
-//     if (!ticketId || !assignTo) {
-//       return NextResponse.json({ error: "Ticket ID and sub-admin username are required" }, { status: 400 });
-//     }
-
-//     // Log the received data for debugging
-//     console.log(`Assigning ticket ID: ${ticketId} to sub-admin: ${assignTo}`);
-
-//     // Perform the database update operation
-//     const updatedTicket = await db
-//       .update(ticket)
-//       .set({ assign_to: assignTo })
-//       .where(eq(ticket.id, ticketId))  // Use eq for ticket id comparison
-//       .returning();
-
-//     // Check if any ticket was updated
-//     if (updatedTicket.length === 0) {
-//       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
-//     }
-
-//     // Return the updated ticket
-//     return NextResponse.json({
-//       message: "Ticket successfully assigned",
-//       ticket: updatedTicket[0], // Return the updated ticket data
-//     }, { status: 200 });
-
-//   } catch (error) {
-//     // Log the detailed error for debugging
-//     console.error("Error assigning sub-admin:", error);
-
-//     // Provide more specific error response
-//     return NextResponse.json({
-//       error: error instanceof Error ? error.message : "Unknown error assigning sub-admin"
-//     }, { status: 500 });
-//   }
-// }
-
 import { NextResponse } from 'next/server';
 import { db } from "@/lib/db";
 import { ticket, admin } from '@/lib/schema'; // Import admin schema
@@ -93,7 +47,12 @@ export async function POST(req: Request) {
       message: "Ticket successfully assigned",
       ticket: {
         id: assignedTicket[0].id,
-        assign_to: assignedTicket[0].assignToUsername, // Convert ID to username
+        assign_to: assignedTicket[0].assignToUsername,
+
+        // id: assignedTicket[0].id,
+        // assign_to: assignTo, // still the ID
+
+        // assignToUsername: assignedTicket[0].assignToUsername,
       }
     }, { status: 200 });
 
@@ -108,3 +67,4 @@ export async function POST(req: Request) {
   }
 }
 
+ // Convert ID to username
