@@ -250,11 +250,7 @@ useEffect(() => {
                 {matchingEntities.length > 0 && (
                     <div className="bg-gray-50 p-4 rounded-md border text-sm text-gray-700">
                         <p className="font-semibold mb-2">
-<<<<<<< HEAD
-                            Select {type} names to receive the notification:
-=======
                             Select {type} name&#39;s to receive the notification:
->>>>>>> 945044c3eed5c3969a98e0a876144039f19d171c
                         </p>
 
                         
