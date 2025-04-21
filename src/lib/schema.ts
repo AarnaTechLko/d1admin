@@ -1,5 +1,5 @@
 
-
+// import { Certificate } from "crypto";
 import {
   pgTable,
   serial,
@@ -10,18 +10,17 @@ import {
   date,
   decimal,
   boolean,
-  // pgEnum,
-  integer 
+  integer, 
 } from "drizzle-orm/pg-core";
-// 
 // import { number } from "zod";
- 
+// import { sql } from "drizzle-orm"; 
 
 // Users table
 export const users = pgTable(
   "users",
   {
     id: serial("id").primaryKey(),
+    blockedCoachIds: text("blockedCoachIds"),
     first_name: varchar("first_name"),
     last_name: varchar("last_name"),
     grade_level: varchar("grade_level"),
@@ -83,6 +82,7 @@ export const coaches = pgTable(
   "coaches",
   {
     id: serial("id").primaryKey(),
+    blockedPlayerIds: text("blockedPlayerIds"),
     firstName: varchar("firstName"),
     lastName: varchar("lastName"),
     email: varchar("email"),
@@ -101,7 +101,7 @@ export const coaches = pgTable(
     country:varchar("country"),
     state:varchar("state"),
     city:varchar("city"),
-    currency: varchar("currency").default("$"), 
+    currency: varchar("currency").default("$"),
     rating: decimal("rating", { precision: 10, scale: 1 }).default('0'),
     password: text("password").notNull(),
     certificate:text("certificate"),
@@ -300,6 +300,7 @@ export const enterprises=pgTable('enterprises', {
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
+//What is this for?
 export const packages=pgTable('packages', {
   id: serial('id').primaryKey(),
   packageName: text('packageName').notNull(),
@@ -555,6 +556,8 @@ export const admin = pgTable("admin", {
 
 });
 
+
+
 export const admins = pgTable("admin", {
   id: serial("id").primaryKey(),
   username: varchar("username", { length: 255 }).notNull(),
@@ -565,16 +568,21 @@ export const admins = pgTable("admin", {
   is_deleted: boolean("is_deleted").default(false), // ✅ Add this line
 });
 
+
+
 export const ticket = pgTable("ticket", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull(),
   subject: text("subject").notNull(),
   assign_to: integer('assign_to').default(0), // Ensure this is defined
+  ticket_from: integer('ticket_from').default(0), // Ensure this is defined
   status: varchar("status").default("Pending"),
+  role: varchar("role"),
   message: text("message").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
 export const ticket_messages = pgTable("ticket_messages", {
   id: serial("id").primaryKey(),
   ticket_id: integer("ticket_id").notNull(),
@@ -590,4 +598,6 @@ export const userOrgStatus = pgTable("userOrgStatus",{
 	enterprise_id:integer("enterprise_id").references(() => enterprises.id),
 	status:text("status").default("Pending").notNull(),
 	role:text("text")
-})
+});
+
+

@@ -1,6 +1,6 @@
-// // import { NextAuthOptions } from "next-auth";
+//  import { NextAuthOptions } from "next-auth";
 
-// // export const authOptions: NextAuthOptions = {
+//  export const authOptions: NextAuthOptions = {
 //   providers: [
 //     // Add your providers (e.g., Google, GitHub)
 //   ],

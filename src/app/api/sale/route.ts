@@ -31,8 +31,8 @@ export async function GET() {
 
     // Return the monthly sales and total revenue in the response
     return NextResponse.json({ monthlySales, totalRevenue });
-  } catch (err) {
-    console.error("Error fetching sales data:", err);
+  } catch (error) {
+    console.error("Error fetching sales data:", error);
     return NextResponse.json({ error: "Error fetching sales data" }, { status: 500 });
   }
 }

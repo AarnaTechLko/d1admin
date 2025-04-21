@@ -14,7 +14,7 @@ export async function GET(
   if (isNaN(id)) {
     return NextResponse.json({ message: 'Invalid player ID' }, { status: 400 });
   }
-
+ 
   try {
     // Main player data with enterprise and coach names
     const playerResult = await db
