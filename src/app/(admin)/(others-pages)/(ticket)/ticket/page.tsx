@@ -359,7 +359,7 @@ useEffect(() => {
                         onClick={() => handleAssignToClick(ticket)}
                       >
 
-                        {ticket.assignee_name || 'Assign To'}
+                        {ticket.assignToUsername || 'Assign To'}
                       </button>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-yellow-500">

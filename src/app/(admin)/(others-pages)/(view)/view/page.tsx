@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { Table, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-// import { Trash } from "lucide-react";
+import { Table, TableCell, TableBody,TableHeader, TableRow } from "@/components/ui/table";
+import { Trash } from "lucide-react";
 
 
 
@@ -46,28 +46,28 @@ const AdminListPage = () => {
     fetchAdmins();
   }, [searchQuery, currentPage]);
 
-  // const handleDelete = async (adminID: number) => {
-  //   if (!window.confirm("Are you sure you want to delete this admin?")) return;
+  const handleDelete = async (adminID: number) => {
+    if (!window.confirm("Are you sure you want to delete this admin?")) return;
   
-  //   try {
-  //     const response = await fetch(`/api/subadmin?id=${adminID}`, {
-  //       method: "DELETE",
-  //     });
+    try {
+      const response = await fetch(`/api/subadmin?id=${adminID}`, {
+        method: "DELETE",
+      });
   
-  //     if (!response.ok) {
-  //       const text = await response.text();
-  //       throw new Error(text || "Failed to delete admin");
-  //     }
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Failed to delete admin");
+      }
   
-  //     // Remove the deleted admin from the state
-  //     setAdmins((prev) => prev.filter(admin => admin.id !== adminID));
-  //   } catch (error) {
-  //     console.error("Error deleting admin:", error);
-  //     alert(`Failed to delete admin: ${error}`);
-  //   }finally{
-  //     window.location.reload();
-  //   }
-  // };
+      // Remove the deleted admin from the state
+      setAdmins((prev) => prev.filter(admin => admin.id !== adminID));
+    } catch (error) {
+      console.error("Error deleting admin:", error);
+      alert(`Failed to delete admin: ${error}`);
+    }finally{
+      window.location.reload();
+    }
+  };
   
 
   return (
@@ -106,21 +106,21 @@ const AdminListPage = () => {
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">Actions</TableCell>
                 </TableRow>
               </TableHeader>
-              {/* <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {admins.map((admin) => {
-                  const isDeleted = deletedAdminIds.includes(admin.id) || admin.is_deleted;
+// const isDeleted = admin.is_deleted ?? false;
 
                   return (
-                    <TableRow key={admin.id} className={isDeleted ? "bg-red-50 opacity-60 pointer-events-none" : ""}>
+                    <TableRow key={admin.id}>
                       <TableCell className="px-4 py-3 text-gray-800 dark:text-white/90">{admin.username}</TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{admin.email}</TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{admin.role}</TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      <TableCell className="px-4 py-3 text-gray-800 dark:text-white/90">{admin.email}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-800 dark:text-white/90">{admin.role}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-800 dark:text-white/90">
                         <div className="flex gap-3">
                           <button
                             onClick={() => handleDelete(admin.id)}
                             className="p-2 text-red-500 hover:text-red-600 disabled:opacity-30"
-                            disabled={isDeleted}
+                            // disabled={isDeleted}
                           >
                             <Trash size={18} />
                           </button>
@@ -129,7 +129,7 @@ const AdminListPage = () => {
                     </TableRow>
                   );
                 })}
-              </TableBody> */}
+              </TableBody> 
             </Table>
 
             <div className="flex justify-end items-center gap-2 p-4 border-t border-gray-200 dark:border-white/[0.05]">
