@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from "@/lib/db";
 import { ticket,admin } from '@/lib/schema';
-import { ilike, desc, and,sql, count,or,eq } from 'drizzle-orm';
+import { ilike, desc, and,sql, or,eq } from 'drizzle-orm';
 const ADMIN_ID = 9; // Can be configured or fetched dynamically
 
 
@@ -99,84 +99,84 @@ console.log("userId");
 } */
   export async function GET(req: Request) {
     try {
-    const { searchParams } = new URL(req.url);
-    const search = (searchParams.get("search") || "").trim();
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
-    const userId = parseInt(searchParams.get("userId") || "0");
+      const { searchParams } = new URL(req.url);
   
-    console.log("userId", userId);
+      const search = (searchParams.get("search") || "").trim();
+      const page = parseInt(searchParams.get("page") || "1");
+      const limit = parseInt(searchParams.get("limit") || "10");
+      const userId = parseInt(searchParams.get("userId") || "0");
   
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
-    }
+      if (!userId) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 401 }
+        );
+      }
   
-    const offset = (page - 1) * limit;
-    const isAdmin = userId === ADMIN_ID;
-
-    // Dynamic search conditions across multiple fields
-    const searchCondition = search
-      ? or(
-          ilike(ticket.name, `%${search}%`),
-          ilike(ticket.email, `%${search}%`),
-          ilike(ticket.subject, `%${search}%`),
-          ilike(ticket.message, `%${search}%`)
-        )
-      : undefined;
+      const offset = (page - 1) * limit;
+      const isAdmin = userId === ADMIN_ID;
+  
+      // Build dynamic search condition
+      const searchCondition = search
+        ? or(
+            ilike(ticket.name, `%${search}%`),
+            ilike(ticket.email, `%${search}%`),
+            ilike(ticket.subject, `%${search}%`),
+            ilike(ticket.message, `%${search}%`)
+          )
+        : undefined;
+  
+      // Final where clause based on role
       const whereClause = !isAdmin
-      ? searchCondition
-        ? and(eq(ticket.assign_to, userId), searchCondition)
-        : eq(ticket.assign_to, userId)
-      : searchCondition;
-    // Query to fetch tickets with additional aggregations (optional)
-    const ticketsData = await db
-      .select({
-        id: ticket.id,
-        name: ticket.name,
-        email: ticket.email,
-        subject: ticket.subject,
-        message: ticket.message,
-        assign_to:ticket.assign_to,
-        status:ticket.status,
-        assignToUsername: admin.username,
-        createdAt: ticket.createdAt,
-        ticketCount: sql<number>`COUNT(*) OVER()`, // Get total count without separate query
-      })
-      .from(ticket)
-      .leftJoin(admin, eq(ticket.assign_to, admin.id)) // Join with the admin table
-      .where(whereClause)
-      .orderBy(desc(ticket.createdAt))
-      .offset(offset)
-      .limit(limit);
-
-    // Get total ticket count for pagination
-    const totalCount = await db
-      .select({ count: count() })
-      .from(ticket)
-      .where(whereClause)
-      .then((result) => result[0]?.count || 0);
-
-    const totalPages = Math.ceil(totalCount / limit);
-
-    return NextResponse.json({
-      tickets: ticketsData,
-      currentPage: page,
-      totalPages: totalPages,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1,
-      totalCount: totalCount
-    });
-
-  } catch (error) {
-    return NextResponse.json(
-      {
-        message: 'Failed to fetch tickets',
-        error: error instanceof Error ? error.message : String(error)
-      },
-      { status: 500 }
-    );
+        ? searchCondition
+          ? and(eq(ticket.assign_to, userId), searchCondition)
+          : eq(ticket.assign_to, userId)
+        : searchCondition;
+  
+      // Fetch paginated tickets with assigned admin username
+      const ticketsData = await db
+        .select({
+          id: ticket.id,
+          name: ticket.name,
+          email: ticket.email,
+          subject: ticket.subject,
+          message: ticket.message,
+          assign_to: ticket.assign_to,
+          status: ticket.status,
+          createdAt: ticket.createdAt,
+          assignToUsername: admin.username,
+          ticketCount: sql<number>`COUNT(*) OVER()`, // Total count for pagination
+        })
+        .from(ticket)
+        .leftJoin(admin, eq(ticket.assign_to, admin.id))
+        .where(whereClause)
+        .orderBy(desc(ticket.createdAt))
+        .offset(offset)
+        .limit(limit);
+  
+      // Total count from the first row (thanks to COUNT(*) OVER())
+      const totalCount = ticketsData[0]?.ticketCount || 0;
+      const totalPages = Math.ceil(totalCount / limit);
+  
+      return NextResponse.json({
+        tickets: ticketsData,
+        currentPage: page,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+        totalCount,
+      });
+    } catch (error) {
+      console.error("Error fetching tickets:", error);
+      return NextResponse.json(
+        {
+          message: "Failed to fetch tickets",
+          error: error instanceof Error ? error.message : String(error),
+        },
+        { status: 500 }
+      );
+    }
   }
-}
 
 export async function DELETE(req:Request) {
   try {
