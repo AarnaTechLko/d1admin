@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
         city: teams.city,
         organisation_name: enterprises.organizationName,
         club_id: teams.club_id,
+        is_deleted:teams.is_deleted,
       })
       .from(teams)
       .leftJoin(enterprises, eq(teams.club_id, enterprises.id))
