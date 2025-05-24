@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { enterprises } from '@/lib/schema';
+import { teams } from '@/lib/schema';
 export async function DELETE(req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
   ) {
@@ -10,6 +10,6 @@ export async function DELETE(req: NextRequest,
   if (isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
   }
-  await db.update(enterprises).set({ is_deleted: 0 }).where(eq(enterprises.id, numericId));
-  return NextResponse.json({ message: 'Organization deleted permanently' });
+  await db.update(teams).set({ is_deleted: 0 }).where(eq(teams.id, numericId));
+  return NextResponse.json({ message: 'Team deleted permanently' });
 }
