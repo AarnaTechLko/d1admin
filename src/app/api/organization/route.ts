@@ -178,12 +178,6 @@ export async function POST(req: NextRequest) {
 }
 
 
-
-
-
-
-
-
 export async function PUT(req: NextRequest) {
   try {
     const { organizationId, newStatus } = await req.json();

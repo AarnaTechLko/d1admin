@@ -1,7 +1,7 @@
 
 export interface Evaluation {
   id: number;
-  review_title: string;
+  reviewTitle: string;
   primary_video_link: string;
   first_name: string;
   coachId: number;

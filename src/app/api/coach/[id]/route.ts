@@ -1,10 +1,18 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import {
-  coaches, licenses, coachaccount, playerEvaluation,
-  coachearnings, payments, evaluationResults
+  coaches,
+  licenses,
+  coachaccount,
+  playerEvaluation,
+  coachearnings,
+  payments,
+  evaluationResults,
+  users,
+  countries,
 } from '@/lib/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, and,sql } from 'drizzle-orm';
 
 export async function GET(
   req: NextRequest,
@@ -17,7 +25,7 @@ export async function GET(
   }
 
   try {
-    // Get coach basic info with aggregate data
+    // Fetch coach basic info with aggregates
     const coachData = await db
       .select({
         id: coaches.id,
@@ -31,18 +39,55 @@ export async function GET(
         sport: coaches.sport,
         qualifications: coaches.qualifications,
         status: coaches.status,
-        consumeLicenseCount: sql<number>`COALESCE(COUNT(CASE WHEN licenses.status = 'Consumed' THEN 1 END), 0)`,
-        assignedLicenseCount: sql<number>`COALESCE(COUNT(CASE WHEN licenses.status = 'Assigned' THEN 1 END), 0)`,
-        earnings: sql<number>`COALESCE(SUM(coachaccount.amount), 0)`,
+        country: coaches.country,
+        state: coaches.state,
+        city: coaches.city,
+        clubName: coaches.clubName,
+        facebook: coaches.facebook,
+        instagram: coaches.instagram,
+        linkedin: coaches.linkedin,
+        xlink: coaches.xlink,
+        youtube: coaches.youtube,
+        license: coaches.license,
+        cv: coaches.cv,
+        license_type: coaches.license_type,
+        countryName: countries.name,
+        countrycode: coaches.countrycode,
+        consumeLicenseCount: sql<number>`COALESCE(COUNT(CASE WHEN ${licenses.status} = 'Consumed' THEN 1 END), 0)`,
+        assignedLicenseCount: sql<number>`COALESCE(COUNT(CASE WHEN ${licenses.status} = 'Assigned' THEN 1 END), 0)`,
+        earnings: sql<number>`COALESCE(SUM(${coachaccount.amount}), 0)`,
       })
       .from(coaches)
-      .leftJoin(licenses, sql`${licenses.assigned_to} = ${coaches.id}`)
-      .leftJoin(coachaccount, sql`${coachaccount.coach_id} = ${coaches.id}`)
+      .leftJoin(countries, eq(countries.id, sql<number>`CAST(${coaches.country} AS INTEGER)`))
+      .leftJoin(licenses, eq(licenses.assigned_to, coaches.id))
+      .leftJoin(coachaccount, eq(coachaccount.coach_id, coaches.id))
       .where(eq(coaches.id, coachId))
       .groupBy(
-        coaches.id, coaches.firstName, coaches.lastName, coaches.gender,
-        coaches.image, coaches.email, coaches.phoneNumber, coaches.slug,
-        coaches.sport, coaches.qualifications, coaches.status
+        coaches.id,
+        coaches.firstName,
+        coaches.lastName,
+        coaches.gender,
+        coaches.image,
+        coaches.email,
+        coaches.phoneNumber,
+        coaches.slug,
+        coaches.sport,
+        coaches.qualifications,
+        coaches.status,
+        coaches.country,
+        coaches.countrycode,
+        coaches.state,
+        coaches.city,
+        coaches.clubName,
+        coaches.facebook,
+        coaches.instagram,
+        coaches.linkedin,
+        coaches.xlink,
+        coaches.youtube,
+        coaches.license,
+        coaches.cv,
+        coaches.license_type,
+        countries.name
       )
       .limit(1);
 
@@ -50,19 +95,71 @@ export async function GET(
       return NextResponse.json({ message: 'Coach not found' }, { status: 404 });
     }
 
-    const [evaluations, results, earnings, coachPayments] = await Promise.all([
-      db.select().from(playerEvaluation).where(eq(playerEvaluation.coach_id, coachId)),
+    // Fetch evaluations with player info
+    const evaluations = await db
+      .select({
+        evaluationId: playerEvaluation.id,
+        review_title: playerEvaluation.review_title,
+        primary_video_link: playerEvaluation.primary_video_link,
+        jerseyNumber: playerEvaluation.jerseyNumber,
+        status: playerEvaluation.status,
+        turnaroundTime: playerEvaluation.turnaroundTime,
+        payment_status: playerEvaluation.payment_status,
+        rating: playerEvaluation.rating,
+        remarks: playerEvaluation.remarks,
+        created_at: playerEvaluation.created_at,
+        player_id: playerEvaluation.player_id,
+        playerFirstName: users.first_name,
+        playerLastName: users.last_name,
+        playerSlug: users.slug,
+        is_deleted:playerEvaluation.is_deleted,
+      })
+      .from(playerEvaluation)
+      .leftJoin(users, eq(users.id, playerEvaluation.player_id))
+.where(
+  and(
+    eq(playerEvaluation.coach_id, coachId),
+    //eq(playerEvaluation.is_deleted, 1) // show only non-hidden evaluations
+  )
+)
+
+    // Fetch related data in parallel
+    const [evaluationResultsList, earningsList, paymentsList] = await Promise.all([
       db.select().from(evaluationResults).where(eq(evaluationResults.coachId, coachId)),
       db.select().from(coachearnings).where(eq(coachearnings.coach_id, coachId)),
-      db.select().from(payments).where(eq(payments.coach_id, coachId)),
+      // db.select().from(payments).where(eq(payments.coach_id, coachId)),
+      db
+  .select({
+    id: payments.id,
+    amount: payments.amount,
+    status: payments.status,
+    created_at: payments.created_at,
+    evaluation_id:payments.evaluation_id,
+      player_id: payments.player_id,
+      description:payments.description,
+    playerFirstName: users.first_name,
+    playerLastName: users.last_name,
+    review_title:playerEvaluation.review_title,
+    is_deleted:payments.is_deleted,
+  })
+  .from(payments)
+  .leftJoin(users, eq(users.id, payments.player_id))
+  .leftJoin(playerEvaluation, eq(playerEvaluation.id,payments.evaluation_id))
+  .where(
+  and(
+    eq(payments.coach_id, coachId),
+    //eq(playerEvaluation.is_deleted, 1) // filter out payments tied to hidden evaluations
+  )
+)
+
     ]);
 
     return NextResponse.json({
       ...coachData[0],
       evaluations,
-      evaluationResults: results,
-      earningsDetails: earnings,
-      payments: coachPayments,
+      evaluationResults: evaluationResultsList,
+      earningsDetails: earningsList,
+      payments: paymentsList,
     });
   } catch (error) {
     return NextResponse.json(
@@ -70,6 +167,88 @@ export async function GET(
         message: 'Failed to fetch coach data',
         error: error instanceof Error ? error.message : String(error),
       },
+      { status: 500 }
+    );
+  }
+}
+
+
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const evaluationId = parseInt((await params).id, 10);
+  if (isNaN(evaluationId)) {
+    return NextResponse.json({ message: 'Invalid evaluation ID' }, { status: 400 });
+  }
+
+  try {
+    // Get the current is_deleted value
+    const existing = await db
+      .select({ is_deleted: playerEvaluation.is_deleted })
+      .from(playerEvaluation)
+      .where(eq(playerEvaluation.id, evaluationId))
+      .then((res) => res[0]);
+      
+
+    if (!existing) {
+      return NextResponse.json({ message: 'Evaluation not found' }, { status: 404 });
+    }
+
+    const newStatus = existing.is_deleted === 1 ? 0 : 1;
+
+    // Toggle is_deleted
+    await db
+      .update(playerEvaluation)
+      .set({ is_deleted: newStatus })
+      .where(eq(playerEvaluation.id, evaluationId));
+
+       await db
+      .update(payments)
+      .set({ is_deleted: newStatus })
+      .where(eq(payments.evaluation_id, evaluationId)); // assuming foreign key
+
+
+    return NextResponse.json({
+      message: `Evaluation ${newStatus === 1 ? 'hidden' : 'restored'} successfully`,
+      newStatus,
+    });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { message: 'Failed to toggle evaluation', error: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const evaluationId = parseInt(( await params).id, 10);
+  if (isNaN(evaluationId)) {
+    return NextResponse.json({ message: 'Invalid evaluation ID' }, { status: 400 });
+  }
+
+  try {
+    await db
+      .update(playerEvaluation)
+  .set({ is_deleted: 1 }) // hide the evaluation
+      .where(eq(playerEvaluation.id, evaluationId));
+
+  await db
+      .update(payments)
+      .set({ is_deleted: 1 })
+      .where(eq(payments.evaluation_id, evaluationId)); // assuming foreign key
+
+
+    return NextResponse.json({ message: 'Evaluation reverted successfully' });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { message: 'Failed to revert evaluation', error: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

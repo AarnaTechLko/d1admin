@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
-import { Pencil, Trash } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {  Trash } from "lucide-react";
+// import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Button from "@/components/ui/button/Button";
@@ -41,7 +41,7 @@ const TeamsPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const router = useRouter();
+  // const router = useRouter();
 
 
   const getBadgeColor = (status: string) => {
@@ -116,9 +116,7 @@ const TeamsPage = () => {
   }, [searchQuery, currentPage]);
 
   // Handle Edit Function
-  const handleEdit = (id: string) => {
-    router.push(`/teams/edit/${id}`);
-  };
+
 
   // Handle Delete Function
   const handleDelete = async (id: string) => {
@@ -295,9 +293,7 @@ const TeamsPage = () => {
                     </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                     <div className="flex gap-3">
-                      <button onClick={() => handleEdit(team.id)} className="p-2 text-green-500 hover:text-green-600">
-                        <Pencil size={18} />
-                      </button>
+                  
                       <button onClick={() => handleDelete(team.id)} className="p-2 text-red-500 hover:text-red-600">
                         <Trash size={18} />
                       </button>

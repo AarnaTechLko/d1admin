@@ -1,6 +1,5 @@
 "use client";
-import React, {useState} from "react";
-import { Pencil, Trash } from "lucide-react";
+import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 // import Badge from "../ui/badge/Badge";
 import Image from "next/image";
@@ -9,7 +8,8 @@ import Button from "../ui/button/Button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import Badge from "../ui/badge/Badge";
 import Link from "next/link";
-
+import Swal from "sweetalert2";
+import withReactContent from 'sweetalert2-react-content';
 
 interface Player {
   id: string;
@@ -27,6 +27,7 @@ interface Player {
   earnings: number;
   age_group: string;
   grade_level: string;
+  is_deleted: number;
 }
 
 interface PlayerTableProps {
@@ -40,41 +41,19 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
   // currentPage = 1,
   // totalPages = 1,
   // setCurrentPage = () => { },
-   }) => {
+}) => {
+  const MySwal = withReactContent(Swal);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [open, setOpen] = useState(false); // State for modal visibility
   const [showConfirmation, setShowConfirmation] = useState(false); // State for confirmation modal visibility
-  const [confirmationCallback, setConfirmationCallback] = useState<() => void>(() => () => {}); // Callback for confirmation
+  const [confirmationCallback, setConfirmationCallback] = useState<() => void>(() => () => { }); // Callback for confirmation
   const itemsPerPage = 10;
   const totalPages = Math.ceil(data.length / itemsPerPage);
-  const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);  
-
-
-    const handleEdit = (playerId: string) => {
-    console.log("Edit player with ID:", playerId);
-  };
-
-  const handleDelete = async (playerId: string) => {
-    if (!window.confirm("Are you sure you want to delete this player?")) return;
-
-    try {
-      const response = await fetch(`/api/player?id=${playerId}`, { method: "DELETE" });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to delete player");
-      }
-
-      // Refresh page after deletion
-      window.location.reload();
-    } catch (error) {
-      console.error("Error deleting player:", error);
-    }
-  };
-
+  const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const [Player, setPlayer] = useState<{ players: Player[] } | null>(null);
 
   const getBadgeColor = (status: string) => {
     switch (status) {
@@ -89,8 +68,8 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
     }
   };
 
-   // Function to handle status change after confirmation
-   const handleStatusChange = async () => {
+  // Function to handle status change after confirmation
+  const handleStatusChange = async () => {
     if (!selectedPlayer) return;
 
     try {
@@ -102,7 +81,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
           newStatus: status,
         }),
       });
-
       if (!response.ok) throw new Error("Failed to update status");
 
       setOpen(false); // Close the popup after saving
@@ -120,13 +98,98 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
 
 
+  async function handleHidePlayer(playerId: string) {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This player will be marked as hidden.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, hide it!',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (!result.isConfirmed) return; // Stop if user cancels
+
+    try {
+      const res = await fetch(`/api/player/hide/${playerId}`, {
+        method: 'DELETE',
+      });
+      console.log("hide", playerId);
+
+      if (!res.ok) throw new Error('Failed to hide player');
+
+      setPlayer((prev) => {
+        if (!prev) return { players: [] };
+
+        const updatedPlayers = prev.players.map((player) =>
+          player.id === playerId ? { ...player, is_deleted: 0 } : player
+        );
+        return { ...prev, players: updatedPlayers };
+      });
+
+      await MySwal.fire('Updated!', 'player hide successfully.', 'success');
+
+
+      window.location.reload();
+
+    } catch (error) {
+      console.error('Hide player error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to hide player',
+      });
+    }
+  }
+
+  async function handleRevertPlayer(playerId: string) {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This will restore the player.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, revert it!',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (!result.isConfirmed) return; // Stop if user cancels
+    try {
+      const res = await fetch(`/api/player/revert/${playerId}`, {
+        method: 'PATCH',
+      });
+      console.log("Revert", res);
+
+      if (!res.ok) throw new Error('Failed to revert player');
+
+      setPlayer((prev) => {
+        if (!prev) return { players: [] };
+        const updatedPlayers = prev.players.map((player) =>
+          player.id === playerId ? { ...player, is_deleted: 1 } : player
+        );
+        return { ...prev, players: updatedPlayers };
+      });
+
+      await MySwal.fire('Updated!', 'Player reverted successfully .', 'success');
+
+      window.location.reload();
+
+    } catch (error) {
+      console.error('Revert player error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to revert player',
+      });
+    }
+  }
+
 
 
 
   return (
     <>
       <div className="flex justify-end items-center gap-2 p-2">
-   
+
         {[...Array(totalPages)].map((_, index) => {
           const pageNumber = index + 1;
           return (
@@ -220,8 +283,18 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
               </TableHeader>
 
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+  {Player?.players.map((p) => (
+      <div key={p.id}>
+        <h3>{p.first_name}</h3>
+        <p>{p.position}</p>
+      </div>
+    ))}
                 {paginatedData.map((player) => (
-                  <TableRow key={player.id}>
+
+                  <TableRow
+                    key={`${player.id}-${player.is_deleted}`} // include is_deleted to force re-render
+                    className={player.is_deleted === 0 ? "bg-red-100" : "bg-white"}
+                  >
                     <TableCell className="px-5 py-4 sm:px-6 text-start">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 overflow-hidden ">
@@ -298,8 +371,8 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
 
 
-                     {/** palyer history */}
-                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                    {/** palyer history */}
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       <Link href={`/player/${player.id}`}>
                         <Button>Open</Button>
                       </Link>
@@ -307,12 +380,66 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       <div className="flex gap-3">
-                        <button onClick={() => handleEdit(player.id)} className="p-2 text-green-500 hover:text-green-600">
-                          <Pencil size={18} />
-                        </button>
-                        <button onClick={() => handleDelete(player.id)} className="p-2 text-red-500 hover:text-red-600">
+                        {/* <button
+                          onClick={async () => {
+                            try {
+                              if (player.is_deleted === 0) {
+                                // Currently hidden, so "Hide" clicked (maybe you want to keep it hidden)
+                                await handleHidePlayer(player.id);
+                                setPlayer((prev) => {
+                                  if (!prev) return prev;
+                                  const updatedPlayers = prev.players.map((p) =>
+                                    p.id === player.id ? { ...p, is_deleted: 0 } : p
+                                  );
+                                  return { ...prev, players: updatedPlayers };
+                                });
+                              } else {
+                                // Currently active, so "Revert" clicked (restore player)
+                                await handleRevertPlayer(player.id);
+                                setPlayer((prev) => {
+                                  if (!prev) return prev;
+                                  const updatedPlayers = prev.players.map((p) =>
+                                    p.id === player.id ? { ...p, is_deleted: 1 } : p
+                                  );
+                                  return { ...prev, players: updatedPlayers };
+                                });
+                              }
+                            } catch (error) {
+                              // error handled elsewhere
+                            }
+                          }}
+                        >
+                          {player.is_deleted === 0 ? "Hide" : "Revert"}
+                        </button> */}
+                        {player.is_deleted === 0 ? (
+                          <button
+                            onClick={async () => {
+                              await handleRevertPlayer(player.id);
+                            }}
+                            className=" text-white px-4 py-1 rounded"
+                          >
+                              🛑
+                          </button>
+                        ) : (
+                          <button
+                            onClick={async () => {
+                              await handleHidePlayer(player.id);
+                            }}
+                            className=" text-white px-4 py-1 rounded"
+                          >
+                          ♻️
+                          </button>
+                        )}
+
+
+
+                        {/* <button onClick={() => revertPlayer(player.id, player.is_deleted)}>
+  {player.is_deleted === 0 ? "hide" : "revert"}
+</button> */}
+
+                        {/* <button onClick={() => handleDelete(player.id)} className="p-2 text-red-500 hover:text-red-600">
                           <Trash size={18} />
-                        </button>
+                        </button> */}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -320,24 +447,23 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
               </TableBody>
             </Table>
             <div className="flex justify-end items-center gap-2 p-4 border-t border-gray-200 dark:border-white/[0.05]">
- 
-  {[...Array(totalPages)].map((_, index) => {
-    const pageNumber = index + 1;
-    return (
-      <button
-        key={pageNumber}
-        onClick={() => setCurrentPage(pageNumber)}
-        className={`px-3 py-1 rounded-md ${
-          currentPage === pageNumber
-            ? "bg-blue-500 text-white"
-            : "text-blue-500 hover:bg-gray-200"
-        }`}
-      >
-        {pageNumber}
-      </button>
-    );
-  })}
-</div>
+
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNumber = index + 1;
+                return (
+                  <button
+                    key={pageNumber}
+                    onClick={() => setCurrentPage(pageNumber)}
+                    className={`px-3 py-1 rounded-md ${currentPage === pageNumber
+                      ? "bg-blue-500 text-white"
+                      : "text-blue-500 hover:bg-gray-200"
+                      }`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

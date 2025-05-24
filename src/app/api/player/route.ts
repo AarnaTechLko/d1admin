@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
         birth_year: users.birth_year,
         age_group: users.age_group,
         status: users.status,
-
+        is_deleted:users.is_deleted,
         coachName: sql`coa."firstName"`.as("coachName"),
         coachLastName: sql`coa."lastName"`.as("coachLastName"),
         enterpriseName: sql`ent."organizationName"`.as("enterpriseName")
