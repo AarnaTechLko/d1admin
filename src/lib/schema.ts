@@ -63,6 +63,8 @@ export const users = pgTable(
     status: varchar("status").default("Pending"),
     visibility: varchar("visibility").default("off"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
+       is_deleted: integer("is_deleted").default(1).notNull(),
+
     isCompletedProfile: boolean("isCompletedProfile").default(false)
   },
   (users) => {
@@ -117,6 +119,8 @@ export const coaches = pgTable(
     license:text("license"),
     status: varchar("status").default("Pending"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
+        is_deleted: integer("is_deleted").default(1).notNull(),
+
     isCompletedProfile: boolean("isCompletedProfile").default(false)
   },
   (coaches) => {
@@ -174,6 +178,8 @@ export const playerEvaluation = pgTable(
     percentage:text('percentage'),
     rejectremarks: text("rejectremarks"),
     updated_at: timestamp("updated_at").defaultNow().notNull(),
+    is_deleted: integer("is_deleted").default(1).notNull(),
+
   }
 );
 
@@ -223,6 +229,8 @@ export const payments = pgTable(
     payment_info: text("payment_info"),
     created_at: timestamp("created_at").defaultNow().notNull(),
     description: text("description"),
+    is_deleted: integer("is_deleted").default(1).notNull(),
+
   },
   (payments) => {
     return {
@@ -297,6 +305,8 @@ export const enterprises=pgTable('enterprises', {
   youtube: text('youtube'),
   website: text('website'),
   status: text('status').default('Active'),
+        is_deleted: integer("is_deleted").default(1).notNull(),
+
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
@@ -386,7 +396,8 @@ export const teams=pgTable('teams', {
   buy_evaluation: text('buy_evaluation'),
   view_evaluation: text('view_evaluation'),
   parent_id: integer("parent_id"),
-  createdAt: timestamp('createdAt').defaultNow().notNull(),
+   is_deleted: integer("is_deleted").default(1).notNull(),
+createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
 export const teamPlayers = pgTable("teamPlayers", {
@@ -600,4 +611,58 @@ export const userOrgStatus = pgTable("userOrgStatus",{
 	role:text("text")
 });
 
+export const radarEvaluation = pgTable('radar_evaluation', {
+  id: serial('id').primaryKey(),
+  playerId: integer('playerId'),
+  coachId: integer('coachId'),
+  club_id: integer('club_id'),
+  evaluationId: integer('evaluation_id'),
+  speed: integer('speed'),
+  ability: integer('ability'),
+  codWithBall: integer('cod_with_ball'),
+  codWithoutBall: integer('cod_without_ball'),
+  counterMoveJump: integer('counter_move_jump'),
+  receivingFirstTouch: integer('receiving_first_touch'),
+  shotsOnGoal: integer('shots_on_goal'),
+  finishingTouches: integer('finishing_touches'),
+  combinationPlay: integer('combination_play'),
+  workrate: integer('workrate'),
+  pressingFromFront: integer('pressing_from_front'),
+  oneVOneDomination: integer('one_v_one_domination'),
+  goalThreat: integer('goal_threat'),
+  beingAGoodTeammate: integer('being_a_good_teammate'),
+  decisionMakingScore: integer('decision_making_score'),
+  touchesInFinalThird: integer('touches_in_final_third'),
+  offTheBallMovement: integer('off_the_ball_movement'),
+  spaceInBoxAbility: integer('space_in_box_ability'),
+  forwardRuns: integer('forward_runs'),
+  comm_persistence: text('persistence'),
+  comm_aggression: text('aggression'),
+  comm_alertness: text('alertness'),
+  exe_scoring: text('scoring'),
+  exe_receiving: text('receiving'),
+  exe_passing: text('passing'),
+  dec_mobility: text('mobility'),
+  dec_anticipation: text('anticipation'),
+  dec_pressure: text('pressure'),
+  soc_speedEndurance: text('speed_endurance'),
+  soc_strength: text('strength'),
+  soc_explosiveMovements: text('explosive_movements'),
+  superStrengths: text('super_strengths'),
+  developmentAreas: text('development_areas'),
+  idpGoals: text('idp_goals'),
+  keySkills: text('key_skills'),
+  attacking: text('attacking'),
+  defending: text('defending'),
+  transitionDefending: text('transition_defending'),
+  transitionAttacking: text('transition_attacking'),
+});
 
+export const ability = pgTable('ability', {
+  id: serial('id').primaryKey(),
+  evaluationId: integer('evaluation_id').notNull(),
+  filename: text('filename').notNull(),
+  comments: text('comments'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});

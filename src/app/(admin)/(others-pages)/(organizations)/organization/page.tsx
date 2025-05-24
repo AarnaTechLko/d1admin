@@ -28,6 +28,7 @@ interface Organization {
   linkedin: string;
   xlink: string;
   youtube: string;
+  is_deleted:number;
 }
 
 const OrganizationsPage = () => {
@@ -50,6 +51,7 @@ const OrganizationsPage = () => {
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();
+        console.log("organisation",data)
         setOrganizations(data.enterprises);
         setTotalPages(data.totalPages);
       } catch (err) {

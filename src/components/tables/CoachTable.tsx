@@ -1,15 +1,38 @@
 "use client";
 import React, { useState } from "react";
-import { Pencil, Trash } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 import Badge from "../ui/badge/Badge";
 import Image from "next/image";
 import Button from "../ui/button/Button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Link from "next/link";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 
+interface Evaluation {
+  id: string;
+  evaluationId: number;
+  player_id: string;
+  playerSlug: string;
+  playerFirstName: string;
+  firstname: string;
+  lastname: string;
+  review_title: string;
+  primary_video_link: string;
+  jerseyNumber: string;
+  jerseyColorOne: string;
+  positionOne: string;
+  status: number;
+  turnaroundTime: number;
+  payment_status: string;
+  rating?: number;
+  remarks?: string;
+  created_at: string;
+  is_deleted: number;
+}
 interface Coach {
   id: string;
+  evaluationId: number;
   firstName: string;
   lastName: string;
   image: string;
@@ -19,6 +42,10 @@ interface Coach {
   status: string;
   history?: string;
   earnings: number;
+  evaluations: Evaluation[];
+  is_deleted: number;
+
+
 }
 
 interface CoachTableProps {
@@ -35,28 +62,16 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [] }) => {
   const [open, setOpen] = useState(false); // State for modal visibility
   const [showConfirmation, setShowConfirmation] = useState(false); // State for confirmation modal visibility
   const [confirmationCallback, setConfirmationCallback] = useState<() => void>(() => () => { }); // Callback for confirmation
+  const MySwal = withReactContent(Swal);
 
   const itemsPerPage = 10;
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  const handleEdit = (coachId: string) => {
-    console.log("Edit coach with ID:", coachId);
-  };
 
-  const handleDelete = async (coachId: string) => {
-    if (!window.confirm("Are you sure you want to delete this coach?")) return;
+  //const [coach, setCoach] = useState<Coach | null>(null);
+   const [coach, setCoach] = useState<{ coaches: Coach[] } | null>(null);
 
-    try {
-      const response = await fetch(`/api/coach?id=${coachId}`, { method: "DELETE" });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to delete coach");
-      }
-      window.location.reload();
-    } catch (error) {
-      console.error("Error deleting coach :", error);
-    }
-  };
+
 
   const getBadgeColor = (status: string) => {
     switch (status) {
@@ -99,6 +114,92 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [] }) => {
     setShowConfirmation(true); // Show the confirmation dialog
     setConfirmationCallback(() => handleStatusChange); // Set the confirmation callback
   };
+  async function handleHideCoach(coachId: string) {
+  const confirmResult = await MySwal.fire({
+    title: 'Are you sure?',
+    text: 'This coach will be marked as hidden.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, hide it!',
+    cancelButtonText: 'Cancel',
+  });
+
+  if (!confirmResult.isConfirmed) return; // exit if canceled
+
+  try {
+    const res = await fetch(`/api/coach/hide/${coachId}`, {
+      method: 'DELETE',
+    });
+    console.log("hide", coachId);
+
+    if (!res.ok) throw new Error('Failed to hide coach');
+
+    setCoach((prev) => {
+      if (!prev) return { coaches: [] };
+
+      const updatedCoaches = prev.coaches.map((coach) =>
+        coach.id === coachId ? { ...coach, is_deleted: 0 } : coach
+      );
+      return { ...prev, coaches: updatedCoaches };
+    });
+
+    await MySwal.fire('Updated!', 'Coach hidden successfully.', 'success');
+
+    window.location.reload();
+
+  } catch (error) {
+    console.error('Hide coach error:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Failed to hide coach',
+    });
+  }
+}
+
+async function handleRevertCoach(coachId: string) {
+  const confirmResult = await MySwal.fire({
+    title: 'Are you sure?',
+    text: 'This will revert the coach data.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, revert it!',
+    cancelButtonText: 'Cancel',
+  });
+
+  if (!confirmResult.isConfirmed) return; // exit if canceled
+
+  try {
+    const res = await fetch(`/api/coach/revert/${coachId}`, {
+      method: 'PATCH',
+    });
+    console.log("Revert", res);
+
+    if (!res.ok) throw new Error('Failed to revert coach');
+
+    setCoach((prev) => {
+      if (!prev) return { coaches: [] };
+      const updatedCoaches = prev.coaches.map((coach) =>
+        coach.id === coachId ? { ...coach, is_deleted: 1 } : coach
+      );
+      return { ...prev, coaches: updatedCoaches };
+    });
+
+    await MySwal.fire('Updated!', 'Coach reverted successfully.', 'success');
+
+    window.location.reload();
+
+  } catch (error) {
+    console.error('Revert coach error:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Failed to revert coach',
+    });
+  }
+}
+
+
 
   return (
     <>
@@ -170,9 +271,18 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [] }) => {
               </TableHeader>
 
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {coach?.coaches.map((c) => (
+  <div key={c.id}>
+    <h3>{c.firstName}</h3>
+  </div>
+))}
+
                 {paginatedData.map((coach) => (
-                  <TableRow key={coach.id}>
-                    <TableCell className="px-5 py-4 sm:px-6 text-start">
+                  <TableRow
+                    key={`${coach.id}-${coach.is_deleted}`} // include is_deleted to force re-render
+                    className={coach.is_deleted === 0 ? "bg-red-100" : "bg-white"}
+                  > 
+                  <TableCell className="px-5 py-4 sm:px-6 text-start">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 overflow-hidden rounded-full">
                           <Image width={40} height={40} src={coach.image || "/images/signin/d1.png"} alt={`${coach.firstName} ${coach.lastName}`} />
@@ -240,19 +350,38 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [] }) => {
 
 
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      <div className="flex gap-3">
-                        <button onClick={() => handleEdit(coach.id)} className="p-2 text-green-500 hover:text-green-600">
-                          <Pencil size={18} />
-                        </button>
-                        <button onClick={() => handleDelete(coach.id)} className="p-2 text-red-500 hover:text-red-600">
-                          <Trash size={18} />
-                        </button>
-                      </div>
+                     <div className="flex gap-3">
+  {coach.is_deleted === 0 ? (
+    <button
+    onClick={() => handleRevertCoach(coach.id)}
+      title="Revert Coach"
+   
+      style={{
+        fontSize: '1.2rem',
+        marginRight: '8px',
+      }}
+    >
+      🛑
+    </button>
+  ) : (
+    <button
+         onClick={() => handleHideCoach(coach.id)}
+      title="Hide Coach"
+      style={{
+        fontSize: '1.2rem',
+      }}
+    >
+      ♻️
+    </button>
+  )}
+</div>
+
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            
             <div className="flex justify-end items-center gap-2 p-4 border-t border-gray-200 dark:border-white/[0.05]">
               {[...Array(totalPages)].map((_, index) => {
                 const pageNumber = index + 1;

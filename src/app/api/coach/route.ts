@@ -61,6 +61,7 @@ export async function GET(req: NextRequest) {
         sport: coaches.sport,
         qualifications: coaches.qualifications,
         status: coaches.status,
+        is_deleted:coaches.is_deleted,
         consumeLicenseCount: sql<number>`COUNT(CASE WHEN licenses.status = 'Consumed' THEN 1 END)`,
         assignedLicenseCount: sql<number>`COUNT(CASE WHEN licenses.status = 'Assigned' THEN 1 END)`,
         earnings: sql<number>`SUM(CASE WHEN coachaccount.coach_id = coaches.id THEN coachaccount.amount ELSE 0 END)`,

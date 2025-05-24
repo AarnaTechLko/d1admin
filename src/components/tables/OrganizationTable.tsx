@@ -1,7 +1,7 @@
 "use client";
 
-import React,{useState} from "react";
-import { Pencil, Trash, FacebookIcon, Instagram, Youtube, Linkedin } from "lucide-react";
+import React, { useState } from "react";
+import { FacebookIcon, Instagram, Youtube, Linkedin } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 import Badge from "../ui/badge/Badge";
 import Image from "next/image";
@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import Button from "../ui/button/Button";
 // import { enterprises } from "@/lib/schema";
 import Link from "next/link";
-
+import Swal from 'sweetalert2';
+ import withReactContent from 'sweetalert2-react-content';
 
 interface Organization {
   id: string;
@@ -36,6 +37,8 @@ interface Organization {
   linkedin: string;
   xlink: string;
   youtube: string;
+  is_deleted: number;
+
 }
 
 
@@ -48,29 +51,18 @@ interface OrganizationTableProps {
 
 const OrganizationTable: React.FC<OrganizationTableProps> = ({
   data = [] }) => {
-    const [currentPage, setCurrentPage] = useState(1);
-     const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
-      const [status, setStatus] = useState<string | null>(null);
-      const [open, setOpen] = useState(false); // State for modal visibility
-      const [showConfirmation, setShowConfirmation] = useState(false); // State for confirmation modal visibility
-      const [confirmationCallback, setConfirmationCallback] = useState<() => void>(() => () => {}); // Callback for confirmation
-    const itemsPerPage = 10;
-    const totalPages = Math.ceil(data.length / itemsPerPage);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [open, setOpen] = useState(false); // State for modal visibility
+  const [showConfirmation, setShowConfirmation] = useState(false); // State for confirmation modal visibility
+  const [confirmationCallback, setConfirmationCallback] = useState<() => void>(() => () => { }); // Callback for confirmation
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const [organization, setOrganization] = useState<{ organizations: Organization[] } | null>(null);
+
+   const MySwal = withReactContent(Swal);
   
-  const handleEdit = (organizationId: string) => console.log("Edit organization with ID:", organizationId);
-
-  const handleDelete = async (organizationId: string) => {
-    if (!window.confirm("Are you sure you want to delete this organization?")) return;
-
-    try {
-      const response = await fetch(`/api/organization?id=${organizationId}`, { method: "DELETE" });
-      if (!response.ok) throw new Error("Failed to delete organization");
-
-      window.location.reload();
-    } catch (error) {
-      console.error("Error deleting organization:", error);
-    }
-  };
 
   const getBadgeColor = (status: string) => {
     switch (status) {
@@ -85,8 +77,8 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
     }
   };
 
-   // Function to handle status change after confirmation
-   const handleStatusChange = async () => {
+  // Function to handle status change after confirmation
+  const handleStatusChange = async () => {
     if (!selectedOrganization) return;
 
     try {
@@ -114,6 +106,94 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
     setConfirmationCallback(() => handleStatusChange); // Set the confirmation callback
   };
 
+
+ async function handleHideOrganization(organizationId: string) {
+  console.log("id",organizationId)
+  const result = await Swal.fire({
+    title: 'Are you sure?',
+    text: 'This organization will be marked as hidden.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, hide it!',
+    cancelButtonText: 'Cancel',
+  });
+
+  if (!result.isConfirmed) return; // User cancelled
+
+  try {
+    const res = await fetch(`/api/organization/hide/${organizationId}`, {
+      method: 'DELETE',
+    });
+    console.log("hide", res);
+
+    if (!res.ok) throw new Error('Failed to hide organization');
+
+    setOrganization((prev) => {
+      if (!prev) return { organizations: [] };
+
+      const updatedOrgs = prev.organizations.map((organization) =>
+        organization.id === organizationId ? { ...organization, is_deleted: 0 } : organization
+      );
+      return { ...prev, organizations: updatedOrgs };
+    });
+
+          await MySwal.fire('Updated!', 'Organization hide successfully.', 'success');
+
+    window.location.reload();
+
+  } catch (error) {
+    console.error('Hide organization error:', error);
+    await Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text:  'Failed to hide organization',
+    });
+  }
+}
+
+async function handleRevertOrganization(organizationId: string) {
+  const result = await Swal.fire({
+    title: 'Are you sure?',
+    text: 'This will revert the organization.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, revert it!',
+    cancelButtonText: 'Cancel',
+  });
+
+  if (!result.isConfirmed) return; // User cancelled
+
+  try {
+    const res = await fetch(`/api/organization/revert/${organizationId}`, {
+      method: 'PATCH',
+    });
+    console.log("Revert", res);
+
+    if (!res.ok) throw new Error('Failed to revert organization');
+
+    setOrganization((prev) => {
+      if (!prev) return { organizations: [] };
+      const updatedOrgs = prev.organizations.map((organization) =>
+        organization.id === organizationId ? { ...organization, is_deleted: 1 } : organization
+      );
+      return { ...prev, organizations: updatedOrgs };
+    });
+
+         await MySwal.fire('Updated!', 'Organization Revert successfully.', 'success');
+
+    window.location.reload();
+
+  } catch (error) {
+    console.error('Revert organization error:', error);
+    await Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Failed to revert organization',
+    });
+  }
+}
+
+
   return (
     <>
       {/* Pagination */}
@@ -130,38 +210,38 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
         ))}
       </div>
 
-       {/* Confirmation Dialog */}
-            {showConfirmation && (
-              <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-                <DialogContent className="max-w-sm rounded-lg p-6 bg-white shadow-lg fixed top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                  <DialogHeader>
-                    <DialogTitle className="text-lg font-semibold">Confirm Status Change</DialogTitle>
-                  </DialogHeader>
-                  <div className="mt-4">
-                    <p>Are you sure you want to change the status to {status}?</p>
-                  </div>
-                  <div className="flex justify-end gap-4 mt-4">
-                    <Button
-                      onClick={() => {
-                        setShowConfirmation(false); // Close the confirmation dialog
-                      }}
-                      className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md"
-                    >
-                      No
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        confirmationCallback(); // Proceed with the status change
-                        setShowConfirmation(false); // Close the confirmation dialog
-                      }}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-md"
-                    >
-                      Yes
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
+      {/* Confirmation Dialog */}
+      {showConfirmation && (
+        <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+          <DialogContent className="max-w-sm rounded-lg p-6 bg-white shadow-lg fixed top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-semibold">Confirm Status Change</DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              <p>Are you sure you want to change the status to {status}?</p>
+            </div>
+            <div className="flex justify-end gap-4 mt-4">
+              <Button
+                onClick={() => {
+                  setShowConfirmation(false); // Close the confirmation dialog
+                }}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md"
+              >
+                No
+              </Button>
+              <Button
+                onClick={() => {
+                  confirmationCallback(); // Proceed with the status change
+                  setShowConfirmation(false); // Close the confirmation dialog
+                }}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md"
+              >
+                Yes
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
 
       {/* Table */}
@@ -172,7 +252,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
               {/* Table Header */}
               <TableHeader className="border-b border-gray-100 dark:border-white/10">
                 <TableRow>
-                  {[" Name", "Address", " Data", "Status","History", "Actions"].map(
+                  {[" Name", "Address", " Data", "Status", "History", "Actions"].map(
                     (header) => (
                       <TableCell key={header} className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400 text-start">
                         {header}
@@ -184,8 +264,18 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
 
               {/* Table Body */}
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {organization?.organizations.map((org) => (
+  <div key={org.id}>
+    <h3>{org.email}</h3>
+    {/* <p>{org.description}</p> */}
+  </div>
+))}
+
                 {data.map((organization) => (
-                  <TableRow key={organization.id}>
+                  <TableRow
+                    key={`${organization.id}-${organization.is_deleted}`} // include is_deleted to force re-render
+                    className={organization.is_deleted === 0 ? "bg-red-100" : "bg-white"}
+                  >
                     {/* Organization Name & Logo */}
                     <TableCell className="px-5 py-4 text-start">
                       <div className="flex items-center gap-3">
@@ -207,47 +297,47 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 break-words">
                       {organization.address || "N/A"}, {organization.city || "N/A"}, {organization.state || "N/A"},{" "}
                       {organization.country || "N/A"}
-                      
+
                       <br />
                       <span className="text-blue-500">{organization.email || "N/A"}</span>
                       <br />
                       <span className="font-medium">{organization.mobileNumber || "N/A"}</span>
-                      <span className="px-1 py-2 text-gray-500 dark:text-gray-400 flex items-center gap-3">  
-                         <a
-                        href={organization.facebook || "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={!organization.facebook ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-700"}
-                      >
-                        <FacebookIcon className="w-4 h-4" />
-                      </a>
+                      <span className="px-1 py-2 text-gray-500 dark:text-gray-400 flex items-center gap-3">
+                        <a
+                          href={organization.facebook || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={!organization.facebook ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-700"}
+                        >
+                          <FacebookIcon className="w-4 h-4" />
+                        </a>
 
-                      <a
-                        href={organization.instagram || "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={!organization.instagram ? "text-gray-400 cursor-default" : "text-pink-600 hover:text-red-600"}
-                      >
-                        <Instagram className="w-4 h-4" />
-                      </a>
+                        <a
+                          href={organization.instagram || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={!organization.instagram ? "text-gray-400 cursor-default" : "text-pink-600 hover:text-red-600"}
+                        >
+                          <Instagram className="w-4 h-4" />
+                        </a>
 
-                      <a
-                        href={organization.youtube || "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={!organization.youtube ? "text-gray-400 cursor-default" : "text-red-600 hover:text-red-800"}
-                      >
-                        <Youtube className="w-4 h-4" />
-                      </a>
+                        <a
+                          href={organization.youtube || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={!organization.youtube ? "text-gray-400 cursor-default" : "text-red-600 hover:text-red-800"}
+                        >
+                          <Youtube className="w-4 h-4" />
+                        </a>
 
-                      <a
-                        href={organization.linkedin || "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={!organization.linkedin ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
-                      >
-                        <Linkedin className="w-4 h-4" />
-                      </a></span>
+                        <a
+                          href={organization.linkedin || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={!organization.linkedin ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
+                        >
+                          <Linkedin className="w-4 h-4" />
+                        </a></span>
                     </TableCell>
 
                     {/* Organization Data */}
@@ -352,14 +442,31 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
 
                     {/* Actions */}
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      <div className="flex gap-3">
-                        <button onClick={() => handleEdit(organization.id)} className="p-2 text-green-500 hover:text-green-600">
-                          <Pencil size={18} />
-                        </button>
-                        <button onClick={() => handleDelete(organization.id)} className="p-2 text-red-500 hover:text-red-600">
-                          <Trash size={18} />
-                        </button>
-                      </div>
+                     <div className="flex gap-3">
+  {organization.is_deleted === 0 ? (
+    <button
+      onClick={() =>  handleRevertOrganization(organization.id)}
+      title="Hide Organization"
+      style={{
+        fontSize: '1.2rem',
+        marginRight: '8px',
+      }}
+    >
+      🛑
+    </button>
+  ) : (
+    <button
+      onClick={() => handleHideOrganization(organization.id)}
+      title="Revert Organization"
+      style={{
+        fontSize: '1.2rem',
+      }}
+    >
+      ♻️
+    </button>
+  )}
+</div>
+
                     </TableCell>
                   </TableRow>
                 ))}
@@ -376,8 +483,8 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                     key={pageNumber}
                     onClick={() => setCurrentPage(pageNumber)}
                     className={`px-3 py-1 rounded-md ${currentPage === pageNumber
-                        ? "bg-blue-500 text-white"
-                        : "text-blue-500 hover:bg-gray-200"
+                      ? "bg-blue-500 text-white"
+                      : "text-blue-500 hover:bg-gray-200"
                       }`}
                   >
                     {pageNumber}

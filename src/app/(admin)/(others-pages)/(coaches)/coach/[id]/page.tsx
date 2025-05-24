@@ -1,352 +1,699 @@
 'use client';
-
+import { FaTwitter, FaFacebookF, FaFileAlt, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
-
+import Link from 'next/link';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 interface Evaluation {
-    id: string;
-    review_title: string;
-    primary_video_link: string;
-    jerseyNumber: string;
-    jerseyColorOne: string;
-    positionOne: string;
-    status: number;
-    turnaroundTime: number;
-    payment_status: string;
-    rating?: number;
-    remarks?: string;
-    created_at: string;
-  }
-  
-  interface EvaluationResult {
-    id: string;
-    finalRemarks?: string;
-    sport?: string;
-    physicalScores: number;
-    technicalScores: number;
-    tacticalScores: number;
-    created_at: string;
-  }
-  
-  interface Payment {
-    id: string;
-    player_id: string;
-    evaluation_id: string;
-    amount: number;
-    status: string;
-    currency: string;
-    created_at: string;
-  }
-  
-  interface Coach {
-    id: string;
-    first_name: string;
-    last_name: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phoneNumber: string;
-    sport: string;
-    status: string;
-    qualifications: string;
-    consumeLicenseCount: number;
-    assignedLicenseCount: number;
-    earnings: number;
-    image?: string;
-    evaluations: Evaluation[];
-    evaluationResults: EvaluationResult[];
-    payments: Payment[];
-  }
-  
+  id: string;
+  evaluationId: number;
+  player_id: string;
+  playerSlug: string;
+  playerFirstName: string;
+  firstname: string;
+  lastname: string;
+  review_title: string;
+  primary_video_link: string;
+  jerseyNumber: string;
+  jerseyColorOne: string;
+  positionOne: string;
+  status: number;
+  turnaroundTime: number;
+  payment_status: string;
+  rating?: number;
+  remarks?: string;
+  created_at: string;
+  is_deleted: number;
+}
+
+interface EvaluationResult {
+  id: string;
+  finalRemarks?: string;
+  sport?: string;
+  physicalScores: number;
+  technicalScores: number;
+  tacticalScores: number;
+  created_at: string;
+}
+
+interface Payment {
+  id: number;
+  playerFirstName: string;
+  playerLastName: string;
+  playerid: string;
+  evaluation_id: number;
+  amount: number;
+  status: number;
+  currency: string;
+  created_at: string;
+  review_title: string;
+  description: string;
+  is_deleted: number;
+
+}
+interface Coach {
+  id: string;
+  first_name: string;
+  last_name: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  gender: string;
+  country: string;
+  state: string;
+  city: string;
+  sport: string;
+  status: string;
+  qualifications: string;
+  consumeLicenseCount: number;
+  assignedLicenseCount: number;
+  earnings: number;
+  image?: string;
+  evaluations: Evaluation[];
+  evaluationResults: EvaluationResult[];
+  payments: Payment[];
+  clubName: string;
+  license_type: string;
+  facebook: string;
+  instagram: string;
+  linkedin: string;
+  xlink: string;
+  youtube: string;
+  cv: string;
+  license: string;
+  countryName: string;
+  countrycode: string;
+}
 
 export default function CoachDetailsPage() {
-    const { id } = useParams();
-    const [coach, setCoach] = useState<Coach | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 10;
+  const { id } = useParams();
+  const [coach, setCoach] = useState<Coach | null>(null);
+  const [payments, setPayments] = useState<Payment[]>([]);
 
-    const paginatedPayments = coach?.payments?.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
-    ) ?? [];
+const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  // const ITEMSPERPAGE = 10;
+  const [evaluationPage, setEvaluationPage] = useState(1);
+  const [paymentPage, setPaymentPage] = useState(1);
+  const evaluationsPerPage = 10;
+  const paymentsPerPage = 10;
 
-    const totalPages = Math.ceil(coach?.payments?.length ?? 0 / ITEMS_PER_PAGE) || 1;
-    const EVALUATIONS_PER_PAGE = 10;
-    const RESULTS_PER_PAGE = 10;
+  const filteredEvaluations = coach?.evaluations || [];
 
-    const [evaluationPage, setEvaluationPage] = useState(1);
-    const [resultsPage, setResultsPage] = useState(1);
+  const paginatedEvaluations = filteredEvaluations.slice(
+    (evaluationPage - 1) * evaluationsPerPage,
+    evaluationPage * evaluationsPerPage
+  );
 
-    const paginatedEvaluations = coach?.evaluations?.slice(
-        (evaluationPage - 1) * EVALUATIONS_PER_PAGE,
-        evaluationPage * EVALUATIONS_PER_PAGE
-    ) ?? [];
+  const paginatedPayments: Payment[] = (coach?.payments ?? []).slice(
+    (paymentPage - 1) * paymentsPerPage,
+    paymentPage * paymentsPerPage
+  );
+  const totalPaymentPages = paymentsPerPage > 0
+    ? Math.ceil((coach?.payments?.length ?? 0) / paymentsPerPage)
+    : 0;
 
-    const paginatedResults = coach?.evaluationResults?.slice(
-        (resultsPage - 1) * RESULTS_PER_PAGE,
-        resultsPage * RESULTS_PER_PAGE
-    ) ?? [];
+  const totalEvaluationPages = Math.ceil(filteredEvaluations.length / evaluationsPerPage);
+  // const totalPaymentPages = Math.ceil((coach?.payments?.length??0) / paymentsPerPage);
+  // const [evaluations, setEvaluations] = useState([]);
+  // const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  // const pageSize = 10;
+  const MySwal = withReactContent(Swal);
+  // const [hiddenEvaluations, setHiddenEvaluations] = useState<Set<number>>(new Set());
 
-    const totalEvaluationPages = Math.ceil(coach?.evaluations?.length ?? 0 / EVALUATIONS_PER_PAGE) || 1;
-    const totalResultsPages = Math.ceil(coach?.evaluationResults?.length ?? 0 / RESULTS_PER_PAGE) || 1;
 
+  const handleHide = async (id: number) => {
+    const result = await MySwal.fire({
+      title: 'Are you sure?',
+      text: 'This evaluation will be marked as hidden.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, hide it!',
+      cancelButtonText: 'Cancel',
+    });
 
-
-    useEffect(() => {
-        async function fetchCoachData() {
-            try {
-                const res = await fetch(`/api/coach/${id}`);
-                const data = await res.json();
-                setCoach(data);
-            } catch (err) {
-                console.error('Failed to fetch coach data', err);
-            } finally {
-                setLoading(false);
+    if (result.isConfirmed) {
+      const res = await fetch(`/api/coach/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        // const { newStatus } = await res.json();
+        MySwal.fire('Updated!', 'Evaluation status updated.', 'success');
+        setCoach(prev =>
+          prev
+            ? {
+              ...prev,
+              evaluations: prev.evaluations.map(ev =>
+                ev.evaluationId === id ? { ...ev, is_deleted: 0 } : ev
+              ),
             }
-        }
+            : null
+        );
+      } else {
+        MySwal.fire('Error!', 'Failed to update evaluation.', 'error');
+      }
+    }
+  };
 
-        fetchCoachData();
-    }, [id]);
+  const handleRevert = async (id: number) => {
+    const result = await MySwal.fire({
+      title: 'Are you sure?',
+      text: 'This will revert the evaluation status.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, revert it!',
+      cancelButtonText: 'Cancel',
+    });
 
-    if (loading) return <div className="p-6 text-center">Loading coach data...</div>;
-    if (!coach) return <div className="p-6 text-center text-red-500">Coach not found.</div>;
+    if (result.isConfirmed) {
+      const res = await fetch(`/api/coach/${id}`, { method: 'PATCH' });
+      if (res.ok) {
+        // const { newStatus } = await res.json();
+        MySwal.fire('Updated!', 'Evaluation status updated.', 'success');
+        setCoach(prev =>
+          prev
+            ? {
+              ...prev,
+              evaluations: prev.evaluations.map(ev =>
+                ev.evaluationId === id ? { ...ev, is_deleted: 1 } : ev
+              ),
+            }
+            : null
+        );
+      } else {
+        MySwal.fire('Error!', 'Failed to update evaluation.', 'error');
+      }
+    }
+  };
 
-    return (
-        <div className="p-6 max-w-7xl mx-auto space-y-8">
-            {/* Header */}
-            <div className="p-6 max-w-7xl mx-auto space-y-8">
-                <div className="flex items-center gap-6 p-6 bg-white rounded-2xl shadow mb-6 ">
-                    {coach.image && (
-                        <Image
-                            src={coach.image}
-                            alt={`${coach.first_name} ${coach.last_name}`}
-                            width={96} // 24 * 4 (tailwind w-24 = 6rem = 96px)
-                            height={96}
-                            className="w-24 h-24 object-cover rounded-full border-4 border-gray-200 shadow"
-                        />
-                    )}
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-800">Player History</h1>
-                        <p className="text-xl font-medium text-gray-600">
-                            {coach.firstName} {coach.lastName}
-                        </p>
-                    </div>
-                </div>
-                {/* Coach Info Card */}
-                <div className="bg-white shadow-md rounded-2xl p-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm border border-gray-200">
-                    {/* <div><strong className="text-gray-500">Name:</strong> {coach.firstName} {coach.lastName}</div> */}
-                    <div><strong className="text-gray-500">Email:</strong> {coach.email}</div>
-                    <div><strong className="text-gray-500">Phone:</strong> {coach.phoneNumber}</div>
-                    <div><strong className="text-gray-500">Sport:</strong> {coach.sport}</div>
-                    <div><strong className="text-gray-500">Status:</strong>
-                        <span className={`ml-2 px-2 py-1 rounded-full text-white text-xs ${coach.status === 'active' ? 'bg-green-500' : 'bg-yellow-500'}`}>
-                            {coach.status}
-                        </span>
-                    </div>
-                    <div><strong className="text-gray-500">Qualifications:</strong> {coach.qualifications}</div>
-                    <div><strong className="text-gray-500">Consumed Licenses:</strong> {coach.consumeLicenseCount}</div>
-                    <div><strong className="text-gray-500">Assigned Licenses:</strong> {coach.assignedLicenseCount}</div>
-                    <div><strong className="text-gray-500">Total Earnings:</strong> ${coach.earnings}</div>
-                </div>
+  const handleHidePayment = async (id: number) => {
+    console.log("evaluation:", id)
+    const result = await MySwal.fire({
+      title: 'Are you sure?',
+      text: 'This payment will be marked as hidden.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, hide it!',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (result.isConfirmed) {
+      const res = await fetch(`/api/coach/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        // const { newStatus } = await res.json();
+        MySwal.fire('Updated!', 'Payment status updated.', 'success');
+        window.location.reload();
+
+        setPayments(prev =>
+          prev.map(payment =>
+            payment.evaluation_id === id ? { ...payment, is_deleted: 0 } : payment
+          )
+        );
+
+      } else {
+        MySwal.fire('Error!', 'Failed to update payment.', 'error');
+      }
+    }
+  };
+
+
+  const handleRevertPayment = async (id: number) => {
+    const result = await MySwal.fire({
+      title: 'Are you sure?',
+      text: 'This will revert the payment status.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, revert it!',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (result.isConfirmed) {
+      const res = await fetch(`/api/coach/${id}`, {
+        method: 'PATCH',
+      });
+
+      if (res.ok) {
+        // const { newStatus } = await res.json();
+        MySwal.fire('Updated!', 'Payment status reverted.', 'success');
+        window.location.reload();
+
+        setPayments(prev =>
+          prev.map(payment =>
+            payment.evaluation_id === id ? { ...payment, is_deleted: 1 } : payment
+          )
+        );
+      } else {
+        MySwal.fire('Error!', 'Failed to revert payment.', 'error');
+      }
+    }
+  };
+
+
+
+
+
+const handleEvaluationDetails = (evaluation: Evaluation) => {
+  router.push(`/evaluationdetails?evaluationId=${evaluation.evaluationId}`);
+};
+
+  // const handleEvaluationDetails = (evaluation: Evaluation) => {
+     
+  //    window.open(`/evaluationdetails?evaluationId=${evaluation.evaluationId}`, 'blank');
+  // };
+  // const totalPages = Math.ceil((coach?.payments?.length ?? 0) / ITEMSPERPAGE) || 1;
+  // const EVALUATIONSPERPAGE = 10;
+  // const RESULTSPERPAGE = 10;
+
+  // const [resultsPage, setResultsPage] = useState(1);
+
+  // const paginatedResults = coach?.evaluationResults?.slice(
+  //   (resultsPage - 1) * RESULTSPERPAGE,
+  //   resultsPage * RESULTSPERPAGE
+  // ) ?? [];
+
+  // const totalEvaluationPages = Math.ceil(coach?.evaluations?.length ?? 0 / EVALUATIONSPERPAGE) || 1;
+  // const totalResultsPages = Math.ceil(coach?.evaluationResults?.length ?? 0 / RESULTSPERPAGE) || 1;
+
+  const handleDownload = async (url: string) => {
+    if (!url || typeof url !== 'string') {
+      return;
+    }
+
+
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      console.log("value:", blob)
+      const blobUrl = window.URL.createObjectURL(blob);
+      // Extract file extension from URL (strip query params if present)
+      const urlWithoutQuery = url.split('?')[0];
+      const extensionMatch = urlWithoutQuery.split('.').pop();
+      const extension = extensionMatch && extensionMatch.length < 10 ? extensionMatch : 'file';
+      const filename = `download.${extension}`;
+
+      // Create and trigger download link
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Cleanup blob URL
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+      }, 100);
+    } catch (error) {
+      console.error("Download failed:", error);
+      // Optional: display error toast
+      // showError("Download failed. Please try again.");
+    }
+
+
+  };
+
+  useEffect(() => {
+    async function fetchCoachData() {
+      try {
+        const res = await fetch(`/api/coach/${id}`);
+        const data = await res.json();
+        console.log("is_deleted", data)
+        setCoach(data);
+        setPayments(data.payments || []);
+
+      } catch (err) {
+        console.error('Failed to fetch coach data', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+
+    fetchCoachData();
+
+
+  }, [id]);
+
+  if (loading) return <div className="p-6 text-center">Loading coach data...</div>;
+  if (!coach) return <div className="p-6 text-center text-red-500">Coach not found.</div>;
+
+  return (
+    <div className=" max-w-7xl mx-auto ">
+      {/* Header */} <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow p-6 mb-6">
+
+        <div className="flex items-center justify-between gap-6">
+
+          {/* Left: Coach Image and Info */}
+          <div className="flex items-center gap-6">
+            {coach.image && (
+              <Image
+                src={coach.image}
+                alt={`${coach.first_name} ${coach.last_name}`}
+                width={96}
+                height={96}
+                className="w-24 h-24 object-cover rounded-full border-4 border-gray-200 shadow"
+              />
+            )}
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800">
+                {coach.firstName} {coach.lastName}
+              </h1>
+              <p className="text-xl text-gray-600">{coach.clubName}</p>
+              <div className="flex gap-3 mt-2 text-xl text-gray-500">
+                <a href={coach.facebook} target="_blank" rel="noopener noreferrer">
+                  <FaFacebookF className="text-[#1877F2] hover:opacity-80 transition" />
+                </a>
+                <a href={coach.instagram} target="_blank" rel="noopener noreferrer">
+                  <FaInstagram className="text-[#E1306C] hover:opacity-80 transition" />
+                </a>
+                <a href={coach.linkedin} target="_blank" rel="noopener noreferrer">
+                  <FaLinkedinIn className="text-[#0A66C2] hover:opacity-80 transition" />
+                </a>
+                <a href={coach.youtube} target="_blank" rel="noopener noreferrer">
+                  <FaYoutube className="text-[#FF0000] hover:opacity-80 transition" />
+                </a>
+                <a href={coach.xlink} target="_blank" rel="noopener noreferrer">
+                  <FaTwitter className="text-[#1DA1F2] hover:opacity-80 transition" />
+                </a>
+              </div>
             </div>
+          </div>
 
-            {/* Evaluations */}
-            <section className="p-6 max-w-7xl mx-auto space-y-8">
-                <h2 className="text-2xl font-semibold mb-4">Evaluations</h2>
-                <div className="overflow-x-auto bg-white shadow-md rounded-2xl border border-gray-200">
-                    {coach.evaluations.length === 0 ? (
-                        <p className="p-6 text-gray-600">No evaluations found.</p>
-                    ) : (
-                        <table className="w-full text-sm text-left border-collapse">
-                            <thead className="bg-gray-50 border-b text-gray-700 uppercase text-xs">
-                                <tr>
-                                    <th className="px-4 py-3">Title</th>
-                                    <th className="px-4 py-3">Video</th>
-                                    <th className="px-4 py-3">Jersey</th>
-                                    <th className="px-4 py-3">Color</th>
-                                    <th className="px-4 py-3">Position</th>
-                                    <th className="px-4 py-3">Status</th>
-                                    <th className="px-4 py-3">Turnaround</th>
-                                    <th className="px-4 py-3">Payment</th>
-                                    <th className="px-4 py-3">Rating</th>
-                                    <th className="px-4 py-3">Remarks</th>
-                                    <th className="px-4 py-3">Created At</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {paginatedEvaluations.map((ev: Evaluation) => (
-                                    <tr key={ev.id} className="hover:bg-gray-50 border-b">
-                                        <td className="px-4 py-3">{ev.review_title}</td>
-                                        <td className="px-4 py-3">
-                                            <a
-                                                href={ev.primary_video_link}
-                                                className="text-blue-600 hover:underline"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                Watch
-                                            </a>
-                                        </td>
-                                        <td className="px-4 py-3">{ev.jerseyNumber}</td>
-                                        <td className="px-4 py-3">{ev.jerseyColorOne}</td>
-                                        <td className="px-4 py-3">{ev.positionOne}</td>
-                                        <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 text-xs rounded-full font-medium text-white ${ev.status === 2 ? 'bg-green-500' : 'bg-gray-400'
-                                                }`}>
-                                                {ev.status === 2 ? 'Completed' : 'Pending'}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3">{ev.turnaroundTime} mins</td>
-                                        <td className="px-4 py-3">{ev.payment_status}</td>
-                                        <td className="px-4 py-3">{ev.rating ?? '—'}</td>
-                                        <td className="px-4 py-3">{ev.remarks ?? '—'}</td>
-                                        <td className="px-4 py-3">{new Date(ev.created_at).toLocaleDateString()}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                            </table>
-                    )}
-                            <div className="flex justify-between items-center p-4 border-t">
-                                <button
-                                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
-                                    onClick={() => setEvaluationPage((prev) => Math.max(prev - 1, 1))}
-                                    disabled={evaluationPage === 1}
-                                >
-                                    Previous
-                                </button>
-
-                                <div className="text-sm text-gray-700">
-                                    Page {evaluationPage} of {totalEvaluationPages}
-                                </div>
-                                <button
-                                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
-                                    onClick={() => setEvaluationPage((prev) => Math.min(prev + 1, totalEvaluationPages))}
-                                    disabled={evaluationPage === totalEvaluationPages}
-                                >
-                                    Next
-                                </button>
-                            </div>
-
-                    
-                </div>
-            </section>
-
-            {/* Evaluation Results */}
-            <section className="p-6 max-w-7xl mx-auto space-y-8">
-                <h2 className="text-2xl font-semibold mb-4">Evaluation Results</h2>
-                <div className="overflow-x-auto bg-white shadow-md rounded-2xl border border-gray-200">
-                    {coach.evaluationResults.length === 0 ? (
-                        <p className="p-6 text-gray-600">No evaluation results found.</p>
-                    ) : (
-                        <table className="w-full text-sm text-left border-collapse">
-                            <thead className="bg-gray-50 border-b text-gray-700 uppercase text-xs">
-                                <tr>
-                                    <th className="px-4 py-3">Final Remarks</th>
-                                    <th className="px-4 py-3">Sport</th>
-                                    <th className="px-4 py-3">Physical</th>
-                                    <th className="px-4 py-3">Technical</th>
-                                    <th className="px-4 py-3">Tactical</th>
-                                    <th className="px-4 py-3">Created</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {paginatedResults.map((r: EvaluationResult) => (
-                                    <tr key={r.id} className="hover:bg-gray-50 border-b">
-                                        <td className="px-4 py-3">{r.finalRemarks ?? '—'}</td>
-                                        <td className="px-4 py-3">{r.sport ?? '—'}</td>
-                                        <td className="px-4 py-3">{r.physicalScores}</td>
-                                        <td className="px-4 py-3">{r.technicalScores}</td>
-                                        <td className="px-4 py-3">{r.tacticalScores}</td>
-                                        <td className="px-4 py-3">{new Date(r.created_at).toLocaleDateString()}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                            </table>
-                    )}
-                            <div className="flex justify-between items-center p-4 border-t">
-                                <button
-                                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
-                                    onClick={() => setResultsPage((prev) => Math.max(prev - 1, 1))}
-                                    disabled={resultsPage === 1}
-                                >
-                                    Previous
-                                </button>
-                                <div className="text-sm text-gray-700 text-center">
-                                    Page {resultsPage} of {totalResultsPages}
-                                </div>
-                                <button
-                                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
-                                    onClick={() => setResultsPage((prev) => Math.min(prev + 1, totalResultsPages))}
-                                    disabled={resultsPage === totalResultsPages}
-                                >
-                                    Next
-                                </button>
-                            </div>
-
-                        
-                </div>
-            </section>
+          {/* Right: Download Section */}
+          <div className="flex flex-col items-end space-y-2">
+            <button
+              className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition"
+              onClick={() => {
+                // console.log("Downloading Coaching cv:", coach.cv); // 👈 Log to console
+                handleDownload(coach.cv);
+              }}
+            >
+              <FaFileAlt className="text-blue-500" />
+              <span>Download CV</span>
+            </button>
+            <button
+              className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition"
+              onClick={() => {
+                // console.log("Downloading Coaching License:", coach.license); // 👈 Log to console
+                handleDownload(coach.license);
+              }}
+            >
+              <FaFileAlt className="text-blue-500" />
+              <span>Download Coaching License</span>
+            </button>
+          </div>
 
 
-            {/* Payments */}
-            <section className="p-6 max-w-7xl mx-auto space-y-8">
-                <h2 className="text-2xl font-semibold mb-4">Payments</h2>
-                <div className="overflow-x-auto bg-white shadow-md rounded-2xl border border-gray-200">
-                    {coach.payments.length === 0 ? (
-                        <p className="p-6 text-gray-600">No payments found.</p>
-                    ) : (
-                        <>
-                            <table className="w-full text-sm text-left border-collapse">
-                                <thead className="bg-gray-50 border-b text-gray-700 uppercase text-xs">
-                                    <tr>
-                                        <th className="px-4 py-3">Player ID</th>
-                                        <th className="px-4 py-3">Evaluation</th>
-                                        <th className="px-4 py-3">Amount</th>
-                                        <th className="px-4 py-3">Status</th>
-                                        <th className="px-4 py-3">Currency</th>
-                                        <th className="px-4 py-3">Created</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {paginatedPayments.map((p: Payment) => (
-                                        <tr key={p.id} className="hover:bg-gray-50 border-b">
-                                            <td className="px-4 py-3">{p.player_id}</td>
-                                            <td className="px-4 py-3">{p.evaluation_id}</td>
-                                            <td className="px-4 py-3">${p.amount}</td>
-                                            <td className="px-4 py-3">{p.status}</td>
-                                            <td className="px-4 py-3">{p.currency}</td>
-                                            <td className="px-4 py-3">{new Date(p.created_at).toLocaleDateString()}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-
-                            {/* Pagination Controls */}
-                            <div className="flex justify-between items-center p-4 border-t">
-                                <button
-                                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
-                                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                                    disabled={currentPage === 1}
-                                >
-                                    Previous
-                                </button>
-                                <div className="text-sm text-gray-700">
-                                    Page {currentPage} of {totalPages}
-                                </div>
-                                <button
-                                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
-                                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </section>
         </div>
-    );
+      </div>
+
+
+      {/* Coach Info Card */}
+      <div className="bg-white shadow-md rounded-2xl p-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border border-gray-200">
+        {/* <div><strong className="text-gray-500">Name:</strong> {coach.firstName} {coach.lastName}</div> */}
+        <div><strong className="text-gray-700">Email:</strong> {coach.email}</div>
+        <div><strong className="text-gray-700">Phone:</strong> {coach.countrycode}{coach.phoneNumber}</div>
+        <div><strong className="text-gray-700">Gender:</strong> {coach.gender}</div>
+        <div><strong className="text-gray-700">Sport:</strong> {coach.sport}</div>
+        <div><strong className="text-gray-700">City:</strong> {coach.city}</div>
+        <div><strong className="text-gray-700">State:</strong> {coach.state}</div>
+        <div><strong className="text-gray-700">Country:</strong> {coach.countryName}</div>
+        <div><strong className="text-gray-700">Status:</strong>
+          <span className={`ml-2 px-2 py-1 rounded-full text-white text-xs ${coach.status === 'active' ? 'bg-green-500' : 'bg-yellow-500'}`}>
+            {coach.status}
+          </span>
+        </div>
+        <div><strong className="text-gray-700">Coaching License Type:</strong> {coach.license_type}</div>
+        {/* <div><strong className="text-gray-500">Consumed Licenses:</strong> {coach.consumeLicenseCount}</div> */}
+        {/* <div><strong className="text-gray-500">Assigned Licenses:</strong> {coach.assignedLicenseCount}</div> */}
+        <div><strong className="text-gray-700">Total Earnings:</strong><span className='ml-2 px-2 py-1 rounded-full  text-xs bg-blue-200 '> ${coach.earnings}</span></div>
+        <div><strong className="text-gray-700">Qualifications:</strong> {coach.qualifications}</div>
+
+
+      </div>
+      <div>  <h2 className="text-lg font-semibold mt-5  bg-customBlue text-black p-4 rounded-lg">
+        Background
+      </h2>
+        <section className="bg-white p-6 border mb-4 rounded-lg shadow-md transform transition-all duration-300 hover:shadow-lg animate-fadeInDelay">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {/* First Column: Qualifications */}
+            <div>
+              {/* <h3 className="text-lg font-semibold mb-2">Background</h3> */}
+              <p className="text-gray-700">
+                {coach.qualifications}
+              </p>
+            </div>
+            <div>
+              {/* <h3 className="text-lg font-semibold mb-2">Background</h3> */}
+
+            </div>
+          </div>
+
+          {/* Modal */}
+
+        </section>
+      </div>
+
+
+
+
+      {/* Evaluations */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-semibold">Evaluations</h2>
+        <div className="text-gray-700">
+
+
+          Total: {coach.evaluations.filter((ev: Evaluation) => ev.is_deleted !== 0).length}
+
+        </div>
+
+
+        <div className="overflow-x-auto bg-white shadow-md rounded-2xl border border-gray-200">
+          {coach.evaluations.length === 0 ? (
+            <p className="p-6 text-gray-600">No evaluations found.</p>
+          ) : (
+            <table className="w-full text-sm text-left border-collapse">
+              <thead className="bg-gray-50 border-b text-gray-700 uppercase text-xs">
+                <tr>
+                  <th className="px-4 py-3">Player</th>
+                  <th className="px-4 py-3">Title</th>
+                  <th className="px-4 py-3">Video</th>
+                  <th className="px-4 py-3">Jersey</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Turnaround</th>
+                  <th className="px-4 py-3">Payment</th>
+                  <th className="px-4 py-3">Created At</th>
+                  <th className="px-4 py-3 text-center">Action</th>
+
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedEvaluations
+                  //  .filter((ev: Evaluation) => ev.status !== 0) 
+                  .map((ev: Evaluation) => (
+                    <tr
+                      key={ev.evaluationId}
+                      className={`transition-colors duration-300 ${ev.is_deleted === 0 ? 'bg-red-100' : ev.is_deleted === 1 ? 'bg-white' : ''}`}
+
+                    >
+
+
+                      <td className="px-4 py-2 text-gray-700">
+                        <Link href={`/player/${ev.player_id}`} className="text-blue-700 hover:underline">
+
+                          {/* <Link href={`/player/${ev.player_id}`} target="_blank" className="text-blue-700 hover:underline"> */}
+                          {ev.playerFirstName}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3">
+                        {/* <Link href={`/player/${ev.player_id}`} className="text-blue-700 hover:underline"> */}
+                        <a onClick={() => handleEvaluationDetails(ev)} href='#' className=' text-blue-700'>{ev.review_title}</a>
+
+
+                      </td>
+                      <td className="px-4 py-3">
+                        <a href={ev.primary_video_link} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                          Watch
+                        </a>
+                      </td>
+                      <td className="px-4 py-3">{ev.jerseyNumber}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 text-xs rounded-full font-medium text-white ${ev.status === 2 ? 'bg-green-500' : 'bg-gray-400'}`}>
+                          {ev.status === 2 ? 'Completed' : 'Pending'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">{ev.turnaroundTime} mins</td>
+                      <td className="px-4 py-3">{ev.payment_status}</td>
+                      <td className="px-4 py-3">{new Date(ev.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
+
+
+                        {ev.is_deleted === 0 ? (
+                          <button
+                            onClick={() => handleRevert(ev.evaluationId)}
+                            title="Revert Coach"
+
+                            style={{
+                              fontSize: '1.2rem',
+                              marginRight: '8px',
+                            }}
+                          >
+                            🛑
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleHide(ev.evaluationId)}
+                            title="Hide Coach"
+                            style={{
+                              fontSize: '1.2rem',
+                            }}
+                          >
+                            ♻️
+                          </button>
+                        )}
+
+
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          )}
+
+          {/* Pagination */}
+          <div className="flex justify-between items-center p-4 border-t">
+            <button
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
+              onClick={() => setEvaluationPage((prev) => Math.max(prev - 1, 1))}
+              disabled={evaluationPage === 1}
+            >
+              Previous
+            </button>
+            <div className="text-sm text-gray-700">
+              Page {evaluationPage}
+            </div>
+            <button
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
+              onClick={() => setEvaluationPage((prev) => Math.min(prev + 1, totalEvaluationPages))}
+              disabled={evaluationPage === totalEvaluationPages}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </section >
+
+      {/* Payments */}
+      {payments.length > 0 && (
+
+        < section className="p-6 max-w-7xl mx-auto space-y-8" >
+
+          <h2 className="text-2xl font-semibold mb-4">Payments</h2>
+          <div className='flex justify-between'>
+            <div className="text-gray-700">Total: {coach.payments.filter((p: Payment) => p.is_deleted !== 0).length}</div>
+            {/* Total: {coach.evaluations.filter((ev: Evaluation) => ev.is_deleted !== 0).length} */}
+
+            <div className="text-gray-700 ">Total Earnings: ${coach.earnings}</div></div>
+          <div className="overflow-x-auto bg-white shadow-md rounded-2xl border border-gray-200">
+            {coach.payments.length === 0 ? (
+              <p className="p-6 text-gray-600">No payments found.</p>
+            ) : (
+              <>
+                <table className="w-full text-sm text-left border-collapse">
+                  <thead className="bg-gray-50 border-b text-gray-700 uppercase text-xs">
+                    <tr>
+                      <th className="px-4 py-3">Player</th>
+                      <th className="px-4 py-3">Evaluation</th>
+                      <th className="px-4 py-3">Amount</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Description</th>
+                      <th className="px-4 py-3">Created At</th>
+                      <th className="px-4 py-3">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedPayments.map((p: Payment) => (
+                      // <tr key={p.id} className="hover:bg-gray-50 border-b">
+                      <tr
+                        key={p.evaluation_id}
+                        className={`transition-colors duration-300 ${p.is_deleted === 0 ? 'bg-red-100' : 'bg-white'
+                          }`}
+                      >
+
+                        <td className="px-4 py-3">{p.playerFirstName}</td>
+                        <td className="px-4 py-3">{p.review_title}</td>
+                        <td className="px-4 py-3">${p.amount}</td>
+                        <td className="px-4 py-3">{p.status}</td>
+                        <td className="px-4 py-3">{p.description}</td>
+                        <td className="px-4 py-3">{new Date(p.created_at).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
+                          {p.is_deleted === 0 ? (
+                            <button
+                              onClick={() => handleRevertPayment(p.evaluation_id)}
+                              title="Revert Coach"
+
+                              style={{
+                                fontSize: '1.2rem',
+                                marginRight: '8px',
+                              }}
+                            >
+                              🛑
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleHidePayment(p.evaluation_id)}
+                              title="Hide Coach"
+                              style={{
+                                fontSize: '1.2rem',
+                              }}
+                            >
+                              ♻️
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* Pagination Controls */}
+                <div className="flex justify-between items-center p-4 border-t">
+                  <button
+                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
+                    onClick={() => setPaymentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={paymentPage === 1}
+                  >
+                    Previous
+                  </button>
+                  <div className="text-sm text-gray-700">
+                    Page {paymentPage}
+                  </div>
+                  <button
+                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
+                    onClick={() => setPaymentPage((prev) => Math.min(prev + 1, totalPaymentPages))}
+                    disabled={paymentPage === totalPaymentPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </section >
+      )}
+    </div >
+
+  );
 }
