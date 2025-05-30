@@ -373,6 +373,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
                     {/** palyer history */}
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                     
                       <Link href={`/player/${player.id}`}>
                         <Button>Open</Button>
                       </Link>

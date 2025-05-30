@@ -43,7 +43,8 @@ export async function GET(req: NextRequest) {
             ilike(coaches.email, `%${search}%`),
             ilike(coaches.phoneNumber, `%${search}%`),
             ilike(coaches.sport, `%${search}%`),
-            ilike(coaches.status, `%${search}%`)
+            ilike(coaches.status, `%${search}%`),
+            ilike(coaches.gender, `%${search}%`)
           )
         )
       : baseCondition;

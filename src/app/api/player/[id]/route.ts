@@ -20,6 +20,7 @@ export async function GET(
     const playerResult = await db
       .select({
         id: users.id,
+        email:users.email,
         first_name: users.first_name,
         last_name: users.last_name,
         image: users.image,
