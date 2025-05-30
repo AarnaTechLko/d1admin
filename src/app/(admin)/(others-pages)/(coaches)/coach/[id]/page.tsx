@@ -1,5 +1,7 @@
 'use client';
-import { FaTwitter, FaFacebookF, FaFileAlt, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
+import { FacebookIcon, Instagram, Youtube, Linkedin,Twitter } from "lucide-react";
+
+import {  FaFileAlt } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -348,73 +350,98 @@ const handleEvaluationDetails = (evaluation: Evaluation) => {
   if (!coach) return <div className="p-6 text-center text-red-500">Coach not found.</div>;
 
   return (
-    <div className=" max-w-7xl mx-auto ">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
       {/* Header */} <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow p-6 mb-6">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 p-4 bg-white rounded-2xl shadow">
 
-        <div className="flex items-center justify-between gap-6">
+  {/* Image */}
+  <div className="flex-shrink-0">
+    {coach.image && (
+      <Image
+        src={coach.image}
+        alt={`${coach.firstName} ${coach.lastName}`}
+        width={96}
+        height={96}
+        className="w-30 h-30 object-cover rounded-full border-4 border-gray-200 shadow mx-auto md:mx-0"
+      />
+    )}
+  </div>
 
-          {/* Left: Coach Image and Info */}
-          <div className="flex items-center gap-6">
-            {coach.image && (
-              <Image
-                src={coach.image}
-                alt={`${coach.first_name} ${coach.last_name}`}
-                width={96}
-                height={96}
-                className="w-24 h-24 object-cover rounded-full border-4 border-gray-200 shadow"
-              />
-            )}
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">
-                {coach.firstName} {coach.lastName}
-              </h1>
-              <p className="text-xl text-gray-600">{coach.clubName}</p>
-              <div className="flex gap-3 mt-2 text-xl text-gray-500">
-                <a href={coach.facebook} target="_blank" rel="noopener noreferrer">
-                  <FaFacebookF className="text-[#1877F2] hover:opacity-80 transition" />
-                </a>
-                <a href={coach.instagram} target="_blank" rel="noopener noreferrer">
-                  <FaInstagram className="text-[#E1306C] hover:opacity-80 transition" />
-                </a>
-                <a href={coach.linkedin} target="_blank" rel="noopener noreferrer">
-                  <FaLinkedinIn className="text-[#0A66C2] hover:opacity-80 transition" />
-                </a>
-                <a href={coach.youtube} target="_blank" rel="noopener noreferrer">
-                  <FaYoutube className="text-[#FF0000] hover:opacity-80 transition" />
-                </a>
-                <a href={coach.xlink} target="_blank" rel="noopener noreferrer">
-                  <FaTwitter className="text-[#1DA1F2] hover:opacity-80 transition" />
-                </a>
-              </div>
-            </div>
-          </div>
+  {/* Name + Socials */}
+  <div className="flex flex-col items-center md:items-start gap-2 md:flex-1">
+    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 text-center md:text-left">
+      {coach.firstName} {coach.lastName}
+    </h1>
+    <p className="text-base sm:text-lg md:text-xl text-gray-600 text-center md:text-left">
+      {coach.clubName}
+    </p>
 
-          {/* Right: Download Section */}
-          <div className="flex flex-col items-end space-y-2">
-            <button
-              className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition"
-              onClick={() => {
-                // console.log("Downloading Coaching cv:", coach.cv); // 👈 Log to console
-                handleDownload(coach.cv);
-              }}
-            >
-              <FaFileAlt className="text-blue-500" />
-              <span>Download CV</span>
-            </button>
-            <button
-              className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition"
-              onClick={() => {
-                // console.log("Downloading Coaching License:", coach.license); // 👈 Log to console
-                handleDownload(coach.license);
-              }}
-            >
-              <FaFileAlt className="text-blue-500" />
-              <span>Download Coaching License</span>
-            </button>
-          </div>
+    <div className="flex gap-3 mt-2 text-lg sm:text-xl text-gray-500">
+      <a
+        href={coach.facebook || "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={!coach.facebook ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-700"}
+      >
+        <FacebookIcon className="w-6 h-6" />
+      </a>
+      <a
+        href={coach.instagram || "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={!coach.instagram ? "text-gray-400 cursor-default" : "text-pink-600 hover:text-red-600"}
+      >
+        <Instagram className="w-6 h-6" />
+      </a>
+      <a
+        href={coach.youtube || "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={!coach.youtube ? "text-gray-400 cursor-default" : "text-red-600 hover:text-red-800"}
+      >
+        <Youtube className="w-6 h-6" />
+      </a>
+      <a
+        href={coach.linkedin || "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={!coach.linkedin ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
+      >
+        <Linkedin className="w-6 h-6" />
+      </a>
+      <a
+        href={coach.xlink || "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={!coach.xlink ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
+      >
+        <Twitter className="w-6 h-6" />
+      </a>
+    </div>
+  </div>
+
+  {/* Download Buttons */}
+<div className="flex flex-col items-center sm:items-end lg:items-end space-y-2">
+  <button
+    className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-700 hover:text-blue-600 transition"
+    onClick={() => handleDownload(coach.cv)}
+  >
+    <FaFileAlt className="text-blue-500" />
+    <span>Download CV</span>
+  </button>
+  <button
+    className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-700 hover:text-blue-600 transition"
+    onClick={() => handleDownload(coach.license)}
+  >
+    <FaFileAlt className="text-blue-500" />
+    <span>Download Coaching License</span>
+  </button>
+</div>
 
 
-        </div>
+
+</div>
+
       </div>
 
 
@@ -487,7 +514,7 @@ const handleEvaluationDetails = (evaluation: Evaluation) => {
             <table className="w-full text-sm text-left border-collapse">
               <thead className="bg-gray-50 border-b text-gray-700 uppercase text-xs">
                 <tr>
-                  <th className="px-4 py-3">Player</th>
+                  <th className="px-4 py-3">coach</th>
                   <th className="px-4 py-3">Title</th>
                   <th className="px-4 py-3">Video</th>
                   <th className="px-4 py-3">Jersey</th>
@@ -511,14 +538,14 @@ const handleEvaluationDetails = (evaluation: Evaluation) => {
 
 
                       <td className="px-4 py-2 text-gray-700">
-                        <Link href={`/player/${ev.player_id}`} className="text-blue-700 hover:underline">
+                        <Link href={`/coach/${ev.player_id}`} className="text-blue-700 hover:underline">
 
-                          {/* <Link href={`/player/${ev.player_id}`} target="_blank" className="text-blue-700 hover:underline"> */}
+                          {/* <Link href={`/coach/${ev.player_id}`} target="_blank" className="text-blue-700 hover:underline"> */}
                           {ev.playerFirstName}
                         </Link>
                       </td>
                       <td className="px-4 py-3">
-                        {/* <Link href={`/player/${ev.player_id}`} className="text-blue-700 hover:underline"> */}
+                        {/* <Link href={`/coach/${ev.player_id}`} className="text-blue-700 hover:underline"> */}
                         <a onClick={() => handleEvaluationDetails(ev)} href='#' className=' text-blue-700'>{ev.review_title}</a>
 
 
@@ -614,7 +641,7 @@ const handleEvaluationDetails = (evaluation: Evaluation) => {
                 <table className="w-full text-sm text-left border-collapse">
                   <thead className="bg-gray-50 border-b text-gray-700 uppercase text-xs">
                     <tr>
-                      <th className="px-4 py-3">Player</th>
+                      <th className="px-4 py-3">coach</th>
                       <th className="px-4 py-3">Evaluation</th>
                       <th className="px-4 py-3">Amount</th>
                       <th className="px-4 py-3">Status</th>

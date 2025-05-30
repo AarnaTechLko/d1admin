@@ -4,13 +4,16 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FaTwitter, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
+import { FacebookIcon, Instagram, Youtube, Linkedin ,Twitter} from "lucide-react";
+
+// import { FaTwitter, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { useRouter } from 'next/navigation';
 interface Player {
     id: number;
     first_name: string;
+    email:string;
     last_name: string;
     image: string | null;
     position: string;
@@ -335,46 +338,81 @@ const handleEvaluationDetails = (evaluation: Evaluation) => {
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-8">
-            <div className="flex items-start gap-6 p-6 bg-white rounded-2xl shadow mb-6 ">
-                {player.image && typeof player.image === 'string' && player.image.startsWith('http') && (
-                    <Image
-                        src={player.image}
-                        alt={`${player.first_name} ${player.last_name}`}
-                        width={96} // 24 * 4 (tailwind w-24 = 6rem = 96px)
-                        height={96}
-                        className="w-24 h-24 object-cover rounded-full border-4 border-gray-200 shadow"
-                    />
-                )}
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800"> {player.first_name} {player.last_name}</h1>
-                    <div className="flex gap-3 mt-2 text-xl text-gray-500">
-                        <a href={player.facebook} target="_blank" rel="noopener noreferrer">
-                            <FaFacebookF className="text-[#1877F2] hover:opacity-80 transition" />
-                        </a>
-                        <a href={player.instagram} target="_blank" rel="noopener noreferrer">
-                            <FaInstagram className="text-[#E1306C] hover:opacity-80 transition" />
-                        </a>
-                        <a href={player.linkedin} target="_blank" rel="noopener noreferrer">
-                            <FaLinkedinIn className="text-[#0A66C2] hover:opacity-80 transition" />
-                        </a>
-                        <a href={player.youtube} target="_blank" rel="noopener noreferrer">
-                            <FaYoutube className="text-[#FF0000] hover:opacity-80 transition" />
-                        </a>
-                        <a href={player.xlink} target="_blank" rel="noopener noreferrer">
-                            <FaTwitter className="text-[#1DA1F2] hover:opacity-80 transition" />
-                        </a>
-                    </div>
-                </div>
-            </div>
+         <div className="flex flex-col sm:flex-row items-start gap-6 p-6 bg-white rounded-2xl shadow mb-6">
+  {player.image && typeof player.image === 'string' && player.image.startsWith('http') && (
+    <Image
+      src={player.image}
+      alt={`${player.first_name} ${player.last_name}`}
+      width={96}
+      height={96}
+      className="w-24 h-24 object-cover rounded-full border-4 border-gray-200 shadow"
+    />
+  )}
+  <div>
+    <h1 className="text-3xl font-bold text-gray-800">{player.first_name} {player.last_name}</h1>
+    <div className="flex gap-3 mt-2 text-xl text-gray-500">
+      <a
+        href={player.facebook || "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={!player.facebook ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-700"}
+      >
+        <FacebookIcon className="w-6 h-6" />
+      </a>
+      <a
+        href={player.instagram || "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={!player.instagram ? "text-gray-400 cursor-default" : "text-pink-600 hover:text-red-600"}
+      >
+        <Instagram className="w-6 h-6" />
+      </a>
+      <a
+        href={player.youtube || "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={!player.youtube ? "text-gray-400 cursor-default" : "text-red-600 hover:text-red-800"}
+      >
+        <Youtube className="w-6 h-6" />
+      </a>
+      <a
+        href={player.linkedin || "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={!player.linkedin ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
+      >
+        <Linkedin className="w-6 h-6" />
+      </a>
+      <a
+        href={player.xlink || "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={!player.xlink ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
+      >
+        <Twitter className="w-6 h-6" />
+      </a>
+    </div>
+  </div>
+</div>
+
 
             {/* Player Info Card */}
             <div className="p-6 max-w-7xl mx-auto space-y-8">
 
 
-                <div className="bg-white shadow-md rounded-2xl p-6 grid grid-cols-3 md:grid-cols-3 gap-4 text-sm border border-gray-200">
-                    {/* <div>
+<div className="bg-white shadow-md rounded-2xl p-6 border border-gray-200
+  grid 
+  grid-cols-1       
+  sm:grid-cols-2      
+  md:grid-cols-3     
+  gap-4
+  text-sm
+">                    {/* <div>
           <strong className="text-gray-500">Name:</strong> {player.first_name} {player.last_name}
         </div> */}
+        <div>
+                        <strong className="text-gray-700">Email:</strong> {player.email}
+                    </div>
                     <div>
                         <strong className="text-gray-700">Position:</strong> {player.position}
                     </div>

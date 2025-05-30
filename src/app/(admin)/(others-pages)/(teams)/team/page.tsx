@@ -156,6 +156,7 @@ const TeamsPage = () => {
         icon: 'error',
         title: 'Error',
         text: 'Failed to hide team',
+        
       });
     }
   }

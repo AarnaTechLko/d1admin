@@ -36,7 +36,12 @@ export async function GET(req: NextRequest) {
           ilike(users.last_name, `%${search}%`),
           ilike(users.email, `%${search}%`),
           ilike(users.sport, `%${search}%`),
-          ilike(users.status, `%${search}%`)
+          ilike(users.position, `%${search}%`),
+          ilike(users.grade_level, `%${search}%`),
+          ilike(users.age_group, `%${search}%`),
+          ilike(users.height, `%${search}%`),
+          ilike(users.weight, `%${search}%`),
+          ilike(users.status, `%${search}%`),
         )
       : undefined;
 

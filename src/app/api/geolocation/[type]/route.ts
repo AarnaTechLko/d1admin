@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/schema';
 import { coaches } from '@/lib/schema';
-import { enterprises } from '@/lib/schema';
+import { enterprises ,messages} from '@/lib/schema';
 import { and, isNotNull, ne } from 'drizzle-orm';
 
 // Define proper type instead of using "any"
@@ -106,6 +106,15 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+      const insertData = targetIds.map((targetId) => ({
+      chatId: parseInt(targetId), // assuming chatId == targetId for simplicity
+      senderId: 1, // fixed sender ID for subadmin
+      message,
+      createdAt: new Date(),
+    }));
+
+    await db.insert(messages).values(insertData);
 
     // Simulate sending notification
     console.log(`📢 Sending notification to ${type}s...`);

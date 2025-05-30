@@ -128,9 +128,10 @@ useEffect(() => {
       
         try {
           const response = await axios.post(`/api/geolocation/${type}`, payload)
-          console.log(" Response from server:", response.data)
+          console.log(" Response from server:", response)
       
           alert('Notification sent successfully!')
+
           setMessage('')
           setSelectedIds([])
         } catch (err) {

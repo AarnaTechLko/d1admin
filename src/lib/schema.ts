@@ -305,7 +305,7 @@ export const enterprises=pgTable('enterprises', {
   youtube: text('youtube'),
   website: text('website'),
   status: text('status').default('Active'),
-        is_deleted: integer("is_deleted").default(1).notNull(),
+  is_deleted: integer("is_deleted").default(1).notNull(),
 
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
