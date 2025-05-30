@@ -199,10 +199,14 @@ export async function DELETE(
     const newStatus = existing.is_deleted === 1 ? 0 : 1;
 
     // Toggle is_deleted
-    await db
-      .update(playerEvaluation)
+    // await db
+    //   .update(playerEvaluation)
+    //   .set({ is_deleted: newStatus })
+    //   .where(eq(playerEvaluation.id, evaluationId));
+      await db
+      .update(coachearnings)
       .set({ is_deleted: newStatus })
-      .where(eq(playerEvaluation.id, evaluationId));
+      .where(eq(coachearnings.evaluation_id, evaluationId)); // assuming foreign key
 
        await db
       .update(payments)

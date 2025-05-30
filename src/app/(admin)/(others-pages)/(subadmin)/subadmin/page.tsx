@@ -157,9 +157,11 @@ export default function SignInForm() {
         onChange={handleChange}
         className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-300"
         required
-      >
+      > 
+        <option value="Executive">Manager</option>
         <option value="Customer Support">Customer Support</option>
-        <option value="Executive">Executive</option>
+        <option value="Executive">Executive Level 1</option>
+        <option value="Executive">Executive Level 2</option>
       </select>
     </div>
   </div>

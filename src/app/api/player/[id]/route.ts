@@ -7,9 +7,9 @@ import { eq, sql } from 'drizzle-orm';
 
 export async function GET(
   req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = parseInt(( await params).id, 10);
+  const id = parseInt((await params).id, 10);
 
   if (isNaN(id)) {
     return NextResponse.json({ message: 'Invalid player ID' }, { status: 400 });
@@ -20,7 +20,7 @@ export async function GET(
     const playerResult = await db
       .select({
         id: users.id,
-        email:users.email,
+        email: users.email,
         first_name: users.first_name,
         last_name: users.last_name,
         image: users.image,
@@ -109,7 +109,7 @@ export async function GET(
         id: payments.id,
         amount: payments.amount,
         status: payments.status,
-        evaluation_id:payments.evaluation_id,
+        evaluation_id: payments.evaluation_id,
         created_at: payments.created_at,
         player_id: payments.player_id,
         description: payments.description,
@@ -153,9 +153,9 @@ export async function GET(
 
 export async function DELETE(
   req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const evaluationId = parseInt(( await params).id, 10);
+  const evaluationId = parseInt((await params).id, 10);
   if (isNaN(evaluationId)) {
     return NextResponse.json({ message: 'Invalid evaluation ID' }, { status: 400 });
   }
@@ -176,10 +176,16 @@ export async function DELETE(
     const newStatus = existing.is_deleted === 1 ? 0 : 1;
 
     // Toggle is_deleted
+    // await db
+    //   .update(playerEvaluation)
+    //   .set({ is_deleted: newStatus })
+    //   .where(eq(playerEvaluation.id, evaluationId));
+
     await db
-      .update(playerEvaluation)
+      .update(coachearnings)
       .set({ is_deleted: newStatus })
-      .where(eq(playerEvaluation.id, evaluationId));
+      .where(eq(coachearnings.evaluation_id, evaluationId)); // assuming foreign key
+
 
     await db
       .update(payments)
@@ -202,9 +208,9 @@ export async function DELETE(
 
 export async function PATCH(
   req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const evaluationId = parseInt(( await params).id, 10);
+  const evaluationId = parseInt((await params).id, 10);
   if (isNaN(evaluationId)) {
     return NextResponse.json({ message: 'Invalid evaluation ID' }, { status: 400 });
   }
@@ -212,12 +218,12 @@ export async function PATCH(
   try {
     await db
       .update(playerEvaluation)
-      .set({ is_deleted: 1 }) 
+      .set({ is_deleted: 1 })
       .where(eq(playerEvaluation.id, evaluationId));
 
     await db
       .update(payments)
-      .set({ is_deleted:1 })
+      .set({ is_deleted: 1 })
       .where(eq(payments.evaluation_id, evaluationId)); // assuming foreign key
 
 

@@ -4,16 +4,16 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FacebookIcon, Instagram, Youtube, Linkedin ,Twitter} from "lucide-react";
+import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter } from "lucide-react";
 
 // import { FaTwitter, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { useRouter } from 'next/navigation';
+// import { useRouter } from 'next/navigation';
 interface Player {
     id: number;
     first_name: string;
-    email:string;
+    email: string;
     last_name: string;
     image: string | null;
     position: string;
@@ -126,7 +126,7 @@ export default function PlayerDetailPage() {
         evaluationResults: EvaluationResult[];
     } | null>(null);
     // const [isHiding, setIsHiding] = useState(false);
-const router=useRouter();
+    // const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [evaluationPage, setEvaluationPage] = useState(1);
@@ -302,9 +302,9 @@ const router=useRouter();
     };
 
 
-const handleEvaluationDetails = (evaluation: Evaluation) => {
-  router.push(`/evaluationdetails?evaluationId=${evaluation.evaluationId}`);
-};
+    // const handleEvaluationDetails = (evaluation: Evaluation) => {
+    //     router.push(`/evaluationdetails?evaluationId=${evaluation.evaluationId}`);
+    // };
 
 
     useEffect(() => {
@@ -338,69 +338,69 @@ const handleEvaluationDetails = (evaluation: Evaluation) => {
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-8">
-         <div className="flex flex-col sm:flex-row items-start gap-6 p-6 bg-white rounded-2xl shadow mb-6">
-  {player.image && typeof player.image === 'string' && player.image.startsWith('http') && (
-    <Image
-      src={player.image}
-      alt={`${player.first_name} ${player.last_name}`}
-      width={96}
-      height={96}
-      className="w-24 h-24 object-cover rounded-full border-4 border-gray-200 shadow"
-    />
-  )}
-  <div>
-    <h1 className="text-3xl font-bold text-gray-800">{player.first_name} {player.last_name}</h1>
-    <div className="flex gap-3 mt-2 text-xl text-gray-500">
-      <a
-        href={player.facebook || "#"}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={!player.facebook ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-700"}
-      >
-        <FacebookIcon className="w-6 h-6" />
-      </a>
-      <a
-        href={player.instagram || "#"}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={!player.instagram ? "text-gray-400 cursor-default" : "text-pink-600 hover:text-red-600"}
-      >
-        <Instagram className="w-6 h-6" />
-      </a>
-      <a
-        href={player.youtube || "#"}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={!player.youtube ? "text-gray-400 cursor-default" : "text-red-600 hover:text-red-800"}
-      >
-        <Youtube className="w-6 h-6" />
-      </a>
-      <a
-        href={player.linkedin || "#"}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={!player.linkedin ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
-      >
-        <Linkedin className="w-6 h-6" />
-      </a>
-      <a
-        href={player.xlink || "#"}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={!player.xlink ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
-      >
-        <Twitter className="w-6 h-6" />
-      </a>
-    </div>
-  </div>
-</div>
+            <div className="flex flex-col sm:flex-row items-start gap-6 p-6 bg-white rounded-2xl shadow mb-6">
+                {player.image && typeof player.image === 'string' && player.image.startsWith('http') && (
+                    <Image
+                        src={player.image}
+                        alt={`${player.first_name} ${player.last_name}`}
+                        width={96}
+                        height={96}
+                        className="w-24 h-24 object-cover rounded-full border-4 border-gray-200 shadow"
+                    />
+                )}
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-800">{player.first_name} {player.last_name}</h1>
+                    <div className="flex gap-3 mt-2 text-xl text-gray-500">
+                        <a
+                            href={player.facebook || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={!player.facebook ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-700"}
+                        >
+                            <FacebookIcon className="w-6 h-6" />
+                        </a>
+                        <a
+                            href={player.instagram || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={!player.instagram ? "text-gray-400 cursor-default" : "text-pink-600 hover:text-red-600"}
+                        >
+                            <Instagram className="w-6 h-6" />
+                        </a>
+                        <a
+                            href={player.youtube || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={!player.youtube ? "text-gray-400 cursor-default" : "text-red-600 hover:text-red-800"}
+                        >
+                            <Youtube className="w-6 h-6" />
+                        </a>
+                        <a
+                            href={player.linkedin || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={!player.linkedin ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
+                        >
+                            <Linkedin className="w-6 h-6" />
+                        </a>
+                        <a
+                            href={player.xlink || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={!player.xlink ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
+                        >
+                            <Twitter className="w-6 h-6" />
+                        </a>
+                    </div>
+                </div>
+            </div>
 
 
             {/* Player Info Card */}
             <div className="p-6 max-w-7xl mx-auto space-y-8">
 
 
-<div className="bg-white shadow-md rounded-2xl p-6 border border-gray-200
+                <div className="bg-white shadow-md rounded-2xl p-6 border border-gray-200
   grid 
   grid-cols-1       
   sm:grid-cols-2      
@@ -410,7 +410,7 @@ const handleEvaluationDetails = (evaluation: Evaluation) => {
 ">                    {/* <div>
           <strong className="text-gray-500">Name:</strong> {player.first_name} {player.last_name}
         </div> */}
-        <div>
+                    <div>
                         <strong className="text-gray-700">Email:</strong> {player.email}
                     </div>
                     <div>
@@ -523,7 +523,13 @@ const handleEvaluationDetails = (evaluation: Evaluation) => {
                                                 </Link>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <a onClick={() => handleEvaluationDetails(ev)} href='#' className=' text-blue-700'>{ev.review_title}</a>
+                                                {/* <a onClick={() => handleEvaluationDetails(ev)} href='#' className=' text-blue-700'>{ev.review_title}</a> */}
+                                                <Link
+                                                    href={`/evaluationdetails?evaluationId=${ev.evaluationId}`}
+                                                    className="text-blue-700"
+                                                >
+                                                    {ev.review_title}
+                                                </Link>
 
                                             </td>
                                             <td className="px-4 py-3">
@@ -605,7 +611,17 @@ const handleEvaluationDetails = (evaluation: Evaluation) => {
             {/* Payments */}
             <section className="p-6 max-w-7xl mx-auto space-y-8">
                 <h2 className="text-2xl font-semibold mb-4">Payments</h2>
+                 <div className='flex justify-between'>
+
                 <div className="text-gray-700">Total: {data.payments.length}</div>
+                {/* <div className="text-gray-700">
+                    Total Earnings: $
+                    {coach.payments
+                        .filter((p: Payment) => p.is_deleted !== 0)
+                        .reduce((sum, p) => sum + Number(p.amount), 0)
+                        .toFixed(2)}
+                </div> */}
+                </div>
                 <div className="overflow-x-auto bg-white shadow-md rounded-2xl border border-gray-200">
                     {data.payments.length === 0 ? (
                         <p className="p-6 text-gray-600">No payments found.</p>
