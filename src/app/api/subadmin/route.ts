@@ -109,35 +109,36 @@ export async function GET(req: Request) {
 
 
 export async function DELETE(req: Request) {
-    try {
-        const url = new URL(req.url);
-        const adminId = url.searchParams.get("id");
+  try {
+    const url = new URL(req.url);
+    const adminId = url.searchParams.get("id");
 
-        if (!adminId) {
-            return NextResponse.json({ message: "Admin ID is required" }, { status: 400 });
-        }
-
-        const adminIdNumber = Number(adminId);
-        if (isNaN(adminIdNumber)) {
-            return NextResponse.json({ message: "Invalid Admin ID" }, { status: 400 });
-        }
-
-        // Check if the admin exists
-        const existingAdmin = await db.select().from(admins).where(eq(admins.id, adminIdNumber));
-        if (existingAdmin.length === 0) {
-            return NextResponse.json({ message: "Admin not found" }, { status: 404 });
-        }
-
-        // Delete the admin
-        // await db.delete(admin).where(eq(admin.id, adminIdNumber));
-        await db.update(admins).set({ is_deleted: true }).where(eq(admins.id, adminIdNumber));
-
-        return NextResponse.json({ message: "Admin deleted successfully" }, { status: 200 });
-    } catch (error) {
-        return NextResponse.json(
-            { message: "Failed to delete admin", error: error instanceof Error ? error.message : String(error) },
-            { status: 500 }
-        );
+    if (!adminId) {
+      return NextResponse.json({ message: "Admin ID is required" }, { status: 400 });
     }
-}
 
+    const adminIdNumber = Number(adminId);
+    if (isNaN(adminIdNumber)) {
+      return NextResponse.json({ message: "Invalid Admin ID" }, { status: 400 });
+    }
+
+    // Check if the admin exists
+    const existingAdmin = await db.select().from(admins).where(eq(admins.id, adminIdNumber));
+    if (existingAdmin.length === 0) {
+      return NextResponse.json({ message: "Admin not found" }, { status: 404 });
+    }
+
+    // Soft delete by setting is_deleted (assuming boolean, else use 1)
+await db.delete(admins).where(eq(admins.id, adminIdNumber));
+
+    return NextResponse.json({ message: "Admin deleted successfully" }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        message: "Failed to delete admin",
+        error: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
+}

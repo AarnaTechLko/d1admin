@@ -68,8 +68,12 @@ const OrganizationsPage = () => {
     <div>
       <PageBreadcrumb pageTitle="Organization" onSearch={setSearchQuery} />
       
-      {loading && <p className="text-center py-5">Loading...</p>}
-      {error && <p className="text-center py-5 text-red-500">{error}</p>}
+   {loading && (
+  <div className="flex items-center justify-center gap-4 ">
+    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+    Loading...
+  </div>
+)}      {error && <p className="text-center py-5 text-red-500">{error}</p>}
       
       {!loading && !error && (
         <OrganizationTable

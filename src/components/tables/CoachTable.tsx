@@ -266,7 +266,7 @@ async function handleRevertCoach(coachId: string) {
         <Table>
           <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
             <TableRow>
-              {["Coach", "Gender", "Sport", "Earnings", "Evaluations", "Status", "History", "Actions"].map((header) => (
+              {["Coach", "Gender", "Sport", "Earnings", "Status", "History", "Actions"].map((header) => (
                 <TableCell key={header} className="px-4 py-2 sm:px-5 sm:py-3 font-medium text-gray-500 text-start text-sm sm:text-base dark:text-gray-400">
                   {header}
                 </TableCell>
@@ -294,7 +294,6 @@ async function handleRevertCoach(coachId: string) {
 
                 <TableCell className="px-4 py-3 text-gray-500 text-sm dark:text-gray-400">{coach.gender}</TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-sm dark:text-gray-400">{coach.sport}</TableCell>
-                <TableCell className="px-4 py-3 text-gray-500 text-sm dark:text-gray-400">{coach.earnings || 0}</TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-sm dark:text-gray-400">{coach.totalEvaluations || 0}</TableCell>
 
                 {/* Status */}

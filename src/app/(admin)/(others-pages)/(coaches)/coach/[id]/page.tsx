@@ -1,14 +1,15 @@
 'use client';
-import { FacebookIcon, Instagram, Youtube, Linkedin,Twitter } from "lucide-react";
+import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter } from "lucide-react";
 
-import {  FaFileAlt } from 'react-icons/fa';
-import { useRouter } from 'next/navigation';
+import { FaFileAlt } from 'react-icons/fa';
+// import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+
 interface Evaluation {
   id: string;
   evaluationId: number;
@@ -54,6 +55,7 @@ interface Payment {
   review_title: string;
   description: string;
   is_deleted: number;
+  coach: Coach[];
 
 }
 interface Coach {
@@ -96,13 +98,13 @@ export default function CoachDetailsPage() {
   const [coach, setCoach] = useState<Coach | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
 
-const router = useRouter();
   const [loading, setLoading] = useState(true);
   // const ITEMSPERPAGE = 10;
   const [evaluationPage, setEvaluationPage] = useState(1);
   const [paymentPage, setPaymentPage] = useState(1);
   const evaluationsPerPage = 10;
   const paymentsPerPage = 10;
+  // const router = useRouter();
 
   const filteredEvaluations = coach?.evaluations || [];
 
@@ -259,12 +261,14 @@ const router = useRouter();
 
 
 
-const handleEvaluationDetails = (evaluation: Evaluation) => {
-  router.push(`/evaluationdetails?evaluationId=${evaluation.evaluationId}`);
-};
+  // const handleEvaluationDetails = (evaluation: Evaluation) => {
+  //   console.log('Navigating to:', evaluation.evaluationId);
+
+  //   router.push(`/evaluationdetails?evaluationId=${evaluation.evaluationId}`);
+  // };
 
   // const handleEvaluationDetails = (evaluation: Evaluation) => {
-     
+
   //    window.open(`/evaluationdetails?evaluationId=${evaluation.evaluationId}`, 'blank');
   // };
   // const totalPages = Math.ceil((coach?.payments?.length ?? 0) / ITEMSPERPAGE) || 1;
@@ -346,101 +350,108 @@ const handleEvaluationDetails = (evaluation: Evaluation) => {
 
   }, [id]);
 
-  if (loading) return <div className="p-6 text-center">Loading coach data...</div>;
+if (loading) {
+  return (
+    <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+      <div className="w-18 h-18 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <div>Loading coach data...</div>
+    </div>
+  );
+}
   if (!coach) return <div className="p-6 text-center text-red-500">Coach not found.</div>;
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
       {/* Header */} <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow p-6 mb-6">
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 p-4 bg-white rounded-2xl shadow">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 p-4 bg-white rounded-2xl shadow">
 
-  {/* Image */}
-  <div className="flex-shrink-0">
-    {coach.image && (
-      <Image
-        src={coach.image}
-        alt={`${coach.firstName} ${coach.lastName}`}
-        width={96}
-        height={96}
-        className="w-30 h-30 object-cover rounded-full border-4 border-gray-200 shadow mx-auto md:mx-0"
-      />
-    )}
-  </div>
+          {/* Image */}
+          <div className="flex-shrink-0">
+            {coach.image && (
+              <Image
+                src={coach.image}
+                alt={`${coach.firstName} ${coach.lastName}`}
+                width={96}
+                height={96}
+                className="w-30 h-30 object-cover rounded-full border-4 border-gray-200 shadow mx-auto md:mx-0"
+              />
+            )}
+          </div>
 
-  {/* Name + Socials */}
-  <div className="flex flex-col items-center md:items-start gap-2 md:flex-1">
-    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 text-center md:text-left">
-      {coach.firstName} {coach.lastName}
-    </h1>
-    <p className="text-base sm:text-lg md:text-xl text-gray-600 text-center md:text-left">
-      {coach.clubName}
-    </p>
+          {/* Name + Socials */}
+          <div className="flex flex-col items-center md:items-start gap-2 md:flex-1">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 text-center md:text-left">
+              {coach.firstName} {coach.lastName}
+            </h1>
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 text-center md:text-left">
+              {coach.clubName}
+            </p>
 
-    <div className="flex gap-3 mt-2 text-lg sm:text-xl text-gray-500">
-      <a
-        href={coach.facebook || "#"}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={!coach.facebook ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-700"}
-      >
-        <FacebookIcon className="w-6 h-6" />
-      </a>
-      <a
-        href={coach.instagram || "#"}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={!coach.instagram ? "text-gray-400 cursor-default" : "text-pink-600 hover:text-red-600"}
-      >
-        <Instagram className="w-6 h-6" />
-      </a>
-      <a
-        href={coach.youtube || "#"}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={!coach.youtube ? "text-gray-400 cursor-default" : "text-red-600 hover:text-red-800"}
-      >
-        <Youtube className="w-6 h-6" />
-      </a>
-      <a
-        href={coach.linkedin || "#"}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={!coach.linkedin ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
-      >
-        <Linkedin className="w-6 h-6" />
-      </a>
-      <a
-        href={coach.xlink || "#"}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={!coach.xlink ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
-      >
-        <Twitter className="w-6 h-6" />
-      </a>
-    </div>
-  </div>
+            <div className="flex gap-3 mt-2 text-lg sm:text-xl text-gray-500">
+              <a
+                href={coach.facebook || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={!coach.facebook ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-700"}
+              >
+                <FacebookIcon className="w-6 h-6" />
+              </a>
+              <a
+                href={coach.instagram || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={!coach.instagram ? "text-gray-400 cursor-default" : "text-pink-600 hover:text-red-600"}
+              >
+                <Instagram className="w-6 h-6" />
+              </a>
+              <a
+                href={coach.youtube || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={!coach.youtube ? "text-gray-400 cursor-default" : "text-red-600 hover:text-red-800"}
+              >
+                <Youtube className="w-6 h-6" />
+              </a>
+              <a
+                href={coach.linkedin || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={!coach.linkedin ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
+              >
+                <Linkedin className="w-6 h-6" />
+              </a>
+              <a
+                href={coach.xlink || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={!coach.xlink ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
+              >
+                <Twitter className="w-6 h-6" />
+              </a>
+            </div>
+          </div>
 
-  {/* Download Buttons */}
-<div className="flex flex-col items-center sm:items-end lg:items-end space-y-2">
-  <button
-    className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-700 hover:text-blue-600 transition"
-    onClick={() => handleDownload(coach.cv)}
-  >
-    <FaFileAlt className="text-blue-500" />
-    <span>Download CV</span>
-  </button>
-  <button
-    className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-700 hover:text-blue-600 transition"
-    onClick={() => handleDownload(coach.license)}
-  >
-    <FaFileAlt className="text-blue-500" />
-    <span>Download Coaching License</span>
-  </button>
-</div>
+          {/* Download Buttons */}
+          <div className="flex flex-col items-center sm:items-end lg:items-end space-y-2">
+            <button
+              className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-700 hover:text-blue-600 transition"
+              onClick={() => handleDownload(coach.cv)}
+            >
+              <FaFileAlt className="text-blue-500" />
+              <span>Download CV</span>
+            </button>
+            <button
+              className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-700 hover:text-blue-600 transition"
+              onClick={() => handleDownload(coach.license)}
+            >
+              <FaFileAlt className="text-blue-500" />
+              <span>Download Coaching License</span>
+            </button>
+          </div>
 
 
 
-</div>
+        </div>
 
       </div>
 
@@ -463,7 +474,10 @@ const handleEvaluationDetails = (evaluation: Evaluation) => {
         <div><strong className="text-gray-700">Coaching License Type:</strong> {coach.license_type}</div>
         {/* <div><strong className="text-gray-500">Consumed Licenses:</strong> {coach.consumeLicenseCount}</div> */}
         {/* <div><strong className="text-gray-500">Assigned Licenses:</strong> {coach.assignedLicenseCount}</div> */}
-        <div><strong className="text-gray-700">Total Earnings:</strong><span className='ml-2 px-2 py-1 rounded-full  text-xs bg-blue-200 '> ${coach.earnings}</span></div>
+        <div><strong className="text-gray-700">Total Earnings:</strong><span className='ml-2 px-2 py-1 rounded-full  text-xs bg-blue-200 '> ${coach.payments
+                .filter((p: Payment) => p.is_deleted !== 0)
+                .reduce((sum, p) => sum + Number(p.amount), 0)
+                .toFixed(2)}</span></div>
         <div><strong className="text-gray-700">Qualifications:</strong> {coach.qualifications}</div>
 
 
@@ -546,9 +560,14 @@ const handleEvaluationDetails = (evaluation: Evaluation) => {
                       </td>
                       <td className="px-4 py-3">
                         {/* <Link href={`/coach/${ev.player_id}`} className="text-blue-700 hover:underline"> */}
-                        <a onClick={() => handleEvaluationDetails(ev)} href='#' className=' text-blue-700'>{ev.review_title}</a>
+                        {/* <a onClick={() => handleEvaluationDetails(ev)} href='#' className=' text-blue-700'>{ev.review_title}</a> */}
 
-
+                        <Link
+                          href={`/evaluationdetails?evaluationId=${ev.evaluationId}`}
+                          className="text-blue-700"
+                        >
+                          {ev.review_title}
+                        </Link>
                       </td>
                       <td className="px-4 py-3">
                         <a href={ev.primary_video_link} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
@@ -632,7 +651,14 @@ const handleEvaluationDetails = (evaluation: Evaluation) => {
             <div className="text-gray-700">Total: {coach.payments.filter((p: Payment) => p.is_deleted !== 0).length}</div>
             {/* Total: {coach.evaluations.filter((ev: Evaluation) => ev.is_deleted !== 0).length} */}
 
-            <div className="text-gray-700 ">Total Earnings: ${coach.earnings}</div></div>
+
+            <div className="text-gray-700">
+              Total Earnings: $
+              {coach.payments
+                .filter((p: Payment) => p.is_deleted !== 0)
+                .reduce((sum, p) => sum + Number(p.amount), 0)
+                .toFixed(2)}
+            </div>            </div>
           <div className="overflow-x-auto bg-white shadow-md rounded-2xl border border-gray-200">
             {coach.payments.length === 0 ? (
               <p className="p-6 text-gray-600">No payments found.</p>

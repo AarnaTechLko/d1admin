@@ -3,7 +3,8 @@ import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Table, TableCell, TableBody,TableHeader, TableRow } from "@/components/ui/table";
 import { Trash } from "lucide-react";
-
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 
 
 interface Admin {
@@ -22,7 +23,7 @@ const AdminListPage = () => {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
+const MySwal = withReactContent(Swal);
   useEffect(() => {
     const fetchAdmins = async () => {
       setLoading(true);
@@ -46,29 +47,59 @@ const AdminListPage = () => {
     fetchAdmins();
   }, [searchQuery, currentPage]);
 
+  // const handleDelete = async (adminID: number) => {
+  //   if (!window.confirm("Are you sure you want to delete this admin?")) return;
+  
+  //   try {
+  //     const response = await fetch(`/api/subadmin?id=${adminID}`, {
+  //       method: "DELETE",
+  //     });
+  
+  //     if (!response.ok) {
+  //       const text = await response.text();
+  //       throw new Error(text || "Failed to delete admin");
+  //     }
+  
+  //     // Remove the deleted admin from the state
+  //     setAdmins((prev) => prev.filter(admin => admin.id !== adminID));
+  //   } catch (error) {
+  //     console.error("Error deleting admin:", error);
+  //     alert(`Failed to delete admin: ${error}`);
+  //   }finally{
+  //     window.location.reload();
+  //   }
+  // };
   const handleDelete = async (adminID: number) => {
-    if (!window.confirm("Are you sure you want to delete this admin?")) return;
-  
-    try {
-      const response = await fetch(`/api/subadmin?id=${adminID}`, {
-        method: "DELETE",
-      });
-  
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || "Failed to delete admin");
-      }
-  
-      // Remove the deleted admin from the state
-      setAdmins((prev) => prev.filter(admin => admin.id !== adminID));
-    } catch (error) {
-      console.error("Error deleting admin:", error);
-      alert(`Failed to delete admin: ${error}`);
-    }finally{
-      window.location.reload();
+  const result = await MySwal.fire({
+    title: 'Are you sure?',
+    text: "Do you really want to delete this admin?",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, delete it!',
+    cancelButtonText: 'Cancel',
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const response = await fetch(`/api/subadmin?id=${adminID}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || 'Failed to delete admin');
     }
-  };
-  
+
+    // Update state to remove deleted admin
+    setAdmins(prev => prev.filter(admin => admin.id !== adminID));
+
+    await MySwal.fire('Deleted!', 'Admin has been deleted.', 'success');
+  } catch (error) {
+    console.error('Error deleting admin:', error);
+    await MySwal.fire('Error!', `Failed to delete admin: ${error}`, 'error');
+  }
+};
 
   return (
     <div>

@@ -63,7 +63,7 @@ const CoachesPage = () => {
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();
-        console.log("coach",data)
+        console.log("coach", data)
         setCoaches(data.coaches);
         setTotalPages(data.totalPages);
       } catch (err) {
@@ -79,10 +79,17 @@ const CoachesPage = () => {
   return (
     <div>
       <PageBreadcrumb pageTitle="Coaches" onSearch={setSearchQuery} />
-      
-      {loading && <p className="text-center py-5">Loading...</p>}
+
+    {loading && (
+  <div className="flex items-center justify-center gap-4 ">
+    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+    Loading...
+  </div>
+)}
+
+
       {error && <p className="text-center py-5 text-red-500">{error}</p>}
-      
+
       {!loading && !error && (
         <CoachTable
           data={coaches}
