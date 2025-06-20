@@ -54,11 +54,9 @@ export default function TabbedDataView() {
         Payment: "payments",
         Evaluation: "evaluations",
       };
-
       const endpoint = endpointMap[tab];
       const res = await fetch(`/api/${endpoint}?page=${page}&limit=10&timeRange=${range}`);
       const json = await res.json();
-
       if (tab === "Payment") {
         setPayments(json.data || []);
       } else if (tab === "Evaluation") {
