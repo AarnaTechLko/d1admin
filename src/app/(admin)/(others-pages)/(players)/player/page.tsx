@@ -3,25 +3,25 @@
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import PlayerTable from "@/components/tables/PlayerTable";
-
-interface Player {
-  id: string;
-  first_name: string;
-  last_name: string;
-  image: string;
-  position: string;
-  height: string;
-  jersey: string;
-  weight: string;
-  history?: string;
-  graduation: string;
-  sport: string;
-  status: string;
-  earnings: number;
-  age_group: string;
-  grade_level: string;
-  is_deleted: number;
-}
+import { Player } from "@/app/types/types";
+// interface Player {
+//   id: string;
+//   first_name: string;
+//   last_name: string;
+//   image: string;
+//   position: string;
+//   height: string;
+//   jersey: string;
+//   weight: string;
+//   history?: string;
+//   graduation: string;
+//   sport: string;
+//   status: string;
+//   earnings: number;
+//   age_group: string;
+//   grade_level: string;
+//   is_deleted: number;
+// }
 
 const PlayersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");

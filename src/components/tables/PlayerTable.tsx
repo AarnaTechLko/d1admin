@@ -17,17 +17,23 @@ interface Player {
   last_name: string;
   image: string;
   position: string;
+  league: string;
   height: string;
   jersey: string;
   weight: string;
   history?: string;
   graduation: string;
   sport: string;
+  gender: string;
+  country: string;
+  state: string;
+  city: string;
   status: string;
   earnings: number;
   age_group: string;
   grade_level: string;
   is_deleted: number;
+
 }
 
 interface PlayerTableProps {
@@ -245,57 +251,66 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
           <div className="min-w-[1000px]">
-            <Table>
-              <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+            <Table  className="w-full text-xs">
+              <TableHeader className="border-b text-sm  bg-gray-200 border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                     Player
                   </TableCell>
-                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                     Positions
                   </TableCell>
-                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Grade Level
+                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                    League
                   </TableCell>
-                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                    Grade
+                  </TableCell>
+                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                     Age
                   </TableCell>
-                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                     <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                    Gender
+                  </TableCell>
+                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                     Height
                   </TableCell>
-                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                     Weight
                   </TableCell>
-                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                    Address
+                  </TableCell>
+                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                     Status
                   </TableCell>
-                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                     History
                   </TableCell>
 
 
 
 
-                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                     Actions
                   </TableCell>
                 </TableRow>
               </TableHeader>
 
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-  {Player?.players.map((p) => (
-      <div key={p.id}>
-        <h3>{p.first_name}</h3>
-        <p>{p.position}</p>
-      </div>
-    ))}
+                {Player?.players.map((p) => (
+                  <div key={p.id}>
+                    <h5>{p.first_name}</h5>
+                    <p>{p.position}</p>
+                  </div>
+                ))}
                 {paginatedData.map((player) => (
 
                   <TableRow
                     key={`${player.id}-${player.is_deleted}`} // include is_deleted to force re-render
                     className={player.is_deleted === 0 ? "bg-red-100" : "bg-white"}
                   >
-                    <TableCell className="px-5 py-4 sm:px-6 text-start">
+                    <TableCell className=" py-4 sm:px-6 text-start">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 overflow-hidden ">
                           <Image
@@ -316,15 +331,20 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.position}</TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.league}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.grade_level}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.age_group}</TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.gender}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.height}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.weight}</TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      {[player.country, player.state, player.city].filter(Boolean).join(", ")}
+                    </TableCell>
 
 
 
                     {/* Clickable Status Badge */}
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 background-overlay">
+                    <TableCell className="px-4 py-3  text-gray-500 dark:text-gray-400 background-overlay">
                       <Dialog open={open} onOpenChange={setOpen}>
                         <DialogTrigger asChild>
                           <button
@@ -373,9 +393,9 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
                     {/** palyer history */}
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                     
+
                       <Link href={`/player/${player.id}`}>
-                        <Button>Open</Button>
+                        <Button className="text-xs">Open</Button>
                       </Link>
                     </TableCell>
 
@@ -419,7 +439,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                             }}
                             className=" text-white px-4 py-1 rounded"
                           >
-                              🛑
+                            🛑
                           </button>
                         ) : (
                           <button
@@ -428,7 +448,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                             }}
                             className=" text-white px-4 py-1 rounded"
                           >
-                          ♻️
+                            ♻️
                           </button>
                         )}
 

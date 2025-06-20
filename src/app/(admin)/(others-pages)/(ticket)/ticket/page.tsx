@@ -18,7 +18,7 @@ interface Ticket {
   subject: string;
   message: string;
   assign_to: number;
-  assignToUsername: string;
+  assign_to_username: string;
   createdAt: string;
   status: string;
   assignee_name: string;
@@ -68,6 +68,8 @@ const TicketsPage = () => {
       if (!response.ok) throw new Error("Failed to fetch replies");
 
       const data = await response.json();
+
+
       setTicketReplies(data.replies);
       setReplyStatus(ticket.status); // Set current status for reply
     } catch (error) {
@@ -76,8 +78,6 @@ const TicketsPage = () => {
     }
 
   };
-
-
   const handleReplySubmit = async () => {
     if (!selectedTicket) {
       Swal.fire("Error", "No ticket selected.", "error");
@@ -150,7 +150,8 @@ useEffect(() => {
       if (!response.ok) throw new Error("Failed to fetch tickets");
 
       const data = await response.json();
-      setTickets(data.tickets ?? []);
+      console.log("daata",data);
+      setTickets(data.ticket ?? []);
       setTotalPages(data.totalPages);
     } catch (err) {
       setError((err as Error).message);
@@ -162,30 +163,7 @@ useEffect(() => {
   fetchTickets();
 }, [userId, searchQuery, currentPage]);
 
-  // useEffect(() => {
-  //   const fetchTickets = async () => {
-  //     if (!userId) return;
-
-  //     setLoading(true);
-  //     setError(null);
-  //     try {
-  //       const response = await fetch(`/api/ticket?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}`);
-
-  //       if (!response.ok) throw new Error("Failed to fetch tickets");
-
-  //       const data = await response.json();
-  //       setTickets(data.tickets);
-  //       setTotalPages(data.totalPages);
-  //     } catch (err) {
-  //       setError((err as Error).message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchTickets();
-  // }, [searchQuery, currentPage, userId]); // depend on userId too
-
-
+  
   useEffect(() => {
     const fetchSubAdmins = async () => {
       try {
@@ -259,7 +237,7 @@ useEffect(() => {
 
       // const data = await response.json();
       setTickets((prevTickets) =>
-        prevTickets.map((t) => (t.id === selectedTicket.id ? { ...t, assign_to: subAdmin.id, assignToUsername: subAdmin.username } : t))
+        prevTickets.map((t) => (t.id === selectedTicket.id ? { ...t, assign_to: subAdmin.id, assign_to_username: subAdmin.username } : t))
       );
 
 
@@ -301,12 +279,11 @@ useEffect(() => {
   return (
     <div>
 
-      <div className="p-4">
+      {/* <div className="p-4">
         {userId && (
           <p className="mt-2 text-gray-600">Logged in as Admin ID: <strong>{userId}</strong></p>
         )}
-        {/* your ticket listing goes here */}
-      </div>
+      </div> */}
 
       <PageBreadcrumb pageTitle="Ticket" onSearch={setSearchQuery} />
       <div className="flex justify-end items-center gap-2 p-4 dark:border-white/[0.05]">
@@ -359,7 +336,7 @@ useEffect(() => {
                         onClick={() => handleAssignToClick(ticket)}
                       >
 
-                        {ticket.assignToUsername || 'Assign To'}
+                        {ticket.assign_to_username || 'Assign To'}
                       </button>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-yellow-500">

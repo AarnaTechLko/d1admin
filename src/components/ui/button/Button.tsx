@@ -2,7 +2,7 @@ import React, { ReactNode } from "react";
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   
   children: ReactNode; // Button text or content
-  size?: "sm" | "md"; // Button size
+  size?: "sm" | "md"|"xs"; // Button size
   variant?: "primary" | "outline"; // Button variant
   startIcon?: ReactNode; // Icon before the text
   endIcon?: ReactNode; // Icon after the text
@@ -14,7 +14,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 const Button: React.FC<ButtonProps> = ({
   children,
   
-  size = "md",
+  size = "xs",
   variant = "primary",
   startIcon,
   endIcon,
@@ -24,6 +24,7 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   // Size Classes
   const sizeClasses = {
+    xs: "px-2 py-1 text-xs",
     sm: "px-4 py-3 text-sm",
     md: "px-5 py-3.5 text-sm",
   };
@@ -38,7 +39,7 @@ const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
-      className={`btn ${size === "sm" ? "px-3 py-1 text-sm" : ""}  inline-flex items-center justify-center font-medium gap-2 rounded-lg transition ${className} ${
+      className={`btn ${size === "xs" ? "px-3 py-1 text-sm" : ""}  inline-flex items-center justify-center font-medium gap-2 rounded-lg transition ${className} ${
         sizeClasses[size]
       } ${variantClasses[variant]} ${
         disabled ? "cursor-not-allowed opacity-50" : ""

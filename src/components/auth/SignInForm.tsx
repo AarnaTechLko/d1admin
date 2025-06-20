@@ -28,45 +28,47 @@ export default function SignInForm() {
     setSuccess(null);
 
     try {
-        const res = await fetch("/api/signin", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData),
-            credentials: "include", // ✅ Ensures cookies are sent
-        });
+      const res = await fetch("/api/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+        credentials: "include", // ✅ Ensures cookies are sent
+      });
 
-        const data = await res.json();
+      const data = await res.json();
+      console.log("signin", data);
+      if (!res.ok) {
+        throw new Error(data.error || "Invalid credentials");
+      }
 
-        if (!res.ok) {
-            throw new Error(data.error || "Invalid credentials");
-        }
+      if (!data.token || !data.user_id) {
+        throw new Error("Authentication failed. Please try again.");
+      }
 
-        if (!data.token || !data.user_id) {
-            throw new Error("Authentication failed. Please try again.");
-        }
+      setSuccess("Login successful! Redirecting...");
 
-        setSuccess("Login successful! Redirecting...");
+      // ✅ Store token & user_id securely
 
-        // ✅ Store token & user_id securely
-    
-            sessionStorage.setItem("session_token", data.token); // Session-based login
-            sessionStorage.setItem("user_id", data.user_id);
-        
+      sessionStorage.setItem("session_token", data.token); // Session-based login
+      sessionStorage.setItem("user_id", data.user_id);
+      sessionStorage.setItem("role", data.role);
 
-        // ✅ Redirect after short delay
-        setTimeout(() => {
-            router.push("/dashboard");
-        }, 2000);
 
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-            console.error("Signin error:", err.message);
-            setError(err.message);
-        } else {
-            setError("An unknown error occurred.");
-        }
+       const redirectPath = data.role === "Customer Support" ? "/ticket" : "/dashboard";
+
+    setTimeout(() => {
+      router.push(redirectPath);
+    }, 2000);
+
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Signin error:", err.message);
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred.");
+      }
     }
-};
+  };
 
 
 
@@ -76,7 +78,7 @@ export default function SignInForm() {
         <div>
           <div className="mb-5 sm:mb-8">
             <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
-             Admin Login !
+              Admin Login !
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Enter your email and password to login!
@@ -145,7 +147,7 @@ export default function SignInForm() {
             </div>
           </form>
 
-          
+
         </div>
       </div>
     </div>

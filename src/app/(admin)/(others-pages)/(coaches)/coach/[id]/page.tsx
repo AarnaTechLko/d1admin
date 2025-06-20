@@ -257,34 +257,6 @@ export default function CoachDetailsPage() {
     }
   };
 
-
-
-
-
-  // const handleEvaluationDetails = (evaluation: Evaluation) => {
-  //   console.log('Navigating to:', evaluation.evaluationId);
-
-  //   router.push(`/evaluationdetails?evaluationId=${evaluation.evaluationId}`);
-  // };
-
-  // const handleEvaluationDetails = (evaluation: Evaluation) => {
-
-  //    window.open(`/evaluationdetails?evaluationId=${evaluation.evaluationId}`, 'blank');
-  // };
-  // const totalPages = Math.ceil((coach?.payments?.length ?? 0) / ITEMSPERPAGE) || 1;
-  // const EVALUATIONSPERPAGE = 10;
-  // const RESULTSPERPAGE = 10;
-
-  // const [resultsPage, setResultsPage] = useState(1);
-
-  // const paginatedResults = coach?.evaluationResults?.slice(
-  //   (resultsPage - 1) * RESULTSPERPAGE,
-  //   resultsPage * RESULTSPERPAGE
-  // ) ?? [];
-
-  // const totalEvaluationPages = Math.ceil(coach?.evaluations?.length ?? 0 / EVALUATIONSPERPAGE) || 1;
-  // const totalResultsPages = Math.ceil(coach?.evaluationResults?.length ?? 0 / RESULTSPERPAGE) || 1;
-
   const handleDownload = async (url: string) => {
     if (!url || typeof url !== 'string') {
       return;
