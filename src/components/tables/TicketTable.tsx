@@ -182,66 +182,67 @@ const TicketTable: React.FC<Props> = ({
   return (
     <>
       {isSubmitting && <p>Loading...</p>}
-      {loading && <p className="text-center py-5">
-      <Loader2 className="animate-spin text-gray-500" size={18} />
-        
-        Loading...</p>}
+      {loading && (
+        <p className="text-center py-5">
+          <Loader2 className="animate-spin inline-block text-gray-500 mr-2" size={18} />
+          Loading...
+        </p>
+      )}
       {error && <p className="text-center py-5 text-red-500">{error}</p>}
 
       {!loading && !error && (
         <>
-          <Table className="text-xs">
-            <TableHeader className="border-b border-gray-100 font-medium text-sm bg-gray-200 dark:border-white/[0.05]">
-              <TableRow className="bg-gray-100">
-                <TableCell className="px-5 py-3 font-small text-gray-500 text-start">Name</TableCell>
-                <TableCell className="px-5 py-3 font-small text-gray-500 text-start">Email</TableCell>
-                <TableCell className="px-5 py-3 font-small text-gray-500 text-start">Subject</TableCell>
-                <TableCell className="px-5 py-3 font-small text-gray-500 text-start">Message</TableCell>
-                <TableCell className="px-5 py-3 font-small text-gray-500 text-start">Assign To</TableCell>
-                <TableCell className="px-5 py-3 font-small text-gray-500 text-start">Status</TableCell>
-                <TableCell className="px-5 py-3 font-small text-gray-500 text-start">Actions</TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tickets.length > 0 ? (
-                tickets.map((ticket) => (
-                  <TableRow key={ticket.id}>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.name}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.message}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      <button className="text-blue-500 hover:underline" onClick={() => handleAssignToClick(ticket)}>
-                        {ticket.assign_to_username || 'Assign To'}
-                      </button>
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-yellow-500">
-                      <Badge
-                        color={
-                          ticket.status.toLowerCase() === "closed" ? "error" :
-                          ticket.status.toLowerCase() === "open" ? "info" :
-                          ticket.status.toLowerCase() === "fixed" ? "success" :
-                          ticket.status.toLowerCase() === "pending" ? "warning" : "light"
-                        }
-                      >
-                        {ticket.status || "Pending"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      <button className="text-green-500" onClick={() => handleReplyClick(ticket)}>
-                        <MessageSquare size={18} />
-                      </button>
-                    </TableCell>
+          {tickets.length === 0 ? (
+            <p className="p-6 text-gray-600">No tickets found.</p>
+          ) : (
+            <>
+              <Table className="text-xs">
+                <TableHeader className="border-b border-gray-100 font-medium text-sm bg-gray-200 dark:border-white/[0.05]">
+                  <TableRow className="bg-gray-100">
+                    <TableCell className="px-5 py-3">Name</TableCell>
+                    <TableCell className="px-5 py-3">Email</TableCell>
+                    <TableCell className="px-5 py-3">Subject</TableCell>
+                    <TableCell className="px-5 py-3">Message</TableCell>
+                    <TableCell className="px-5 py-3">Assign To</TableCell>
+                    <TableCell className="px-5 py-3">Status</TableCell>
+                    <TableCell className="px-5 py-3">Actions</TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell  className="text-center">No tickets found.</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-
+                </TableHeader>
+                <TableBody>
+                  {tickets.map((ticket) => (
+                    <TableRow key={ticket.id}>
+                      <TableCell className="px-4 py-3">{ticket.name}</TableCell>
+                      <TableCell className="px-4 py-3">{ticket.email}</TableCell>
+                      <TableCell className="px-4 py-3">{ticket.subject}</TableCell>
+                      <TableCell className="px-4 py-3">{ticket.message}</TableCell>
+                      <TableCell className="px-4 py-3">
+                        <button className="text-blue-500 hover:underline" onClick={() => handleAssignToClick(ticket)}>
+                          {ticket.assign_to_username || "Assign To"}
+                        </button>
+                      </TableCell>
+                      <TableCell className="px-4 py-3">
+                        <Badge
+                          color={
+                            ticket.status.toLowerCase() === "closed" ? "error" :
+                            ticket.status.toLowerCase() === "open" ? "info" :
+                            ticket.status.toLowerCase() === "fixed" ? "success" :
+                            ticket.status.toLowerCase() === "pending" ? "warning" : "light"
+                          }
+                        >
+                          {ticket.status || "Pending"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="px-4 py-3">
+                        <button className="text-green-500" onClick={() => handleReplyClick(ticket)}>
+                          <MessageSquare size={18} />
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </>
+          )}
           {totalPages && setCurrentPage && (
             <div className="flex justify-between items-center mt-4 gap-3 px-4">
               <button

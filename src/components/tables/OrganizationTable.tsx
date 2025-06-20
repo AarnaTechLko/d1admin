@@ -248,6 +248,10 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
           <div className="min-w-[1000px]">
+            {data.length === 0 ? (
+        <p className="p-6 text-gray-600">No organization found.</p>
+      ) : (
+        <>
             <Table className="text-xs">
               {/* Table Header */}
               <TableHeader className="border-b bg-gray-200 text-sm border-gray-100 dark:border-white/10">
@@ -469,6 +473,8 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
               </TableBody>
 
             </Table>
+            </>
+      )}
             <div className="flex justify-end items-center gap-2 p-2 border-t border-gray-200 dark:border-white/[0.05]">
 
               {[...Array(totalPages)].map((_, index) => {

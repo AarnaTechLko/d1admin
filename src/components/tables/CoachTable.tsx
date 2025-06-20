@@ -225,6 +225,9 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [] }) => {
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="w-full overflow-x-auto">
           <div className="min-w-[800px] sm:min-w-full">
+             {data.length === 0 ? (
+        <p className="p-6 text-gray-600">No Coach found.</p>
+      ) : (
             <Table className="text-xs">
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow className="text-xs">
@@ -267,7 +270,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [] }) => {
                     <TableCell className="px-4 py-3 text-gray-500 text-sm dark:text-gray-400">{coach.sport}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 text-sm dark:text-gray-400">{coach.totalEvaluations || 0}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 text-sm dark:text-gray-400">
-                       {[coach.country, coach.state, coach.city].filter(Boolean).join(", ")}
+                       {[coach.countryName, coach.state, coach.city].filter(Boolean).join(", ")}
                     </TableCell>
 
                     {/* Status */}
@@ -347,6 +350,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [] }) => {
                 ))}
               </TableBody>
             </Table>
+               )}
           </div>
         </div>
 
@@ -368,7 +372,9 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [] }) => {
             );
           })}
         </div>
+      
       </div>
+       
     </>
 
   );

@@ -199,7 +199,11 @@ export default function TabbedDataView() {
             />
           ) : activeTab === "Team" ? (
             <div className="overflow-x-auto">
+                 {data.length === 0 ? (
+        <p className="p-6 text-gray-600">No Team found.</p>
+      ) : (
               <table className="min-w-full border border-gray-200 text-sm">
+                
                 <thead className="bg-gray-100">
                   <tr>
                     <th className="p-2 border">Logo</th>
@@ -233,6 +237,7 @@ export default function TabbedDataView() {
                   ))}
                 </tbody>
               </table>
+      )}
             </div>
           ) : activeTab === "Evaluation" ? (
             <EvaluationTable

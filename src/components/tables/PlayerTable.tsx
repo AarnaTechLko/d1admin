@@ -25,7 +25,7 @@ interface Player {
   graduation: string;
   sport: string;
   gender: string;
-  country: string;
+  countryName: string;
   state: string;
   city: string;
   status: string;
@@ -194,24 +194,27 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
   return (
     <>
-      <div className="flex justify-end items-center gap-2 p-2">
+     {totalPages > 0 && (
+  <div className="flex justify-end items-center gap-2 p-2">
+    {[...Array(totalPages)].map((_, index) => {
+      const pageNumber = index + 1;
+      return (
+        <button
+          key={pageNumber}
+          onClick={() => setCurrentPage?.(pageNumber)}
+          className={`px-3 py-2 rounded-md ${
+            currentPage === pageNumber
+              ? "bg-blue-500 text-white"
+              : "text-blue-500 hover:bg-gray-200"
+          }`}
+        >
+          {pageNumber}
+        </button>
+      );
+    })}
+  </div>
+)}
 
-        {[...Array(totalPages)].map((_, index) => {
-          const pageNumber = index + 1;
-          return (
-            <button
-              key={pageNumber}
-              onClick={() => setCurrentPage(pageNumber)}
-              className={`px-3 py-2 rounded-md ${currentPage === pageNumber
-                ? "bg-blue-500 text-white"
-                : "text-blue-500 hover:bg-gray-200"
-                }`}
-            >
-              {pageNumber}
-            </button>
-          );
-        })}
-      </div>
 
 
       {/* Confirmation Dialog */}
@@ -251,157 +254,161 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
           <div className="min-w-[1000px]">
-            <Table  className="w-full text-xs">
-              <TableHeader className="border-b text-sm  bg-gray-200 border-gray-100 dark:border-white/[0.05]">
-                <TableRow>
-                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Player
-                  </TableCell>
-                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Positions
-                  </TableCell>
-                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    League
-                  </TableCell>
-                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Grade
-                  </TableCell>
-                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Age
-                  </TableCell>
-                     <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Gender
-                  </TableCell>
-                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Height
-                  </TableCell>
-                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Weight
-                  </TableCell>
-                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Address
-                  </TableCell>
-                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Status
-                  </TableCell>
-                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    History
-                  </TableCell>
+            {data.length === 0 ? (
+              <p className="p-6 text-gray-600">No Player found.</p>
+            ) : (
+              <>
+                <Table className="w-full text-xs">
+                  <TableHeader className="border-b text-sm  bg-gray-200 border-gray-100 dark:border-white/[0.05]">
+                    <TableRow>
+                      <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        Player
+                      </TableCell>
+                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        Positions
+                      </TableCell>
+                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        League
+                      </TableCell>
+                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        Grade
+                      </TableCell>
+                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        Age
+                      </TableCell>
+                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        Gender
+                      </TableCell>
+                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        Height
+                      </TableCell>
+                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        Weight
+                      </TableCell>
+                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        Address
+                      </TableCell>
+                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        Status
+                      </TableCell>
+                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        History
+                      </TableCell>
 
 
 
 
-                  <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                    Actions
-                  </TableCell>
-                </TableRow>
-              </TableHeader>
+                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        Actions
+                      </TableCell>
+                    </TableRow>
+                  </TableHeader>
 
-              <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {Player?.players.map((p) => (
-                  <div key={p.id}>
-                    <h5>{p.first_name}</h5>
-                    <p>{p.position}</p>
-                  </div>
-                ))}
-                {paginatedData.map((player) => (
-
-                  <TableRow
-                    key={`${player.id}-${player.is_deleted}`} // include is_deleted to force re-render
-                    className={player.is_deleted === 0 ? "bg-red-100" : "bg-white"}
-                  >
-                    <TableCell className=" py-4 sm:px-6 text-start">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 overflow-hidden ">
-                          <Image
-                            width={50}
-                            height={50}
-                            className="rounded-full"
-                            src={player.image && player.image.startsWith("http") ? player.image : d1}
-                            alt={`${player.first_name} ${player.last_name}`}
-                            onError={(e) => (e.currentTarget.src = "/images/default-avatar.png")} // Fallback image
-                          />
-
-                        </div>
-                        <div>
-                          <span className="block font-medium text-gray-800 dark:text-white/90">
-                            {player.first_name} {player.last_name}
-                          </span>
-                        </div>
+                  <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                    {Player?.players.map((p) => (
+                      <div key={p.id}>
+                        <h5>{p.first_name}</h5>
+                        <p>{p.position}</p>
                       </div>
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.position}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.league}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.grade_level}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.age_group}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.gender}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.height}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.weight}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      {[player.country, player.state, player.city].filter(Boolean).join(", ")}
-                    </TableCell>
+                    ))}
+                    {paginatedData.map((player) => (
+
+                      <TableRow
+                        key={`${player.id}-${player.is_deleted}`} // include is_deleted to force re-render
+                        className={player.is_deleted === 0 ? "bg-red-100" : "bg-white"}
+                      >
+                        <TableCell className=" py-4 sm:px-6 text-start">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 overflow-hidden ">
+                              <Image
+                                width={50}
+                                height={50}
+                                className="rounded-full"
+                                src={player.image && player.image.startsWith("http") ? player.image : d1}
+                                alt={`${player.first_name} ${player.last_name}`}
+                                onError={(e) => (e.currentTarget.src = "/images/default-avatar.png")} // Fallback image
+                              />
+
+                            </div>
+                            <div>
+                              <span className="block font-medium text-gray-800 dark:text-white/90">
+                                {player.first_name} {player.last_name}
+                              </span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.position}</TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.league}</TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.grade_level}</TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.age_group}</TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.gender}</TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.height}</TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.weight}</TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                          {[player.countryName, player.state, player.city].filter(Boolean).join(", ")}
+                        </TableCell>
 
 
 
-                    {/* Clickable Status Badge */}
-                    <TableCell className="px-4 py-3  text-gray-500 dark:text-gray-400 background-overlay">
-                      <Dialog open={open} onOpenChange={setOpen}>
-                        <DialogTrigger asChild>
-                          <button
-                            onClick={() => { setSelectedPlayer(player); setStatus(player.status); }}
-                          >
-                            <Badge color={getBadgeColor(player.status) ?? undefined} >
-                              {player.status}
-                            </Badge>
-                          </button>
-                        </DialogTrigger>
+                        {/* Clickable Status Badge */}
+                        <TableCell className="px-4 py-3  text-gray-500 dark:text-gray-400 background-overlay">
+                          <Dialog open={open} onOpenChange={setOpen}>
+                            <DialogTrigger asChild>
+                              <button
+                                onClick={() => { setSelectedPlayer(player); setStatus(player.status); }}
+                              >
+                                <Badge color={getBadgeColor(player.status) ?? undefined} >
+                                  {player.status}
+                                </Badge>
+                              </button>
+                            </DialogTrigger>
 
-                        {selectedPlayer && (
-                          <DialogContent className="max-w-sm rounded-lg p-6 bg-white shadow-lg fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 backdrop-blur-md ">
-                            <DialogHeader>
-                              <DialogTitle className="text-lg font-semibold">Change Status</DialogTitle>
-                            </DialogHeader>
+                            {selectedPlayer && (
+                              <DialogContent className="max-w-sm rounded-lg p-6 bg-white shadow-lg fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 backdrop-blur-md ">
+                                <DialogHeader>
+                                  <DialogTitle className="text-lg font-semibold">Change Status</DialogTitle>
+                                </DialogHeader>
 
-                            {selectedPlayer.status === "Pending" ? (
-                              <p className="text-red-500">Pending status cannot be changed.</p>
-                            ) : (
-                              <div>
-                                <select
-                                  value={status ?? selectedPlayer.status}
-                                  onChange={(e) => setStatus(e.target.value)}
-                                  className="w-full p-2 border rounded-md text-gray-700"
-                                >
-                                  <option value="Active">Active</option>
-                                  <option value="Inactive">Inactive</option>
-                                </select>
+                                {selectedPlayer.status === "Pending" ? (
+                                  <p className="text-red-500">Pending status cannot be changed.</p>
+                                ) : (
+                                  <div>
+                                    <select
+                                      value={status ?? selectedPlayer.status}
+                                      onChange={(e) => setStatus(e.target.value)}
+                                      className="w-full p-2 border rounded-md text-gray-700"
+                                    >
+                                      <option value="Active">Active</option>
+                                      <option value="Inactive">Inactive</option>
+                                    </select>
 
-                                <div className="flex justify-center mt-4">
-                                  <Button onClick={confirmChange} className="bg-blue-500  text-white px-4 py-2 rounded-md">
-                                    Save
-                                  </Button>
-                                </div>
-                              </div>
+                                    <div className="flex justify-center mt-4">
+                                      <Button onClick={confirmChange} className="bg-blue-500  text-white px-4 py-2 rounded-md">
+                                        Save
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </DialogContent>
                             )}
-                          </DialogContent>
-                        )}
-                      </Dialog>
-                    </TableCell>
+                          </Dialog>
+                        </TableCell>
 
 
 
 
 
-                    {/** palyer history */}
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        {/** palyer history */}
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
 
-                      <Link href={`/player/${player.id}`}>
-                        <Button className="text-xs">Open</Button>
-                      </Link>
-                    </TableCell>
+                          <Link href={`/player/${player.id}`}>
+                            <Button className="text-xs">Open</Button>
+                          </Link>
+                        </TableCell>
 
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      <div className="flex gap-3">
-                        {/* <button
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                          <div className="flex gap-3">
+                            {/* <button
                           onClick={async () => {
                             try {
                               if (player.is_deleted === 0) {
@@ -432,41 +439,43 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                         >
                           {player.is_deleted === 0 ? "Hide" : "Revert"}
                         </button> */}
-                        {player.is_deleted === 0 ? (
-                          <button
-                            onClick={async () => {
-                              await handleRevertPlayer(player.id);
-                            }}
-                            className=" text-white px-4 py-1 rounded"
-                          >
-                            🛑
-                          </button>
-                        ) : (
-                          <button
-                            onClick={async () => {
-                              await handleHidePlayer(player.id);
-                            }}
-                            className=" text-white px-4 py-1 rounded"
-                          >
-                            ♻️
-                          </button>
-                        )}
+                            {player.is_deleted === 0 ? (
+                              <button
+                                onClick={async () => {
+                                  await handleRevertPlayer(player.id);
+                                }}
+                                className=" text-white px-4 py-1 rounded"
+                              >
+                                🛑
+                              </button>
+                            ) : (
+                              <button
+                                onClick={async () => {
+                                  await handleHidePlayer(player.id);
+                                }}
+                                className=" text-white px-4 py-1 rounded"
+                              >
+                                ♻️
+                              </button>
+                            )}
 
 
 
-                        {/* <button onClick={() => revertPlayer(player.id, player.is_deleted)}>
+                            {/* <button onClick={() => revertPlayer(player.id, player.is_deleted)}>
   {player.is_deleted === 0 ? "hide" : "revert"}
 </button> */}
 
-                        {/* <button onClick={() => handleDelete(player.id)} className="p-2 text-red-500 hover:text-red-600">
+                            {/* <button onClick={() => handleDelete(player.id)} className="p-2 text-red-500 hover:text-red-600">
                           <Trash size={18} />
                         </button> */}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </>
+            )}
             <div className="flex justify-end items-center gap-2 p-4 border-t border-gray-200 dark:border-white/[0.05]">
 
               {[...Array(totalPages)].map((_, index) => {
