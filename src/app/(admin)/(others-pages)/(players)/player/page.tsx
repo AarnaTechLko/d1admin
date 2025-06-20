@@ -43,7 +43,7 @@ const PlayersPage = () => {
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();
-                console.log('response',data)
+                console.log('responsedaa',data)
 
         setplayers(data.coaches);
         setTotalPages(data.totalPages);

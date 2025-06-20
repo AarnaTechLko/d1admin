@@ -87,7 +87,7 @@ export interface Player {
   image: string;
   position: string;
   height: string;
-  country: string;
+  countryName: string;
   state: string;
   city: string;
   gender: string;
@@ -112,7 +112,7 @@ export interface Coach {
   lastName: string;
   image: string;
   gender: string;
-  country: string;
+  countryName: string;
   state: string;
   city: string;
   sport: string;

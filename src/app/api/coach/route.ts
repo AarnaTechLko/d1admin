@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 // import { hash } from 'bcryptjs';
 import { db } from '@/lib/db';
-import { coaches, licenses, coachaccount, playerEvaluation } from '@/lib/schema';
+import { coaches, licenses, coachaccount,countries, playerEvaluation } from '@/lib/schema';
 // import debug from 'debug';
 // import jwt from 'jsonwebtoken';
 // import { SECRET_KEY } from '@/lib/constants';
@@ -82,7 +82,8 @@ export async function GET(req: NextRequest) {
         email: coaches.email,
         phoneNumber: coaches.phoneNumber,
         slug: coaches.slug,
-        country: coaches.country,
+        // country: coaches.country,
+        countryName: countries.name,
         state: coaches.state,
         city: coaches.city,
         sport: coaches.sport,
@@ -98,11 +99,13 @@ export async function GET(req: NextRequest) {
       .leftJoin(licenses, sql`${licenses.assigned_to} = ${coaches.id}`)
       .leftJoin(coachaccount, sql`${coachaccount.coach_id} = ${coaches.id}`)
       .leftJoin(playerEvaluation, sql`${playerEvaluation.coach_id} = ${coaches.id}`)
+      .leftJoin(countries, eq(countries.id, sql<number>`CAST(${coaches.country} AS INTEGER)`))
       .where(whereClause)
       .groupBy(
         coaches.id, coaches.firstName, coaches.lastName, coaches.gender, coaches.image,
         coaches.email, coaches.phoneNumber, coaches.slug, coaches.sport,
-        coaches.qualifications, coaches.status
+        coaches.qualifications, coaches.status, countries.name 
+
       )
       .orderBy(desc(coaches.createdAt))
 

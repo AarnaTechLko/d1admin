@@ -3,9 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
 import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
-import StatisticsChart from "@/components/ecommerce/StatisticsChart";
-import RecentOrders from "@/components/ecommerce/RecentOrders";
-import DemographicCard from "@/components/ecommerce/DemographicCard";
+// import StatisticsChart from "@/components/ecommerce/StatisticsChart";
+// import RecentOrders from "@/components/ecommerce/RecentOrders";
+// import DemographicCard from "@/components/ecommerce/DemographicCard";
 import ActivityLog from "@/components/ecommerce/ActivityLog";
 // import { useSession } from 'next-auth/react';
 
@@ -45,15 +45,15 @@ export default function Ecommerce() {
       
 
       <div className="col-span-12">
-        <StatisticsChart />
+        {/* <StatisticsChart /> */}
       </div>
 
       <div className="col-span-12 xl:col-span-5">
-        <DemographicCard />
+        {/* <DemographicCard /> */}
       </div>
 
       <div className="col-span-12 xl:col-span-6">
-        <RecentOrders />
+        {/* <RecentOrders /> */}
       </div>
     </div>
   );

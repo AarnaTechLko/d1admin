@@ -308,7 +308,7 @@ useEffect(() => {
       {!loading && !error && (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
           {/* <div className="p-4 text-gray-700 dark:text-gray-300">Total Tickets: {tickets.length}</div> */}
-          <Table >
+          <Table className="text-xs">
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow className="bg-gray-100">
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Name</TableCell>

@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users } from '@/lib/schema';
-import { eq, and, not, ilike, sql, count, or, gte } from 'drizzle-orm';
+import { users, countries } from '@/lib/schema';
+import { eq, and, not, ilike, sql, count, or, gte, desc } from 'drizzle-orm';
 
 type TimeRange = '24h' | '1w' | '1m' | '1y';
 
-// Shared time range utility
 function getTimeFilterCondition(column: typeof users.createdAt, timeRange: TimeRange | string | null) {
   if (!timeRange) return undefined;
   const now = new Date();
@@ -37,7 +36,7 @@ export async function GET(req: NextRequest) {
 
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
-    const offset = (page - 1) * limit;
+    // const offset = (page - 1) * limit;
 
     const conditions = [
       eq(users.status, 'Active'),
@@ -67,7 +66,7 @@ export async function GET(req: NextRequest) {
           ilike(users.gender, `%${search}%`),
           ilike(users.country, `%${search}%`),
           ilike(users.state, `%${search}%`),
-          ilike(users.league, `%${search}%`),
+          ilike(users.league, `%${search}%`)
         )
       : undefined;
 
@@ -77,7 +76,7 @@ export async function GET(req: NextRequest) {
 
     const whereClause = and(...conditions);
 
-    const query = db
+    const result = await db
       .select({
         id: users.id,
         first_name: users.first_name,
@@ -94,7 +93,7 @@ export async function GET(req: NextRequest) {
         birth_year: users.birth_year,
         age_group: users.age_group,
         status: users.status,
-        country: users.country,
+        countryName: countries.name,
         state: users.state,
         league: users.league,
         city: users.city,
@@ -107,11 +106,11 @@ export async function GET(req: NextRequest) {
       .from(users)
       .leftJoin(sql`enterprises AS ent`, sql`NULLIF(${users.enterprise_id}, '')::integer = ent.id`)
       .leftJoin(sql`coaches AS coa`, sql`NULLIF(${users.coach_id}, '')::integer = coa.id`)
+      .leftJoin(countries, sql`${users.country}::int = ${countries.id}`)
       .where(whereClause)
-      .limit(limit)
-      .offset(offset);
-
-    const result = await query.execute();
+      .orderBy(desc(users.createdAt))
+      // .limit(limit)
+      // .offset(offset);
 
     const totalCount = await db
       .select({ count: count() })
@@ -128,9 +127,12 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching player:", error);
-    return NextResponse.json({
-      message: "Failed to fetch player",
-      error: error instanceof Error ? error.message : "Unknown error"
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        message: "Failed to fetch player",
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      { status: 500 }
+    );
   }
 }
