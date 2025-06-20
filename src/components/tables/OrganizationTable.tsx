@@ -11,7 +11,7 @@ import Button from "../ui/button/Button";
 // import { enterprises } from "@/lib/schema";
 import Link from "next/link";
 import Swal from 'sweetalert2';
- import withReactContent from 'sweetalert2-react-content';
+import withReactContent from 'sweetalert2-react-content';
 
 interface Organization {
   id: string;
@@ -61,8 +61,8 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const [organization, setOrganization] = useState<{ organizations: Organization[] } | null>(null);
 
-   const MySwal = withReactContent(Swal);
-  
+  const MySwal = withReactContent(Swal);
+
 
   const getBadgeColor = (status: string) => {
     switch (status) {
@@ -107,91 +107,91 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
   };
 
 
- async function handleHideOrganization(organizationId: string) {
-  console.log("id",organizationId)
-  const result = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'This organization will be marked as hidden.',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, hide it!',
-    cancelButtonText: 'Cancel',
-  });
-
-  if (!result.isConfirmed) return; // User cancelled
-
-  try {
-    const res = await fetch(`/api/organization/hide/${organizationId}`, {
-      method: 'DELETE',
-    });
-    console.log("hide", res);
-
-    if (!res.ok) throw new Error('Failed to hide organization');
-
-    setOrganization((prev) => {
-      if (!prev) return { organizations: [] };
-
-      const updatedOrgs = prev.organizations.map((organization) =>
-        organization.id === organizationId ? { ...organization, is_deleted: 0 } : organization
-      );
-      return { ...prev, organizations: updatedOrgs };
+  async function handleHideOrganization(organizationId: string) {
+    console.log("id", organizationId)
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This organization will be marked as hidden.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, hide it!',
+      cancelButtonText: 'Cancel',
     });
 
-          await MySwal.fire('Updated!', 'Organization hide successfully.', 'success');
+    if (!result.isConfirmed) return; // User cancelled
 
-    window.location.reload();
+    try {
+      const res = await fetch(`/api/organization/hide/${organizationId}`, {
+        method: 'DELETE',
+      });
+      console.log("hide", res);
 
-  } catch (error) {
-    console.error('Hide organization error:', error);
-    await Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text:  'Failed to hide organization',
-    });
+      if (!res.ok) throw new Error('Failed to hide organization');
+
+      setOrganization((prev) => {
+        if (!prev) return { organizations: [] };
+
+        const updatedOrgs = prev.organizations.map((organization) =>
+          organization.id === organizationId ? { ...organization, is_deleted: 0 } : organization
+        );
+        return { ...prev, organizations: updatedOrgs };
+      });
+
+      await MySwal.fire('Updated!', 'Organization hide successfully.', 'success');
+
+      window.location.reload();
+
+    } catch (error) {
+      console.error('Hide organization error:', error);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to hide organization',
+      });
+    }
   }
-}
 
-async function handleRevertOrganization(organizationId: string) {
-  const result = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'This will revert the organization.',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, revert it!',
-    cancelButtonText: 'Cancel',
-  });
-
-  if (!result.isConfirmed) return; // User cancelled
-
-  try {
-    const res = await fetch(`/api/organization/revert/${organizationId}`, {
-      method: 'PATCH',
-    });
-    console.log("Revert", res);
-
-    if (!res.ok) throw new Error('Failed to revert organization');
-
-    setOrganization((prev) => {
-      if (!prev) return { organizations: [] };
-      const updatedOrgs = prev.organizations.map((organization) =>
-        organization.id === organizationId ? { ...organization, is_deleted: 1 } : organization
-      );
-      return { ...prev, organizations: updatedOrgs };
+  async function handleRevertOrganization(organizationId: string) {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This will revert the organization.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, revert it!',
+      cancelButtonText: 'Cancel',
     });
 
-         await MySwal.fire('Updated!', 'Organization Revert successfully.', 'success');
+    if (!result.isConfirmed) return; // User cancelled
 
-    window.location.reload();
+    try {
+      const res = await fetch(`/api/organization/revert/${organizationId}`, {
+        method: 'PATCH',
+      });
+      console.log("Revert", res);
 
-  } catch (error) {
-    console.error('Revert organization error:', error);
-    await Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Failed to revert organization',
-    });
+      if (!res.ok) throw new Error('Failed to revert organization');
+
+      setOrganization((prev) => {
+        if (!prev) return { organizations: [] };
+        const updatedOrgs = prev.organizations.map((organization) =>
+          organization.id === organizationId ? { ...organization, is_deleted: 1 } : organization
+        );
+        return { ...prev, organizations: updatedOrgs };
+      });
+
+      await MySwal.fire('Updated!', 'Organization Revert successfully.', 'success');
+
+      window.location.reload();
+
+    } catch (error) {
+      console.error('Revert organization error:', error);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to revert organization',
+      });
+    }
   }
-}
 
 
   return (
@@ -248,9 +248,9 @@ async function handleRevertOrganization(organizationId: string) {
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
           <div className="min-w-[1000px]">
-            <Table>
+            <Table className="text-xs">
               {/* Table Header */}
-              <TableHeader className="border-b border-gray-100 dark:border-white/10">
+              <TableHeader className="border-b bg-gray-200 text-sm border-gray-100 dark:border-white/10">
                 <TableRow>
                   {[" Name", "Address", " Data", "Status", "History", "Actions"].map(
                     (header) => (
@@ -264,12 +264,12 @@ async function handleRevertOrganization(organizationId: string) {
 
               {/* Table Body */}
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {organization?.organizations.map((org) => (
-  <div key={org.id}>
-    <h3>{org.email}</h3>
-    {/* <p>{org.description}</p> */}
-  </div>
-))}
+                {organization?.organizations.map((org) => (
+                  <div key={org.id}>
+                    <h3>{org.email}</h3>
+                    {/* <p>{org.description}</p> */}
+                  </div>
+                ))}
 
                 {data.map((organization) => (
                   <TableRow
@@ -284,7 +284,7 @@ async function handleRevertOrganization(organizationId: string) {
                             width={40}
                             height={40}
                             src={organization.logo || d1}
-                            alt={organization.organizationName}
+                            alt={organization.organizationName || "Organization Logo"}
                           />
                         </div>
                         <span className="block font-medium text-gray-800 dark:text-white/90">
@@ -442,30 +442,25 @@ async function handleRevertOrganization(organizationId: string) {
 
                     {/* Actions */}
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                     <div className="flex gap-3">
-  {organization.is_deleted === 0 ? (
-    <button
-      onClick={() =>  handleRevertOrganization(organization.id)}
-      title="Hide Organization"
-      style={{
-        fontSize: '1.2rem',
-        marginRight: '8px',
-      }}
-    >
-      🛑
-    </button>
-  ) : (
-    <button
-      onClick={() => handleHideOrganization(organization.id)}
-      title="Revert Organization"
-      style={{
-        fontSize: '1.2rem',
-      }}
-    >
-      ♻️
-    </button>
-  )}
-</div>
+                      <div className="flex gap-3">
+                        {organization.is_deleted === 0 ? (
+                          <button
+                            onClick={() => handleRevertOrganization(organization.id)}
+                            title="Hide Organization"
+                           
+                          >
+                            🛑
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleHideOrganization(organization.id)}
+                            title="Revert Organization"
+                           
+                          >
+                            ♻️
+                          </button>
+                        )}
+                      </div>
 
                     </TableCell>
                   </TableRow>

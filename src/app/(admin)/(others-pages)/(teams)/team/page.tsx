@@ -280,8 +280,8 @@ const TeamsPage = () => {
             Total Teams: {teams.length}
           </div> */}
 
-            <Table>
-              <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+            <Table className="text-xs">
+              <TableHeader className="border-b border-gray-100 bg-gray-200 text-sm dark:border-white/[0.05]">
                 <TableRow className="bg-gray-100">
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">Logo</TableCell>
                   <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400"> Name</TableCell>
@@ -308,18 +308,19 @@ const TeamsPage = () => {
                     className={team.is_deleted === 0 ? "bg-red-100" : "bg-white"}
                   >                   
                   <TableCell className="py-4 sm:px-1 text-start">
-                      <div className="flex flex-col">
+                      <div className="flex
+                      items-center ">
                         <div className="px-5">
                           <Image
                             src={team.logo}
                             alt={team.team_name}
-                            className="w-12 h-12 rounded-full"
-                            width={48}
-                            height={48}
+                            className=" rounded-full"
+                            width={40}
+                            height={40}
                           />
                         </div>
-                        <div className="block font-medium text-gray-800 dark:text-white/90">
-                          <span>{team.team_name}</span>
+                        <div >
+                          <span className="block font-medium text-gray-800 dark:text-white/90">{team.team_name}</span>
                         </div>
                       </div>
                     </TableCell>
@@ -380,10 +381,7 @@ const TeamsPage = () => {
                             onClick={() => handleRevertTeam(team.id)}
                             title="Revert team"
 
-                            style={{
-                              fontSize: '1.2rem',
-                              marginRight: '8px',
-                            }}
+                           
                           >
                             🛑
                           </button>
@@ -391,9 +389,7 @@ const TeamsPage = () => {
                           <button
                             onClick={() => handleHideTeam(team.id)}
                             title="Hide team"
-                            style={{
-                              fontSize: '1.2rem',
-                            }}
+                          
                           >
                             ♻️
                           </button>

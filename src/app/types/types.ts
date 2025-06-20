@@ -79,3 +79,99 @@ export interface EvaluationData {
   last_name: string; // Adjust this type based on your actual image data
   remarks: string; // Adjust this type based on your actual image data
 }
+
+export interface Player {
+  id: string;
+  first_name: string;
+  last_name: string;
+  image: string;
+  position: string;
+  height: string;
+  country: string;
+  state: string;
+  city: string;
+  gender: string;
+  league: string;
+  jersey: string;
+  weight: string;
+  history?: string;
+  graduation: string;
+  sport: string;
+  status: string;
+  earnings: number;
+  age_group: string;
+  grade_level: string;
+  is_deleted: number;
+}
+
+
+export interface Coach {
+  id: string;
+  evaluationId: number;
+  firstName: string;
+  lastName: string;
+  image: string;
+  gender: string;
+  country: string;
+  state: string;
+  city: string;
+  sport: string;
+  totalEvaluations: string;
+  status: string;
+  history?: string;
+  earnings: number;
+  is_deleted: number;
+ evaluations?: Evaluation[];
+}
+
+export interface Organization {
+  id: string;
+  organizationName: string;
+  contactPerson: string;
+  owner_name: string;
+  package_id: string;
+  email: string;
+  mobileNumber: string;
+  countryCodes: string;
+  address: string;
+  country: string;
+  state: string;
+  city: string;
+  logo: string;
+  status: string;
+  totalPlayers: number;
+  totalCoaches: number;
+  totalTeams: number;
+  history?: string;
+  facebook: string;
+  instagram: string;
+  linkedin: string;
+  xlink: string;
+  youtube: string;
+  is_deleted: number;
+
+}
+
+export interface Ticket{
+    id: number;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  assign_to: number;
+  assign_to_username: string;
+  createdAt: string;
+  status: string;
+  assignee_name: string;
+}
+export interface Team {
+  id: number;
+  team_name: string;
+  logo: string;
+  organisation_name?: string;
+  totalPlayers: number;
+  totalCoaches: number;
+  team_type: string;
+  team_year: number;
+  status: string;
+}

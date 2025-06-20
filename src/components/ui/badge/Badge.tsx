@@ -23,7 +23,7 @@ interface BadgeProps {
 const Badge: React.FC<BadgeProps> = ({
   variant = "light",
   color = "primary",
-  size = "md",
+  size = "sm",
   startIcon,
   endIcon,
   children,

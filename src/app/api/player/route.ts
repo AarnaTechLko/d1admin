@@ -1,7 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/schema';
-import { eq, and, not, ilike, sql, count, or } from 'drizzle-orm';
+import { eq, and, not, ilike, sql, count, or, gte } from 'drizzle-orm';
+
+type TimeRange = '24h' | '1w' | '1m' | '1y';
+
+// Shared time range utility
+function getTimeFilterCondition(column: typeof users.createdAt, timeRange: TimeRange | string | null) {
+  if (!timeRange) return undefined;
+  const now = new Date();
+  switch (timeRange) {
+    case '24h':
+      return gte(column, new Date(now.getTime() - 24 * 60 * 60 * 1000));
+    case '1w':
+      return gte(column, new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
+    case '1m':
+      return gte(column, new Date(new Date().setMonth(now.getMonth() - 1)));
+    case '1y':
+      return gte(column, new Date(new Date().setFullYear(now.getFullYear() - 1)));
+    default:
+      return undefined;
+  }
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,6 +33,8 @@ export async function GET(req: NextRequest) {
     const graduation = searchParams.get('graduation') || '';
     const birthyear = searchParams.get('birthyear') || '';
     const position = searchParams.get('position') || '';
+    const timeRange = searchParams.get('timeRange') || '';
+
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const offset = (page - 1) * limit;
@@ -29,7 +51,7 @@ export async function GET(req: NextRequest) {
     if (graduation) conditions.push(ilike(users.graduation, `%${graduation}%`));
     if (position) conditions.push(ilike(users.position, `%${position}%`));
     if (birthyear) conditions.push(sql`EXTRACT(YEAR FROM ${users.birthday}) = ${birthyear}`);
-    
+
     const searchCondition = search
       ? or(
           ilike(users.first_name, `%${search}%`),
@@ -42,10 +64,18 @@ export async function GET(req: NextRequest) {
           ilike(users.height, `%${search}%`),
           ilike(users.weight, `%${search}%`),
           ilike(users.status, `%${search}%`),
+          ilike(users.gender, `%${search}%`),
+          ilike(users.country, `%${search}%`),
+          ilike(users.state, `%${search}%`),
+          ilike(users.league, `%${search}%`),
         )
       : undefined;
 
-    const whereClause = searchCondition ? and(...conditions, searchCondition) : and(...conditions);
+    const timeCondition = getTimeFilterCondition(users.createdAt, timeRange);
+    if (timeCondition) conditions.push(timeCondition);
+    if (searchCondition) conditions.push(searchCondition);
+
+    const whereClause = and(...conditions);
 
     const query = db
       .select({
@@ -64,7 +94,12 @@ export async function GET(req: NextRequest) {
         birth_year: users.birth_year,
         age_group: users.age_group,
         status: users.status,
-        is_deleted:users.is_deleted,
+        country: users.country,
+        state: users.state,
+        league: users.league,
+        city: users.city,
+        gender: users.gender,
+        is_deleted: users.is_deleted,
         coachName: sql`coa."firstName"`.as("coachName"),
         coachLastName: sql`coa."lastName"`.as("coachLastName"),
         enterpriseName: sql`ent."organizationName"`.as("enterpriseName")

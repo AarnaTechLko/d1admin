@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState,useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MoreHorizontal } from "lucide-react";
+// import { MoreHorizontal } from "lucide-react";
 import d1 from "@/public/images/signin/d1.png"
 import logo from "@/public/images/logo1/logo.webp"
 // import user from "@/public/images/user/user-01.jpg"
@@ -11,13 +11,10 @@ import logo from "@/public/images/logo1/logo.webp"
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
-  
-
   ChevronDownIcon,
   GridIcon,
   // HorizontaLDots,
   ListIcon,
-
   TableIcon,
   UserCircleIcon,
 } from "lucide-react";
@@ -30,62 +27,107 @@ type NavItem = {
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
-const navItems: NavItem[] = [
-  {
-    icon: <GridIcon />,
-    name: "Dashboard",
-    path: "/dashboard",
-  },
-
-
-  {
-    name: "Coaches",
-    icon: <ListIcon />,
-    subItems: [{ name: "View Coach ", path: "/coach", pro: false }],
-  },
-
-  {
-    name: "Players",
-    icon: <  UserCircleIcon/>,
-    subItems: [{ name: "View Player ", path: "/player", pro: false }],
-  },
-  {
-    name: "Organizations",
-    icon: <TableIcon />,
-    subItems: [{ name: "View Organizations", path: "/organization", pro: false }],
-  },
-  {
-    name: "Teams",
-    icon: <ListIcon />,
-    subItems: [{ name: "View Team ", path: "/team", pro: false }],
-  },
-   {
-    name: "Notifications",
-    icon: <ListIcon />,
-    subItems: [{ name: "View Notification ", path: "/notification", pro: false }],
-  },
-  {
-    name:"Subadmin",
-    icon:<UserCircleIcon/>,
-    subItems:[{name:"Add",path:"/subadmin",pro:false},{name:"View",path:"/view",pro:false}],
-  
-  },
-  {
-    name:"Ticket",
-    icon:<UserCircleIcon/>,
-    subItems:[{name:"View Ticket",path:"/ticket",pro:false}],
-  
-  },
-  
- 
- 
-];
-
-
-
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedRole = sessionStorage.getItem("role");
+    setRole(storedRole);
+  }, []);
+const navItems: NavItem[] =
+  role === "Customer Support"
+    ? [
+        {
+          name: "Ticket",
+          icon: <UserCircleIcon />,
+          subItems: [{ name: "View Ticket", path: "/ticket", pro: false }],
+        },
+      ]
+    : role === "admin"
+    ? [
+        {
+          icon: <GridIcon />,
+          name: "Dashboard",
+          path: "/dashboard",
+        },
+        {
+          name: "Coaches",
+          icon: <ListIcon />,
+          subItems: [{ name: "View Coach", path: "/coach", pro: false }],
+        },
+        {
+          name: "Players",
+          icon: <UserCircleIcon />,
+          subItems: [{ name: "View Player", path: "/player", pro: false }],
+        },
+        {
+          name: "Organizations",
+          icon: <TableIcon />,
+          subItems: [
+            { name: "View Organizations", path: "/organization", pro: false },
+          ],
+        },
+        {
+          name: "Teams",
+          icon: <ListIcon />,
+          subItems: [{ name: "View Team", path: "/team", pro: false }],
+        },
+        {
+          name: "Notifications",
+          icon: <ListIcon />,
+          subItems: [
+            { name: "View Notification", path: "/notification", pro: false },
+          ],
+        },
+        {
+          name: "Subadmin",
+          icon: <UserCircleIcon />,
+          subItems: [
+            { name: "Add", path: "/subadmin", pro: false },
+            { name: "View", path: "/view", pro: false },
+          ],
+        },
+        {
+          name: "Ticket",
+          icon: <UserCircleIcon />,
+          subItems: [{ name: "View Ticket", path: "/ticket", pro: false }],
+        },
+      ]
+       : role === "Manager"
+    ? [
+        {
+          icon: <GridIcon />,
+          name: "Dashboard",
+          path: "/dashboard",
+        },
+        {
+          name: "Coaches",
+          icon: <ListIcon />,
+          subItems: [{ name: "View Coach", path: "/coach", pro: false }],
+        },
+        {
+          name: "Players",
+          icon: <UserCircleIcon />,
+          subItems: [{ name: "View Player", path: "/player", pro: false }],
+        },
+        {
+          name: "Organizations",
+          icon: <TableIcon />,
+          subItems: [
+            { name: "View Organizations", path: "/organization", pro: false },
+          ],
+        },
+        {
+          name: "Teams",
+          icon: <ListIcon />,
+          subItems: [{ name: "View Team", path: "/team", pro: false }],
+        },
+      ]
+    : [];
+
+
 
   const renderMenuItems = (
     navItems: NavItem[],
@@ -333,36 +375,30 @@ const AppSidebar: React.FC = () => {
         <nav className="mb-6">
           <div className="flex flex-col gap-4">
             <div>
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start"
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Menu"
-                ) : (
-<MoreHorizontal />
-                )}
-              </h2>
+              {(isExpanded || isHovered || isMobileOpen) && (
+  <h2
+    className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+      !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+    }`}
+  >
+    Menu
+  </h2>
+)}
+
               {renderMenuItems(navItems, "main")}
             </div>
 
             <div className="">
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start"
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
-                ) : (
-<MoreHorizontal />
-                )}
-              </h2>
+            {(isExpanded || isHovered || isMobileOpen) && (
+  <h2
+    className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+      !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+    }`}
+  >
+    
+  </h2>
+)}
+
               {/* {renderMenuItems(othersItems, "others")} */}
             </div>
           </div>

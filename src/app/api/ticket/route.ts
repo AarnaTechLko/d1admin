@@ -1,206 +1,279 @@
-import { NextResponse } from 'next/server';
+// import { NextRequest, NextResponse } from "next/server";
+// import { db } from "@/lib/db";
+// import { ticket } from "@/lib/schema";
+// import { ilike, desc, and, sql, or, eq, gte } from "drizzle-orm";
+
+// // Change this to your actual admin ID logic if needed
+// const ADMIN_ID = 9;
+
+// type TimeRange = "24h" | "1w" | "1m" | "1y";
+
+// /**
+//  * Utility: Get time filter condition based on time range
+//  */
+// function getTimeFilterCondition(column: typeof ticket.createdAt, timeRange: TimeRange | null) {
+//   const now = new Date();
+//   switch (timeRange) {
+//     case "24h":
+//       return gte(column, new Date(now.getTime() - 24 * 60 * 60 * 1000));
+//     case "1w":
+//       return gte(column, new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
+//     case "1m":
+//       return gte(column, new Date(now.setMonth(now.getMonth() - 1)));
+//     case "1y":
+//       return gte(column, new Date(now.setFullYear(now.getFullYear() - 1)));
+//     default:
+//       return undefined;
+//   }
+// }
+
+// /**
+//  * ✅ POST: Create a new ticket
+//  */
+// export async function POST(req: Request) {
+//   try {
+//     const { name, email, subject, message, assign_to, status } = await req.json();
+
+//     const result = await db.insert(ticket).values({
+//       name,
+//       email,
+//       subject,
+//       message: message ?? "",
+//       assign_to,
+//       status,
+//       createdAt: new Date(), // Ensure timestamp is inserted
+//     }).returning();
+
+//     return NextResponse.json({ message: "Ticket created successfully", result }, { status: 200 });
+//   } catch (error) {
+//     console.error("❌ Error creating ticket:", error);
+//     return NextResponse.json({ error: "Error creating ticket" }, { status: 500 });
+//   }
+// }
+
+// /**
+//  * ✅ GET: Fetch tickets with pagination, search, time filter, and user-role filtering
+//  */
+// export async function GET(req: NextRequest) {
+//   try {
+//     const url = new URL(req.url);
+//     const search = url.searchParams.get("search")?.trim() || "";
+//     const timeRange = url.searchParams.get("timeRange") as TimeRange | null;
+//     const page = parseInt(url.searchParams.get("page") || "1", 10);
+//     const limit = parseInt(url.searchParams.get("limit") || "10", 10);
+//     const userId = parseInt(url.searchParams.get("userId") || "0", 10);
+
+//     if (!userId) {
+//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+//     }
+
+//     const offset = (page - 1) * limit;
+//     const isAdmin = userId === ADMIN_ID;
+
+//     const conditions = [];
+
+//     // 🔍 Search Filter
+//     if (search) {
+//       conditions.push(
+//         or(
+//           ilike(ticket.subject, `%${search}%`),
+//           ilike(ticket.name, `%${search}%`),
+//           ilike(ticket.email, `%${search}%`),
+//           ilike(ticket.message, `%${search}%`)
+//         )
+//       );
+//     }
+
+//     // 🕒 Time Range Filter
+//     const timeCondition = getTimeFilterCondition(ticket.createdAt, timeRange);
+//     if (timeCondition) {
+//       conditions.push(timeCondition);
+//     }
+
+//     // 👤 User Role Filter
+//     if (!isAdmin) {
+//       conditions.push(eq(ticket.assign_to, userId));
+//     }
+
+//     const whereClause = conditions.length ? and(...conditions) : undefined;
+
+//     // 📦 Fetch data and count
+//     const [ticketList, totalResult] = await Promise.all([
+//       db
+//         .select()
+//         .from(ticket)
+//         .where(whereClause)
+//         .orderBy(desc(ticket.id))
+//         .limit(limit)
+//         .offset(offset),
+
+//       db
+//         .select({ count: sql<number>`count(*)` })
+//         .from(ticket)
+//         .where(whereClause),
+//     ]);
+
+//     const total = totalResult[0]?.count ?? 0;
+
+//     return NextResponse.json({
+//       ticket: ticketList,
+//       currentPage: page,
+//       totalPages: Math.ceil(total / limit),
+//       totalCount: total,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error fetching tickets:", error);
+//     return NextResponse.json({ error: "Failed to load tickets" }, { status: 500 });
+//   }
+// }
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ticket,admin } from '@/lib/schema';
-import { ilike, desc, and,sql, or,eq } from 'drizzle-orm';
-const ADMIN_ID = 9; // Can be configured or fetched dynamically
+import { ticket, admin } from "@/lib/schema";
+import { ilike, desc, and, sql, or, eq, gte } from "drizzle-orm";
 
+// Default admin user ID (you can replace this with env config or session auth)
+const ADMIN_ID = 9;
+type TimeRange = "24h" | "1w" | "1m" | "1y";
 
-// POST: Create a new ticket
-export async function POST(req: Request) {
-  // try {
-  //   const { name, email, subject, message,assign_to,status } = await req.json();
-
-  //   // Insert the ticket into the database
-  //   const result = await db.insert(ticket).values({
-  //     name,
-  //     email,
-  //     subject,
-  //     message,
-  //     assign_to,
-  //     status,
-  //   }).returning(); // Ensure it returns the inserted data
-
-  //   return NextResponse.json({ message: 'Ticket created successfully', result }, { status: 200 });
-  // } catch (error) {
-  //   console.error("Error creating ticket:", error);
-  //   return NextResponse.json({ error: "Error creating ticket" }, { status: 500 });
-  // }
-
-
-  try {
-    const payload = await req.json();
-    const { name, email, subject, message, assign_to, status } = payload;
-
-    console.log("Payload received:", payload);
-
-    const result = await db.insert(ticket).values({
-      name,
-      email,
-      subject,
-      message: message ?? "", // Prevent undefined
-      assign_to,
-      status,
-    }).returning();
-
-    console.log("Insert result:", result);
-
-    return NextResponse.json({ message: 'Ticket created successfully', result }, { status: 200 });
-  } catch (error) {
-    console.error("Error creating ticket:", error);
-    return NextResponse.json({ error: "Error creating ticket" }, { status: 500 });
+/**
+ * Utility: Get time filter condition for createdAt
+ */
+function getTimeFilterCondition(column: typeof ticket.createdAt, range: TimeRange | null) {
+  const now = new Date();
+  switch (range) {
+    case "24h":
+      return gte(column, new Date(now.getTime() - 24 * 60 * 60 * 1000));
+    case "1w":
+      return gte(column, new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
+    case "1m":
+      return gte(column, new Date(now.setMonth(now.getMonth() - 1)));
+    case "1y":
+      return gte(column, new Date(now.setFullYear(now.getFullYear() - 1)));
+    default:
+      return undefined;
   }
 }
 
-
-// ✅ GET: Fetch tickets with pagination and search
-/* export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const search = (searchParams.get("search") || "").trim();
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "10");
-  const userId = parseInt(searchParams.get("userId") || "0");
-console.log("userId");
-  if (!userId) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
-  }
-
-  const offset = (page - 1) * limit;
-  const isAdmin = userId === ADMIN_ID;
-
-  // Search condition: match in subject, name, email, or message
-  const searchCondition = or(
-    like(ticket.subject, `%${search}%`),
-    like(ticket.name, `%${search}%`),
-    like(ticket.email, `%${search}%`),
-    like(ticket.message, `%${search}%`)
-  );
-
-  // Combine with assignment filter for non-admin users
-  const whereClause = isAdmin
-    ? searchCondition
-    : and(eq(ticket.assign_to, userId), searchCondition);
-
+/**
+ * ✅ POST /api/tickets → Create a new ticket
+ */
+export async function POST(req: Request) {
   try {
+    const body = await req.json();
+    const { name, email, subject, message = "", assign_to, status } = body;
+
+    const result = await db
+      .insert(ticket)
+      .values({
+        name,
+        email,
+        subject,
+        message,
+        assign_to,
+        status,
+        createdAt: new Date(),
+      })
+      .returning();
+
+    return NextResponse.json(
+      { message: "Ticket created successfully", result },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("❌ Error creating ticket:", error);
+    return NextResponse.json({ error: "Failed to create ticket" }, { status: 500 });
+  }
+}
+
+/**
+ * ✅ GET /api/tickets → Fetch paginated tickets with filters
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const url = new URL(req.url);
+
+    // Extract query params
+    const search = url.searchParams.get("search")?.trim() || "";
+    const timeRange = url.searchParams.get("timeRange") as TimeRange | null;
+    const page = parseInt(url.searchParams.get("page") || "1", 10);
+    const limit = parseInt(url.searchParams.get("limit") || "10", 10);
+    const userId = parseInt(url.searchParams.get("userId") || "0", 10);
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const offset = (page - 1) * limit;
+    const isAdmin = userId === ADMIN_ID;
+
+    // WHERE conditions
+    const conditions = [];
+
+    // 🔍 Search filter
+    if (search) {
+      conditions.push(
+        or(
+          ilike(ticket.name, `%${search}%`),
+          ilike(ticket.email, `%${search}%`),
+          ilike(ticket.subject, `%${search}%`),
+          ilike(ticket.message, `%${search}%`)
+        )
+      );
+    }
+
+    // 🕒 Time range filter
+    const timeCondition = getTimeFilterCondition(ticket.createdAt, timeRange);
+    if (timeCondition) {
+      conditions.push(timeCondition);
+    }
+
+    // 👤 Role-based filter
+    if (!isAdmin) {
+      conditions.push(eq(ticket.assign_to, userId));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Fields to select
+    const ticketSelectFields = {
+      id: ticket.id,
+      name: ticket.name,
+      email: ticket.email,
+      subject: ticket.subject,
+      message: ticket.message,
+      assign_to: ticket.assign_to,
+      status: ticket.status,
+      createdAt: ticket.createdAt,
+      assign_to_username: admin.username, // From joined admin table
+    };
+
+    // Fetch paginated data & total count
     const [ticketList, totalResult] = await Promise.all([
-      db.select().from(ticket).where(whereClause).orderBy(desc(ticket.id)).limit(limit).offset(offset),
-      db.select({ count: sql<number>`count(*)` }).from(ticket).where(whereClause),
+      db
+        .select(ticketSelectFields)
+        .from(ticket)
+        .leftJoin(admin, eq(ticket.assign_to, admin.id))
+        .where(whereClause)
+        .orderBy(desc(ticket.id))
+        .limit(limit)
+        .offset(offset),
+
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(ticket)
+        .where(whereClause),
     ]);
 
     const total = totalResult[0]?.count ?? 0;
 
-    return Response.json({
+    return NextResponse.json({
       ticket: ticketList,
+      currentPage: page,
       totalPages: Math.ceil(total / limit),
+      totalCount: total,
     });
-  } catch (err) {
-    console.error("Error fetching tickets:", err);
-    return new Response(JSON.stringify({ error: "Failed to load tickets" }), { status: 500 });
-  }
-} */
-  export async function GET(req: Request) {
-    try {
-      const { searchParams } = new URL(req.url);
-  
-      const search = (searchParams.get("search") || "").trim();
-      const page = parseInt(searchParams.get("page") || "1");
-      const limit = parseInt(searchParams.get("limit") || "10");
-      const userId = parseInt(searchParams.get("userId") || "0");
-  
-      if (!userId) {
-        return NextResponse.json(
-          { error: "Unauthorized" },
-          { status: 401 }
-        );
-      }
-  
-      const offset = (page - 1) * limit;
-      const isAdmin = userId === ADMIN_ID;
-  
-      // Build dynamic search condition
-      const searchCondition = search
-        ? or(
-            ilike(ticket.name, `%${search}%`),
-            ilike(ticket.email, `%${search}%`),
-            ilike(ticket.subject, `%${search}%`),
-            ilike(ticket.message, `%${search}%`)
-          )
-        : undefined;
-  
-      // Final where clause based on role
-      const whereClause = !isAdmin
-        ? searchCondition
-          ? and(eq(ticket.assign_to, userId), searchCondition)
-          : eq(ticket.assign_to, userId)
-        : searchCondition;
-  
-      // Fetch paginated tickets with assigned admin username
-      const ticketsData = await db
-        .select({
-          id: ticket.id,
-          name: ticket.name,
-          email: ticket.email,
-          subject: ticket.subject,
-          message: ticket.message,
-          assign_to: ticket.assign_to,
-          status: ticket.status,
-          createdAt: ticket.createdAt,
-          assignToUsername: admin.username,
-          ticketCount: sql<number>`COUNT(*) OVER()`, // Total count for pagination
-        })
-        .from(ticket)
-        .leftJoin(admin, eq(ticket.assign_to, admin.id))
-        .where(whereClause)
-        .orderBy(desc(ticket.createdAt))
-        .offset(offset)
-        .limit(limit);
-  
-      // Total count from the first row (thanks to COUNT(*) OVER())
-      const totalCount = ticketsData[0]?.ticketCount || 0;
-      const totalPages = Math.ceil(totalCount / limit);
-  
-      return NextResponse.json({
-        tickets: ticketsData,
-        currentPage: page,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-        totalCount,
-      });
-    } catch (error) {
-      console.error("Error fetching tickets:", error);
-      return NextResponse.json(
-        {
-          message: "Failed to fetch tickets",
-          error: error instanceof Error ? error.message : String(error),
-        },
-        { status: 500 }
-      );
-    }
-  }
-
-export async function DELETE(req:Request) {
-  try {
-    const url = new URL(req.url);
-    const ticketId = url.searchParams.get("id");
-
-    if (!ticketId) {
-      return NextResponse.json({ message: "ticket ID is required" }, { status: 400 });
-    }
-
-    const ticketIdNumber = Number(ticketId);
-    if (isNaN(ticketIdNumber)) {
-      return NextResponse.json({ message: "Invalid ticket ID" }, { status: 400 });
-    }
-
-    // Delete the ticket by ID
-    await db.delete(ticket).where(eq(ticket.id, ticketIdNumber));
-
-    return NextResponse.json({ message: "ticket deleted successfully" });
   } catch (error) {
-    return NextResponse.json(
-      { message: "Failed to delete ticket", error: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
-    );
+    console.error("❌ Error fetching tickets:", error);
+    return NextResponse.json({ error: "Failed to load tickets" }, { status: 500 });
   }
 }
-

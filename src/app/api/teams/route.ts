@@ -1,20 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { teams, enterprises, coaches, users } from "@/lib/schema"; // Ensure correct imports
-import { eq, ilike, or, count, desc } from "drizzle-orm";
+import { teams, enterprises, coaches, users } from "@/lib/schema";
+import { eq, ilike, or, count, desc, and, gte } from "drizzle-orm";
 
-
+type TimeRange = '24h' | '1w' | '1m' | '1y';
+function getTimeFilterCondition(column: typeof teams.createdAt, timeRange: TimeRange | string | null) {
+  if (!timeRange) return undefined;
+  const now = new Date();
+  switch (timeRange) {
+    case '24h':
+      return gte(column, new Date(now.getTime() - 24 * 60 * 60 * 1000));
+    case '1w':
+      return gte(column, new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
+    case '1m':
+      return gte(column, new Date(new Date().setMonth(now.getMonth() - 1)));
+    case '1y':
+      return gte(column, new Date(new Date().setFullYear(now.getFullYear() - 1)));
+    default:
+      return undefined;
+  }
+}
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const search = url.searchParams.get("search")?.trim() || "";
+  const timeRange = url.searchParams.get("timeRange") || ""; // e.g. '24h', '1w', '1m', '1y'
   const page = parseInt(url.searchParams.get("page") || "1", 10);
   const limit = parseInt(url.searchParams.get("limit") || "10", 10);
   const offset = (page - 1) * limit;
 
   try {
-    const whereClause = search
-      ? or(
+    const conditions = [];
+
+    // Search filter
+    if (search) {
+      conditions.push(
+        or(
           ilike(teams.team_name, `%${search}%`),
           ilike(teams.team_type, `%${search}%`),
           ilike(teams.status, `%${search}%`),
@@ -22,8 +43,18 @@ export async function GET(req: NextRequest) {
           ilike(teams.country, `%${search}%`),
           ilike(teams.city, `%${search}%`)
         )
-      : undefined;
+      );
+    }
 
+    // Time range filter
+    const timeCondition = getTimeFilterCondition(teams.createdAt, timeRange);
+    if (timeCondition) {
+      conditions.push(timeCondition);
+    }
+
+    const whereClause = conditions.length ? and(...conditions) : undefined;
+
+    // Main data query
     const teamsData = await db
       .select({
         id: teams.id,
@@ -38,7 +69,7 @@ export async function GET(req: NextRequest) {
         city: teams.city,
         organisation_name: enterprises.organizationName,
         club_id: teams.club_id,
-        is_deleted:teams.is_deleted,
+        is_deleted: teams.is_deleted,
       })
       .from(teams)
       .leftJoin(enterprises, eq(teams.club_id, enterprises.id))
@@ -47,20 +78,21 @@ export async function GET(req: NextRequest) {
       .offset(offset)
       .limit(limit);
 
+    // Add counts per team
     const teamsWithCounts = await Promise.all(
       teamsData.map(async (team) => {
-        const totalCoaches = await db
-          .select({ count: count() })
-          .from(coaches)
-          .where(eq(coaches.enterprise_id, String(team.club_id)))
-          .then((result) => result[0]?.count || 0);
-
-        const totalPlayers = await db
-          .select({ count: count() })
-          .from(users)
-          .where(eq(users.enterprise_id, String(team.club_id)))
-          .then((result) => result[0]?.count || 0);
-
+        const [totalCoaches, totalPlayers] = await Promise.all([
+          db
+            .select({ count: count() })
+            .from(coaches)
+            .where(eq(coaches.enterprise_id, String(team.club_id)))
+            .then((res) => res[0]?.count || 0),
+          db
+            .select({ count: count() })
+            .from(users)
+            .where(eq(users.enterprise_id, String(team.club_id)))
+            .then((res) => res[0]?.count || 0),
+        ]);
         return { ...team, totalCoaches, totalPlayers };
       })
     );
@@ -69,14 +101,16 @@ export async function GET(req: NextRequest) {
       .select({ count: count() })
       .from(teams)
       .where(whereClause)
-      .then((result) => result[0]?.count || 0);
+      .then((res) => res[0]?.count || 0);
+
+    const totalPages = Math.ceil(totalCount / limit);
 
     return NextResponse.json({
       teams: teamsWithCounts,
       currentPage: page,
-      totalPages: Math.ceil(totalCount / limit),
+      totalPages,
       totalCount,
-      hasNextPage: page < Math.ceil(totalCount / limit),
+      hasNextPage: page < totalPages,
       hasPrevPage: page > 1,
     });
   } catch (error) {
@@ -86,8 +120,6 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-
-
 
 /**
  * POST API: Fetches total coaches and total players for a given enterprise

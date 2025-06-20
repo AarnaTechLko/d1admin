@@ -1,38 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import { hash } from 'bcryptjs';
 import { db } from '@/lib/db';
 import { licenses, enterprises, users, coaches, teams } from '@/lib/schema';
-// import debug from 'debug';
-// import jwt from 'jsonwebtoken';
-// import { SECRET_KEY } from '@/lib/constants';
-import { eq, ilike, or, count, desc, and } from 'drizzle-orm';
-// import { sendEmail } from '@/lib/helpers';
+import { eq, ilike, or, count, desc, and, gte } from 'drizzle-orm';
 
+type TimeRange = '24h' | '1w' | '1m' | '1y';
 
+// ✅ Updated to use enterprises.createdAt
+function getTimeFilterCondition(column: typeof enterprises.createdAt, timeRange: TimeRange | string | null) {
+  if (!timeRange) return undefined;
+  const now = new Date();
+  switch (timeRange) {
+    case '24h':
+      return gte(column, new Date(now.getTime() - 24 * 60 * 60 * 1000));
+    case '1w':
+      return gte(column, new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
+    case '1m':
+      return gte(column, new Date(new Date().setMonth(now.getMonth() - 1)));
+    case '1y':
+      return gte(column, new Date(new Date().setFullYear(now.getFullYear() - 1)));
+    default:
+      return undefined;
+  }
+}
 
-
+// GET Handler: Fetch Enterprises
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
-  const search = url.searchParams.get('search')?.trim() || '';  
+  const search = url.searchParams.get('search')?.trim() || '';
+  const timeRange = url.searchParams.get('timeRange') || '';
   const page = parseInt(url.searchParams.get('page') || '1', 10);
   const limit = parseInt(url.searchParams.get('limit') || '10', 10);
-  
-  try {
-    const offset = (page - 1) * limit;
+  const offset = (page - 1) * limit;
 
-    const whereClause = search
-      ? or(
+  try {
+    const conditions = [];
+
+    // Search filters
+    if (search) {
+      conditions.push(
+        or(
           ilike(enterprises.organizationName, `%${search}%`),
           ilike(enterprises.email, `%${search}%`),
           ilike(enterprises.state, `%${search}%`),
           ilike(enterprises.mobileNumber, `%${search}%`),
-          ilike(enterprises.country, `%${search}%`),  
-          ilike(enterprises.address, `%${search}%`),  
-          ilike(enterprises.status, `%${search}%`)  
+          ilike(enterprises.country, `%${search}%`),
+          ilike(enterprises.address, `%${search}%`),
+          ilike(enterprises.status, `%${search}%`)
         )
-      : undefined;
+      );
+    }
 
-    // ✅ Fetch enterprises first (without subqueries)
+    // Time-based filter ✅ (correct function & column used)
+    const timeCondition = getTimeFilterCondition(enterprises.createdAt, timeRange);
+    if (timeCondition) {
+      conditions.push(timeCondition);
+    }
+
+    const whereClause = conditions.length ? and(...conditions) : undefined;
+
+    // Fetch paginated enterprises
     const enterprisesData = await db
       .select()
       .from(enterprises)
@@ -41,63 +67,59 @@ export async function GET(req: NextRequest) {
       .offset(offset)
       .limit(limit);
 
-    // ✅ Fetch counts separately for each enterprise
+    // Enrich each enterprise with related counts
     const enrichedEnterprises = await Promise.all(
       enterprisesData.map(async (enterprise) => {
-        const totalPlayersResult = await db
-          .select({ count: count() })
-          .from(users)
-          .where(eq(users.enterprise_id, String(enterprise.id)))
-
-        const totalCoachesResult = await db
-          .select({ count: count() })
-          .from(coaches)
-          .where(eq(coaches.enterprise_id, String(enterprise.id)));
-
-        const totalTeamsResult = await db
-          .select({ count: count() })
-          .from(teams)
-          .where(and(eq(teams.created_by, 'Enterprise'), eq(teams.club_id, enterprise.id)));
+        const [totalPlayers, totalCoaches, totalTeams] = await Promise.all([
+          db
+            .select({ count: count() })
+            .from(users)
+            .where(eq(users.enterprise_id, String(enterprise.id))),
+          db
+            .select({ count: count() })
+            .from(coaches)
+            .where(eq(coaches.enterprise_id, String(enterprise.id))),
+          db
+            .select({ count: count() })
+            .from(teams)
+            .where(and(eq(teams.created_by, 'Enterprise'), eq(teams.club_id, enterprise.id))),
+        ]);
 
         return {
           ...enterprise,
-          totalPlayers: totalPlayersResult[0]?.count || 0,
-          totalCoaches: totalCoachesResult[0]?.count || 0,
-          totalTeams: totalTeamsResult[0]?.count || 0
+          totalPlayers: totalPlayers[0]?.count || 0,
+          totalCoaches: totalCoaches[0]?.count || 0,
+          totalTeams: totalTeams[0]?.count || 0,
         };
       })
     );
 
-    // ✅ Get total enterprise count for pagination
+    // Total count for pagination
     const totalCount = await db
       .select({ count: count() })
       .from(enterprises)
       .where(whereClause)
-      .then((result) => result[0]?.count || 0);
+      .then((res) => res[0]?.count || 0);
 
     const totalPages = Math.ceil(totalCount / limit);
 
     return NextResponse.json({
-      enterprises: enrichedEnterprises, // Updated data with counts
+      enterprises: enrichedEnterprises,
       currentPage: page,
-      totalPages: totalPages,
+      totalPages,
       hasNextPage: page < totalPages,
-      hasPrevPage: page > 1
+      hasPrevPage: page > 1,
     });
-
   } catch (error) {
     return NextResponse.json(
       {
-        message: 'Failed to fetch organization',
-        error: error instanceof Error ? error.message : String(error)
+        message: 'Failed to fetch organizations',
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
   }
 }
-
-
-
 
 
 export async function DELETE(req: NextRequest) {

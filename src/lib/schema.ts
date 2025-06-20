@@ -232,7 +232,6 @@ export const payments = pgTable(
     created_at: timestamp("created_at").defaultNow().notNull(),
     description: text("description"),
     is_deleted: integer("is_deleted").default(1).notNull(),
-
   },
   (payments) => {
     return {
@@ -563,11 +562,18 @@ export const admin = pgTable("admin", {
   id: serial("id").primaryKey(),
   username: varchar("username", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  role: text("role", { enum: ["customer_support", "executive"] }).notNull(),
+  role: text("role", {
+    enum: [
+      "Manager",
+      "Customer Support",
+      "Executive Level 1",
+      "Executive Level 2",
+    ],
+  }).notNull(),
   password_hash: text("password_hash").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
-
 });
+
 
 
 
@@ -575,10 +581,17 @@ export const admins = pgTable("admin", {
   id: serial("id").primaryKey(),
   username: varchar("username", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  role: text("role", { enum: ["customer_support", "executive"] }).notNull(),
+  role: text("role", {
+    enum: [
+      "Manager",
+      "Customer Support",
+      "Executive Level 1",
+      "Executive Level 2",
+    ],
+  }).notNull(),
   password_hash: text("password_hash").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
-  is_deleted: boolean("is_deleted").default(false), // ✅ Add this line
+  is_deleted: boolean("is_deleted").default(false), // ✅ Already correct
 });
 
 
@@ -593,7 +606,7 @@ export const ticket = pgTable("ticket", {
   status: varchar("status").default("Pending"),
   role: varchar("role"),
   message: text("message").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 export const ticket_messages = pgTable("ticket_messages", {

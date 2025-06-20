@@ -14,7 +14,7 @@ import {
   ne,
   count,
   desc,
-  sql
+  sql,gte
 } from 'drizzle-orm';
 // import { sendEmail } from '@/lib/helpers';
  
@@ -25,29 +25,52 @@ export async function GET(req: NextRequest) {
   const search = url.searchParams.get('search')?.trim() || '';  
   const page = parseInt(url.searchParams.get('page') || '1', 10);
   const limit = parseInt(url.searchParams.get('limit') || '10', 10);
-  
+  const timeRange = url.searchParams.get('timeRange') || ''; // e.g., "24h", "1w", "1m", "1y"
+
+  // Build time range filter condition
+  let timeFilterCondition = undefined;
+  const now = new Date();
+
+  switch (timeRange) {
+    case '24h':
+      timeFilterCondition = gte(coaches.createdAt, new Date(now.getTime() - 24 * 60 * 60 * 1000));
+      break;
+    case '1w':
+      timeFilterCondition = gte(coaches.createdAt, new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
+      break;
+    case '1m':
+      timeFilterCondition = gte(coaches.createdAt, new Date(now.setMonth(now.getMonth() - 1)));
+      break;
+    case '1y':
+      timeFilterCondition = gte(coaches.createdAt, new Date(now.setFullYear(now.getFullYear() - 1)));
+      break;
+    default:
+      break;
+  }
+
   try {
-    // Ensure firstName is not null and not an empty string
     const baseCondition = and(
       isNotNull(coaches.firstName),
       ne(coaches.firstName, '')
     );
 
-    // Search clause combined with base condition
-    const whereClause = search
-      ? and(
-          baseCondition,
-          or(
-            ilike(coaches.firstName, `%${search}%`),
-            ilike(coaches.lastName, `%${search}%`),
-            ilike(coaches.email, `%${search}%`),
-            ilike(coaches.phoneNumber, `%${search}%`),
-            ilike(coaches.sport, `%${search}%`),
-            ilike(coaches.status, `%${search}%`),
-            ilike(coaches.gender, `%${search}%`)
-          )
+    const searchCondition = search
+      ? or(
+          ilike(coaches.firstName, `%${search}%`),
+          ilike(coaches.lastName, `%${search}%`),
+          ilike(coaches.email, `%${search}%`),
+          ilike(coaches.phoneNumber, `%${search}%`),
+          ilike(coaches.sport, `%${search}%`),
+          ilike(coaches.status, `%${search}%`),
+          ilike(coaches.gender, `%${search}%`)
         )
-      : baseCondition;
+      : undefined;
+
+    const whereClause = and(
+      baseCondition,
+      ...(searchCondition ? [searchCondition] : []),
+      ...(timeFilterCondition ? [timeFilterCondition] : [])
+    );
 
     const coachesData = await db
       .select({
@@ -59,10 +82,13 @@ export async function GET(req: NextRequest) {
         email: coaches.email,
         phoneNumber: coaches.phoneNumber,
         slug: coaches.slug,
+        country: coaches.country,
+        state: coaches.state,
+        city: coaches.city,
         sport: coaches.sport,
         qualifications: coaches.qualifications,
         status: coaches.status,
-        is_deleted:coaches.is_deleted,
+        is_deleted: coaches.is_deleted,
         consumeLicenseCount: sql<number>`COUNT(CASE WHEN licenses.status = 'Consumed' THEN 1 END)`,
         assignedLicenseCount: sql<number>`COUNT(CASE WHEN licenses.status = 'Assigned' THEN 1 END)`,
         earnings: sql<number>`SUM(CASE WHEN coachaccount.coach_id = coaches.id THEN coachaccount.amount ELSE 0 END)`,
@@ -79,7 +105,6 @@ export async function GET(req: NextRequest) {
         coaches.qualifications, coaches.status
       )
       .orderBy(desc(coaches.createdAt))
-     
 
     const totalCount = await db
       .select({ count: count() })
@@ -92,7 +117,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       coaches: coachesData,
       currentPage: page,
-      totalPages: totalPages,
+      totalPages,
       hasNextPage: page < totalPages,
       hasPrevPage: page > 1
     });
@@ -107,6 +132,7 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
 
 export async function DELETE(req: NextRequest) {
   try {

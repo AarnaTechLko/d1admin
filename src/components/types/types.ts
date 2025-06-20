@@ -92,3 +92,15 @@ export interface EvaluationData {
   organizationScores?: number[]; // Optional array for organization scores (for Goalkeeper)
   position?: string; 
 }
+export interface Payment {
+  id: number;
+  coach_id: number;
+  evaluation_id: number;
+  review_title: string;
+  playerFirstName: string;
+  amount: number;
+  status: string;
+  description: string;
+  created_at: string;
+  is_deleted: number;
+}
