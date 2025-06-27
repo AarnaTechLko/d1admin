@@ -2,59 +2,50 @@
 
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import OrganizationTable from "@/components/tables/OrganizationTable";
+import PlayerTable from "@/components/tables/PlayerTable";
+import { Player } from "@/app/types/types";
+// interface Player {
+//   id: string;
+//   first_name: string;
+//   last_name: string;
+//   image: string;
+//   position: string;
+//   height: string;
+//   jersey: string;
+//   weight: string;
+//   history?: string;
+//   graduation: string;
+//   sport: string;
+//   status: string;
+//   earnings: number;
+//   age_group: string;
+//   grade_level: string;
+//   is_deleted: number;
+// }
 
-interface Organization {
-  id: string;
-  organizationName: string;
-  contactPerson: string;
-  owner_name: string;
-  package_id: string;
-  email: string;
-  mobileNumber: string;
-  countryCodes: string;
-  address: string;
-  country: string;
-  state: string;
-  city: string;
-  logo: string;
-  status: string;
-  totalPlayers: number;
-  totalCoaches: number;
-  totalTeams: number;
-  history?: string;
-  facebook: string;
-  instagram: string;
-  linkedin: string;
-  xlink: string;
-  youtube: string;
-  is_deleted:number;
-  suspend: number;
-  suspend_days: number;
-}
-
-const OrganizationsPage = () => {
+const PlayersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [players, setplayers] = useState<Player[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchOrganizations = async () => {
+    const fetchplayers = async () => {
       setLoading(true);
       setError(null);
       try {
         const response = await fetch(
-          `/api/organization?search=${searchQuery}&page=${currentPage}&limit=10`
+          `/api/disableplayer?search=${searchQuery}&page=${currentPage}&limit=10`
         );
 
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();
-        console.log("organisation",data)
-        setOrganizations(data.enterprises);
+                console.log('responsedaa',data)
+
+        setplayers(data.coaches);
         setTotalPages(data.totalPages);
       } catch (err) {
         setError((err as Error).message);
@@ -63,12 +54,12 @@ const OrganizationsPage = () => {
       }
     };
 
-    fetchOrganizations();
+    fetchplayers();
   }, [searchQuery, currentPage]);
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Organization" onSearch={setSearchQuery} />
+      <PageBreadcrumb pageTitle="Players" onSearch={setSearchQuery} />
       
    {loading && (
   <div className="flex items-center justify-center gap-4 ">
@@ -78,8 +69,8 @@ const OrganizationsPage = () => {
 )}      {error && <p className="text-center py-5 text-red-500">{error}</p>}
       
       {!loading && !error && (
-        <OrganizationTable
-          data={organizations}
+        <PlayerTable
+          data={players}
           currentPage={currentPage}
           totalPages={totalPages}
           setCurrentPage={setCurrentPage}
@@ -89,4 +80,4 @@ const OrganizationsPage = () => {
   );
 };
 
-export default OrganizationsPage;
+export default PlayersPage;

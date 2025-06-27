@@ -8,6 +8,7 @@ type TimeRange = '24h' | '1w' | '1m' | '1y';
 function getTimeFilterCondition(column: typeof users.createdAt, timeRange: TimeRange | string | null) {
   if (!timeRange) return undefined;
   const now = new Date();
+
   switch (timeRange) {
     case '24h':
       return gte(column, new Date(now.getTime() - 24 * 60 * 60 * 1000));
@@ -36,14 +37,13 @@ export async function GET(req: NextRequest) {
 
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
-    // const offset = (page - 1) * limit;
+    const offset = (page - 1) * limit;
 
     const conditions = [
       eq(users.status, 'Active'),
+      eq(users.is_deleted, 0), // Only fetch users that are not suspended
       not(eq(users.first_name, '')),
       eq(users.visibility, 'on'),
-       eq(users.suspend, 1) ,
-       eq(users.is_deleted, 1) ,
     ];
 
     if (country) conditions.push(eq(users.country, country));
@@ -55,22 +55,22 @@ export async function GET(req: NextRequest) {
 
     const searchCondition = search
       ? or(
-        ilike(users.first_name, `%${search}%`),
-        ilike(users.last_name, `%${search}%`),
-        ilike(users.email, `%${search}%`),
-        ilike(users.sport, `%${search}%`),
-        ilike(users.position, `%${search}%`),
-        ilike(users.grade_level, `%${search}%`),
-        ilike(users.age_group, `%${search}%`),
-        ilike(users.height, `%${search}%`),
-        ilike(users.weight, `%${search}%`),
-        ilike(users.status, `%${search}%`),
-        ilike(users.gender, `%${search}%`),
-        ilike(countries.name, `%${search}%`),
-        ilike(users.state, `%${search}%`),
-        ilike(users.city, `%${search}%`),
-        ilike(users.league, `%${search}%`)
-      )
+          ilike(users.first_name, `%${search}%`),
+          ilike(users.last_name, `%${search}%`),
+          ilike(users.email, `%${search}%`),
+          ilike(users.sport, `%${search}%`),
+          ilike(users.position, `%${search}%`),
+          ilike(users.grade_level, `%${search}%`),
+          ilike(users.age_group, `%${search}%`),
+          ilike(users.height, `%${search}%`),
+          ilike(users.weight, `%${search}%`),
+          ilike(users.status, `%${search}%`),
+          ilike(users.gender, `%${search}%`),
+          ilike(countries.name, `%${search}%`),
+          ilike(users.state, `%${search}%`),
+          ilike(users.city, `%${search}%`),
+          ilike(users.league, `%${search}%`)
+        )
       : undefined;
 
     const timeCondition = getTimeFilterCondition(users.createdAt, timeRange);
@@ -106,7 +106,7 @@ export async function GET(req: NextRequest) {
         is_deleted: users.is_deleted,
         coachName: sql`coa."firstName"`.as("coachName"),
         coachLastName: sql`coa."lastName"`.as("coachLastName"),
-        enterpriseName: sql`ent."organizationName"`.as("enterpriseName")
+        enterpriseName: sql`ent."organizationName"`.as("enterpriseName"),
       })
       .from(users)
       .leftJoin(sql`enterprises AS ent`, sql`NULLIF(${users.enterprise_id}, '')::integer = ent.id`)
@@ -114,14 +114,13 @@ export async function GET(req: NextRequest) {
       .leftJoin(countries, sql`${users.country}::int = ${countries.id}`)
       .where(whereClause)
       .orderBy(desc(users.createdAt))
-    // .limit(limit)
-    // .offset(offset);
+      .limit(limit)
+      .offset(offset);
 
     const totalCount = await db
       .select({ count: count() })
       .from(users)
       .leftJoin(countries, eq(countries.id, sql<number>`CAST(${users.country} AS INTEGER)`))
-
       .where(whereClause)
       .then((res) => res[0]?.count || 0);
 
@@ -130,14 +129,14 @@ export async function GET(req: NextRequest) {
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),
       hasNextPage: page * limit < totalCount,
-      hasPrevPage: page > 1
+      hasPrevPage: page > 1,
     });
   } catch (error) {
-    console.error("Error fetching player:", error);
+    console.error('Error fetching player:', error);
     return NextResponse.json(
       {
-        message: "Failed to fetch player",
-        error: error instanceof Error ? error.message : "Unknown error"
+        message: 'Failed to fetch player',
+        error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

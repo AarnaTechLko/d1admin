@@ -102,10 +102,13 @@ export interface Player {
   age_group: string;
   grade_level: string;
   is_deleted: number;
+  suspend: number;
+  suspend_days: number;
 }
 
 
 export interface Coach {
+  // [x: string]: number;
   id: string;
   evaluationId: number;
   firstName: string;
@@ -118,6 +121,10 @@ export interface Coach {
   sport: string;
   totalEvaluations: string;
   status: string;
+  suspend: number;
+  suspend_days: number;
+  suspend_start_date: Date;
+  suspend_end_date: Date;
   history?: string;
   earnings: number;
   is_deleted: number;
@@ -149,7 +156,8 @@ export interface Organization {
   xlink: string;
   youtube: string;
   is_deleted: number;
-
+suspend: number;
+  suspend_days: number;
 }
 
 export interface Ticket{

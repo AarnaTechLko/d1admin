@@ -12,6 +12,7 @@ import Swal from "sweetalert2";
 import withReactContent from 'sweetalert2-react-content';
 
 interface Player {
+
   id: string;
   first_name: string;
   last_name: string;
@@ -33,7 +34,8 @@ interface Player {
   age_group: string;
   grade_level: string;
   is_deleted: number;
-
+  suspend: number;
+  suspend_days: number;
 }
 
 interface PlayerTableProps {
@@ -60,7 +62,9 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const [Player, setPlayer] = useState<{ players: Player[] } | null>(null);
-
+  const [suspendPlayer, setSuspendPlayer] = useState<Player | null>(null);
+  const [suspendDays, setSuspendDays] = useState<number | null>(null);
+  const [suspendOpen, setSuspendOpen] = useState(false);
   const getBadgeColor = (status: string) => {
     switch (status) {
       case "Active":
@@ -194,26 +198,25 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
   return (
     <>
-     {totalPages > 0 && (
-  <div className="flex justify-end items-center gap-2 p-2">
-    {[...Array(totalPages)].map((_, index) => {
-      const pageNumber = index + 1;
-      return (
-        <button
-          key={pageNumber}
-          onClick={() => setCurrentPage?.(pageNumber)}
-          className={`px-3 py-2 rounded-md ${
-            currentPage === pageNumber
-              ? "bg-blue-500 text-white"
-              : "text-blue-500 hover:bg-gray-200"
-          }`}
-        >
-          {pageNumber}
-        </button>
-      );
-    })}
-  </div>
-)}
+      {totalPages > 0 && (
+        <div className="flex justify-end items-center gap-2 p-2">
+          {[...Array(totalPages)].map((_, index) => {
+            const pageNumber = index + 1;
+            return (
+              <button
+                key={pageNumber}
+                onClick={() => setCurrentPage?.(pageNumber)}
+                className={`px-3 py-2 rounded-md ${currentPage === pageNumber
+                  ? "bg-blue-500 text-white"
+                  : "text-blue-500 hover:bg-gray-200"
+                  }`}
+              >
+                {pageNumber}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
 
 
@@ -251,54 +254,56 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
       )}
 
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-        <div className="max-w-full overflow-x-auto">
-          <div className="min-w-[1000px]">
+      <div className="overflow-x-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="w-full overflow-x-auto">
+          <div>
             {data.length === 0 ? (
               <p className="p-6 text-gray-600">No Player found.</p>
             ) : (
               <>
-                <Table className="w-full text-xs">
-                  <TableHeader className="border-b text-sm  bg-gray-200 border-gray-100 dark:border-white/[0.05]">
+                <Table className="min-w-full text-xs">
+                  <TableHeader className="border-b text-xs  bg-gray-200 border-gray-100 dark:border-white/[0.05]">
                     <TableRow>
-                      <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Player
                       </TableCell>
-                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      <TableCell className=" px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Positions
                       </TableCell>
-                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      <TableCell className=" px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         League
                       </TableCell>
-                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      <TableCell className=" px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Grade
                       </TableCell>
-                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Age
                       </TableCell>
-                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Gender
                       </TableCell>
-                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Height
                       </TableCell>
-                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Weight
                       </TableCell>
-                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Address
                       </TableCell>
-                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Status
                       </TableCell>
-                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         History
                       </TableCell>
 
 
+                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        Suspend
+                      </TableCell>
 
-
-                      <TableCell className=" py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Actions
                       </TableCell>
                     </TableRow>
@@ -308,7 +313,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                     {Player?.players.map((p) => (
                       <div key={p.id}>
                         <h5>{p.first_name}</h5>
-                        <p>{p.position}</p>
                       </div>
                     ))}
                     {paginatedData.map((player) => (
@@ -406,39 +410,31 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                           </Link>
                         </TableCell>
 
-                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                          <div className="flex gap-3">
-                            {/* <button
-                          onClick={async () => {
-                            try {
-                              if (player.is_deleted === 0) {
-                                // Currently hidden, so "Hide" clicked (maybe you want to keep it hidden)
-                                await handleHidePlayer(player.id);
-                                setPlayer((prev) => {
-                                  if (!prev) return prev;
-                                  const updatedPlayers = prev.players.map((p) =>
-                                    p.id === player.id ? { ...p, is_deleted: 0 } : p
-                                  );
-                                  return { ...prev, players: updatedPlayers };
-                                });
-                              } else {
-                                // Currently active, so "Revert" clicked (restore player)
-                                await handleRevertPlayer(player.id);
-                                setPlayer((prev) => {
-                                  if (!prev) return prev;
-                                  const updatedPlayers = prev.players.map((p) =>
-                                    p.id === player.id ? { ...p, is_deleted: 1 } : p
-                                  );
-                                  return { ...prev, players: updatedPlayers };
-                                });
+                        <TableCell className="px-2 py-3">
+                          <button
+                            className="underline text-sm"
+                            onClick={() => {
+                              setSuspendPlayer(player);
+                              setSuspendOpen(true);
+                            }}
+                          >
+                            <Badge
+                              color={
+                                (player.suspend === 1 || player.suspend_days === null)
+                                  ? "success"
+                                  : "error"
                               }
-                            } catch (error) {
-                              // error handled elsewhere
-                            }
-                          }}
-                        >
-                          {player.is_deleted === 0 ? "Hide" : "Revert"}
-                        </button> */}
+                            >
+                              {(player.suspend === 1 || player.suspend_days === null)
+                                ? "Unsuspend"
+                                : "Suspend"}
+                            </Badge>
+                          </button>
+                        </TableCell>
+
+
+                        <TableCell>
+                          <div>
                             {player.is_deleted === 0 ? (
                               <button
                                 onClick={async () => {
@@ -459,15 +455,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                               </button>
                             )}
 
-
-
-                            {/* <button onClick={() => revertPlayer(player.id, player.is_deleted)}>
-  {player.is_deleted === 0 ? "hide" : "revert"}
-</button> */}
-
-                            {/* <button onClick={() => handleDelete(player.id)} className="p-2 text-red-500 hover:text-red-600">
-                          <Trash size={18} />
-                        </button> */}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -495,6 +482,152 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
               })}
             </div>
           </div>
+
+          <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
+            <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">
+              <DialogHeader>
+                <DialogTitle>
+                  {suspendPlayer?.suspend === 1 ? "Unsuspend Player" : "Suspend Player"}
+                </DialogTitle>
+              </DialogHeader>
+
+              {suspendPlayer && (
+                <div className="space-y-4">
+                  {suspendPlayer.suspend === 1 ? (
+                    <>
+                      {/* Show input when player is suspended */}
+                      <p>
+                        Suspend {suspendPlayer.first_name} {suspendPlayer.last_name} for how many days?
+                      </p>
+
+                      <input
+                        type="number"
+                        min={1}
+                        placeholder="Enter number of days"
+                        value={suspendDays ?? ''}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setSuspendDays(isNaN(val) ? null : val);
+                        }}
+                        className="w-full p-2 border border-gray-300 rounded"
+                      />
+
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setSuspendOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          className="bg-red-500 text-white"
+                          onClick={async () => {
+                            if (!suspendPlayer || suspendDays === null || suspendDays <= 0) {
+                              Swal.fire({
+                                icon: 'warning',
+                                title: 'Invalid Input',
+                                text: 'Please enter a valid number greater than 0.',
+                              });
+                              return;
+                            }
+
+                            try {
+                              const res = await fetch(`/api/player/${suspendPlayer.id}/suspend`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ suspend_days: suspendDays }),
+                              });
+
+                              const result = await res.json();
+                              if (!res.ok) throw new Error('Failed to suspend player');
+                              console.log(result); // or use it in some logic
+
+                              Swal.fire({
+                                icon: 'success',
+                                title: 'Player Suspended',
+                                text: `${suspendPlayer.first_name} suspended for ${suspendDays} day(s).`,
+                              });
+
+                              setSuspendOpen(false);
+                              setSuspendPlayer(null);
+                              setSuspendDays(null);
+                              window.location.reload(); // Optional
+                            } catch (err) {
+                              console.error("Suspension failed", err);
+                              Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Could not suspend player. Please try again.',
+                              });
+                            }
+                          }}
+                        >
+                          Confirm Suspension
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Show only confirmation dialog when already active */}
+                      <p>
+                        Are you sure you want to unsuspend {suspendPlayer.first_name} {suspendPlayer.last_name}?
+                      </p>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setSuspendOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          className="bg-green-600 text-white"
+                          onClick={async () => {
+                            const confirm = await Swal.fire({
+                              icon: 'question',
+                              title: 'Confirm Unsuspend',
+                              text: `Unsuspend ${suspendPlayer.first_name}?`,
+                              showCancelButton: true,
+                              confirmButtonText: 'Yes, Unsuspend',
+                              cancelButtonText: 'Cancel',
+                            });
+
+                            if (!confirm.isConfirmed) return;
+
+                            try {
+                              const res = await fetch(`/api/player/${suspendPlayer.id}/suspend`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ suspend_days: 0 }), // zero triggers unsuspend
+                              });
+
+                              const result = await res.json();
+                              if (!res.ok) throw new Error('Failed to unsuspend player');
+                              console.log(result); // or use it in some logic
+
+                              Swal.fire({
+                                icon: 'success',
+                                title: 'Player Unsuspended',
+                                text: `${suspendPlayer.first_name} has been unsuspended.`,
+                              });
+
+                              setSuspendOpen(false);
+                              setSuspendPlayer(null);
+                              setSuspendDays(null);
+                              window.location.reload(); // Optional
+                            } catch (err) {
+                              console.error("Unsuspension failed", err);
+                              Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Could not unsuspend player. Please try again.',
+                              });
+                            }
+                          }}
+                        >
+                          Confirm Unsuspend
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
         </div>
       </div>
     </>

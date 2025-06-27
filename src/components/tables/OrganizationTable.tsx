@@ -14,6 +14,7 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 
 interface Organization {
+ 
   id: string;
   organizationName: string;
   contactPerson: string;
@@ -30,6 +31,8 @@ interface Organization {
   status: string;
   totalPlayers: number;
   totalCoaches: number;
+  suspend: number;
+  suspend_days: number;
   totalTeams: number;
   history?: string;
   facebook: string;
@@ -60,7 +63,9 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
   const itemsPerPage = 10;
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const [organization, setOrganization] = useState<{ organizations: Organization[] } | null>(null);
-
+ const [suspendOrganization, setSuspendOrganization] = useState<Organization | null>(null);
+  const [suspendDays, setSuspendDays] = useState<number | null>(null);
+  const [suspendOpen, setSuspendOpen] = useState(false);
   const MySwal = withReactContent(Swal);
 
 
@@ -256,7 +261,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
               {/* Table Header */}
               <TableHeader className="border-b bg-gray-200 text-sm border-gray-100 dark:border-white/10">
                 <TableRow>
-                  {[" Name", "Address", " Data", "Status", "History", "Actions"].map(
+                  {[" Name", "Address", " Data", "Status", "History","Suspend" ,"Actions"].map(
                     (header) => (
                       <TableCell key={header} className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400 text-start">
                         {header}
@@ -443,6 +448,27 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                         <Button>Open</Button>
                       </Link>
                     </TableCell>
+                      <TableCell className="px-2 py-3">
+                    <button
+                      className="underline text-sm"
+                      onClick={() => {
+                        setSuspendOrganization(organization);
+                        setSuspendOpen(true);
+                      }}
+                    >
+                      <Badge
+                        color={
+                          (organization.suspend === 1 || organization.suspend_days === null)
+                            ? "success"
+                            : "error"
+                        }
+                      >
+                        {(organization.suspend === 1 || organization.suspend_days === null)
+                          ? "Unsuspend"
+                          : "Suspend"}
+                      </Badge>
+                    </button>
+                  </TableCell>
 
                     {/* Actions */}
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
@@ -496,6 +522,152 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
 
             </div>
           </div>
+
+            <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
+          <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">
+            <DialogHeader>
+              <DialogTitle>
+                {suspendOrganization?.suspend === 1 ? "Unsuspend Organization" : "Suspend Organization"}
+              </DialogTitle>
+            </DialogHeader>
+
+            {suspendOrganization && (
+              <div className="space-y-4">
+                {suspendOrganization.suspend === 1 ? (
+                  <>
+                    {/* Show input when organization is suspended */}
+                    <p>
+                      Suspend {suspendOrganization.organizationName}  for how many days?
+                    </p>
+
+                    <input
+                      type="number"
+                      min={1}
+                      placeholder="Enter number of days"
+                      value={suspendDays ?? ''}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setSuspendDays(isNaN(val) ? null : val);
+                      }}
+                      className="w-full p-2 border border-gray-300 rounded"
+                    />
+
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setSuspendOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        className="bg-red-500 text-white"
+                        onClick={async () => {
+                          if (!suspendOrganization || suspendDays === null || suspendDays <= 0) {
+                            Swal.fire({
+                              icon: 'warning',
+                              title: 'Invalid Input',
+                              text: 'Please enter a valid number greater than 0.',
+                            });
+                            return;
+                          }
+
+                          try {
+                            const res = await fetch(`/api/organization/${suspendOrganization.id}/suspend`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ suspend_days: suspendDays }),
+                            });
+
+                            const result = await res.json();
+                            if (!res.ok) throw new Error('Failed to suspend organization');
+console.log(result); // or use it in some logic
+
+                            Swal.fire({
+                              icon: 'success',
+                              title: 'Organization Suspended',
+                              text: `${suspendOrganization.organizationName} suspended for ${suspendDays} day(s).`,
+                            });
+
+                            setSuspendOpen(false);
+                            setSuspendOrganization(null);
+                            setSuspendDays(null);
+                            window.location.reload(); // Optional
+                          } catch (err) {
+                            console.error("Suspension failed", err);
+                            Swal.fire({
+                              icon: 'error',
+                              title: 'Error',
+                              text: 'Could not suspend organization. Please try again.',
+                            });
+                          }
+                        }}
+                      >
+                        Confirm Suspension
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Show only confirmation dialog when already active */}
+                    <p>
+                      Are you sure you want to unsuspend {suspendOrganization.organizationName} ?
+                    </p>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setSuspendOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        className="bg-green-600 text-white"
+                        onClick={async () => {
+                          const confirm = await Swal.fire({
+                            icon: 'question',
+                            title: 'Confirm Unsuspend',
+                            text: `Unsuspend ${suspendOrganization.organizationName}?`,
+                            showCancelButton: true,
+                            confirmButtonText: 'Yes, Unsuspend',
+                            cancelButtonText: 'Cancel',
+                          });
+
+                          if (!confirm.isConfirmed) return;
+
+                          try {
+                            const res = await fetch(`/api/organization/${suspendOrganization.id}/suspend`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ suspend_days: 0 }), // zero triggers unsuspend
+                            });
+
+                            const result = await res.json();
+                            if (!res.ok) throw new Error('Failed to unsuspend organization');
+console.log(result); // or use it in some logic
+
+                            Swal.fire({
+                              icon: 'success',
+                              title: 'Organization Unsuspended',
+                              text: `${suspendOrganization.organizationName} has been unsuspended.`,
+                            });
+
+                            setSuspendOpen(false);
+                            setSuspendOrganization(null);
+                            setSuspendDays(null);
+                            window.location.reload(); // Optional
+                          } catch (err) {
+                            console.error("Unsuspension failed", err);
+                            Swal.fire({
+                              icon: 'error',
+                              title: 'Error',
+                              text: 'Could not unsuspend organization. Please try again.',
+                            });
+                          }
+                        }}
+                      >
+                        Confirm Unsuspend
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
         </div>
       </div>
     </>
