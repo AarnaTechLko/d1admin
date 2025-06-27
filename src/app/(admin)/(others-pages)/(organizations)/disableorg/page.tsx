@@ -47,7 +47,7 @@ const OrganizationsPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/organization?search=${searchQuery}&page=${currentPage}&limit=10`
+          `/api/disableorg?search=${searchQuery}&page=${currentPage}&limit=10`
         );
 
         if (!response.ok) throw new Error("Failed to fetch data");

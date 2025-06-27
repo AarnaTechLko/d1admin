@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import { hash } from 'bcryptjs';
 import { db } from '@/lib/db';
-import { coaches, licenses, coachaccount,countries, playerEvaluation } from '@/lib/schema';
-// import debug from 'debug';
-// import jwt from 'jsonwebtoken';
-// import { SECRET_KEY } from '@/lib/constants';
+import {
+  coaches,
+  licenses,
+  coachaccount,
+  countries,
+  playerEvaluation
+} from '@/lib/schema';
 import {
   eq,
   ilike,
@@ -14,12 +16,11 @@ import {
   ne,
   count,
   desc,
-  sql,gte
+  sql,
+  gte
 } from 'drizzle-orm';
-// import { sendEmail } from '@/lib/helpers';
- 
 
-
+// ================= GET ===================
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const search = url.searchParams.get('search')?.trim() || '';
@@ -30,6 +31,7 @@ export async function GET(req: NextRequest) {
 
   const now = new Date();
   let timeFilterCondition;
+
   switch (timeRange) {
     case '24h':
       timeFilterCondition = gte(coaches.createdAt, new Date(now.getTime() - 24 * 60 * 60 * 1000));
@@ -51,8 +53,7 @@ export async function GET(req: NextRequest) {
     const baseCondition = and(
       isNotNull(coaches.firstName),
       ne(coaches.firstName, ''),
-       eq(coaches.suspend, 1), 
-       eq(coaches.is_deleted, 1), 
+      eq(coaches.suspend, 0) // ✅ Only suspended coaches
     );
 
     const searchCondition = search
@@ -63,10 +64,10 @@ export async function GET(req: NextRequest) {
           ilike(coaches.phoneNumber, `%${search}%`),
           ilike(coaches.sport, `%${search}%`),
           ilike(coaches.status, `%${search}%`),
-          ilike(countries.name, `%${search}%`), // ✅ Search by country name
+          ilike(countries.name, `%${search}%`),
           ilike(coaches.state, `%${search}%`),
           ilike(coaches.city, `%${search}%`),
-ilike(coaches.gender, `%${search.toLowerCase()}%`)
+          ilike(coaches.gender, `%${search}%`)
         )
       : undefined;
 
@@ -156,7 +157,7 @@ ilike(coaches.gender, `%${search.toLowerCase()}%`)
   }
 }
 
-
+// ================= DELETE ===================
 export async function DELETE(req: NextRequest) {
   try {
     const url = new URL(req.url);
@@ -171,18 +172,21 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ message: "Invalid Coach ID" }, { status: 400 });
     }
 
-    // Delete the coach by ID
     await db.delete(coaches).where(eq(coaches.id, coachIdNumber));
 
     return NextResponse.json({ message: "Coach deleted successfully" });
   } catch (error) {
     return NextResponse.json(
-      { message: "Failed to delete coach", error: error instanceof Error ? error.message : String(error) },
+      {
+        message: "Failed to delete coach",
+        error: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }
 }
 
+// ================= PUT ===================
 export async function PUT(req: NextRequest) {
   try {
     const { coachId, newStatus } = await req.json();
@@ -195,7 +199,6 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ message: "Invalid status. Only Active or Inactive are allowed." }, { status: 400 });
     }
 
-    // Update coach's status
     await db
       .update(coaches)
       .set({ status: newStatus })
@@ -204,10 +207,11 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ message: "Status updated successfully" });
   } catch (error) {
     return NextResponse.json(
-      { message: "Failed to update status", error: error instanceof Error ? error.message : String(error) },
+      {
+        message: "Failed to update status",
+        error: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }
 }
-
-

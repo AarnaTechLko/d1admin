@@ -65,7 +65,12 @@ export const users = pgTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     is_deleted: integer("is_deleted").default(1).notNull(),
 
-    isCompletedProfile: boolean("isCompletedProfile").default(false)
+    isCompletedProfile: boolean("isCompletedProfile").default(false),
+    suspend: integer("suspend").default(1).notNull(),
+    suspend_days: integer("suspend_days"),
+      suspend_start_date: date("suspend_start_date"),
+suspend_end_date: date("suspend_end_date"),
+
   },
   (users) => {
     return {
@@ -121,7 +126,12 @@ export const coaches = pgTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     is_deleted: integer("is_deleted").default(1).notNull(),
 
-    isCompletedProfile: boolean("isCompletedProfile").default(false)
+    isCompletedProfile: boolean("isCompletedProfile").default(false),
+    suspend: integer("suspend").default(1).notNull(),
+    suspend_days: integer("suspend_days"),
+    suspend_start_date: date("suspend_start_date"),
+suspend_end_date: date("suspend_end_date"),
+
   },
   (coaches) => {
     return {
@@ -309,6 +319,11 @@ export const enterprises = pgTable('enterprises', {
   is_deleted: integer("is_deleted").default(1).notNull(),
 
   createdAt: timestamp('createdAt').defaultNow().notNull(),
+  suspend: integer("suspend").default(1).notNull(),
+  suspend_days: integer("suspend_days"),
+    suspend_start_date: date("suspend_start_date"),
+suspend_end_date: date("suspend_end_date"),
+
 });
 
 //What is this for?
@@ -399,6 +414,10 @@ export const teams = pgTable('teams', {
   parent_id: integer("parent_id"),
   is_deleted: integer("is_deleted").default(1).notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
+   suspend: integer("suspend").default(1).notNull(),
+  suspend_days: integer("suspend_days"),
+    suspend_start_date: date("suspend_start_date"),
+suspend_end_date: date("suspend_end_date"),
 });
 
 export const teamPlayers = pgTable("teamPlayers", {
@@ -680,4 +699,30 @@ export const ability = pgTable('ability', {
   comments: text('comments'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+
+export const admin_message = pgTable("admin_message", {
+  id: serial("id").primaryKey(),
+
+  sender_id: integer("sender_id").default(1),
+  receiver_id: integer("receiver_id").notNull(),
+
+  message: text("message").notNull(),
+
+
+  status: integer("status").default(1),   // e.g., 1 = active, 0 = deleted/inactive
+  read: integer("read").default(0),       // e.g., 0 = unread, 1 = read
+
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+    
+export const suspendlog = pgTable('suspendlog', {
+  id: serial('id').primaryKey(),
+  user_id: integer('user_id').notNull(),
+  type: varchar('type', { length: 20 }), 
+  suspend_start_date: date('suspend_start_date'),
+  suspend_end_date: date('suspend_end_date'),
+  created_at: timestamp('created_at').defaultNow(),
 });

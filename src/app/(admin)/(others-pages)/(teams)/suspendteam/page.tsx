@@ -100,7 +100,7 @@ const TeamsPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/teams?search=${searchQuery}&page=${currentPage}&limit=10`
+          `/api/suspendteam?search=${searchQuery}&page=${currentPage}&limit=10`
         );
 
         if (!response.ok) throw new Error("Failed to fetch teams");

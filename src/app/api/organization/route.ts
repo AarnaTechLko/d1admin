@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { licenses, enterprises, users, coaches, teams } from '@/lib/schema';
-import { eq, ilike, or, count, desc, and, gte } from 'drizzle-orm';
+import { eq, ilike, or, count, desc, and, gte, SQL } from 'drizzle-orm';
 
 type TimeRange = '24h' | '1w' | '1m' | '1y';
 
@@ -33,8 +33,10 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit;
 
   try {
-    const conditions = [];
-
+ const conditions: (SQL | undefined)[] = [
+      eq(enterprises.suspend, 1),        // ✅ Only suspended teams
+      eq(enterprises.is_deleted, 1),     // ✅ Only non-deleted teams
+    ];
     // Search filters
     if (search) {
       conditions.push(
