@@ -30,6 +30,7 @@ interface Evaluation {
   remarks?: string;
   created_at: string;
   is_deleted: number;
+  firstName: string;
 }
 
 interface EvaluationResult {
@@ -322,14 +323,14 @@ export default function CoachDetailsPage() {
 
   }, [id]);
 
-if (loading) {
-  return (
-    <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
-      <div className="w-18 h-18 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      <div>Loading coach data...</div>
-    </div>
-  );
-}
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <div className="w-18 h-18 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <div>Loading coach data...</div>
+      </div>
+    );
+  }
   if (!coach) return <div className="p-6 text-center text-red-500">Coach not found.</div>;
 
   return (
@@ -447,9 +448,9 @@ if (loading) {
         {/* <div><strong className="text-gray-500">Consumed Licenses:</strong> {coach.consumeLicenseCount}</div> */}
         {/* <div><strong className="text-gray-500">Assigned Licenses:</strong> {coach.assignedLicenseCount}</div> */}
         <div><strong className="text-gray-700">Total Earnings:</strong><span className='ml-2 px-2 py-1 rounded-full  text-xs bg-blue-200 '> ${coach.payments
-                .filter((p: Payment) => p.is_deleted !== 0)
-                .reduce((sum, p) => sum + Number(p.amount), 0)
-                .toFixed(2)}</span></div>
+          .filter((p: Payment) => p.is_deleted !== 0)
+          .reduce((sum, p) => sum + Number(p.amount), 0)
+          .toFixed(2)}</span></div>
         <div><strong className="text-gray-700">Qualifications:</strong> {coach.qualifications}</div>
 
 
@@ -527,7 +528,7 @@ if (loading) {
                         <Link href={`/coach/${ev.player_id}`} className="text-blue-700 hover:underline">
 
                           {/* <Link href={`/coach/${ev.player_id}`} target="_blank" className="text-blue-700 hover:underline"> */}
-                          {ev.playerFirstName}
+                          {ev.firstName}
                         </Link>
                       </td>
                       <td className="px-4 py-3">

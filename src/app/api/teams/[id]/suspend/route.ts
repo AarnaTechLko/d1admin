@@ -59,7 +59,7 @@ export async function POST(
 
 
       return NextResponse.json({ success: true, action: 'unsuspended' });
-    }
+    }  
   } catch (error) {
     console.error('Suspend/Unsuspend POST update failed', error);
     return new NextResponse('Error updating suspension', { status: 500 });

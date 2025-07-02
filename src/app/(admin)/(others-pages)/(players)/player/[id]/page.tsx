@@ -511,7 +511,9 @@ export default function PlayerDetailPage() {
                                 {paginatedEvaluations
                                     // .filter((ev: Evaluation) => ev.status !== 0)
                                     .map((ev: Evaluation) => (
+
                                         <tr
+
                                             key={ev.evaluationId}
                                             className={`transition-colors duration-300 ${ev.is_deleted === 0 ? 'bg-red-100' : 'bg-white'
                                                 }`}
@@ -522,6 +524,7 @@ export default function PlayerDetailPage() {
                                                     {ev.playerFirstName}
                                                 </Link>
                                             </td>
+
                                             <td className="px-4 py-3">
                                                 {/* <a onClick={() => handleEvaluationDetails(ev)} href='#' className=' text-blue-700'>{ev.review_title}</a> */}
                                                 <Link
@@ -611,10 +614,10 @@ export default function PlayerDetailPage() {
             {/* Payments */}
             <section className="p-6 max-w-7xl mx-auto space-y-8">
                 <h2 className="text-2xl font-semibold mb-4">Payments</h2>
-                 <div className='flex justify-between'>
+                <div className='flex justify-between'>
 
-                <div className="text-gray-700">Total: {data.payments.length}</div>
-                {/* <div className="text-gray-700">
+                    <div className="text-gray-700">Total: {data.payments.length}</div>
+                    {/* <div className="text-gray-700">
                     Total Earnings: $
                     {coach.payments
                         .filter((p: Payment) => p.is_deleted !== 0)

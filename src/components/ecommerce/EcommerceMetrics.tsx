@@ -1,31 +1,16 @@
 "use client";
 import React, { useEffect, useState } from "react";
-// import Badge from "../ui/badge/Badge";
-// import { ArrowDownIcon, ArrowUpIcon, BoxIconLine, GroupIcon } from "@/icons";
+
 import { GroupIcon } from "lucide-react";
-// import { useRouter } from "next/navigation";
-
-
-// interface Team {
-//   id: string;
-// }
-
 interface Coach {
-  id: string;
-  
+  id: string; 
 }
 interface player {
   id: string;
-  
 }
-
 interface Organization {
   id: string;
- 
 }
-
-
-
 export const EcommerceMetrics = () => {
     // const [teams, setTeams] = useState<Team[]>([]);
     // const [totalPages, setTotalPages] = useState<number>(1);

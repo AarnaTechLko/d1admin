@@ -192,6 +192,7 @@ export async function GET(request: NextRequest) {
         status: playerEvaluation.status,
         paymentStatus: playerEvaluation.payment_status,
         rating: playerEvaluation.rating,
+        remarks: playerEvaluation.remarks,
         evaluationposition: playerEvaluation.position,
         positionOne: playerEvaluation.positionOne,
         positionTwo: playerEvaluation.positionTwo,
@@ -204,6 +205,7 @@ export async function GET(request: NextRequest) {
         jerseyColorThree: playerEvaluation.jerseyColorThree,
         createdAt: playerEvaluation.created_at,
         updatedAt: playerEvaluation.updated_at,
+        review_status: playerEvaluation.review_status,
 
         first_name: users.first_name,
         last_name: users.last_name,

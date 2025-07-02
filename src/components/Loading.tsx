@@ -1,15 +1,19 @@
 import React from 'react';
+import Image from 'next/image';
+import logo1 from "@/public/images/logo1/logo.webp";
 
 const Loading: React.FC = () => {
   return (
-    <div className="flex justify-center items-center h-screen bg-white-100">
+    <div className="flex justify-center items-center h-screen bg-white">
       <div className="flex">
-        {/* Logo with zigzag animation */}
-        <div className="logo-container">
-          <img
-            src="/logo.png" // Replace with your logo URL
+        {/* Logo with bounce or custom animation */}
+        <div className="animate-bounce">
+          <Image
+            src={logo1}
             alt="Logo"
-            className="logo animate-zigzag"
+            width={150}
+            height={150}
+            priority
           />
         </div>
       </div>

@@ -18,11 +18,9 @@ import {
 import { format } from 'date-fns';
 import Image from 'next/image';
 import Loading from '@/components/Loading';
-import { getSession } from 'next-auth/react';
-// import StarRating from '../components/StarRating';
 import defaultImage from '@/public/default.jpg'
 import { FaFileAlt } from 'react-icons/fa';
-import { showError } from '@/components/Toastr';
+import Swal from 'sweetalert2';
 
 
 //  import parse from "html-react-parser"
@@ -69,11 +67,12 @@ const radarSkills =
         ];
 
 
- function EvaluationPage() {
+function EvaluationPage() {
     const searchParams = useSearchParams();
-    const evaluationId = searchParams.get('evaluationId'); 
+    const evaluationId = searchParams.get('evaluationId');
     const [headerRatings, setHeaderRatings] = useState<number[]>(Array(headerMetrics.length).fill(0));
     const [skillRatings, setSkillRatings] = useState<number[]>(Array(radarSkills.length).fill(0));
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // const {evaluationId } = searchParams; // Get evaluationId from searchParams
     const [evaluationData, setEvaluationData] = useState<Evaluation | null>(null); // State to store evaluation data
@@ -84,16 +83,22 @@ const radarSkills =
     const [distributionScores, setDistributionScores] = useState<{ [key: string]: string }>({});
     const [organizationScores, setOrganizationScores] = useState<{ [key: string]: string }>({});
     const [loading, setLoading] = useState<boolean>(true);
-    const [userType, setUserType] = useState<string | null>(null);
-    const [playerId, setPlayerId] = useState<number>(0);
+    // const [userType, setUserType] = useState<string | null>(null);
+    // const [playerId, setPlayerId] = useState<number>(0);
     const [data, setData] = useState<AbilityData | null>(null);
     // const [abilities, setAbilities] = useState<AbilityData[]>([]);
     const MAX_FILE_SIZE = 9 * 1024 * 1024; // 9MB
 
-    const [rating, setRating] = useState<number>(0);
-    const [hover, setHover] = useState<number>(0);
-    const [remarks, setRemarks] = useState<string>('');
-    const [isRatingSubmitted, setIsRatingSubmitted] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [newRemarks, setNewRemarks] = useState<string>(evaluationData?.remark ?? '');
+
+    const [newRating, setNewRating] = useState(evaluationData?.rating || 0);
+    // const [isHidden, setIsHidden] = useState(false);
+
+    // const [rating, setRating] = useState<number>(0);
+    // const [hover, setHover] = useState<number>(0);
+    // const [remarks, setRemarks] = useState<string>('');
+    // const [isRatingSubmitted, setIsRatingSubmitted] = useState(false);
 
     const formattedDate = evaluationData?.updated_at ? format(new Date(evaluationData.updated_at), 'MM/dd/yyyy') : '';
 
@@ -160,37 +165,14 @@ const radarSkills =
 
 
 
-    const handleSubmitRating = async () => {
-        if (rating <= 0) {
-            showError("Please select rating");
-            return
-        }
-        try {
-            const response = await fetch('/api/submitRating', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ evaluationId, rating, remarks, playerId }),
-            });
 
-            if (!response.ok) {
-                throw new Error('Failed to submit rating');
-            }
-
-            setIsRatingSubmitted(true);
-        } catch (error) {
-            console.error('Error submitting rating:', error);
-            // Handle error, e.g., show an error message
-        }
-    }
 
     const fetchEvaluationData = async () => {
-        const session = await getSession();
-        if (session) {
-            setUserType(session.user.type);
-            setPlayerId(Number(session.user.id)); // Assuming 'role' is stored in session
-        }
+        // const session = await getSession();
+        // if (session) {
+        //     setUserType(session.user.type);
+        //     setPlayerId(Number(session.user.id)); // Assuming 'role' is stored in session
+        // }
         try {
             const response = await fetch(`/api/evaluationdetails?evaluationId=${evaluationId}`, {
                 method: 'GET',
@@ -204,12 +186,13 @@ const radarSkills =
             }
 
             const data = await response.json();
-            console.log("evaluation",data);
+            console.log("evaluation", data);
 
-               if (!data?.result) {
-            throw new Error("No evaluation data found in response");
-        }
+            if (!data?.result) {
+                throw new Error("No evaluation data found in response");
+            }
             setEvaluationData(data.result as Evaluation); // Type assertion here
+            console.log("evaliation data:", data.result as Evaluation);
             setPhysicalScores(JSON.parse(data.result.physicalScores));
             setTacticalScores(JSON.parse(data.result.tacticalScores));
             setTechnicalScores(JSON.parse(data.result.technicalScores));
@@ -269,14 +252,13 @@ const radarSkills =
     useEffect(() => {
 
         fetchEvaluationData();
-    }, []); // Dependency array includes evaluationId
+    }, []);
     if (loading) {
-        return <Loading />; // Loading indicator
+        return <Loading />;
     }
 
     const chartData = radarSkills
         .filter((skill) => {
-            // Filter skills based on position
             if (position === "Goalkeeper") {
                 return true; // Include all skills for Goalkeeper
             }
@@ -344,6 +326,129 @@ const radarSkills =
         // Calculate and return the overall average
         return count > 0 ? (total / count).toFixed(2) : "N/A";
     };
+    const handleEdit = () => {
+        setNewRating(evaluationData?.rating || 0);
+        setNewRemarks(evaluationData?.remark ?? '');
+
+        setShowModal(true);
+    };
+
+    const submitEdit = async () => {
+        if (!evaluationData) return;
+    setIsSubmitting(true);
+
+        const res = await fetch(`/api/evaluationdetails/${evaluationId}/rating`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                rating: newRating,
+                remarks: newRemarks,
+
+            }),
+        });
+
+        if (res.ok) {
+            setShowModal(false);
+            await Swal.fire({
+                icon: 'success',
+                title: 'Rating Updated',
+                text: 'The player rating has been updated successfully.',
+                timer: 2000,
+                showConfirmButton: false,
+            });
+            location.reload();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Update Failed',
+                text: 'Failed to update the rating. Please try again.',
+            });
+                setIsSubmitting(true);
+
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!evaluationData) return;
+
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "This will hide the rating, not delete it.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, hide it!',
+        });
+
+        if (result.isConfirmed) {
+            const res = await fetch(`/api/evaluationdetails/${evaluationId}/hide-rating`, {
+                method: 'PATCH',
+            });
+
+            if (res.ok) {
+                setEvaluationData(prev => prev ? { ...prev, reviewStatus: 0 } : prev);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Rating Hidden',
+                    text: 'The rating has been hidden successfully.',
+                    timer: 2000,
+                    showConfirmButton: false,
+                });
+                location.reload();
+
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed to Hide',
+                    text: 'Failed to hide the rating. Please try again.',
+                });
+            }
+        }
+    };
+
+    const handleRevert = async () => {
+        if (!evaluationData) return;
+
+        const result = await Swal.fire({
+            title: 'Revert Rating Visibility',
+            text: 'Are you sure you want to make the rating visible again?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, revert it',
+        });
+
+        if (!result.isConfirmed) return;
+
+        const res = await fetch(`/api/evaluationdetails/${evaluationId}/revert`, {
+            method: 'PATCH',
+        });
+
+        if (res.ok) {
+            setEvaluationData(prev => prev ? { ...prev, reviewStatus: 1 } : prev);
+            Swal.fire({
+                icon: 'success',
+                title: 'Rating Reverted',
+                text: 'The rating is now visible again.',
+                timer: 2000,
+                showConfirmButton: false,
+            });
+            location.reload();
+
+        } else {
+            const { error } = await res.json();
+            Swal.fire({
+                icon: 'error',
+                title: 'Failed to Revert',
+                text: error || 'Could not revert rating visibility.',
+            });
+        }
+    };
+
+
+
 
     return (
         <>
@@ -416,6 +521,7 @@ const radarSkills =
                                             <span className="font-normal">
                                                 {evaluationData?.reviewTitle || "N/A"}
                                             </span>
+
                                         </h3>
                                     </div>
 
@@ -993,57 +1099,212 @@ const radarSkills =
                                     ) : null
                                 )}
                             </div>
+
                         </div>
                     )}
-                    {userType === 'player' && !isRatingSubmitted && evaluationData?.rating === null && (
 
-                        <div className="p-4 bg-white shadow-md rounded-md max-w-md mx-auto">
-                            <h3 className="text-lg text-center font-semibold mb-2">Please Provide a Review<span className='font-red'>*</span></h3>
 
-                            {/* Star Rating */}
-                            <div className="flex justify-center items-center mb-4">
-                                {Array.from({ length: 5 }, (_, index) => index + 1).map(star => (
+                    {/* {evaluationData && evaluationData.rating !== null && (
+
+    <div className="p-4 bg-white shadow-md rounded-md max-w-md mx-auto">
+            <h3 className="text-lg font-semibold mb-2">Player Feedback</h3>
+            <div className="flex items-center mb-2">
+                {Array.from({ length: 5 }, (_, index) => index + 1).map(star => (
+                    <svg
+                        key={star}
+                        className={`w-6 h-6 ${star <= evaluationData.rating ? 'text-yellow-500' : 'text-gray-300'}`}
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
+                    </svg>
+                ))}
+            </div>
+
+            <div className="flex gap-2">
+                <button onClick={handleEdit} className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600">
+                    Edit
+                </button>
+                <button onClick={handleDelete} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">
+                    Delete
+                </button>
+            </div>
+
+            {showModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-md shadow-lg w-[90%] max-w-sm">
+                        <h3 className="text-lg font-bold mb-4">Edit Rating</h3>
+                        <div className="flex justify-center gap-2 mb-4">
+                            {Array.from({ length: 5 }, (_, index) => index + 1).map(star => (
+                                <svg
+                                    key={star}
+                                    onClick={() => setNewRating(star)}
+                                    className={`w-8 h-8 cursor-pointer ${star <= newRating ? 'text-yellow-500' : 'text-gray-300'}`}
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
+                                </svg>
+                            ))}
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-300 rounded-md">Cancel</button>
+                            <button onClick={submitEdit} className="px-4 py-2 bg-green-500 text-white rounded-md">Save</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+                  )} */}
+
+
+                    {/* Stars and Edit/Delete only shown if rating is not null */}
+                    {evaluationData && (
+                        <div className="p-4 bg-gray-100  rounded-md max-w-md mx-auto">
+                            <h3 className="text-lg font-semibold mb-2">Player Feedback</h3>
+
+                            {/* Stars */}
+                            <div className="flex items-center mb-1">
+                                {Array.from({ length: 5 }, (_, index) => index + 1).map((star) => (
                                     <svg
                                         key={star}
-                                        className={`w-10 h-10 cursor-pointer ${star <= (hover || rating) ? 'text-yellow-500' : 'text-gray-300'}`}
+                                        className={`w-6 h-6 ${Number(evaluationData.review_status) === 1 &&
+                                            star <= (evaluationData.rating ?? 0)
+                                            ? 'text-yellow-500'
+                                            : 'text-gray-300'
+                                            }`}
                                         xmlns="http://www.w3.org/2000/svg"
                                         fill="currentColor"
                                         viewBox="0 0 24 24"
-                                        onMouseEnter={() => setHover(star)}
-                                        onMouseLeave={() => setHover(0)}
-                                        onClick={() => setRating(star)}
                                     >
                                         <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
                                     </svg>
                                 ))}
                             </div>
-                            {/* Remarks Textarea */}
-                            <textarea
-                                className="w-full p-2 border border-gray-300 rounded-md mb-4 resize-none"
-                                rows={4}
-                                placeholder="Leave a Testimonial..."
-                                value={remarks}
-                                onChange={(e) => setRemarks(e.target.value)}
-                            />
-                            {/* Submit Button */}
-                            <button
-                                onClick={handleSubmitRating}
-                                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-300"
-                            >
-                                Submit Feedback
-                            </button>
-                        </div>
-                    )}
-                    {userType === 'player' && isRatingSubmitted && (
 
-                        <div className="p-4 bg-white shadow-md rounded-md max-w-md mx-auto">
-                            <h3 className="text-lg font-semibold mb-2">Thanks for Your Feedback</h3>
+                            {/* Remarks */}
+                            {Number(evaluationData.review_status) === 1 && evaluationData.remark && (
+                                <div className="m-4  p-3 bg-gray-100 border-l-4 border-yellow-400 rounded-md shadow-sm">
+                                    <p className="text-sm text-gray-800 italic">
+                                        <span className="font-semibold text-yellow-700">Feedback:</span> “{evaluationData.remark}”
+                                    </p>
+                                </div>
+                            )}
+
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-2">
+                                {Number(evaluationData.review_status) === 1 ? (
+                                    <>
+                                        <button
+                                            onClick={handleEdit}
+                                            className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600"
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={handleDelete}
+                                            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                                        >
+                                            Hide
+                                        </button>
+                                    </>
+                                ) : Number(evaluationData.review_status) === 0 ? (
+                                    <button
+                                        onClick={handleRevert}
+                                        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                                    >
+                                        Revert
+                                    </button>
+                                ) : null}
+                            </div>
                         </div>
                     )}
+
+                    {/* Edit Modal */}
+                    {showModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                            <div className="bg-white p-6 rounded-md shadow-lg w-[90%] max-w-sm">
+                                <h3 className="text-lg font-bold mb-4">Edit Feedback</h3>
+
+                                {/* Star Rating */}
+                                <div className="flex justify-center gap-2 mb-4">
+                                    {Array.from({ length: 5 }, (_, index) => index + 1).map((star) => (
+                                        <svg
+                                            key={star}
+                                            onClick={() => setNewRating(star)}
+                                            className={`w-8 h-8 cursor-pointer ${star <= newRating ? 'text-yellow-500' : 'text-gray-300'
+                                                }`}
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
+                                        </svg>
+                                    ))}
+                                </div>
+
+                                {/* Textarea for Remarks */}
+                                <textarea
+                                    value={newRemarks}
+                                    onChange={(e) => setNewRemarks(e.target.value)}
+                                    placeholder="Enter feedback..."
+                                    className="w-full border border-gray-300 rounded-md p-2 mb-4"
+                                    rows={4}
+                                />
+
+                                {/* Buttons */}
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        onClick={() => setShowModal(false)}
+                                        className="px-4 py-2 bg-gray-300 rounded-md"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={submitEdit}
+                                        disabled={isSubmitting}
+                                        className="px-4 py-2 bg-green-500 text-white rounded-md flex items-center justify-center gap-2 disabled:opacity-60"
+                                    >
+                                        {isSubmitting && (
+                                            <svg
+                                                className="w-4 h-4 animate-spin text-white"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <circle
+                                                    className="opacity-25"
+                                                    cx="12"
+                                                    cy="12"
+                                                    r="10"
+                                                    stroke="currentColor"
+                                                    strokeWidth="4"
+                                                />
+                                                <path
+                                                    className="opacity-75"
+                                                    fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8v8z"
+                                                />
+                                            </svg>
+                                        )}
+                                        {isSubmitting ? 'Saving...' : 'Save'}
+                                    </button>
+
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+
                 </div>
+
+                {/* )} */}
             </div>
         </>
     );
 };
 
- export default EvaluationPage;
+export default EvaluationPage;
