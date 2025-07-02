@@ -80,7 +80,7 @@ export default function SignInForm() {
       });
 
       const data = await res.json();
-
+console.log("khffj",data);
       if (!res.ok) {
         setError(data.error || "Invalid credentials");
       } else {

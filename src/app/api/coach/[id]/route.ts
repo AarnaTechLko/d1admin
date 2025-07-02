@@ -109,20 +109,23 @@ export async function GET(
         remarks: playerEvaluation.remarks,
         created_at: playerEvaluation.created_at,
         player_id: playerEvaluation.player_id,
+        coach_id: playerEvaluation.coach_id,
         playerFirstName: users.first_name,
         playerLastName: users.last_name,
         playerSlug: users.slug,
+       firstName: coaches.firstName,
         is_deleted:playerEvaluation.is_deleted,
       })
       .from(playerEvaluation)
       .leftJoin(users, eq(users.id, playerEvaluation.player_id))
+      .leftJoin(coaches, eq(coaches.id, playerEvaluation.coach_id))
 .where(
   and(
     eq(playerEvaluation.coach_id, coachId),
     //eq(playerEvaluation.is_deleted, 1) // show only non-hidden evaluations
   )
 )
-
+console.log('coaches data:',evaluations );
     // Fetch related data in parallel
     const [evaluationResultsList, earningsList, paymentsList] = await Promise.all([
       db.select().from(evaluationResults).where(eq(evaluationResults.coachId, coachId)),

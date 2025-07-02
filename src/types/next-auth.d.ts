@@ -6,7 +6,7 @@ declare module 'next-auth' {
     user: {
       id: string; // Add custom `id` field
       type: string; // Add custom `type` field (coach or player)
-      name?: string | null;
+      role: string;
       email?: string | null;
       image?: string | null;
       package_id?: string | null;
@@ -23,4 +23,15 @@ declare module 'next-auth' {
       isCompletedProfile?: boolean;
     }
   }
+    interface User {
+    id: string;
+    role: string;
+  }
+
+  interface JWT {
+    id: string;
+    role: string;
+  }
 }
+export {};
+

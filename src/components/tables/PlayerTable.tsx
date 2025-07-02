@@ -77,6 +77,65 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
         return undefined;
     }
   };
+  const [isPlayerPasswordModalOpen, setPlayerPasswordModalOpen] = useState(false);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
+  const [newPlayerPassword, setNewPlayerPassword] = useState("");
+  const userRole = sessionStorage.getItem("role");;
+
+  const handleOpenPlayerModal = (id: number) => {
+    setSelectedPlayerId(id);
+    setPlayerPasswordModalOpen(true);
+  };
+
+  const handleClosePlayerModal = () => {
+    setSelectedPlayerId(null);
+    setNewPlayerPassword("");
+    setPlayerPasswordModalOpen(false);
+  };
+  const handleChangePlayerPassword = async () => {
+    if (!newPlayerPassword || newPlayerPassword.length < 6) {
+      Swal.fire({
+        icon: "warning",
+        title: "Weak Password",
+        text: "Password must be at least 6 characters.",
+      }); return;
+    }
+
+    try {
+      const res = await fetch(`/api/player/${selectedPlayerId}/change-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword: newPlayerPassword }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Player password updated successfully!",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        handleClosePlayerModal();
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Failed",
+          text: data.error || "Failed to change player password.",
+        });
+      }
+    } catch (error) {
+      console.error("Change player password error:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Network Error",
+        text: "An error occurred. Please try again.",
+      });
+    }
+  };
+
 
   // Function to handle status change after confirmation
   const handleStatusChange = async () => {
@@ -264,7 +323,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                 <Table className="min-w-full text-xs">
                   <TableHeader className="border-b text-xs  bg-gray-200 border-gray-100 dark:border-white/[0.05]">
                     <TableRow>
-                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Player
                       </TableCell>
                       <TableCell className=" px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
@@ -306,6 +365,11 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                       <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Actions
                       </TableCell>
+                      {userRole === "Customer Support" && (
+                        <TableCell className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400 text-start">
+                          Change Password
+                        </TableCell>
+                      )}
                     </TableRow>
                   </TableHeader>
 
@@ -457,6 +521,18 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
                           </div>
                         </TableCell>
+                        {userRole === "Customer Support" && (
+
+                          <TableCell>
+                            <button
+                              onClick={() => handleOpenPlayerModal(Number(player.id))}
+                              title="Change Password"
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              🔒
+                            </button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -482,6 +558,31 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
               })}
             </div>
           </div>
+          <Dialog open={isPlayerPasswordModalOpen} onOpenChange={setPlayerPasswordModalOpen}>
+            <DialogContent className="max-w-sm bg-white p-6 rounded-lg shadow-lg">
+              <DialogHeader>
+                <DialogTitle className="text-lg font-semibold">Change Player Password</DialogTitle>
+              </DialogHeader>
+
+              <div className="mt-4 space-y-4">
+                <input
+                  type="password"
+                  placeholder="Enter new password"
+                  value={newPlayerPassword}
+                  onChange={(e) => setNewPlayerPassword(e.target.value)}
+                  className="w-full border px-4 py-2 rounded"
+                />
+
+                <div className="flex justify-end gap-2">
+                  <button onClick={handleClosePlayerModal} className="text-gray-600 hover:text-black">Cancel</button>
+                  <button onClick={handleChangePlayerPassword} className="bg-blue-600 text-white px-4 py-2 rounded">
+                    Update
+                  </button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
 
           <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
             <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">

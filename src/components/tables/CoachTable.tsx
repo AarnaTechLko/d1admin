@@ -31,6 +31,68 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
   const itemsPerPage = 10;
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const [isCoachPasswordModalOpen, setCoachPasswordModalOpen] = useState(false);
+  const [selectedCoachId, setSelectedCoachId] = useState<number | null>(null);
+  const [newCoachPassword, setNewCoachPassword] = useState("");
+  const userRole = sessionStorage.getItem("role");;
+
+  const handleOpenCoachModal = (coachId: number) => {
+    setSelectedCoachId(coachId);
+    setCoachPasswordModalOpen(true);
+  };
+
+  const handleCloseCoachModal = () => {
+    setSelectedCoachId(null);
+    setNewCoachPassword("");
+    setCoachPasswordModalOpen(false);
+  };
+
+
+  const handleChangeCoachPassword = async () => {
+    if (!newCoachPassword || newCoachPassword.length < 6) {
+      Swal.fire({
+        icon: "warning",
+        title: "Weak Password",
+        text: "Password must be at least 6 characters long.",
+      });
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/coach/${selectedCoachId}/change-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword: newCoachPassword }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Coach password updated successfully!",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        handleCloseCoachModal();
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: data.error || "Failed to change coach password.",
+        });
+      }
+    } catch (error) {
+      console.error("Change coach password error:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Network Error",
+        text: "An error occurred. Please try again.",
+      });
+    }
+  };
+
 
   const getBadgeColor = (status: string) => {
     switch (status) {
@@ -125,6 +187,11 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
                     {header}
                   </TableCell>
                 ))}
+                {userRole === "Customer Support" && (
+                  <TableCell  className="px-4 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
+                    Change Password
+                  </TableCell>
+                )}
               </TableRow>
             </TableHeader>
 
@@ -205,6 +272,19 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
                       )}
                     </div>
                   </TableCell>
+                  {userRole === "Customer Support" && (
+
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      <button
+                        onClick={() => handleOpenCoachModal(Number(coach.id))}
+                        title="Change Password"
+                        className="hover:text-blue-600 h-15 w-15"
+                      >
+                        🔒
+                      </button>
+                    </TableCell>
+                  )}
+
                 </TableRow>
               ))}
             </TableBody>
@@ -217,6 +297,30 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
           ))}
         </div>
 
+        <Dialog open={isCoachPasswordModalOpen} onOpenChange={setCoachPasswordModalOpen}>
+          <DialogContent className="max-w-sm bg-white p-6 rounded-lg shadow-lg">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-semibold">Change Coach Password</DialogTitle>
+            </DialogHeader>
+
+            <div className="mt-4 space-y-4">
+              <input
+                type="password"
+                placeholder="Enter new password"
+                value={newCoachPassword}
+                onChange={(e) => setNewCoachPassword(e.target.value)}
+                className="w-full border px-4 py-2 rounded"
+              />
+
+              <div className="flex justify-end gap-2">
+                <button onClick={handleCloseCoachModal} className="text-gray-600 hover:text-black">Cancel</button>
+                <button onClick={handleChangeCoachPassword} className="bg-blue-600 text-white px-4 py-2 rounded">
+                  Update
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
           <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">

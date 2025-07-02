@@ -1,5 +1,6 @@
 
 export interface Evaluation {
+
   id: number;
   reviewTitle: string;
   primary_video_link: string;
@@ -29,6 +30,7 @@ export interface Evaluation {
   finalRemarks: string;
   organizationalRemarks: string;
   rating: number;
+  remark: string;
   percentage: number;
   lighttype: number;
   evaluationposition: number;
@@ -58,6 +60,7 @@ export interface Evaluation {
 document:string;
 thingsToWork:string;
 coachimage:string;
+review_status:number;
 
 }
 

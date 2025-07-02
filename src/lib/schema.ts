@@ -189,6 +189,7 @@ export const playerEvaluation = pgTable(
     rejectremarks: text("rejectremarks"),
     updated_at: timestamp("updated_at").defaultNow().notNull(),
     is_deleted: integer("is_deleted").default(1).notNull(),
+    review_status: integer("review_status").default(1).notNull(),
 
   }
 );
@@ -610,7 +611,7 @@ export const admins = pgTable("admin", {
   }).notNull(),
   password_hash: text("password_hash").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
-  is_deleted: boolean("is_deleted").default(false), // ✅ Already correct
+    is_deleted: integer("is_deleted").default(1).notNull(),
 });
 
 

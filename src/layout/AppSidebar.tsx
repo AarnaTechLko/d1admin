@@ -44,6 +44,33 @@ const AppSidebar: React.FC = () => {
           icon: <UserCircleIcon />,
           subItems: [{ name: "View Ticket", path: "/ticket", pro: false }],
         },
+        {
+          name: "Coaches",
+          icon: <ListIcon />,
+          subItems: [{ name: "View Coach", path: "/coach", pro: false },
+          { name: "Suspended Coach", path: "/suspend", pro: false },
+          { name: "Disable Coach", path: "/disablecoach", pro: false },
+          ],
+        },
+        {
+          name: "Players",
+          icon: <UserCircleIcon />,
+          subItems: [{ name: "View Player", path: "/player", pro: false },
+          { name: "Suspended Player", path: "/suspendplayer", pro: false },
+          { name: "Disable Player", path: "/disableplayer", pro: false },
+
+          ],
+        },
+        {
+          name: "Organizations",
+          icon: <TableIcon />,
+          subItems: [
+            { name: "View Organizations", path: "/organization", pro: false },
+            { name: "Suspended Organization", path: "/suspendorg", pro: false },
+            { name: "Disable Organization", path: "/disableorg", pro: false },
+
+          ],
+        },
       ]
       : role === "admin"
         ? [
@@ -75,7 +102,7 @@ const AppSidebar: React.FC = () => {
             subItems: [
               { name: "View Organizations", path: "/organization", pro: false },
               { name: "Suspended Organization", path: "/suspendorg", pro: false },
-                          { name: "Disable Organization", path: "/disableorg", pro: false },
+              { name: "Disable Organization", path: "/disableorg", pro: false },
 
             ],
           },
@@ -85,7 +112,7 @@ const AppSidebar: React.FC = () => {
             subItems: [{ name: "View Team", path: "/team", pro: false },
             { name: "Suspended Team", path: "/suspendteam", pro: false },
             { name: "Disable Team", path: "/disableteam", pro: false },
-            
+
             ],
           },
           {
@@ -154,8 +181,8 @@ const AppSidebar: React.FC = () => {
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
               className={`menu-item group  ${openSubmenu?.type === menuType && openSubmenu?.index === index
-                  ? "menu-item-active"
-                  : "menu-item-inactive"
+                ? "menu-item-active"
+                : "menu-item-inactive"
                 } cursor-pointer ${!isExpanded && !isHovered
                   ? "lg:justify-center"
                   : "lg:justify-start"
@@ -163,8 +190,8 @@ const AppSidebar: React.FC = () => {
             >
               <span
                 className={` ${openSubmenu?.type === menuType && openSubmenu?.index === index
-                    ? "menu-item-icon-active"
-                    : "menu-item-icon-inactive"
+                  ? "menu-item-icon-active"
+                  : "menu-item-icon-inactive"
                   }`}
               >
                 {nav.icon}
@@ -175,9 +202,9 @@ const AppSidebar: React.FC = () => {
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDownIcon
                   className={`ml-auto w-5 h-5 transition-transform duration-200  ${openSubmenu?.type === menuType &&
-                      openSubmenu?.index === index
-                      ? "rotate-180 text-brand-500"
-                      : ""
+                    openSubmenu?.index === index
+                    ? "rotate-180 text-brand-500"
+                    : ""
                     }`}
                 />
               )}
@@ -191,8 +218,8 @@ const AppSidebar: React.FC = () => {
               >
                 <span
                   className={`${isActive(nav.path)
-                      ? "menu-item-icon-active"
-                      : "menu-item-icon-inactive"
+                    ? "menu-item-icon-active"
+                    : "menu-item-icon-inactive"
                     }`}
                 >
                   {nav.icon}
@@ -222,8 +249,8 @@ const AppSidebar: React.FC = () => {
                     <Link
                       href={subItem.path}
                       className={`menu-dropdown-item ${isActive(subItem.path)
-                          ? "menu-dropdown-item-active"
-                          : "menu-dropdown-item-inactive"
+                        ? "menu-dropdown-item-active"
+                        : "menu-dropdown-item-inactive"
                         }`}
                     >
                       {subItem.name}
@@ -231,8 +258,8 @@ const AppSidebar: React.FC = () => {
                         {subItem.new && (
                           <span
                             className={`ml-auto ${isActive(subItem.path)
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
+                              ? "menu-dropdown-badge-active"
+                              : "menu-dropdown-badge-inactive"
                               } menu-dropdown-badge `}
                           >
                             new
@@ -241,8 +268,8 @@ const AppSidebar: React.FC = () => {
                         {subItem.pro && (
                           <span
                             className={`ml-auto ${isActive(subItem.path)
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
+                              ? "menu-dropdown-badge-active"
+                              : "menu-dropdown-badge-inactive"
                               } menu-dropdown-badge `}
                           >
                             pro

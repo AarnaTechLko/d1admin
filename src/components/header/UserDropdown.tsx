@@ -29,7 +29,7 @@ export default function UserDropdown() {
 
       // ✅ Redirect after logout
       router.push("/signin"); // Use push instead of replace
-      window.location.href = "/signin"; // Force reload to ensure session is cleared
+      // window.location.href = "/signin"; // Force reload to ensure session is cleared
     } catch (err) {
       console.error("Logout failed:", err);
     }
