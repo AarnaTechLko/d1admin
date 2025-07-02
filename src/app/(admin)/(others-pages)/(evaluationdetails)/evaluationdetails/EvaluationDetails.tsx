@@ -90,7 +90,7 @@ function EvaluationPage() {
     const MAX_FILE_SIZE = 9 * 1024 * 1024; // 9MB
 
     const [showModal, setShowModal] = useState(false);
-    const [newRemarks, setNewRemarks] = useState<string>(evaluationData?.remark ?? '');
+    const [newRemarks, setNewRemarks] = useState<string>(evaluationData?.remarks ?? '');
 
     const [newRating, setNewRating] = useState(evaluationData?.rating || 0);
     // const [isHidden, setIsHidden] = useState(false);
@@ -328,7 +328,7 @@ function EvaluationPage() {
     };
     const handleEdit = () => {
         setNewRating(evaluationData?.rating || 0);
-        setNewRemarks(evaluationData?.remark ?? '');
+        setNewRemarks(evaluationData?.remarks ?? '');
 
         setShowModal(true);
     };
@@ -1161,67 +1161,75 @@ function EvaluationPage() {
 
 
                     {/* Stars and Edit/Delete only shown if rating is not null */}
-                    {evaluationData && (
-                        <div className="p-4 bg-gray-100  rounded-md max-w-md mx-auto">
-                            <h3 className="text-lg font-semibold mb-2">Player Feedback</h3>
+                  {evaluationData && (
+  <div className="p-4 bg-gray-100 rounded-md max-w-md mx-auto">
+    <h3 className="text-lg font-semibold mb-2">Player Feedback</h3>
 
-                            {/* Stars */}
-                            <div className="flex items-center mb-1">
-                                {Array.from({ length: 5 }, (_, index) => index + 1).map((star) => (
-                                    <svg
-                                        key={star}
-                                        className={`w-6 h-6 ${Number(evaluationData.review_status) === 1 &&
-                                            star <= (evaluationData.rating ?? 0)
-                                            ? 'text-yellow-500'
-                                            : 'text-gray-300'
-                                            }`}
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
-                                    </svg>
-                                ))}
-                            </div>
+    {/* Star Rating: Always show 5 stars */}
+    <div className="flex items-center mb-3">
+      {Array.from({ length: 5 }, (_, index) => index + 1).map((star) => (
+        <svg
+          key={star}
+          className={`w-6 h-6 ${
+            Number(evaluationData.review_status) === 1 &&
+            star <= (evaluationData.rating ?? 0)
+              ? 'text-yellow-500'
+              : 'text-gray-300'
+          }`}
+          xmlns="http://www.w3.org/2000/svg"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
+        </svg>
+      ))}
+    </div>
 
-                            {/* Remarks */}
-                            {Number(evaluationData.review_status) === 1 && evaluationData.remark && (
-                                <div className="m-4  p-3 bg-gray-100 border-l-4 border-yellow-400 rounded-md shadow-sm">
-                                    <p className="text-sm text-gray-800 italic">
-                                        <span className="font-semibold text-yellow-700">Feedback:</span> “{evaluationData.remark}”
-                                    </p>
-                                </div>
-                            )}
+    {/* Feedback Textarea: Always show, filled or empty */}
+    <div className="mb-4">
+      <label className="block text-sm font-semibold text-yellow-700 mb-1">Feedback:</label>
+      <textarea
+        className="w-full p-2 text-sm text-gray-800 border rounded-md bg-white resize-none"
+        value={
+          Number(evaluationData.review_status) === 1 && evaluationData.remarks
+            ? evaluationData.remarks
+            : ''
+        }
+        placeholder="No feedback submitted yet."
+        readOnly
+        rows={4}
+      />
+    </div>
 
+    {/* Action Buttons */}
+    <div className="flex gap-2">
+      {Number(evaluationData.review_status) === 1 ? (
+        <>
+          <button
+            onClick={handleEdit}
+            className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600"
+          >
+            Edit
+          </button>
+          <button
+            onClick={handleDelete}
+            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+          >
+            Hide
+          </button>
+        </>
+      ) : Number(evaluationData.review_status) === 0 ? (
+        <button
+          onClick={handleRevert}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+        >
+          Revert
+        </button>
+      ) : null}
+    </div>
+  </div>
+)}
 
-                            {/* Action Buttons */}
-                            <div className="flex gap-2">
-                                {Number(evaluationData.review_status) === 1 ? (
-                                    <>
-                                        <button
-                                            onClick={handleEdit}
-                                            className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600"
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={handleDelete}
-                                            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-                                        >
-                                            Hide
-                                        </button>
-                                    </>
-                                ) : Number(evaluationData.review_status) === 0 ? (
-                                    <button
-                                        onClick={handleRevert}
-                                        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                                    >
-                                        Revert
-                                    </button>
-                                ) : null}
-                            </div>
-                        </div>
-                    )}
 
                     {/* Edit Modal */}
                     {showModal && (
