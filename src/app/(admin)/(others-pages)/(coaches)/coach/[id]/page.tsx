@@ -9,6 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import Loading from "@/components/Loading";
 
 interface Evaluation {
   id: string;
@@ -322,17 +323,19 @@ export default function CoachDetailsPage() {
 
 
   }, [id]);
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
-        <div className="w-18 h-18 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-        <div>Loading coach data...</div>
-      </div>
-    );
-  }
+if (loading) {
+        return <Loading />;
+    }
+  // if (loading) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+  //       <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+  //       <div>Loading coach data...</div>
+  //     </div>
+  //   );
+  // }
   if (!coach) return <div className="p-6 text-center text-red-500">Coach not found.</div>;
-
+ 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
       {/* Header */} <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow p-6 mb-6">

@@ -5,6 +5,7 @@ import { Table, TableCell, TableBody,TableHeader, TableRow } from "@/components/
 import { Trash } from "lucide-react";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import Loading from "@/components/Loading";
 
 
 interface Admin {
@@ -46,29 +47,6 @@ const MySwal = withReactContent(Swal);
 
     fetchAdmins();
   }, [searchQuery, currentPage]);
-
-  // const handleDelete = async (adminID: number) => {
-  //   if (!window.confirm("Are you sure you want to delete this admin?")) return;
-  
-  //   try {
-  //     const response = await fetch(`/api/subadmin?id=${adminID}`, {
-  //       method: "DELETE",
-  //     });
-  
-  //     if (!response.ok) {
-  //       const text = await response.text();
-  //       throw new Error(text || "Failed to delete admin");
-  //     }
-  
-  //     // Remove the deleted admin from the state
-  //     setAdmins((prev) => prev.filter(admin => admin.id !== adminID));
-  //   } catch (error) {
-  //     console.error("Error deleting admin:", error);
-  //     alert(`Failed to delete admin: ${error}`);
-  //   }finally{
-  //     window.location.reload();
-  //   }
-  // };
   const handleDelete = async (adminID: number) => {
   const result = await MySwal.fire({
     title: 'Are you sure?',
@@ -100,6 +78,9 @@ const MySwal = withReactContent(Swal);
     await MySwal.fire('Error!', `Failed to delete admin: ${error}`, 'error');
   }
 };
+ if (loading) {
+        return <Loading />;
+    }
 
   return (
     <div>

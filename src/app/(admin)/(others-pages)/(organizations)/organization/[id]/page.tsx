@@ -8,6 +8,7 @@ import Link from 'next/link';
 import Button from '@/components/ui/button/Button';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import Loading from '@/components/Loading';
 
 interface Organization {
   id: string;
@@ -323,12 +324,9 @@ async function handleRevertPlayer(playerId: string) {
 }
 
 
-  if (loading)
-    return (
-      <div className="p-6 text-center text-gray-500 animate-pulse">
-        Loading organization details...
-      </div>
-    );
+  if (loading) {
+        return <Loading />;
+    }
 
   if (error)
     return (

@@ -3,46 +3,9 @@
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import CoachTable from "@/components/tables/CoachTable";
+import Loading from '@/components/Loading';
+
 import { Coach } from "@/app/types/types";
-// interface Evaluation {
-//   id: string;
-//   evaluationId: number;
-//   player_id: string;
-//   playerSlug: string;
-//   playerFirstName: string;
-//   firstname: string;
-//   lastname: string;
-//   review_title: string;
-//   primary_video_link: string;
-//   jerseyNumber: string;
-//   jerseyColorOne: string;
-//   positionOne: string;
-//   status: number;
-//   turnaroundTime: number;
-//   payment_status: string;
-//   rating?: number;
-//   remarks?: string;
-//   created_at: string;
-//   is_deleted: number;
-// }
-
-// interface Coach {
-//   id: string;
-//   evaluationId: number;
-//   firstName: string;
-//   lastName: string;
-//   image: string;
-//   gender: string;
-//   sport: string;
-//   totalEvaluations: string;
-//   status: string;
-//   history?: string;
-//   earnings: number;
-//   evaluations: Evaluation[];
-//   is_deleted: number;
-
-
-// }
 const CoachesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [coaches, setCoaches] = useState<Coach[]>([]);
@@ -75,6 +38,9 @@ const CoachesPage = () => {
 
     fetchCoaches();
   }, [searchQuery, currentPage]);
+ if (loading) {
+        return <Loading />;
+    }
 
   return (
     <div>

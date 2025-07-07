@@ -9,6 +9,7 @@ import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter } from "lucide-reac
 // import { FaTwitter, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import Loading from '@/components/Loading';
 // import { useRouter } from 'next/navigation';
 interface Player {
     id: number;
@@ -330,11 +331,13 @@ export default function PlayerDetailPage() {
         fetchPlayerData();
     }, [id]);
 
-    if (loading) return <p className="p-4">Loading...</p>;
-    if (error) return <p className="p-4 text-red-500">{error}</p>;
+ if (loading) {
+        return <Loading />;
+    }    if (error) return <p className="p-4 text-red-500">{error}</p>;
     if (!data) return <p className="p-4">Player not found.</p>;
 
     const { player } = data;
+
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-8">

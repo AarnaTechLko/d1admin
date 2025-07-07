@@ -1,71 +1,65 @@
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { ticket, ticket_messages } from '@/lib/schema';
+import { eq } from 'drizzle-orm';
+import { put } from '@vercel/blob';
 
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { ticket_messages ,ticket} from "@/lib/schema"; // Use correct table
-import { eq } from "drizzle-orm";
-
-// POST: Reply to a ticket
 export async function POST(req: Request) {
   try {
-    
-    const body = await req.json();
-    const { ticketId, repliedBy, message, status } = body;
+    const formData = await req.formData();
+    const ticketId = formData.get("ticketId");
+    const repliedBy = formData.get("repliedBy");
+    const message = formData.get("message");
+    const status = formData.get("status");
+    const file = formData.get("attachment") as File | null;
 
-    // Validate required fields
     if (!ticketId || !repliedBy || !message || !status) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Insert reply into the database
-    const insertedReply = await db.insert(ticket_messages).values({
+    let filename = '';
+
+    if (file && file.size > 0) {
+      const blob = await put(file.name, file, { access: 'public' });
+      filename = blob.url;
+    }
+
+    const insertedReply = await db.insert(ticket_messages).values({ 
       ticket_id: Number(ticketId),
-      replied_by: repliedBy,
-      message,
-      status,
-      createdAt: new Date(), // Ensure createdAt is provided
+      replied_by: repliedBy.toString(),
+      message: message.toString(),
+      status: status.toString(),
+      createdAt: new Date(),
+      filename,
     }).returning();
 
-    // await db
-    // .update(ticket)
-    // .set({status, status })
-    // .where(eq(ticket.id, ticket_id));
-  // Update ticket status to match the latest ticket message status
-  await db
-  .update(ticket)
-  .set({ status,
-    message,
-   })
-  .where(eq(ticket.id, Number(ticketId)));
-
+    await db.update(ticket)
+      .set({
+        status: status.toString(),
+        message: message.toString(),
+      })
+      .where(eq(ticket.id, Number(ticketId)));
 
     return NextResponse.json({ success: true, reply: insertedReply }, { status: 200 });
+
   } catch (error) {
-    console.error("Error saving ticket reply:", error);
+    console.error("Error uploading file or saving ticket reply:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+export async function DELETE(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
 
-// GET: Fetch ticket messages
-export async function GET(req: Request) {
+  if (!id) {
+    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  }
+
   try {
-    const { searchParams } = new URL(req.url);
-    const ticketId = searchParams.get("ticketId");
-
-    if (!ticketId) {
-      return NextResponse.json({ error: "ticketId is required." }, { status: 400 });
-    }
-
-    // Fetch ticket messages
-    const messages = await db
-      .select()
-      .from(ticket_messages)
-      .where(eq(ticket_messages.ticket_id, Number(ticketId)))
-      .orderBy(ticket_messages.createdAt);
-
-    return NextResponse.json({ success: true, messages }, { status: 200 });
+    await db.delete(ticket_messages).where(eq(ticket_messages.id, Number(id)));
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error fetching ticket messages:", error);
-    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+    console.error("Delete reply error:", error);
+    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
   }
 }
-

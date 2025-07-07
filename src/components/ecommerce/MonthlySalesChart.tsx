@@ -1,62 +1,92 @@
 "use client";
+
 import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
-import { MoreHorizontal } from "lucide-react";
-import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { useState, useEffect } from "react";
+import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 
 // Dynamically import the ReactApexChart component
-const ReactApexChart = dynamic(() => import("react-apexcharts"), {
-  ssr: false,
-});
+const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
-export default function MonthlySalesChart() {
-  const [salesData, setSalesData] = useState<number[]>([]);  // Sales data for chart
-  const [loading, setLoading] = useState<boolean>(true);     // Loading state
-  const [error, setError] = useState<string | null>(null);    // Error state
+export default function DashboardCharts() {
+  const [salesData, setSalesData] = useState<number[]>(Array(12).fill(0));
+  const [ticketData, setTicketData] = useState<number[]>([0, 0, 0, 0]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+const [coachStatus, setCoachStatus] = useState<number[]>([0, 0, 0]);
+const [playerStatus, setPlayerStatus] = useState<number[]>([0, 0, 0]);
 
-  // Fetch monthly sales data from API
-  useEffect(() => {
-    async function fetchSalesData() {
-      try {
-        const response = await fetch("/api/sale");  // API call to your monthly sales endpoint
-        if (!response.ok) {
-          throw new Error("Failed to fetch data");
-        }
-        const data = await response.json();
-        const sales = new Array(12).fill(0);  // Initialize sales array for each month
 
-        // Populate sales data for each month
-        data.monthlySales.forEach((payment: { created_at: string; amount: string }) => {
-          const date = new Date(payment.created_at);
-          const month = date.getMonth();  // Get month index
-          sales[month] += parseFloat(payment.amount);  // Aggregate the sales amount for the month
-        });
 
-        setSalesData(sales);
-        setLoading(false);
-      } catch (err) {
-        console.log("error",err);
-        setError("Error fetching data");
-        setLoading(false);
-      }
+  const fetchSalesData = async () => {
+    try {
+      const response = await fetch("/api/sale");
+      if (!response.ok) throw new Error("Failed to fetch sales data");
+      const data = await response.json();
+
+      const monthlySales = new Array(12).fill(0);
+      data.monthlySales.forEach((item: { created_at: string; amount: string }) => {
+        const month = new Date(item.created_at).getMonth();
+        monthlySales[month] += parseFloat(item.amount);
+      });
+      setSalesData(monthlySales);
+    } catch (err) {
+      console.error(err);
+      setError("Error fetching sales data");
     }
+  };
 
-    fetchSalesData();
-  }, []);
+  const fetchTicketData = async () => {
+    try {
+      const response = await fetch("/api/tickets/status");
+      if (!response.ok) throw new Error("Failed to fetch ticket data");
+      const data = await response.json();
+console.log("dataaaaaa",data);
+      const open = data.statusCounts.open || 0;
+      const closed = data.statusCounts.closed || 0;
+      const fixed = data.statusCounts.fixed || 0;
+      const pending = data.statusCounts.pending || 0;
 
-  // Chart options
-  const options: ApexOptions = {
-    colors: ["#465fff"],
+      setTicketData([open, closed, fixed, pending]);
+    } catch (err) {
+      console.error(err);
+      setError("Error fetching ticket data");
+    }
+  };
+  const fetchCoachPlayerStatus = async () => {
+  try {
+    const response = await fetch("/api/stats/coach-player");
+    if (!response.ok) throw new Error("Failed to fetch coach/player data");
+
+    const data = await response.json();
+    const coach = data.coach || {};
+    const player = data.player || {};
+
+    setCoachStatus([coach.view || 0, coach.suspended || 0, coach.disabled || 0]);
+    setPlayerStatus([player.view || 0, player.suspended || 0, player.disabled || 0]);
+  } catch (err) {
+    console.error(err);
+    setError("Error fetching coach/player status");
+  }
+};
+  useEffect(() => {
+  Promise.all([fetchSalesData(), fetchTicketData(), fetchCoachPlayerStatus()])
+    .finally(() => setLoading(false));
+}, []);
+
+
+  // useEffect(() => {
+  //   Promise.all([fetchSalesData(), fetchTicketData()]).finally(() => setLoading(false));
+  // }, []);
+
+  const chartOptions: ApexOptions = {
     chart: {
-      fontFamily: "Outfit, sans-serif",
-      type: "bar",
+      type: "bar" as const,
       height: 180,
-      toolbar: {
-        show: false,
-      },
+      toolbar: { show: false },
+      fontFamily: "Outfit, sans-serif",
     },
     plotOptions: {
       bar: {
@@ -66,120 +96,201 @@ export default function MonthlySalesChart() {
         borderRadiusApplication: "end",
       },
     },
-    dataLabels: {
-      enabled: false,
+    dataLabels: { enabled: false },
+    stroke: { show: true, width: 4, colors: ["transparent"] },
+    fill: { opacity: 1 },
+    grid: {
+      yaxis: { lines: { show: true } },
     },
-    stroke: {
-      show: true,
-      width: 4,
-      colors: ["transparent"],
+    tooltip: {
+      x: { show: false },
+      y: { formatter: (val: number) => `${val}` },
     },
-    xaxis: {
-      categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
-      axisBorder: {
-        show: false,
-      },
-      axisTicks: {
-        show: false,
-      },
-    },
+    xaxis: { axisBorder: { show: false }, axisTicks: { show: false } },
     legend: {
       show: true,
       position: "top",
       horizontalAlign: "left",
       fontFamily: "Outfit",
     },
-    yaxis: {
-      title: {
-        text: undefined,
-      },
-    },
-    grid: {
-      yaxis: {
-        lines: {
-          show: true,
-        },
-      },
-    },
-    fill: {
-      opacity: 1,
-    },
-    tooltip: {
-      x: {
-        show: false,
-      },
-      y: {
-        formatter: (val: number) => `${val}`,
-      },
-    },
+    colors: ["#465fff"],
   };
 
-  // Handle dropdown toggle
-  function toggleDropdown() {
-    setIsOpen(!isOpen);
-  }
-
-  function closeDropdown() {
-    setIsOpen(false);
-  }
-
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-sky-1 0 px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6 w-[1000px]">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Monthly Sales
-        </h3>
+    <>
+<div className="grid w-full gap-4 sm:grid-cols-1 bg-white md:grid-cols-1 xl:grid-cols-3">
+      {/* Monthly Sales */}
 
-        <div className="relative inline-block">
-          <button onClick={toggleDropdown} className="dropdown-toggle">
-            <MoreHorizontal className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300" />
-          </button>
-          <Dropdown isOpen={isOpen} onClose={closeDropdown} className="w-40 p-2">
-            <DropdownItem
-              onItemClick={closeDropdown}
-              className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-            >
-              View More
-            </DropdownItem>
-            <DropdownItem
-              onItemClick={closeDropdown}
-              className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-            >
-              Delete
-            </DropdownItem>
-          </Dropdown>
+
+      {/* Ticket Status */}
+      <div className=" rounded-2xl border border-gray-200  px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Ticket Status</h3>
         </div>
-      </div>
-
-      <div className="max-w-full overflow-x-auto custom-scrollbar">
         <div className="-ml-5 min-w-[650px] xl:min-w-full pl-2">
           {loading ? (
-            <div>Loading...</div> // Show a loading state
+            <div>Loading...</div>
           ) : error ? (
-            <div>{error}</div> // Show an error message if something goes wrong
+            <div>{error}</div>
           ) : (
-            <ReactApexChart
-              options={options}
-              series={[{ name: "Sales", data: salesData }]} // Use fetched sales data
-              type="bar"
-              height={180}
-            />
+           <ReactApexChart
+  options={{
+    ...chartOptions,
+    colors: [
+      "#60a5fa", // Open - blue-400
+      "#f87171", // Closed - red-400
+      "#34d399", // Fixed - green-400
+      "#facc15", // Pending - yellow-400
+    ],
+    plotOptions: {
+      ...chartOptions.plotOptions,
+      bar: {
+        ...chartOptions.plotOptions?.bar,
+        distributed: true, // each bar gets a different color
+      },
+    },
+    xaxis: {
+      ...chartOptions.xaxis,
+      categories: ["Open", "Closed", "Fixed", "Pending"],
+    },
+  }}
+  series={[{ name: "Tickets", data: ticketData }]}
+  type="bar"
+  height={180}
+/>
+
           )}
         </div>
       </div>
+      {/* Coach Status */}
+<div className=" rounded-2xl border border-gray-200  px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+  <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Coach </h3>
+  <div className="-ml-5 min-w-[650px] xl:min-w-full pl-2">
+    {loading ? (
+      <div>Loading...</div>
+    ) : error ? (
+      <div>{error}</div>
+    ) : (
+     <ReactApexChart
+  options={{
+    ...chartOptions,
+    colors: ["#4ade80", "#facc15", "#f87171"], // Green, Yellow, Red
+    plotOptions: {
+      ...chartOptions.plotOptions,
+      bar: {
+        ...chartOptions.plotOptions?.bar,
+        distributed: true, // 🔑 Distribute different colors per bar
+      },
+    },
+    xaxis: {
+      ...chartOptions.xaxis,
+      categories: ["Active", "Suspended", "Disabled"],
+    },
+  }}
+  series={[{ name: "Coaches", data: coachStatus }]}
+  type="bar"
+  height={180}
+/>
+
+    )}
+  </div>
+</div>
+
+{/* Player Status */}
+<div className=" rounded-2xl border border-gray-200  px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+  <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Player </h3>
+  <div className="-ml-5 min-w-[650px] xl:min-w-full pl-2">
+    {loading ? (
+      <div>Loading...</div>
+    ) : error ? (
+      <div>{error}</div>
+    ) : (
+     <ReactApexChart
+  options={{
+    ...chartOptions,
+colors: ["#60a5fa", // Open - blue-400
+      "#f87171", // Closed - red-400
+      "#34d399",], 
+    plotOptions: {
+      ...chartOptions.plotOptions,
+      bar: {
+        ...chartOptions.plotOptions?.bar,
+        distributed: true, // enables one color per category
+      },
+    },
+    xaxis: {
+      ...chartOptions.xaxis,
+      categories: ["Active", "Suspended", "Disabled"],
+    },
+  }}
+  series={[{ name: "Player", data: playerStatus }]} // or "Players"
+  type="bar"
+  height={180}
+/>
+
+    )}
+  </div>
+</div>
+
     </div>
+
+<div className="grid w-full gap-4 sm:grid-cols-1 bg-white md:grid-cols-1 xl:grid-cols-1">
+
+      <div className="rounded-2xl border border-gray-200  px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Monthly Sales</h3>
+          <Dropdown isOpen={isOpen} onClose={() => setIsOpen(false)} className="w-40 p-2">
+            <DropdownItem onItemClick={() => setIsOpen(false)}>View More</DropdownItem>
+            <DropdownItem onItemClick={() => setIsOpen(false)}>Delete</DropdownItem>
+          </Dropdown>
+        </div>
+        <div className="-ml-5 min-w-[650px] xl:min-w-full pl-2">
+          {loading ? (
+            <div>Loading...</div>
+          ) : error ? (
+            <div>{error}</div>
+          ) : (
+           <ReactApexChart
+  options={{
+    ...chartOptions,
+    colors: [
+      "#60a5fa", // Jan - blue-400
+      "#34d399", // Feb - green-400
+      "#f87171", // Mar - red-400
+      "#facc15", // Apr - yellow-400
+      "#a78bfa", // May - purple-400
+      "#fb7185", // Jun - rose-400
+      "#2dd4bf", // Jul - teal-400
+      "#38bdf8", // Aug - sky-400
+      "#e879f9", // Sep - fuchsia-400
+      "#fbbf24", // Oct - amber-400
+      "#cbd5e1", // Nov - slate-300
+      "#f59e0b", // Dec - orange-400
+    ],
+    plotOptions: {
+      ...chartOptions.plotOptions,
+      bar: {
+        ...chartOptions.plotOptions?.bar,
+        distributed: true, // enables each bar to use its corresponding color
+      },
+    },
+    xaxis: {
+      ...chartOptions.xaxis,
+      categories: [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+      ],
+    },
+  }}
+  series={[{ name: "Sales", data: salesData }]}
+  type="bar"
+  height={180}
+/>
+
+          )}
+        </div>
+      </div>
+      </div>
+      </>
   );
 }

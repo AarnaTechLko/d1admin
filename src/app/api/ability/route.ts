@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
       acc[`file${index + 1}`] = {
         filename: item.filename,
         comments: item.comments || '',
-      };
+      }; 
       return acc;
     }, {} as Record<string, { filename: string; comments: string }>);
 

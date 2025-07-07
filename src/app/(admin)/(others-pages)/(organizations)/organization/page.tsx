@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import OrganizationTable from "@/components/tables/OrganizationTable";
+import Loading from "@/components/Loading";
 
 interface Organization {
   id: string;
@@ -65,7 +66,9 @@ const OrganizationsPage = () => {
 
     fetchOrganizations();
   }, [searchQuery, currentPage]);
-
+ if (loading) {
+        return <Loading />;
+    }
   return (
     <div>
       <PageBreadcrumb pageTitle="Organization" onSearch={setSearchQuery} />
