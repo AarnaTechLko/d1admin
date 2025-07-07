@@ -126,7 +126,7 @@ export async function GET(req: NextRequest) {
       .then((res) => res[0]?.count || 0);
 
     return NextResponse.json({
-      coaches: result,
+      player: result,
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),
       hasNextPage: page * limit < totalCount,

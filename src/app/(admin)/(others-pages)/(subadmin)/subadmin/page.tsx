@@ -8,6 +8,7 @@ import { Eye, EyeOff } from "lucide-react"; // Lucide React icons
 import { User, Mail, Lock } from "lucide-react";
 
 import React, { useState } from "react";
+import Loading from "@/components/Loading";
 
 export default function SignInForm() {
   // const router = useRouter();
@@ -22,55 +23,18 @@ export default function SignInForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const router = useRouter();
+const [loading, setLoading] = useState(false);
 
   // Handle input change
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
-
-  // Handle form submission
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setError(null);
-  //   setSuccess(null);
-
-  //   try {
-  //     const res = await fetch("/api/subadmin", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify(formData),
-  //     });
-
-  //     const data = await res.json();
-
-  //     if (!res.ok) {
-  //       setError(data.error || "Invalid credentials");
-  //     } else {
-  //       setSuccess("Add successful! Redirecting...");
-  //       router.push("/view")
-  //       // ✅ Store JWT token
-  //       // if (isChecked) {
-  //       //   localStorage.setItem("session_token", data.token); // Persist even after closing browser
-  //       // } else {
-  //       //   sessionStorage.setItem("session_token", data.token); // Remove after session ends
-  //       // }
-
-  //       // setTimeout(() => {
-  //       //   router.push("/dashboard"); // Redirect to profile page
-  //       // }, 2000);
-  //     }
-  //   } catch (err) {
-  //     console.error("Signin error:", err);
-  //     setError("Network error, please try again.");
-  //   }
-  // };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+  setLoading(true);
 
     try {
       const res = await fetch("/api/subadmin", {
@@ -80,7 +44,6 @@ export default function SignInForm() {
       });
 
       const data = await res.json();
-console.log("khffj",data);
       if (!res.ok) {
         setError(data.error || "Invalid credentials");
       } else {
@@ -92,9 +55,12 @@ console.log("khffj",data);
     } catch (err) {
       console.error("Signin error:", err);
       setError("Network error, please try again.");
-    }
+    }finally {
+    setLoading(false); // Stop loading either way
+  }
   };
 
+if (loading) return <Loading />;
 
   return (
     <>

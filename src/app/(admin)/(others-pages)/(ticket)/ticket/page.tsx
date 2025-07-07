@@ -3,12 +3,14 @@ import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogTitle, DialogContent } from "@/components/ui/dialog";
-import { MessageSquare } from "lucide-react";
+import { Download, MessageSquare, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
 import { Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
+import Loading from "@/components/Loading";
 // import { useSession } from 'next-auth/react';
+import { UploadCloud } from "lucide-react";
 
 
 interface Ticket {
@@ -22,7 +24,7 @@ interface Ticket {
   createdAt: string;
   status: string;
   assignee_name: string;
-  
+
 }
 interface Admin {
   id: number;
@@ -31,12 +33,15 @@ interface Admin {
   role: string;
 }
 interface TicketReply {
+  filename: string;
   id: number;
   ticketId: number;
   message: string;
   status: string;
   repliedBy: string;
   createdAt: string;
+  fullAttachmentUrl?: string;
+  parsedFiles?: string[];
 }
 
 const TicketsPage = () => {
@@ -53,6 +58,7 @@ const TicketsPage = () => {
   const [isReplyModalOpen, setIsReplyModalOpen] = useState<boolean>(false);
   const [replyMessage, setReplyMessage] = useState<string>("");
   const [replyStatus, setReplyStatus] = useState<string>("");
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
 
   const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
@@ -65,105 +71,134 @@ const TicketsPage = () => {
 
     try {
       const response = await fetch(`/api/ticket/replies?ticketId=${ticket.id}`);
-      if (!response.ok) throw new Error("Failed to fetch replies");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Fetch failed: ${response.status} - ${errorText}`);
+      }
 
       const data = await response.json();
+      console.log("images dataL", data);
+      if (!data.replies || !Array.isArray(data.replies)) {
+        throw new Error("Invalid response: replies not found");
+      }
 
+      // Parse filenames in each reply (if available)
+      const parsedReplies = data.replies.map((reply: TicketReply): TicketReply & { parsedFiles: string[] } => ({
+        ...reply,
+        parsedFiles: (() => {
+          try {
+            const parsed = JSON.parse(reply.filename || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          } catch {
+            return [];
+          }
+        })(),
+      }));
 
-      setTicketReplies(data.replies);
-      setReplyStatus(ticket.status); // Set current status for reply
+      setTicketReplies(parsedReplies);
     } catch (error) {
       console.error("Error fetching replies:", error);
+      setTicketReplies([]);
       Swal.fire("Error", "Could not load ticket messages.", "error");
     }
-
   };
+
   const handleReplySubmit = async () => {
+          setIsReplyModalOpen(false); 
+
     if (!selectedTicket) {
       Swal.fire("Error", "No ticket selected.", "error");
       return;
     }
-    setLoading(true); // Start loading
 
+    if (!replyMessage.trim()) {
+      Swal.fire("Error", "Message cannot be empty.", "warning");
+      return;
+    }
+
+    setLoading(true);
 
     try {
+      const formData = new FormData();
+      formData.append("ticketId", String(selectedTicket.id));
+      formData.append("repliedBy", userId ?? "");
+      formData.append("message", replyMessage.trim());
+      formData.append("status", replyStatus);
+
+      if (attachmentFile) {
+        formData.append("attachment", attachmentFile);
+      }
+
       const response = await fetch("/api/ticket/reply", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ticketId: selectedTicket.id, // Use the selected ticket's ID
-          repliedBy: userId,
-          message: replyMessage,
-          status: replyStatus,
-        }),
+        body: formData,
       });
 
       const data = await response.json();
-      // setTicketReplies(data.replies);
 
       if (response.ok) {
-
         Swal.fire("Success", "Reply sent successfully!", "success");
 
         setTickets((prevTickets) =>
           prevTickets.map((t) =>
-            t.id === selectedTicket.id ? { ...t, status: replyStatus,message:replyMessage } : t
+            t.id === selectedTicket.id
+              ? { ...t, status: replyStatus, message: replyMessage.trim() }
+              : t
           )
         );
-        setReplyMessage(""); // Optional: clear input
 
+        setReplyMessage("");
+        setAttachmentFile(null);
         setIsReplyModalOpen(false);
       } else {
         Swal.fire("Error", data.error || "Failed to send reply.", "error");
       }
     } catch (error) {
-      console.error("Error:", error);
-      Swal.fire("Error", "An unexpected error occurred.", "error");
-      setTicketReplies([]); // fallback
-
-    } finally {
-      setLoading(false); // Stop loading
-    }
-  };
- // ✅ Load user_id on mount
- useEffect(() => {
-  const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
-  if (!storedUserId) {
-    router.push("/signin");
-  } else {
-    setUserId(storedUserId);
-  }
-}, [router]);
-
-// ✅ Fetch tickets when userId, searchQuery or currentPage changes
-useEffect(() => {
-  if (!userId) return;
-
-  const fetchTickets = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        `/api/ticket?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}`
-      );
-
-      if (!response.ok) throw new Error("Failed to fetch tickets");
-
-      const data = await response.json();
-      console.log("daata",data);
-      setTickets(data.ticket ?? []);
-      setTotalPages(data.totalPages);
-    } catch (err) {
-      setError((err as Error).message);
+      console.error("Error submitting ticket reply:", error);
+      Swal.fire("Error", "An unexpected error occurred while sending reply.", "error");
+      setTicketReplies([]);
     } finally {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
+    if (!storedUserId) {
+      router.push("/signin");
+    } else {
+      setUserId(storedUserId);
+    }
+  }, [router]);
 
-  fetchTickets();
-}, [userId, searchQuery, currentPage]);
+  // ✅ Fetch tickets when userId, searchQuery or currentPage changes
+  useEffect(() => {
+    if (!userId) return;
 
-  
+    const fetchTickets = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(
+          `/api/ticket?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}`
+        );
+
+        if (!response.ok) throw new Error("Failed to fetch tickets");
+
+        const data = await response.json();
+        console.log("daata", data);
+        setTickets(data.ticket ?? []);
+        setTotalPages(data.totalPages);
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTickets();
+  }, [userId, searchQuery, currentPage]);
+
+
   useEffect(() => {
     const fetchSubAdmins = async () => {
       try {
@@ -250,22 +285,14 @@ useEffect(() => {
       setIsSubmitting(false);
     }
   };
-
-
-
-
   const handleModalSubmit = () => {
     if (!selectedTicket) {
       setError("No ticket selected");
       return;
-
     }
     setIsSubmitting(true);
-
-
     // Find the selected sub-admin object based on the last clicked admin (selectedTicket.assign_to)
     const assignedSubAdmin = subAdmins.find((admin) => admin.id === selectedTicket.assign_to);
-
     if (assignedSubAdmin) {
       handleAssignSubAdmin(assignedSubAdmin); // Call API function to assign
     } else {
@@ -273,8 +300,39 @@ useEffect(() => {
     }
   };
 
- 
+  const handleDeleteReply = async (replyId: number) => {
+      setIsReplyModalOpen(false); 
 
+    const confirmed = await Swal.fire({
+      title: "Are you sure?",
+      text: "This will delete the message permanently.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    });
+
+    if (confirmed.isConfirmed) {
+      try {
+        const res = await fetch(`/api/ticket/reply?id=${replyId}`, {
+          method: "DELETE",
+        });
+
+        if (res.ok) {
+          Swal.fire("Deleted!", "The reply has been removed.", "success");
+          setTicketReplies((prev) => prev.filter((r) => r.id !== replyId));
+        } else {
+          Swal.fire("Error", "Failed to delete reply.", "error");
+        }
+      } catch (err) {
+        console.error("Delete error:", err);
+        Swal.fire("Error", "Something went wrong.", "error");
+      }
+    }
+  };
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <div>
@@ -376,39 +434,73 @@ useEffect(() => {
 
 
           <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
-            <DialogContent className="p-6">
+            <DialogContent className="p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
               <DialogTitle>Reply to Ticket</DialogTitle>
+
               <input type="hidden" value={userId ?? ""} name="userId" />
               <input type="hidden" value={selectedTicket?.id ?? ""} name="ticketId" />
 
               {/* Previous Messages */}
-              <div>
+              <div className="mt-4">
                 <h3 className="text-sm font-medium mb-2 text-blue-600">Previous Messages</h3>
-                <div className="border border-blue-300 rounded-md p-3 max-h-60 overflow-y-auto space-y-4 bg-gray-50">
+                <div className="border border-blue-300 rounded-md p-3 max-h-60 overflow-y-auto bg-gray-50 space-y-4 custom-scrollbar">
                   {ticketReplies.length === 0 ? (
                     <p className="text-gray-400 text-sm">No messages yet.</p>
                   ) : (
                     ticketReplies.map((reply) => (
                       <div key={reply.id} className="border-b pb-3">
-                        <p className="text-sm text-gray-700 mb-1">
-                          <span className="font-semibold">Message:</span> {reply.message}
-                        </p>
+
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="text-sm text-gray-700">
+                            <span className="font-semibold">Message:</span> {reply.message}
+                          </p>
+                          <button
+                            onClick={() => handleDeleteReply(reply.id)}
+                            className="text-red-500 hover:text-red-700"
+                            title="Delete reply"
+                          >
+                            <Trash className="w-4 h-4" />
+                          </button>
+                        </div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-semibold text-sm">Status:</span>
                           <Badge
                             color={
-                              reply.status.toLowerCase() === "Closed" ? "error" :
-                                reply.status.toLowerCase() === "Open" ? "info" :
-                                  reply.status.toLowerCase() === "Fixed" ? "success" :
-                                    reply.status.toLowerCase() === "Pending" ? "warning" :
-                                      "light"
+                              reply.status.toLowerCase() === "closed"
+                                ? "error"
+                                : reply.status.toLowerCase() === "open"
+                                  ? "info"
+                                  : reply.status.toLowerCase() === "fixed"
+                                    ? "success"
+                                    : reply.status.toLowerCase() === "pending"
+                                      ? "warning"
+                                      : "light"
                             }
                           >
                             {reply.status}
                           </Badge>
                         </div>
+                        {/* Attachment from reply.filename */}
+                        {reply.filename && (
+                          <div className="flex items-center gap-2 text-sm mb-1">
+                            <span className="font-semibold text-sm">Attachment:</span>
+
+                            <a
+                              href={reply.filename}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center hover:underline text-blue-500"
+                            >
+                              <Download className="w-4 h-4 mr-1" />
+                              Download
+                            </a>
+                          </div>
+                        )}
+
+
                         <div className="text-sm text-gray-700">
-                          <span className="font-semibold">Date:</span> {reply.repliedBy}  {new Date(reply.createdAt).toLocaleString()}
+                          <span className="font-semibold">Date:</span> {reply.repliedBy} —{" "}
+                          {new Date(reply.createdAt).toLocaleString()}
                         </div>
                       </div>
                     ))
@@ -416,18 +508,42 @@ useEffect(() => {
                 </div>
               </div>
 
-
-              <label className="block text-sm font-medium text-gray-700">Messages</label>
-
+              {/* Message Box */}
+              <label className="block text-sm font-medium text-gray-700 mt-4">Message</label>
               <textarea
                 className="w-full p-2 border rounded-md resize-none"
-                placeholder="text"
+                placeholder="Write your message..."
                 rows={2}
                 value={replyMessage}
                 onChange={(e) => setReplyMessage(e.target.value)}
               />
-              <label className="block text-sm font-medium text-gray-700">Status</label>
 
+              {/* Attachment Upload */}
+              <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
+                Attachment (Image or PDF)
+              </label>
+              <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 hover:border-blue-400 transition">
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <div className="flex flex-col items-center justify-center space-y-2">
+                  <UploadCloud className="w-4 h-4 text-blue-500" />
+                  <span className="text-sm text-gray-600">
+                    Click or drag to upload file
+                  </span>
+                  {attachmentFile && (
+                    <p className="text-xs text-green-600 font-medium">
+                      Selected: {attachmentFile.name}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Status Dropdown */}
+              <label className="block text-sm font-medium text-gray-700 mt-4">Status</label>
               <select
                 className="w-full p-2 border rounded"
                 value={replyStatus}
@@ -438,25 +554,29 @@ useEffect(() => {
                 <option value="Fixed">Fixed</option>
                 <option value="Closed">Closed</option>
               </select>
-              <div className="mt-4 flex justify-end gap-3">
-                <button className="px-4 py-2 bg-red-500 text-white rounded-md" onClick={() => setIsReplyModalOpen(false)}>
+
+              {/* Buttons */}
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  className="px-4 py-2 bg-red-500 text-white rounded-md"
+                  onClick={() => setIsReplyModalOpen(false)}
+                >
                   Cancel
                 </button>
                 <button
                   className="px-4 py-2 bg-blue-500 text-white rounded-md flex items-center justify-center"
                   onClick={handleReplySubmit}
-                  disabled={loading} // Disables button when loading
+                  disabled={loading}
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="animate-spin text-blue-300 mr-2" size={16} /> Submitting...
+                      <Loader2 className="animate-spin text-blue-300 mr-2" size={16} />
+                      Submitting...
                     </>
                   ) : (
                     "Submit"
                   )}
                 </button>
-
-
               </div>
             </DialogContent>
           </Dialog>

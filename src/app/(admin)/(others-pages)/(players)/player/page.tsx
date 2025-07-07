@@ -4,25 +4,7 @@ import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import PlayerTable from "@/components/tables/PlayerTable";
 import { Player } from "@/app/types/types";
-// interface Player {
-//   id: string;
-//   first_name: string;
-//   last_name: string;
-//   image: string;
-//   position: string;
-//   height: string;
-//   jersey: string;
-//   weight: string;
-//   history?: string;
-//   graduation: string;
-//   sport: string;
-//   status: string;
-//   earnings: number;
-//   age_group: string;
-//   grade_level: string;
-//   is_deleted: number;
-// }
-
+import Loading from "@/components/Loading";
 const PlayersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [players, setplayers] = useState<Player[]>([]);
@@ -45,7 +27,7 @@ const PlayersPage = () => {
         const data = await response.json();
                 console.log('responsedaa',data)
 
-        setplayers(data.coaches);
+        setplayers(data.player);
         setTotalPages(data.totalPages);
       } catch (err) {
         setError((err as Error).message);
@@ -56,6 +38,9 @@ const PlayersPage = () => {
 
     fetchplayers();
   }, [searchQuery, currentPage]);
+ if (loading) {
+        return <Loading />;
+    }
 
   return (
     <div>

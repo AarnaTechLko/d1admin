@@ -68,8 +68,8 @@ export const users = pgTable(
     isCompletedProfile: boolean("isCompletedProfile").default(false),
     suspend: integer("suspend").default(1).notNull(),
     suspend_days: integer("suspend_days"),
-      suspend_start_date: date("suspend_start_date"),
-suspend_end_date: date("suspend_end_date"),
+    suspend_start_date: date("suspend_start_date"),
+    suspend_end_date: date("suspend_end_date"),
 
   },
   (users) => {
@@ -130,7 +130,7 @@ export const coaches = pgTable(
     suspend: integer("suspend").default(1).notNull(),
     suspend_days: integer("suspend_days"),
     suspend_start_date: date("suspend_start_date"),
-suspend_end_date: date("suspend_end_date"),
+    suspend_end_date: date("suspend_end_date"),
 
   },
   (coaches) => {
@@ -322,8 +322,8 @@ export const enterprises = pgTable('enterprises', {
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   suspend: integer("suspend").default(1).notNull(),
   suspend_days: integer("suspend_days"),
-    suspend_start_date: date("suspend_start_date"),
-suspend_end_date: date("suspend_end_date"),
+  suspend_start_date: date("suspend_start_date"),
+  suspend_end_date: date("suspend_end_date"),
 
 });
 
@@ -415,10 +415,10 @@ export const teams = pgTable('teams', {
   parent_id: integer("parent_id"),
   is_deleted: integer("is_deleted").default(1).notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
-   suspend: integer("suspend").default(1).notNull(),
+  suspend: integer("suspend").default(1).notNull(),
   suspend_days: integer("suspend_days"),
-    suspend_start_date: date("suspend_start_date"),
-suspend_end_date: date("suspend_end_date"),
+  suspend_start_date: date("suspend_start_date"),
+  suspend_end_date: date("suspend_end_date"),
 });
 
 export const teamPlayers = pgTable("teamPlayers", {
@@ -611,7 +611,7 @@ export const admins = pgTable("admin", {
   }).notNull(),
   password_hash: text("password_hash").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
-    is_deleted: integer("is_deleted").default(1).notNull(),
+  is_deleted: integer("is_deleted").default(1).notNull(),
 });
 
 
@@ -636,6 +636,8 @@ export const ticket_messages = pgTable("ticket_messages", {
   message: text("message").notNull(),
   status: varchar("status").default("Pending"),
   createdAt: timestamp("created_at").defaultNow(),
+  filename: text('filename').notNull(),
+
 });
 
 
@@ -718,12 +720,31 @@ export const admin_message = pgTable("admin_message", {
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
-    
+
 export const suspendlog = pgTable('suspendlog', {
   id: serial('id').primaryKey(),
   user_id: integer('user_id').notNull(),
-  type: varchar('type', { length: 20 }), 
+  type: varchar('type', { length: 20 }),
   suspend_start_date: date('suspend_start_date'),
   suspend_end_date: date('suspend_end_date'),
   created_at: timestamp('created_at').defaultNow(),
+});
+
+export const ip_logs = pgTable("ip_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  ip_address: varchar("ip_address", { length: 45 }).notNull(), // IPv4 + IPv6 support
+  type: varchar("type", { length: 20 }),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  login_time: timestamp("login_time"),
+  logout_time: timestamp("logout_time"),
+});
+
+export const block_ips = pgTable("block_ips", {
+  id: serial("id").primaryKey(),
+  block_ip_address: varchar("block_ip_address", { length: 45 }).notNull(),
+  user_count: integer("user_count").notNull(),
+  status: varchar("status", { length: 10 }).default("block"),
+  is_deleted: integer("is_deleted").default(1), // 1 = not deleted, 0 = deleted
+
 });

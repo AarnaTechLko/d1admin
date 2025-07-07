@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import Button from "@/components/ui/button/Button";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import Loading from "@/components/Loading";
 interface Team {
   id: string;
   team_name: string;
@@ -207,6 +208,9 @@ const TeamsPage = () => {
     }
   }
 
+ if (loading) {
+        return <Loading />;
+    }
 
 
   return (
