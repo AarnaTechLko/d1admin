@@ -80,6 +80,7 @@ const [blockedList, setBlockedList] = useState<BlockedIP[]>([]);
         try {
             const res = await fetch(`/api/block-ip${searchValue ? `?search=${searchValue}` : ''}`);
             const data = await res.json();
+        console.log("Fetched IPs:", data); // ADD THIS
 
             if (Array.isArray(data)) {
                 setBlockedList(data);
