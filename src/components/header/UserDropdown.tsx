@@ -86,8 +86,7 @@ export default function UserDropdown() {
             >
               Change Password
             </a>
-          </li>
-         
+          </li>                
         </ul>
 
         <button

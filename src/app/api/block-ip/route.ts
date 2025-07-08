@@ -1,12 +1,12 @@
 import { db } from "@/lib/db";
 import { ip_logs, block_ips } from "@/lib/schema";
-import { count, eq ,and} from "drizzle-orm";
+import { count, eq ,ilike} from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
     const { ipToBlock } = await req.json();
-
+ 
     // ✅ Check if IP is already blocked
     const existing = await db
       .select()
@@ -53,23 +53,43 @@ export async function POST(req: Request) {
 }
 
 
+// export async function GET(req: NextRequest) {
+//   try {
+//     const search = req.nextUrl.searchParams.get("search");
+
+//     // Optional search filter
+//     const whereClause = search
+//       ? and(eq(block_ips.status, "block"), eq(block_ips.block_ip_address, search))
+//       : eq(block_ips.status, "block");
+
+//     const results = await db
+//       .select()
+//       .from(block_ips)
+//       .where(whereClause);
+
+//     return NextResponse.json(results);
+//   } catch (error) {
+//     console.error("Fetch blocked IPs error:", error);
+//     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+//   }
+// }
 export async function GET(req: NextRequest) {
-  try {
-    const search = req.nextUrl.searchParams.get("search");
+    try {
+        const { searchParams } = new URL(req.url);
+        const search = searchParams.get('search');
 
-    // Optional search filter
-    const whereClause = search
-      ? and(eq(block_ips.status, "block"), eq(block_ips.block_ip_address, search))
-      : eq(block_ips.status, "block");
+        const data = await db
+            .select()
+            .from(block_ips)
+            .where(
+                search
+                    ? ilike(block_ips.block_ip_address, `%${search}%`)
+                    : undefined
+            );
 
-    const results = await db
-      .select()
-      .from(block_ips)
-      .where(whereClause);
-
-    return NextResponse.json(results);
-  } catch (error) {
-    console.error("Fetch blocked IPs error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
+        return NextResponse.json(data);
+    } catch (err) {
+        console.error('Error fetching blocked IPs:', err);
+        return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 });
+    }
 }
