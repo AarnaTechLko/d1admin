@@ -259,7 +259,7 @@ function EvaluationPage() {
 
     const chartData = radarSkills
         .filter((skill) => {
-            if (position === "Goalkeeper") {
+            if (evaluationData?.position.toString() === "Goalkeeper") {
                 return true; // Include all skills for Goalkeeper
             }
             // Exclude Distribution and Organization for non-Goalkeepers
@@ -308,7 +308,7 @@ function EvaluationPage() {
             total += calculateAverage(tacticalScores);
             count += 1;
         }
-        if (position === "Goalkeeper") {
+        if (evaluationData?.position.toString()=== "Goalkeeper") {
             if (distributionScores) {
                 total += calculateAverage(distributionScores);
                 count += 1;
@@ -744,7 +744,7 @@ function EvaluationPage() {
                         {radarSkills.map((skill, i) => (
                             <div key={i} className="flex items-center justify-center gap-2">
                                 {/* Conditionally render skills based on position */}
-                                {(position === "Goalkeeper" || (position !== "Goalkeeper" && skill.key !== "distributionAverage" && skill.key !== "organizationAverage")) && (
+                                {(evaluationData?.position?.toString()  === "Goalkeeper" || (evaluationData?.position?.toString()  !== "Goalkeeper" && skill.key !== "distributionAverage" && skill.key !== "organizationAverage")) && (
                                     <div>
 
                                     </div>
@@ -787,9 +787,9 @@ function EvaluationPage() {
                                 {[
                                     { title: 'Technical', value: calculateAverage(technicalScores) },
                                     { title: 'Tactical', value: calculateAverage(tacticalScores) },
-                                    position === 'Goalkeeper' && { title: 'Distribution', value: calculateAverage(distributionScores) },
+                                    evaluationData?.position?.toString()  === 'Goalkeeper' && { title: 'Distribution', value: calculateAverage(distributionScores) },
                                     { title: 'Physical', value: calculateAverage(physicalScores) },
-                                    position === 'Goalkeeper' && { title: 'Organization', value: calculateAverage(organizationScores) },
+                                    evaluationData?.position?.toString() === 'Goalkeeper' && { title: 'Organization', value: calculateAverage(organizationScores) },
                                 ]
                                     .filter((metric): metric is { title: string; value: number } => metric !== false)
                                     .map((metric, index) => (
