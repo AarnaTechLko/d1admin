@@ -67,7 +67,8 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
   const [suspendDays, setSuspendDays] = useState<number | null>(null);
   const [suspendOpen, setSuspendOpen] = useState(false);
   const MySwal = withReactContent(Swal);
-
+  const [ipOpen, setIpOpen] = useState<number | null>(null);
+  const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
   // Read role safely
   const userRole = sessionStorage.getItem("role");;
   console.log("User role from session:", userRole);
@@ -84,7 +85,22 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
     setNewPassword("");
     setPasswordModalOpen(false);
   };
+  const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'enterprises') => {
+    try {
+      const res = await fetch(`/api/ip_logstab?userId=${userId}&type=${type}`);
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status}`);
+      }
 
+      const result = await res.json();
+      console.log("IP Log Response:", result);
+
+      setIpData(result.data || []); // Set the IP data for dialog
+      setIpOpen(userId);            // Open dialog for that user
+    } catch (error) {
+      console.error("Failed to fetch IP logs:", error);
+    }
+  };
 
   const handleChangePassword = async () => {
     if (!newPassword) {
@@ -519,6 +535,66 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                                 ♻️
                               </button>
                             )}
+                            {/* 👁️ View IP Info button */}
+                            <Dialog open={ipOpen === Number(organization.id)} onOpenChange={() => setIpOpen(null)}>
+                              <DialogTrigger asChild>
+                                <button
+                                  onClick={() => handleFetchIpInfo(Number(organization.id), 'enterprises')}
+                                  className="text-blue-600 text-sm hover:underline"
+                                  title="View IP Logs"
+                                >
+                                  👁️
+                                </button>
+
+                              </DialogTrigger>
+
+                              <DialogContent className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-6 space-y-4">
+                                <DialogHeader className="border-b pb-2">
+                                  <DialogTitle className="text-lg font-semibold text-gray-800">
+                                    IP Login Logs
+                                  </DialogTitle>
+                                  <p className="text-sm text-gray-500">
+                                    Recent IPs and login times for <span className="font-medium text-black">{organization.organizationName} </span>
+                                  </p>
+                                </DialogHeader>
+
+                                {ipData && ipData.length > 0 ? (
+                                  <>
+                                    <div className="flex justify-between text-sm font-medium text-gray-700 border-b pb-1">
+                                      <span>IP Address</span>
+                                      <span>Login Time</span>
+                                    </div>
+                                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                                      {ipData.map((item, idx) => {
+                                        const formattedTime = item.loginTime
+                                          ? new Date(item.loginTime).toLocaleString("en-IN", {
+                                            dateStyle: "medium",
+                                            timeStyle: "short",
+                                          })
+                                          : "N/A";
+
+                                        return (
+                                          <div
+                                            key={idx}
+                                            className="flex justify-between border-b border-gray-100 py-1 text-sm text-gray-800"
+                                          >
+                                            <span className="truncate max-w-[40%]">{item.ip}</span>
+                                            <span className="text-right text-gray-600">{formattedTime}</span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+
+                                    <div className="pt-3 text-sm text-gray-500 text-right">
+                                      Total logins: <span className="font-semibold text-black">{ipData.length}</span>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <p className="text-center text-sm text-gray-500">No IP logs found.</p>
+                                )}
+                              </DialogContent>
+                            </Dialog>
+
                           </div>
 
                         </TableCell>

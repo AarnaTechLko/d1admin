@@ -59,6 +59,8 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
   const [showConfirmation, setShowConfirmation] = useState(false); // State for confirmation modal visibility
   const [confirmationCallback, setConfirmationCallback] = useState<() => void>(() => () => { }); // Callback for confirmation
   const itemsPerPage = 10;
+  const [ipOpen, setIpOpen] = useState<number | null>(null);
+  const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const [Player, setPlayer] = useState<{ players: Player[] } | null>(null);
@@ -92,6 +94,22 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
     setNewPlayerPassword("");
     setPlayerPasswordModalOpen(false);
   };
+const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'enterprise') => {
+  try {
+    const res = await fetch(`/api/ip_logstab?userId=${userId}&type=${type}`);
+    if (!res.ok) {
+      throw new Error(`API error: ${res.status}`);
+    }
+
+    const result = await res.json();
+    console.log("IP Log Response:", result);
+
+    setIpData(result.data || []); // Set the IP data for dialog
+    setIpOpen(userId);            // Open dialog for that user
+  } catch (error) {
+    console.error("Failed to fetch IP logs:", error);
+  }
+};
   const handleChangePlayerPassword = async () => {
     if (!newPlayerPassword || newPlayerPassword.length < 6) {
       Swal.fire({
@@ -518,6 +536,65 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                 ♻️
                               </button>
                             )}
+                                 {/* 👁️ View IP Info button */}
+                          <Dialog open={ipOpen === Number(player.id)} onOpenChange={() => setIpOpen(null)}>
+                            <DialogTrigger asChild>
+                             <button
+                            onClick={() => handleFetchIpInfo(Number(player.id), 'player')}
+                            className="text-blue-600 text-sm hover:underline"
+                            title="View IP Logs"
+                          >
+                            👁️
+                          </button>
+                          
+                            </DialogTrigger>
+                          
+                            <DialogContent className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-6 space-y-4">
+                              <DialogHeader className="border-b pb-2">
+                                <DialogTitle className="text-lg font-semibold text-gray-800">
+                                  IP Login Logs
+                                </DialogTitle>
+                                <p className="text-sm text-gray-500">
+                                  Recent IPs and login times for <span className="font-medium text-black">{player.first_name} {player.last_name}</span>
+                                </p>
+                              </DialogHeader>
+                          
+                              {ipData && ipData.length > 0 ? (
+                                <>
+                                  <div className="flex justify-between text-sm font-medium text-gray-700 border-b pb-1">
+                                    <span>IP Address</span>
+                                    <span>Login Time</span>
+                                  </div>
+                                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                                    {ipData.map((item, idx) => {
+                                      const formattedTime = item.loginTime
+                                        ? new Date(item.loginTime).toLocaleString("en-IN", {
+                                            dateStyle: "medium",
+                                            timeStyle: "short",
+                                          })
+                                        : "N/A";
+                          
+                                      return (
+                                        <div
+                                          key={idx}
+                                          className="flex justify-between border-b border-gray-100 py-1 text-sm text-gray-800"
+                                        >
+                                          <span className="truncate max-w-[40%]">{item.ip}</span>
+                                          <span className="text-right text-gray-600">{formattedTime}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                          
+                                  <div className="pt-3 text-sm text-gray-500 text-right">
+                                    Total logins: <span className="font-semibold text-black">{ipData.length}</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <p className="text-center text-sm text-gray-500">No IP logs found.</p>
+                              )}
+                            </DialogContent>
+                          </Dialog>
 
                           </div>
                         </TableCell>

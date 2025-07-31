@@ -61,6 +61,7 @@ interface Payment {
 
 }
 interface Coach {
+  latestLoginIp: string;
   id: string;
   first_name: string;
   last_name: string;
@@ -455,7 +456,12 @@ if (loading) {
           .reduce((sum, p) => sum + Number(p.amount), 0)
           .toFixed(2)}</span></div>
         <div><strong className="text-gray-700">Qualifications:</strong> {coach.qualifications}</div>
-
+ {coach?.latestLoginIp && (
+                        <div className="mb-2">
+                            <strong className="text-gray-700">Latest Login IP:</strong>{" "}
+                            <span className="text-black">{coach.latestLoginIp}</span>
+                        </div>
+                    )}
 
       </div>
       <div>  <h2 className="text-lg font-semibold mt-5  bg-customBlue text-black p-4 rounded-lg">
@@ -565,7 +571,7 @@ if (loading) {
                         {ev.is_deleted === 0 ? (
                           <button
                             onClick={() => handleRevert(ev.evaluationId)}
-                            title="Revert Coach"
+                            title="Revert Evaluation"
 
                             style={{
                               fontSize: '1.2rem',
@@ -577,7 +583,7 @@ if (loading) {
                         ) : (
                           <button
                             onClick={() => handleHide(ev.evaluationId)}
-                            title="Hide Coach"
+                            title="Hide Evaluation"
                             style={{
                               fontSize: '1.2rem',
                             }}
@@ -671,7 +677,7 @@ if (loading) {
                           {p.is_deleted === 0 ? (
                             <button
                               onClick={() => handleRevertPayment(p.evaluation_id)}
-                              title="Revert Coach"
+                              title="Revert Payment"
 
                               style={{
                                 fontSize: '1.2rem',
@@ -683,7 +689,7 @@ if (loading) {
                           ) : (
                             <button
                               onClick={() => handleHidePayment(p.evaluation_id)}
-                              title="Hide Coach"
+                              title="Hide Payment"
                               style={{
                                 fontSize: '1.2rem',
                               }}

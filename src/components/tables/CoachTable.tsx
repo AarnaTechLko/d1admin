@@ -27,7 +27,8 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
   const [suspendCoach, setSuspendCoach] = useState<Coach | null>(null);
   const [suspendDays, setSuspendDays] = useState<number | null>(null);
   const [suspendOpen, setSuspendOpen] = useState(false);
-
+const [ipOpen, setIpOpen] = useState<number | null>(null);
+const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
   const itemsPerPage = 10;
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -47,6 +48,22 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
     setCoachPasswordModalOpen(false);
   };
 
+const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'enterprise') => {
+  try {
+    const res = await fetch(`/api/ip_logstab?userId=${userId}&type=${type}`);
+    if (!res.ok) {
+      throw new Error(`API error: ${res.status}`);
+    }
+
+    const result = await res.json();
+    console.log("IP Log Response:", result);
+
+    setIpData(result.data || []); // Set the IP data for dialog
+    setIpOpen(userId);            // Open dialog for that user
+  } catch (error) {
+    console.error("Failed to fetch IP logs:", error);
+  }
+};
 
   const handleChangeCoachPassword = async () => {
     if (!newCoachPassword || newCoachPassword.length < 6) {
@@ -270,6 +287,67 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
                       ) : (
                         <button onClick={() => handleHideCoach(coach.id)} className="text-green-600 text-sm">♻️</button>
                       )}
+                      {/* 👁️ View IP Info button */}
+<Dialog open={ipOpen === Number(coach.id)} onOpenChange={() => setIpOpen(null)}>
+  <DialogTrigger asChild>
+   <button
+  onClick={() => handleFetchIpInfo(Number(coach.id), 'coach')}
+  className="text-blue-600 text-sm hover:underline"
+  title="View IP Logs"
+>
+  👁️
+</button>
+
+  </DialogTrigger>
+
+  <DialogContent className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-6 space-y-4">
+    <DialogHeader className="border-b pb-2">
+      <DialogTitle className="text-lg font-semibold text-gray-800">
+        IP Login Logs
+      </DialogTitle>
+      <p className="text-sm text-gray-500">
+        Recent IPs and login times for <span className="font-medium text-black">{coach.firstName} {coach.lastName}</span>
+      </p>
+    </DialogHeader>
+
+    {ipData && ipData.length > 0 ? (
+      <>
+        <div className="flex justify-between text-sm font-medium text-gray-700 border-b pb-1">
+          <span>IP Address</span>
+          <span>Login Time</span>
+        </div>
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {ipData.map((item, idx) => {
+            const formattedTime = item.loginTime
+              ? new Date(item.loginTime).toLocaleString("en-IN", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })
+              : "N/A";
+
+            return (
+              <div
+                key={idx}
+                className="flex justify-between border-b border-gray-100 py-1 text-sm text-gray-800"
+              >
+                <span className="truncate max-w-[40%]">{item.ip}</span>
+                <span className="text-right text-gray-600">{formattedTime}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="pt-3 text-sm text-gray-500 text-right">
+          Total logins: <span className="font-semibold text-black">{ipData.length}</span>
+        </div>
+      </>
+    ) : (
+      <p className="text-center text-sm text-gray-500">No IP logs found.</p>
+    )}
+  </DialogContent>
+</Dialog>
+
+
                     </div>
                   </TableCell>
                   {userRole === "Customer Support" && (
