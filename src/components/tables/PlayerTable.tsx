@@ -338,10 +338,10 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
               <p className="p-6 text-gray-600">No Player found.</p>
             ) : (
               <>
-                <Table className="min-w-full text-xs">
+<Table className="w-full text-xs">
                   <TableHeader className="border-b text-xs  bg-gray-200 border-gray-100 dark:border-white/[0.05]">
                     <TableRow>
-                      <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Player
                       </TableCell>
                       <TableCell className=" px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
@@ -403,8 +403,8 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
                         key={`${player.id}-${player.is_deleted}`} // include is_deleted to force re-render
                         className={player.is_deleted === 0 ? "bg-red-100" : "bg-white"}
                       >
-                        <TableCell className=" py-4 sm:px-6 text-start">
-                          <div className="flex items-center gap-3">
+                        <TableCell className=" py-4 px-1 text-start">
+                          <div className="flex items-center gap-1">
                             <div className="w-10 h-10 overflow-hidden ">
                               <Image
                                 width={50}
@@ -423,21 +423,21 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.position}</TableCell>
-                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.league}</TableCell>
-                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.grade_level}</TableCell>
-                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.age_group}</TableCell>
-                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.gender}</TableCell>
-                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.height}</TableCell>
-                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{player.weight}</TableCell>
-                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <TableCell className=" py-3 text-gray-500 dark:text-gray-400">{player.position}</TableCell>
+                        <TableCell className=" py-3 text-gray-500 dark:text-gray-400">{player.league}</TableCell>
+                        <TableCell className=" py-3 text-gray-500 dark:text-gray-400">{player.grade_level}</TableCell>
+                        <TableCell className=" py-3 text-gray-500 dark:text-gray-400">{player.age_group}</TableCell>
+                        <TableCell className="py-3 text-gray-500 dark:text-gray-400">{player.gender}</TableCell>
+                        <TableCell className="py-3 text-gray-500 dark:text-gray-400">{player.height}</TableCell>
+                        <TableCell className=" py-3 text-gray-500 dark:text-gray-400">{player.weight}</TableCell>
+                        <TableCell className=" py-3 text-gray-500 dark:text-gray-400">
                           {[player.countryName, player.state, player.city].filter(Boolean).join(", ")}
                         </TableCell>
 
 
 
                         {/* Clickable Status Badge */}
-                        <TableCell className="px-4 py-3  text-gray-500 dark:text-gray-400 background-overlay">
+                        <TableCell className=" py-3  text-gray-500 dark:text-gray-400 background-overlay">
                           <Dialog open={open} onOpenChange={setOpen}>
                             <DialogTrigger asChild>
                               <button
@@ -522,7 +522,7 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
                                 onClick={async () => {
                                   await handleRevertPlayer(player.id);
                                 }}
-                                className=" text-white px-4 py-1 rounded"
+                                className=" text-white  px-2 py-1 rounded"
                               >
                                 🛑
                               </button>
@@ -531,7 +531,7 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
                                 onClick={async () => {
                                   await handleHidePlayer(player.id);
                                 }}
-                                className=" text-white px-4 py-1 rounded"
+                                className=" text-white px-2 py-1 rounded"
                               >
                                 ♻️
                               </button>
