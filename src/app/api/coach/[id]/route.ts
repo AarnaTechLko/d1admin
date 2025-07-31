@@ -11,8 +11,9 @@ import {
   evaluationResults,
   users,
   countries,
+  ip_logs,
 } from '@/lib/schema';
-import { eq, and,sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 
 export async function GET(
   req: NextRequest,
@@ -113,49 +114,61 @@ export async function GET(
         playerFirstName: users.first_name,
         playerLastName: users.last_name,
         playerSlug: users.slug,
-       firstName: coaches.firstName,
-        is_deleted:playerEvaluation.is_deleted,
+        firstName: coaches.firstName,
+        is_deleted: playerEvaluation.is_deleted,
       })
       .from(playerEvaluation)
       .leftJoin(users, eq(users.id, playerEvaluation.player_id))
       .leftJoin(coaches, eq(coaches.id, playerEvaluation.coach_id))
-.where(
-  and(
-    eq(playerEvaluation.coach_id, coachId),
-    //eq(playerEvaluation.is_deleted, 1) // show only non-hidden evaluations
-  )
-)
-console.log('coaches data:',evaluations );
+      .where(
+        and(
+          eq(playerEvaluation.coach_id, coachId),
+          //eq(playerEvaluation.is_deleted, 1) // show only non-hidden evaluations
+        )
+      )
+    console.log('coaches data:', evaluations);
     // Fetch related data in parallel
     const [evaluationResultsList, earningsList, paymentsList] = await Promise.all([
       db.select().from(evaluationResults).where(eq(evaluationResults.coachId, coachId)),
       db.select().from(coachearnings).where(eq(coachearnings.coach_id, coachId)),
       // db.select().from(payments).where(eq(payments.coach_id, coachId)),
       db
-  .select({
-    id: payments.id,
-    amount: payments.amount,
-    status: payments.status,
-    created_at: payments.created_at,
-    evaluation_id:payments.evaluation_id,
-      player_id: payments.player_id,
-      description:payments.description,
-    playerFirstName: users.first_name,
-    playerLastName: users.last_name,
-    review_title:playerEvaluation.review_title,
-    is_deleted:payments.is_deleted,
-  })
-  .from(payments)
-  .leftJoin(users, eq(users.id, payments.player_id))
-  .leftJoin(playerEvaluation, eq(playerEvaluation.id,payments.evaluation_id))
-  .where(
-  and(
-    eq(payments.coach_id, coachId),
-    //eq(playerEvaluation.is_deleted, 1) // filter out payments tied to hidden evaluations
-  )
-)
+        .select({
+          id: payments.id,
+          amount: payments.amount,
+          status: payments.status,
+          created_at: payments.created_at,
+          evaluation_id: payments.evaluation_id,
+          player_id: payments.player_id,
+          description: payments.description,
+          playerFirstName: users.first_name,
+          playerLastName: users.last_name,
+          review_title: playerEvaluation.review_title,
+          is_deleted: payments.is_deleted,
+        })
+        .from(payments)
+        .leftJoin(users, eq(users.id, payments.player_id))
+        .leftJoin(playerEvaluation, eq(playerEvaluation.id, payments.evaluation_id))
+        .where(
+          and(
+            eq(payments.coach_id, coachId),
+            //eq(playerEvaluation.is_deleted, 1) // filter out payments tied to hidden evaluations
+          )
+        )
 
     ]);
+    const latestIpResult = await db
+      .select({
+        ip: ip_logs.ip_address,
+        created_at: ip_logs.created_at
+      })
+      .from(ip_logs)
+      .where(eq(ip_logs.userId, coachId))
+      .orderBy(sql`${ip_logs.created_at} DESC`)
+      .limit(1)
+      .execute();
+
+    const latestIp = latestIpResult[0]?.ip || null;
 
     return NextResponse.json({
       ...coachData[0],
@@ -163,6 +176,8 @@ console.log('coaches data:',evaluations );
       evaluationResults: evaluationResultsList,
       earningsDetails: earningsList,
       payments: paymentsList,
+      latestLoginIp: latestIp // ✅ Added
+
     });
   } catch (error) {
     return NextResponse.json(
@@ -193,7 +208,7 @@ export async function DELETE(
       .from(playerEvaluation)
       .where(eq(playerEvaluation.id, evaluationId))
       .then((res) => res[0]);
-      
+
 
     if (!existing) {
       return NextResponse.json({ message: 'Evaluation not found' }, { status: 404 });
@@ -206,12 +221,12 @@ export async function DELETE(
     //   .update(playerEvaluation)
     //   .set({ is_deleted: newStatus })
     //   .where(eq(playerEvaluation.id, evaluationId));
-      await db
+    await db
       .update(coachearnings)
       .set({ is_deleted: newStatus })
       .where(eq(coachearnings.evaluation_id, evaluationId)); // assuming foreign key
 
-       await db
+    await db
       .update(payments)
       .set({ is_deleted: newStatus })
       .where(eq(payments.evaluation_id, evaluationId)); // assuming foreign key
@@ -234,7 +249,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const evaluationId = parseInt(( await params).id, 10);
+  const evaluationId = parseInt((await params).id, 10);
   if (isNaN(evaluationId)) {
     return NextResponse.json({ message: 'Invalid evaluation ID' }, { status: 400 });
   }
@@ -242,10 +257,10 @@ export async function PATCH(
   try {
     await db
       .update(playerEvaluation)
-  .set({ is_deleted: 1 }) // hide the evaluation
+      .set({ is_deleted: 1 }) // hide the evaluation
       .where(eq(playerEvaluation.id, evaluationId));
 
-  await db
+    await db
       .update(payments)
       .set({ is_deleted: 1 })
       .where(eq(payments.evaluation_id, evaluationId)); // assuming foreign key

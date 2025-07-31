@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users, countries, playerEvaluation, coachearnings, payments, evaluationResults } from '@/lib/schema';
+import { users, countries, playerEvaluation, coachearnings, payments, evaluationResults,ip_logs } from '@/lib/schema';
 import { eq, sql } from 'drizzle-orm';
 
 export async function GET(
@@ -131,13 +131,26 @@ export async function GET(
       .from(evaluationResults)
       .where(eq(evaluationResults.playerId, id))
       .execute();
+ const latestIpResult = await db
+      .select({
+        ip: ip_logs.ip_address,
+        created_at: ip_logs.created_at
+      })
+      .from(ip_logs)
+      .where(eq(ip_logs.userId, id))
+      .orderBy(sql`${ip_logs.created_at} DESC`)
+      .limit(1)
+      .execute();
 
+    const latestIp = latestIpResult[0]?.ip || null;
     return NextResponse.json({
       player,
       evaluations,
       earnings,
       payments: paymentsData,
-      evaluationResults: evalResults
+      evaluationResults: evalResults,
+      latestLoginIp: latestIp // ✅ Added
+
     });
   } catch (error) {
     console.error('Error fetching player data:', error);

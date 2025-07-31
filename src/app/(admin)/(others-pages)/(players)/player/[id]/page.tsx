@@ -12,6 +12,7 @@ import withReactContent from 'sweetalert2-react-content';
 import Loading from '@/components/Loading';
 // import { useRouter } from 'next/navigation';
 interface Player {
+    latestLoginIp: string;
     id: number;
     first_name: string;
     email: string;
@@ -125,6 +126,8 @@ export default function PlayerDetailPage() {
         earnings: Earnings[];
         payments: Payment[];
         evaluationResults: EvaluationResult[];
+        latestLoginIp: string | null;
+
     } | null>(null);
     // const [isHiding, setIsHiding] = useState(false);
     // const router = useRouter();
@@ -315,6 +318,7 @@ export default function PlayerDetailPage() {
             try {
                 const res = await fetch(`/api/player/${id}`);
                 const json = await res.json();
+                console.log("playerdata", json); 
                 if (res.ok) {
                     setData(json);
                 } else {
@@ -331,9 +335,9 @@ export default function PlayerDetailPage() {
         fetchPlayerData();
     }, [id]);
 
- if (loading) {
+    if (loading) {
         return <Loading />;
-    }    if (error) return <p className="p-4 text-red-500">{error}</p>;
+    } if (error) return <p className="p-4 text-red-500">{error}</p>;
     if (!data) return <p className="p-4">Player not found.</p>;
 
     const { player } = data;
@@ -474,6 +478,13 @@ export default function PlayerDetailPage() {
                             {player.status}
                         </span>
                     </div>
+                    {data?.latestLoginIp && (
+                        <div className="mb-2">
+                            <strong className="text-gray-700">Latest Login IP:</strong>{" "}
+                            <span className="text-black">{data.latestLoginIp}</span>
+                        </div>
+                    )}
+
                     {/* <div>
                         <strong className="text-gray-500">Coach:</strong>{' '}
                         {player.coachName ? `${player.coachName} ${player.coachLastName}` : '—'}
@@ -565,7 +576,7 @@ export default function PlayerDetailPage() {
                                                 {ev.is_deleted === 0 ? (
                                                     <button
                                                         onClick={() => handleRevert(ev.evaluationId)}
-                                                        title="Revert Coach"
+                                                        title="Revert Evaluation"
 
                                                         style={{
                                                             fontSize: '1.2rem',
@@ -577,7 +588,7 @@ export default function PlayerDetailPage() {
                                                 ) : (
                                                     <button
                                                         onClick={() => handleHide(ev.evaluationId)}
-                                                        title="Hide Coach"
+                                                        title="Hide Evaluation"
                                                         style={{
                                                             fontSize: '1.2rem',
                                                         }}
@@ -663,7 +674,7 @@ export default function PlayerDetailPage() {
                                                 {p.is_deleted === 0 ? (
                                                     <button
                                                         onClick={() => handleRevertPayment(p.evaluation_id)}
-                                                        title="Revert Coach"
+                                                        title="Revert Payment"
 
                                                         style={{
                                                             fontSize: '1.2rem',
@@ -675,7 +686,7 @@ export default function PlayerDetailPage() {
                                                 ) : (
                                                     <button
                                                         onClick={() => handleHidePayment(p.evaluation_id)}
-                                                        title="Hide Coach"
+                                                        title="Hide Payment"
                                                         style={{
                                                             fontSize: '1.2rem',
                                                         }}

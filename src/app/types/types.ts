@@ -111,6 +111,7 @@ export interface Player {
 
 
 export interface Coach {
+  
   // [x: string]: number;
   id: string;
   evaluationId: number;
