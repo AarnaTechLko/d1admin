@@ -81,7 +81,7 @@ const AppSidebar: React.FC = () => {
           },
            {
             icon: <GridIcon />,
-            name: "Block IPs",
+            name: "Block List",
             path: "/blocks",
           },
           {

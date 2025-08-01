@@ -732,12 +732,23 @@ export const suspendlog = pgTable('suspendlog', {
 
 export const ip_logs = pgTable("ip_logs", {
   id: serial("id").primaryKey(),
+
   userId: integer("user_id").notNull(),
-  ip_address: varchar("ip_address", { length: 45 }).notNull(), // IPv4 + IPv6 support
-  type: varchar("type", { length: 20 }),
+  ip_address: varchar("ip_address", { length: 45 }).notNull(), // IPv4 + IPv6
+
+  type: varchar("type", { length: 20 }), // 'login', 'logout', etc.
   created_at: timestamp("created_at").defaultNow().notNull(),
   login_time: timestamp("login_time"),
   logout_time: timestamp("logout_time"),
+
+  // New fields for geolocation details
+  city: varchar("city", { length: 100 }),
+  region: varchar("region", { length: 100 }),
+  country: varchar("country", { length: 5 }), // e.g. 'IN'
+  postal: varchar("postal", { length: 20 }),
+  org: varchar("org", { length: 255 }),
+  loc: varchar("loc", { length: 50 }), // Latitude,Longitude (e.g. "26.8393,80.9231")
+  timezone: varchar("timezone", { length: 100 }),
 });
 
 export const block_ips = pgTable("block_ips", {
@@ -746,5 +757,6 @@ export const block_ips = pgTable("block_ips", {
   user_count: integer("user_count").notNull(),
   status: varchar("status", { length: 10 }).default("block"),
   is_deleted: integer("is_deleted").default(1), // 1 = not deleted, 0 = deleted
+  block_type: varchar("block_type", { length: 20 }).notNull(), // 'ip address', 'country', 'city', 'region'
 
 });

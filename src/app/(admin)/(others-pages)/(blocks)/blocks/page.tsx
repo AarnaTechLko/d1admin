@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 type BlockedIP = {
   id: number;
   block_ip_address: string;
+  block_type: string;
   user_count: number;
   status: "block" | "unblock"; // adjust if more statuses exist
   is_deleted: number;
@@ -12,9 +13,15 @@ type BlockedIP = {
 
 export default function BlockIPsPage() {
 const [blockedList, setBlockedList] = useState<BlockedIP[]>([]);
-    const [showModal, setShowModal] = useState(false);
-    const [ipInput, setIpInput] = useState('');
+   
     const [search, setSearch] = useState('');
+    const [showModal, setShowModal] = useState(false);
+const [selectedTab, setSelectedTab] = useState('IP Address');
+const [ipInput, setIpInput] = useState('');
+const [country, setCountry] = useState('');
+const [city, setCity] = useState('');
+const [region, setRegion] = useState('');
+
     const handleHide = async (id: number) => {
         const confirm = await Swal.fire({
             title: 'Are you sure?',
@@ -94,30 +101,83 @@ const [blockedList, setBlockedList] = useState<BlockedIP[]>([]);
         }
     };
 
-    const handleAddIP = async () => {
-        try {
-            const res = await fetch('/api/block-ip', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ipToBlock: ipInput }),
-            });
+    // const handleAddIP = async () => {
+    //     try {
+    //         const res = await fetch('/api/block-ip', {
+    //             method: 'POST',
+    //             headers: { 'Content-Type': 'application/json' },
+    //             body: JSON.stringify({ ipToBlock: ipInput }),
+    //         });
 
-            const result = await res.json();
+    //         const result = await res.json();
 
-            if (res.ok) {
-                Swal.fire('Success', result.message, 'success');
-                setIpInput('');
-                setShowModal(false);
-                fetchBlockedIps(search);
-            } else {
-                Swal.fire('Error', result.error || 'Failed to block IP', 'error');
-            }
-        } catch (error) {
-            Swal.fire('Error', 'Something went wrong', 'error');
-            console.error('Submit Error:', error);
-        }
-    };
+    //         if (res.ok) {
+    //             Swal.fire('Success', result.message, 'success');
+    //             setIpInput('');
+    //             setShowModal(false);
+    //             fetchBlockedIps(search);
+    //         } else {
+    //             Swal.fire('Error', result.error || 'Failed to block IP', 'error');
+    //         }
+    //     } catch (error) {
+    //         Swal.fire('Error', 'Something went wrong', 'error');
+    //         console.error('Submit Error:', error);
+    //     }
+    // };
  
+
+const handleAddIP = async () => {
+  let value = "";
+
+  // Determine value based on selected tab
+  switch (selectedTab) {
+    case "IP Address":
+      value = ipInput.trim();
+      break;
+    case "Country":
+      value = country.trim();
+      break;
+    case "City":
+      value = city.trim();
+      break;
+    case "Region":
+      value = region.trim();
+      break;
+    default:
+      Swal.fire("Error", "Invalid block type selected.", "error");
+      return;
+  }
+
+  if (!value) {
+    Swal.fire("Warning", `Please enter a value for ${selectedTab}.`, "warning");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/block-ip", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ selectedTab, value }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      Swal.fire("Success", data.message, "success");
+      setShowModal(false);
+      setIpInput("");
+      setCountry("");
+      setCity("");
+      setRegion("");
+         fetchBlockedIps();
+    } else {
+      Swal.fire("Error", data.error || "Something went wrong.", "error");
+    }
+  } catch (error) {
+    console.error("Request failed:", error);
+    Swal.fire("Error", "Failed to submit. Please try again.", "error");
+  }
+};
 
 
     const handleSearch = () => {
@@ -207,7 +267,8 @@ const [blockedList, setBlockedList] = useState<BlockedIP[]>([]);
                 <thead className="bg-gray-100 text-left">
                     <tr>
                         <th className="px-4 py-2 border-b">ID</th>
-                        <th className="px-4 py-2 border-b">Blocked IP</th>
+                        <th className="px-4 py-2 border-b">Blocked </th>
+                        <th className="px-4 py-2 border-b">Block Type </th>
                         <th className="px-4 py-2 border-b">No. of Users</th>
                         <th className="px-4 py-2 border-b">Status</th>
                         <th className="px-4 py-2 border-b">Action</th>
@@ -222,6 +283,7 @@ const [blockedList, setBlockedList] = useState<BlockedIP[]>([]);
                         >
                             <td className="px-4 py-2 border-b">{row.id}</td>
                             <td className="px-4 py-2 border-b">{row.block_ip_address}</td>
+                            <td className="px-4 py-2 border-b">{row.block_type}</td>
                             <td className="px-4 py-2 border-b">{row.user_count}</td>
                             <td className="px-4 py-2 border-b capitalize cursor-pointer hover:underline">
                                 <span
@@ -278,36 +340,99 @@ const [blockedList, setBlockedList] = useState<BlockedIP[]>([]);
 
 
             {/* Modal */}
-            {
-                showModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-                        <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-                            <h3 className="text-lg font-bold mb-4">Add Blocked IP</h3>
-                            <input
-                                type="text"
-                                value={ipInput}
-                                onChange={(e) => setIpInput(e.target.value)}
-                                className="w-full p-2 border rounded mb-4"
-                                placeholder="Enter IP address"
-                            />
-                            <div className="flex justify-end gap-2">
-                                <button
-                                    onClick={() => setShowModal(false)}
-                                    className="px-4 py-2 bg-gray-300 rounded"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleAddIP}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded"
-                                >
-                                    Submit
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
+     {showModal && (
+<div className="fixed inset-0 bg-black/20 backdrop-blur-[1px] flex justify-center items-center z-50">
+    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md transition-all">
+      <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center">
+        🚫 Add to Block List
+      </h3>
+
+      {/* Tabs */}
+      <div className="flex justify-center gap-2 mb-6">
+        {["IP Address", "Country", "City", "Region"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setSelectedTab(tab)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+              selectedTab === tab
+                ? "bg-blue-600 text-white shadow"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Dynamic Inputs */}
+      {selectedTab === "IP Address" && (
+        <input
+          type="text"
+          value={ipInput}
+          onChange={(e) => setIpInput(e.target.value)}
+          placeholder="Enter IP address"
+          className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+        />
+      )}
+
+      {selectedTab === "Country" && (
+        <select
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
+          className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+        >
+          <option value="">-- Select Country Code --</option>
+          {[
+            "IN", "US", "GB", "AU", "CA", "DE", "FR", "JP", "BR", "RU",
+            "CN", "KR", "ZA", "MX", "IT", "ES", "NL", "SG", "ID", "NG",
+          ].map((code) => (
+            <option key={code} value={code}>
+              {code}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {selectedTab === "City" && (
+        <input
+          type="text"
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          placeholder="Enter city"
+          className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+        />
+      )}
+
+      {selectedTab === "Region" && (
+        <input
+          type="text"
+          value={region}
+          onChange={(e) => setRegion(e.target.value)}
+          placeholder="Enter region"
+          className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+        />
+      )}
+
+      {/* Actions */}
+      <div className="flex justify-end gap-3 pt-2">
+        <button
+          onClick={() => setShowModal(false)}
+          className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleAddIP}
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-all"
+        >
+          Submit
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
         </div >
     );
 }
