@@ -25,15 +25,15 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await db.insert(admins).values({
+    const insertedAdmin =await db.insert(admins).values({
       username,
       email,
       password_hash: hashedPassword,
       role,
       is_deleted: 0,
-    });
-
-    return NextResponse.json({ success: "Admin added successfully" }, { status: 201 });
+    }) .returning();
+console.log("data",insertedAdmin );
+    return NextResponse.json(  { success: "Admin added successfully", user_id: insertedAdmin[0].id }, { status: 201 });
   } catch (error) {
     console.error("POST /api/subadmin error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

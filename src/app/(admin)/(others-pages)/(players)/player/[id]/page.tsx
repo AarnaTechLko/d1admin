@@ -10,6 +10,7 @@ import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter } from "lucide-reac
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import Loading from '@/components/Loading';
+import { useRoleGuard } from '@/hooks/useRoleGaurd';
 // import { useRouter } from 'next/navigation';
 interface Player {
     latestLoginIp: string;
@@ -119,6 +120,8 @@ interface Evaluation {
 }
 
 export default function PlayerDetailPage() {
+          useRoleGuard();
+    
     const { id } = useParams();
     const [data, setData] = useState<{
         player: Player;

@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import Label from '@/components/form/Label';
 import TextArea from '@/components/form/input/TextArea';
 import Button from '@/components/ui/button/Button';
+import { useRoleGuard } from "@/hooks/useRoleGaurd";
 
 interface Entity {
   id: string;
@@ -19,6 +20,8 @@ interface Entity {
 }
 
 export default function NotificationPage() {
+      useRoleGuard();
+  
   const [type, setType] = useState('');
   const [entities, setEntities] = useState<Entity[]>([]);
 

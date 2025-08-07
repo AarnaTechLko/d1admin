@@ -3,8 +3,11 @@ import React, { useEffect, useState } from "react";
 import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
 import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
 import ActivityLog from "@/components/ecommerce/ActivityLog";
+import { useRoleGuard } from "@/hooks/useRoleGaurd";
 
 export default function Ecommerce() {
+      useRoleGuard();
+  
   const [role, setRole] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false); // flag to prevent server rendering issues
 

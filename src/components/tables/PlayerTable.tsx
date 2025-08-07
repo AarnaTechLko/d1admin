@@ -82,7 +82,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
   const [isPlayerPasswordModalOpen, setPlayerPasswordModalOpen] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
   const [newPlayerPassword, setNewPlayerPassword] = useState("");
-  const userRole = sessionStorage.getItem("role");;
+  // const userRole = sessionStorage.getItem("role");;
 
   const handleOpenPlayerModal = (id: number) => {
     setSelectedPlayerId(id);
@@ -94,22 +94,22 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
     setNewPlayerPassword("");
     setPlayerPasswordModalOpen(false);
   };
-const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'enterprise') => {
-  try {
-    const res = await fetch(`/api/ip_logstab?userId=${userId}&type=${type}`);
-    if (!res.ok) {
-      throw new Error(`API error: ${res.status}`);
+  const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'enterprise') => {
+    try {
+      const res = await fetch(`/api/ip_logstab?userId=${userId}&type=${type}`);
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status}`);
+      }
+
+      const result = await res.json();
+      console.log("IP Log Response:", result);
+
+      setIpData(result.data || []); // Set the IP data for dialog
+      setIpOpen(userId);            // Open dialog for that user
+    } catch (error) {
+      console.error("Failed to fetch IP logs:", error);
     }
-
-    const result = await res.json();
-    console.log("IP Log Response:", result);
-
-    setIpData(result.data || []); // Set the IP data for dialog
-    setIpOpen(userId);            // Open dialog for that user
-  } catch (error) {
-    console.error("Failed to fetch IP logs:", error);
-  }
-};
+  };
   const handleChangePlayerPassword = async () => {
     if (!newPlayerPassword || newPlayerPassword.length < 6) {
       Swal.fire({
@@ -118,12 +118,13 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
         text: "Password must be at least 6 characters.",
       }); return;
     }
-
+const userId = sessionStorage.getItem("user_id");
+console.log("userid",userId);
     try {
       const res = await fetch(`/api/player/${selectedPlayerId}/change-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newPassword: newPlayerPassword }),
+        body: JSON.stringify({   user_id: userId, newPassword: newPlayerPassword }),
       });
 
       const data = await res.json();
@@ -338,8 +339,8 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
               <p className="p-6 text-gray-600">No Player found.</p>
             ) : (
               <>
-<Table className="w-full text-xs">
-                  <TableHeader className="border-b text-xs  bg-gray-200 border-gray-100 dark:border-white/[0.05]">
+                <Table className="w-full text-xs">
+                  <TableHeader className="border-b text-xs w-full  bg-gray-200 border-gray-100 dark:border-white/[0.05]">
                     <TableRow>
                       <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Player
@@ -383,11 +384,7 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
                       <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Actions
                       </TableCell>
-                      {userRole === "Customer Support" && (
-                        <TableCell className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400 text-start">
-                          Change Password
-                        </TableCell>
-                      )}
+
                     </TableRow>
                   </TableHeader>
 
@@ -405,10 +402,10 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
                       >
                         <TableCell className=" py-4 px-1 text-start">
                           <div className="flex items-center gap-1">
-                            <div className="w-10 h-10 overflow-hidden ">
+                            <div className=" overflow-hidden ">
                               <Image
-                                width={50}
-                                height={50}
+                                width={40}
+                                height={40}
                                 className="rounded-full"
                                 src={player.image && player.image.startsWith("http") ? player.image : d1}
                                 alt={`${player.first_name} ${player.last_name}`}
@@ -485,7 +482,7 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
 
 
                         {/** palyer history */}
-                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <TableCell className="px-2 py-3 text-gray-500 dark:text-gray-400">
 
                           <Link href={`/player/${player.id}`}>
                             <Button className="text-xs">Open</Button>
@@ -494,7 +491,7 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
 
                         <TableCell className="px-2 py-3">
                           <button
-                            className="underline text-sm"
+                            className="underline text-xs"
                             onClick={() => {
                               setSuspendPlayer(player);
                               setSuspendOpen(true);
@@ -522,7 +519,7 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
                                 onClick={async () => {
                                   await handleRevertPlayer(player.id);
                                 }}
-                                className=" text-white  px-2 py-1 rounded"
+                                className=" text-white  px-1 py-1 rounded"
                               >
                                 🛑
                               </button>
@@ -531,85 +528,97 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
                                 onClick={async () => {
                                   await handleHidePlayer(player.id);
                                 }}
-                                className=" text-white px-2 py-1 rounded"
+                                className=" text-white px-1 py-1 rounded"
                               >
                                 ♻️
                               </button>
                             )}
-                                 {/* 👁️ View IP Info button */}
-                          <Dialog open={ipOpen === Number(player.id)} onOpenChange={() => setIpOpen(null)}>
-                            <DialogTrigger asChild>
-                             <button
-                            onClick={() => handleFetchIpInfo(Number(player.id), 'player')}
-                            className="text-blue-600 text-sm hover:underline"
-                            title="View IP Logs"
-                          >
-                            👁️
-                          </button>
-                          
-                            </DialogTrigger>
-                          
-                            <DialogContent className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-6 space-y-4">
-                              <DialogHeader className="border-b pb-2">
-                                <DialogTitle className="text-lg font-semibold text-gray-800">
-                                  IP Login Logs
-                                </DialogTitle>
-                                <p className="text-sm text-gray-500">
-                                  Recent IPs and login times for <span className="font-medium text-black">{player.first_name} {player.last_name}</span>
-                                </p>
-                              </DialogHeader>
-                          
-                              {ipData && ipData.length > 0 ? (
-                                <>
-                                  <div className="flex justify-between text-sm font-medium text-gray-700 border-b pb-1">
-                                    <span>IP Address</span>
-                                    <span>Login Time</span>
-                                  </div>
-                                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                                    {ipData.map((item, idx) => {
-                                      const formattedTime = item.loginTime
-                                        ? new Date(item.loginTime).toLocaleString("en-IN", {
+                            {/* 👁️ View IP Info button */}
+                            <Dialog open={ipOpen === Number(player.id)} onOpenChange={() => setIpOpen(null)}>
+                              <DialogTrigger asChild>
+                                <button
+                                  onClick={() => handleFetchIpInfo(Number(player.id), 'player')}
+                                  className="text-blue-600 text-xs hover:underline"
+                                  title="View IP Logs"
+                                >
+                                  👁️
+                                </button>
+
+                              </DialogTrigger>
+
+                              <DialogContent className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-6 space-y-4">
+                                <DialogHeader className="border-b pb-2">
+                                  <DialogTitle className="text-lg font-semibold text-gray-800">
+                                    IP Login Logs
+                                  </DialogTitle>
+                                  <p className="text-sm text-gray-500">
+                                    Recent IPs and login times for <span className="font-medium text-black">{player.first_name} {player.last_name}</span>
+                                  </p>
+                                </DialogHeader>
+
+                                {ipData && ipData.length > 0 ? (
+                                  <>
+                                    <div className="flex justify-between text-sm font-medium text-gray-700 border-b pb-1">
+                                      <span>IP Address</span>
+                                      <span>Login Time</span>
+                                    </div>
+                                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                                      {ipData.map((item, idx) => {
+                                        const formattedTime = item.loginTime
+                                          ? new Date(item.loginTime).toLocaleString("en-IN", {
                                             dateStyle: "medium",
                                             timeStyle: "short",
                                           })
-                                        : "N/A";
-                          
-                                      return (
-                                        <div
-                                          key={idx}
-                                          className="flex justify-between border-b border-gray-100 py-1 text-sm text-gray-800"
-                                        >
-                                          <span className="truncate max-w-[40%]">{item.ip}</span>
-                                          <span className="text-right text-gray-600">{formattedTime}</span>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                          
-                                  <div className="pt-3 text-sm text-gray-500 text-right">
-                                    Total logins: <span className="font-semibold text-black">{ipData.length}</span>
-                                  </div>
-                                </>
-                              ) : (
-                                <p className="text-center text-sm text-gray-500">No IP logs found.</p>
-                              )}
-                            </DialogContent>
-                          </Dialog>
+                                          : "N/A";
 
+                                        return (
+                                          <div
+                                            key={idx}
+                                            className="flex justify-between border-b border-gray-100 py-1 text-sm text-gray-800"
+                                          >
+                                            <span className="truncate max-w-[40%]">{item.ip}</span>
+                                            <span className="text-right text-gray-600">{formattedTime}</span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+
+                                    <div className="pt-3 text-sm text-gray-500 text-right">
+                                      Total logins: <span className="font-semibold text-black">{ipData.length}</span>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <p className="text-center text-sm text-gray-500">No IP logs found.</p>
+                                )}
+                              </DialogContent>
+                            </Dialog>
+                          
+           <button
+  onClick={() => {
+    const changePassword = sessionStorage.getItem("change_password");
+
+    console.log("changepassword",changePassword);
+    if (changePassword === "1") {
+      handleOpenPlayerModal(Number(player.id));
+    } else {
+      Swal.fire({
+        icon: "warning",
+        title: "Access Denied",
+        text: "You are not allowed to change the password.",
+      });
+    }
+  }}
+  title="Change Password"
+  className="text-blue-600 hover:text-blue-800"
+>
+  🔒
+</button>
+
+
+                         
                           </div>
                         </TableCell>
-                        {userRole === "Customer Support" && (
 
-                          <TableCell>
-                            <button
-                              onClick={() => handleOpenPlayerModal(Number(player.id))}
-                              title="Change Password"
-                              className="text-blue-600 hover:text-blue-800"
-                            >
-                              🔒
-                            </button>
-                          </TableCell>
-                        )}
                       </TableRow>
                     ))}
                   </TableBody>

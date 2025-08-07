@@ -11,6 +11,7 @@ import Swal from "sweetalert2";
 import Loading from "@/components/Loading";
 // import { useSession } from 'next-auth/react';
 import { UploadCloud } from "lucide-react";
+import { useRoleGuard } from "@/hooks/useRoleGaurd";
 
 
 interface Ticket {
@@ -45,6 +46,8 @@ interface TicketReply {
 }
 
 const TicketsPage = () => {
+      useRoleGuard();
+  
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);

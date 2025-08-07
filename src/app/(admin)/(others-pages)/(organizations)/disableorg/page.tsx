@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import OrganizationTable from "@/components/tables/OrganizationTable";
 import Loading from "@/components/Loading";
+import { useRoleGuard } from "@/hooks/useRoleGaurd";
 
 interface Organization {
   id: string;
@@ -35,6 +36,8 @@ interface Organization {
 }
 
 const OrganizationsPage = () => {
+        useRoleGuard();
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentPage, setCurrentPage] = useState(1);

@@ -175,6 +175,8 @@ export interface Ticket{
   createdAt: string;
   status: string;
   assignee_name: string;
+  ticket_from: string;
+  role: string;
 }
 export interface Team {
   id: number;
