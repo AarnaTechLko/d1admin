@@ -3,10 +3,13 @@
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import CoachTable from "@/components/tables/CoachTable";
-import Loading from '@/components/Loading';
+// import Loading from '@/components/Loading';
 
 import { Coach } from "@/app/types/types";
+import { useRoleGuard } from "@/hooks/useRoleGaurd";
 const CoachesPage = () => {
+      useRoleGuard();
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -38,9 +41,9 @@ const CoachesPage = () => {
 
     fetchCoaches();
   }, [searchQuery, currentPage]);
- if (loading) {
-        return <Loading />;
-    }
+//  if (loading) {
+//         return <Loading />;
+//     }
 
   return (
     <div>

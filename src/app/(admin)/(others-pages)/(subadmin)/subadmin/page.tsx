@@ -1,42 +1,65 @@
 "use client";
+
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-// import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
-import { Eye, EyeOff } from "lucide-react"; // Lucide React icons
-import { User, Mail, Lock } from "lucide-react";
-
-import React, { useState } from "react";
+import { Eye, EyeOff, User, Mail, Lock } from "lucide-react";
 import Loading from "@/components/Loading";
+import { useRoleGuard } from "@/hooks/useRoleGaurd";
 
-export default function SignInForm() {
-  // const router = useRouter();
+const permissionOptions = [
+  { label: "Change Password", value: "changePassword" },
+  { label: "Refund", value: "refund" },
+  { label: "Monitor Activity", value: "monitorActivity" },
+  { label: "View Finance", value: "viewFinance" },
+  { label: "Access Ticket", value: "accessTicket" },
+];
+
+export default function CreateSubAdminWithRole() {
+      useRoleGuard();
+  
+  const router = useRouter();
+
+  // Admin creation
   const [showPassword, setShowPassword] = useState(false);
-  // const [isChecked, setIsChecked] = useState(false); // "Keep me logged in"
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
     role: "Customer Support",
   });
+
+  // Permission assignment
+  // const [roleName, setRoleName] = useState("");
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const router = useRouter();
-const [loading, setLoading] = useState(false);
+  // const [userId, setUserId] = useState<string | null>(null);
 
-  // Handle input change
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleAdminChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const handleCheckboxChange = (value: string) => {
+    setSelectedPermissions((prev) =>
+      prev.includes(value)
+        ? prev.filter((p) => p !== value)
+        : [...prev, value]
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-  setLoading(true);
+    setLoading(true);
 
     try {
+      // Step 1: Create subadmin
       const res = await fetch("/api/subadmin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -45,142 +68,176 @@ const [loading, setLoading] = useState(false);
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Invalid credentials");
-      } else {
-        setSuccess("Add successful! Redirecting...");
-        setTimeout(() => {
-      router.push("/view");
-    }, 1500); // Adjust delay as needed
+        setError(data.error || "Failed to create subadmin");
+        setLoading(false);
+        return;
       }
-    } catch (err) {
-      console.error("Signin error:", err);
-      setError("Network error, please try again.");
-    }finally {
-    setLoading(false); // Stop loading either way
-  }
-  };
 
-if (loading) return <Loading />;
+      const createdUserId = data.user_id || data.id || data.data?.id; // adjust according to your backend response
+      if (!createdUserId) {
+        setError("User ID not returned from server");
+        setLoading(false);
+        return;
+      }
+localStorage.setItem("user_id", createdUserId);
+
+      // localStorage.setItem("user_id", createdUserId);
+      // setUserId(createdUserId);
+
+      // Step 2: Assign Role
+      const roleRes = await fetch(`/api/role/update-permission`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: createdUserId,
+          role_name:  formData.role,
+          permissions: selectedPermissions,
+        }),
+      });
+
+      const roleResult = await roleRes.json();
+      if (!roleRes.ok || !roleResult.success) {
+        setError(roleResult.message || "Role assignment failed");
+        setLoading(false);
+        return;
+      }
+
+      setSuccess("Subadmin and role assigned successfully!");
+
+      // Redirect after success
+      setTimeout(() => {
+        router.push("/view");
+      }, 1500);
+
+    } catch (err) {
+      console.error("Error:", err);
+      setError("Network error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+useEffect(() => {
+  if (formData.role === "Customer Support") {
+    setSelectedPermissions((prev) =>
+      prev.includes("accessTicket") ? prev : [...prev, "accessTicket"]
+    );
+  } else {
+    setSelectedPermissions((prev) =>
+      prev.filter((perm) => perm !== "accessTicket")
+    );
+  }
+}, [formData.role]);
+
+
+  if (loading) return <Loading />;
 
   return (
-    <>
+    <form onSubmit={handleSubmit}   className="space-y-6 bg-white dark:bg-gray-800 p-6 rounded-lg border
+     border-gray-300 shadow-lg dark:border-gray-700 my-8">
+      <h1 className="text-xl font-semibold text-gray-800 dark:text-white/90">
+        Add Sub Admin
+      </h1>
+
+      {/* Username & Email */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="relative">
+          <Label>User Name <span className="text-error-500">*</span></Label>
+          <User className="absolute left-3 top-1/2 transform translate-y-1 text-gray-400" />
+          <Input
+            className="pl-10"
+            placeholder="John"
+            type="text"
+            name="username"
+            value={formData.username}
+            onChange={handleAdminChange}
+            required
+          />
+        </div>
+
+        <div className="relative">
+          <Label>Email <span className="text-error-500">*</span></Label>
+          <Mail className="absolute left-3 top-1/2 transform translate-y-1 text-gray-400" />
+          <Input
+            className="pl-10"
+            placeholder="info@gmail.com"
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleAdminChange}
+            required
+          />
+        </div>
+      </div>
+
+      {/* Password & Role */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="relative">
+          <Label>Password <span className="text-error-500">*</span></Label>
+          <Lock className="absolute left-3 top-1/2 transform translate-y-1 text-gray-400" />
+          <Input
+            className="pl-10"
+            type={showPassword ? "text" : "password"}
+            name="password"
+            placeholder="Enter your password"
+            value={formData.password}
+            onChange={handleAdminChange}
+            required
+          />
+          <span
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-4 top-1/2 transform translate-y-1 cursor-pointer"
+          >
+            {showPassword ? <Eye /> : <EyeOff />}
+          </span>
+        </div>
+
+        <div>
+          <Label>Role <span className="text-error-500">*</span></Label>
+          <select
+            name="role"
+            value={formData.role}
+            onChange={handleAdminChange}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
+          >
+            <option value="Manager">Manager</option>
+            <option value="Customer Support">Customer Support</option>
+            <option value="Executive Level 1">Executive Level 1</option>
+            <option value="Executive Level 2">Executive Level 2</option>
+          </select>
+        </div>
+      </div>
+
+   
+
+      {/* Permissions */}
       <div>
-
-        <h1 className="text-xl font-semibold text-gray-800 dark:text-white/90">
-          Sub Admin
-        </h1>
-      </div>
-      <div className="flex flex-col flex-1 w-full  p-6
- bg-white dark:bg-gray-800 ">
-
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-6 w-full mx-auto">
-            {/* Username and Email - Two Columns */}
-            <div className="grid grid-cols-12 gap-6">
-              {/* Username Field */}
-              <div className="col-span-6 relative">
-                <Label>
-                  User Name <span className="text-error-500">*</span>
-                </Label>
-                <User className="absolute my-3 left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <Input
-                  className="pl-12 py-2 w-full"
-                  placeholder="John"
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              {/* Email Field */}
-              <div className="col-span-6 relative">
-                <Label>
-                  Email <span className="text-error-500">*</span>
-                </Label>
-                <Mail className="absolute my-3 left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <Input
-                  className="pl-12 py-2 w-full"
-                  placeholder="info@gmail.com"
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Password and Role - Two Columns */}
-            <div className="grid grid-cols-12 gap-6">
-              {/* Password Field */}
-              <div className="col-span-6 relative">
-                <Label>
-                  Password <span className="text-error-500">*</span>
-                </Label>
-                <Lock className="absolute my-3 left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  className="pl-12 py-2 w-full"
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-                <span
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute z-30 my-3 -translate-y-1/2 cursor-pointer right-4 top-1/2"
-                >
-                  {showPassword ? (
-                    <Eye className="fill-gray-500 dark:fill-gray-400" />
-                  ) : (
-                    <EyeOff className="fill-gray-500 dark:fill-gray-400" />
-                  )}
-                </span>
-              </div>
-
-              {/* Role Selection */}
-              <div className="col-span-6">
-                <Label>
-                  Role <span className="text-error-500">*</span>
-                </Label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-300"
-                  required
-                >
-                  <option value="Manager">Manager</option>
-                  <option value="Customer Support">Customer Support</option>
-                  <option value="Executive Level 1">Executive Level 1</option>
-                  <option value="Executive Level 2">Executive Level 2</option>
-
-                </select>
-              </div>
-            </div>
-
-
-            {/* Error & Success Messages */}
-            {error && <p className="text-error-500">{error}</p>}
-            {success && <p className="text-green-500">{success}</p>}
-
-            {/* Submit Button Centered */}
-            <div className="flex justify-center">
-              <Button className="w-1/2" size="sm" type="submit">
-                Add Admin
-              </Button>
-            </div>
-          </div>
-
-        </form>
-
-
+        <Label>Permissions</Label>
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-y-3 gap-x-4 mt-2">
+          {permissionOptions.map((perm) => (
+            <label key={perm.value} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                value={perm.value}
+                checked={selectedPermissions.includes(perm.value)}
+                onChange={() => handleCheckboxChange(perm.value)}
+              />
+              {perm.label}
+            </label>
+          ))}
+        </div>
       </div>
 
+      {/* Feedback */}
+      {error && <p className="text-error-500">{error}</p>}
+      {success && <p className="text-green-600">{success}</p>}
 
-    </>
+      {/* Submit */}
+      <div className="flex justify-center">
+        <Button type="submit" className="w-1/2 py-2">
+          Create Subadmin & Assign Role
+        </Button>
+      </div>
+    </form>
   );
 }

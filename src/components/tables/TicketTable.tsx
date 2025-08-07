@@ -24,6 +24,8 @@ interface Ticket {
   createdAt: string;
   status: string;
   assignee_name: string;
+  ticket_from:string;
+  role:string;
 }
 
 interface SubAdmin {

@@ -8,7 +8,8 @@ import Link from 'next/link';
 import Button from '@/components/ui/button/Button';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import Loading from '@/components/Loading';
+// import Loading from '@/components/Loading';
+import { useRoleGuard } from '@/hooks/useRoleGaurd';
 
 interface Organization {
   id: string;
@@ -67,6 +68,8 @@ interface Player {
 }
 
 export default function OrganizationDetailsPage() {
+        useRoleGuard();
+  
   const { id } = useParams();
   const [orgData, setOrgData] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
@@ -324,9 +327,9 @@ async function handleRevertPlayer(playerId: string) {
 }
 
 
-  if (loading) {
-        return <Loading />;
-    }
+  // if (loading) {
+  //       return <Loading />;
+  //   }
 
   if (error)
     return (
@@ -343,7 +346,14 @@ async function handleRevertPlayer(playerId: string) {
     );
 
   return (
+    
     <div className="p-8 space-y-10 max-w-7xl mx-auto">
+          {loading && (
+  <div className="flex items-center justify-center gap-4 ">
+    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+    Loading...
+  </div>
+)}
       <header className="text-center">
         <h1 className="text-4xl font-bold text-gray-800 mb-2">
           Organization History

@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     const assignedTicket = await db
       .select({
         id: ticket.id,
-        assignToUsername: admin.username, // Get the sub-admin username
+        assign_to_username: admin.username, // Get the sub-admin username
       })
       .from(ticket)
       .leftJoin(admin, eq(ticket.assign_to, admin.id)) // Join with the admin table
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       message: "Ticket successfully assigned",
       ticket: {
         id: assignedTicket[0].id,
-        assign_to: assignedTicket[0].assignToUsername,
+        assign_to: assignedTicket[0].assign_to_username,
 
         // id: assignedTicket[0].id,
         // assign_to: assignTo, // still the ID

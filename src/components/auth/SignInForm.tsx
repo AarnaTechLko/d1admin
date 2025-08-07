@@ -51,7 +51,10 @@ export default function SignInForm() {
 
       sessionStorage.setItem("session_token", data.token); // Session-based login
       sessionStorage.setItem("user_id", data.user_id);
+      sessionStorage.setItem("username", data.username);
+      sessionStorage.setItem("email", data.email);
       sessionStorage.setItem("role", data.role);
+      sessionStorage.setItem("change_password", data.change_password);
 
 
        const redirectPath = data.role === "Customer Support" ? "/ticket" : "/dashboard";

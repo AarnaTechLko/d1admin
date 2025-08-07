@@ -27,15 +27,15 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
   const [suspendCoach, setSuspendCoach] = useState<Coach | null>(null);
   const [suspendDays, setSuspendDays] = useState<number | null>(null);
   const [suspendOpen, setSuspendOpen] = useState(false);
-const [ipOpen, setIpOpen] = useState<number | null>(null);
-const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
+  const [ipOpen, setIpOpen] = useState<number | null>(null);
+  const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
   const itemsPerPage = 10;
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const [isCoachPasswordModalOpen, setCoachPasswordModalOpen] = useState(false);
   const [selectedCoachId, setSelectedCoachId] = useState<number | null>(null);
   const [newCoachPassword, setNewCoachPassword] = useState("");
-  const userRole = sessionStorage.getItem("role");;
+  // const userRole = sessionStorage.getItem("role");
 
   const handleOpenCoachModal = (coachId: number) => {
     setSelectedCoachId(coachId);
@@ -48,22 +48,22 @@ const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
     setCoachPasswordModalOpen(false);
   };
 
-const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'enterprise') => {
-  try {
-    const res = await fetch(`/api/ip_logstab?userId=${userId}&type=${type}`);
-    if (!res.ok) {
-      throw new Error(`API error: ${res.status}`);
+  const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'enterprise') => {
+    try {
+      const res = await fetch(`/api/ip_logstab?userId=${userId}&type=${type}`);
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status}`);
+      }
+
+      const result = await res.json();
+      console.log("IP Log Response:", result);
+
+      setIpData(result.data || []); // Set the IP data for dialog
+      setIpOpen(userId);            // Open dialog for that user
+    } catch (error) {
+      console.error("Failed to fetch IP logs:", error);
     }
-
-    const result = await res.json();
-    console.log("IP Log Response:", result);
-
-    setIpData(result.data || []); // Set the IP data for dialog
-    setIpOpen(userId);            // Open dialog for that user
-  } catch (error) {
-    console.error("Failed to fetch IP logs:", error);
-  }
-};
+  };
 
   const handleChangeCoachPassword = async () => {
     if (!newCoachPassword || newCoachPassword.length < 6) {
@@ -204,11 +204,7 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
                     {header}
                   </TableCell>
                 ))}
-                {userRole === "Customer Support" && (
-                  <TableCell  className="px-4 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
-                    Change Password
-                  </TableCell>
-                )}
+
               </TableRow>
             </TableHeader>
 
@@ -288,271 +284,281 @@ const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'ent
                         <button onClick={() => handleHideCoach(coach.id)} className="text-green-600 text-sm">♻️</button>
                       )}
                       {/* 👁️ View IP Info button */}
-<Dialog open={ipOpen === Number(coach.id)} onOpenChange={() => setIpOpen(null)}>
-  <DialogTrigger asChild>
-   <button
-  onClick={() => handleFetchIpInfo(Number(coach.id), 'coach')}
-  className="text-blue-600 text-sm hover:underline"
-  title="View IP Logs"
->
-  👁️
-</button>
+                      <Dialog open={ipOpen === Number(coach.id)} onOpenChange={() => setIpOpen(null)}>
+                        <DialogTrigger asChild>
+                          <button
+                            onClick={() => handleFetchIpInfo(Number(coach.id), 'coach')}
+                            className="text-blue-600 text-sm hover:underline"
+                            title="View IP Logs"
+                          >
+                            👁️
+                          </button>
 
-  </DialogTrigger>
+                        </DialogTrigger>
 
-  <DialogContent className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-6 space-y-4">
-    <DialogHeader className="border-b pb-2">
-      <DialogTitle className="text-lg font-semibold text-gray-800">
-        IP Login Logs
-      </DialogTitle>
-      <p className="text-sm text-gray-500">
-        Recent IPs and login times for <span className="font-medium text-black">{coach.firstName} {coach.lastName}</span>
-      </p>
-    </DialogHeader>
+                        <DialogContent className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-6 space-y-4">
+                          <DialogHeader className="border-b pb-2">
+                            <DialogTitle className="text-lg font-semibold text-gray-800">
+                              IP Login Logs
+                            </DialogTitle>
+                            <p className="text-sm text-gray-500">
+                              Recent IPs and login times for <span className="font-medium text-black">{coach.firstName} {coach.lastName}</span>
+                            </p>
+                          </DialogHeader>
 
-    {ipData && ipData.length > 0 ? (
-      <>
-        <div className="flex justify-between text-sm font-medium text-gray-700 border-b pb-1">
-          <span>IP Address</span>
-          <span>Login Time</span>
-        </div>
-        <div className="space-y-2 max-h-64 overflow-y-auto">
-          {ipData.map((item, idx) => {
-            const formattedTime = item.loginTime
-              ? new Date(item.loginTime).toLocaleString("en-IN", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })
-              : "N/A";
+                          {ipData && ipData.length > 0 ? (
+                            <>
+                              <div className="flex justify-between text-sm font-medium text-gray-700 border-b pb-1">
+                                <span>IP Address</span>
+                                <span>Login Time</span>
+                              </div>
+                              <div className="space-y-2 max-h-64 overflow-y-auto">
+                                {ipData.map((item, idx) => {
+                                  const formattedTime = item.loginTime
+                                    ? new Date(item.loginTime).toLocaleString("en-IN", {
+                                      dateStyle: "medium",
+                                      timeStyle: "short",
+                                    })
+                                    : "N/A";
 
-            return (
-              <div
-                key={idx}
-                className="flex justify-between border-b border-gray-100 py-1 text-sm text-gray-800"
-              >
-                <span className="truncate max-w-[40%]">{item.ip}</span>
-                <span className="text-right text-gray-600">{formattedTime}</span>
-              </div>
-            );
-          })}
-        </div>
+                                  return (
+                                    <div
+                                      key={idx}
+                                      className="flex justify-between border-b border-gray-100 py-1 text-sm text-gray-800"
+                                    >
+                                      <span className="truncate max-w-[40%]">{item.ip}</span>
+                                      <span className="text-right text-gray-600">{formattedTime}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
 
-        <div className="pt-3 text-sm text-gray-500 text-right">
-          Total logins: <span className="font-semibold text-black">{ipData.length}</span>
-        </div>
-      </>
-    ) : (
-      <p className="text-center text-sm text-gray-500">No IP logs found.</p>
-    )}
-  </DialogContent>
-</Dialog>
+                              <div className="pt-3 text-sm text-gray-500 text-right">
+                                Total logins: <span className="font-semibold text-black">{ipData.length}</span>
+                              </div>
+                            </>
+                          ) : (
+                            <p className="text-center text-sm text-gray-500">No IP logs found.</p>
+                          )}
+                        </DialogContent>
+                      </Dialog>
 
-
+                        <button
+                           onClick={() => {
+                             const changePassword = sessionStorage.getItem("change_password");
+                         
+                             console.log("changepassword",changePassword);
+                             if (changePassword === "1") {
+                               handleOpenCoachModal(Number(coach.id));
+                             } else {
+                               Swal.fire({
+                                 icon: "warning",
+                                 title: "Access Denied",
+                                 text: "You are not allowed to change the password.",
+                               });
+                             }
+                           }}
+                          title="Change Password"
+                          className="hover:text-blue-600"
+                        >
+                          🔒
+                        </button>
+                     
                     </div>
-                  </TableCell>
-                  {userRole === "Customer Support" && (
+                  
+                </TableCell>
 
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      <button
-                        onClick={() => handleOpenCoachModal(Number(coach.id))}
-                        title="Change Password"
-                        className="hover:text-blue-600 h-15 w-15"
-                      >
-                        🔒
-                      </button>
-                    </TableCell>
-                  )}
 
                 </TableRow>
               ))}
-            </TableBody>
-          </Table>
-        </div>
+          </TableBody>
+        </Table>
+      </div>
 
-        <div className="flex justify-end items-center gap-2 p-4 flex-wrap border-t border-gray-200 dark:border-white/[0.05]">
-          {[...Array(totalPages)].map((_, index) => (
-            <button key={index + 1} onClick={() => setCurrentPage(index + 1)} className={`px-3 py-1 rounded-md ${currentPage === index + 1 ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"}`}>{index + 1}</button>
-          ))}
-        </div>
+      <div className="flex justify-end items-center gap-2 p-4 flex-wrap border-t border-gray-200 dark:border-white/[0.05]">
+        {[...Array(totalPages)].map((_, index) => (
+          <button key={index + 1} onClick={() => setCurrentPage(index + 1)} className={`px-3 py-1 rounded-md ${currentPage === index + 1 ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"}`}>{index + 1}</button>
+        ))}
+      </div>
 
-        <Dialog open={isCoachPasswordModalOpen} onOpenChange={setCoachPasswordModalOpen}>
-          <DialogContent className="max-w-sm bg-white p-6 rounded-lg shadow-lg">
-            <DialogHeader>
-              <DialogTitle className="text-lg font-semibold">Change Coach Password</DialogTitle>
-            </DialogHeader>
+      <Dialog open={isCoachPasswordModalOpen} onOpenChange={setCoachPasswordModalOpen}>
+        <DialogContent className="max-w-sm bg-white p-6 rounded-lg shadow-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">Change Coach Password</DialogTitle>
+          </DialogHeader>
 
-            <div className="mt-4 space-y-4">
-              <input
-                type="password"
-                placeholder="Enter new password"
-                value={newCoachPassword}
-                onChange={(e) => setNewCoachPassword(e.target.value)}
-                className="w-full border px-4 py-2 rounded"
-              />
+          <div className="mt-4 space-y-4">
+            <input
+              type="password"
+              placeholder="Enter new password"
+              value={newCoachPassword}
+              onChange={(e) => setNewCoachPassword(e.target.value)}
+              className="w-full border px-4 py-2 rounded"
+            />
 
-              <div className="flex justify-end gap-2">
-                <button onClick={handleCloseCoachModal} className="text-gray-600 hover:text-black">Cancel</button>
-                <button onClick={handleChangeCoachPassword} className="bg-blue-600 text-white px-4 py-2 rounded">
-                  Update
-                </button>
-              </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={handleCloseCoachModal} className="text-gray-600 hover:text-black">Cancel</button>
+              <button onClick={handleChangeCoachPassword} className="bg-blue-600 text-white px-4 py-2 rounded">
+                Update
+              </button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-        <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
-          <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">
-            <DialogHeader>
-              <DialogTitle>
-                {suspendCoach?.suspend === 1 ? "Unsuspend Coach" : "Suspend Coach"}
-              </DialogTitle>
-            </DialogHeader>
+      <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
+        <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {suspendCoach?.suspend === 1 ? "Unsuspend Coach" : "Suspend Coach"}
+            </DialogTitle>
+          </DialogHeader>
 
-            {suspendCoach && (
-              <div className="space-y-4">
-                {suspendCoach.suspend === 1 ? (
-                  <>
-                    {/* Show input when coach is suspended */}
-                    <p>
-                      Suspend {suspendCoach.firstName} {suspendCoach.lastName} for how many days?
-                    </p>
+          {suspendCoach && (
+            <div className="space-y-4">
+              {suspendCoach.suspend === 1 ? (
+                <>
+                  {/* Show input when coach is suspended */}
+                  <p>
+                    Suspend {suspendCoach.firstName} {suspendCoach.lastName} for how many days?
+                  </p>
 
-                    <input
-                      type="number"
-                      min={1}
-                      placeholder="Enter number of days"
-                      value={suspendDays ?? ''}
-                      onChange={(e) => {
-                        const val = Number(e.target.value);
-                        setSuspendDays(isNaN(val) ? null : val);
-                      }}
-                      className="w-full p-2 border border-gray-300 rounded"
-                    />
+                  <input
+                    type="number"
+                    min={1}
+                    placeholder="Enter number of days"
+                    value={suspendDays ?? ''}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setSuspendDays(isNaN(val) ? null : val);
+                    }}
+                    className="w-full p-2 border border-gray-300 rounded"
+                  />
 
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setSuspendOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button
-                        className="bg-red-500 text-white"
-                        onClick={async () => {
-                          if (!suspendCoach || suspendDays === null || suspendDays <= 0) {
-                            Swal.fire({
-                              icon: 'warning',
-                              title: 'Invalid Input',
-                              text: 'Please enter a valid number greater than 0.',
-                            });
-                            return;
-                          }
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setSuspendOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      className="bg-red-500 text-white"
+                      onClick={async () => {
+                        if (!suspendCoach || suspendDays === null || suspendDays <= 0) {
+                          Swal.fire({
+                            icon: 'warning',
+                            title: 'Invalid Input',
+                            text: 'Please enter a valid number greater than 0.',
+                          });
+                          return;
+                        }
 
-                          try {
-                            const res = await fetch(`/api/coach/${suspendCoach.id}/suspend`, {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ suspend_days: suspendDays }),
-                            });
-
-                            const result = await res.json();
-                            console.log("api ", result);
-                            if (!res.ok) throw new Error('Failed to suspend coach');
-                            console.log(result);
-                            Swal.fire({
-                              icon: 'success',
-                              title: 'Coach Suspended',
-                              text: `${suspendCoach.firstName} suspended for ${suspendDays} day(s).`,
-                            });
-
-                            setSuspendOpen(false);
-                            setSuspendCoach(null);
-                            setSuspendDays(null);
-                            window.location.reload(); // Optional
-                          } catch (err) {
-                            console.error("Suspension failed", err);
-                            Swal.fire({
-                              icon: 'error',
-                              title: 'Error',
-                              text: 'Could not suspend coach. Please try again.',
-                            });
-                            setSuspendOpen(false);
-
-                          }
-                        }}
-                      >
-                        Confirm Suspension
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {/* Show only confirmation dialog when already active */}
-                    <p>
-                      Are you sure you want to unsuspend {suspendCoach.firstName} {suspendCoach.lastName}?
-                    </p>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setSuspendOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button
-                        className="bg-green-600 text-white"
-                        onClick={async () => {
-                          const confirm = await Swal.fire({
-                            icon: 'question',
-                            title: 'Confirm Unsuspend',
-                            text: `Unsuspend ${suspendCoach.firstName}?`,
-                            showCancelButton: true,
-                            confirmButtonText: 'Yes, Unsuspend',
-                            cancelButtonText: 'Cancel',
+                        try {
+                          const res = await fetch(`/api/coach/${suspendCoach.id}/suspend`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ suspend_days: suspendDays }),
                           });
 
-                          if (!confirm.isConfirmed) return;
+                          const result = await res.json();
+                          console.log("api ", result);
+                          if (!res.ok) throw new Error('Failed to suspend coach');
+                          console.log(result);
+                          Swal.fire({
+                            icon: 'success',
+                            title: 'Coach Suspended',
+                            text: `${suspendCoach.firstName} suspended for ${suspendDays} day(s).`,
+                          });
 
-                          try {
-                            const res = await fetch(`/api/coach/${suspendCoach.id}/suspend`, {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ suspend_days: 0 }), // zero triggers unsuspend
-                            });
+                          setSuspendOpen(false);
+                          setSuspendCoach(null);
+                          setSuspendDays(null);
+                          window.location.reload(); // Optional
+                        } catch (err) {
+                          console.error("Suspension failed", err);
+                          Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Could not suspend coach. Please try again.',
+                          });
+                          setSuspendOpen(false);
 
-                            const result = await res.json();
-                            if (!res.ok) throw new Error('Failed to unsuspend coach');
-                            console.log(result);
+                        }
+                      }}
+                    >
+                      Confirm Suspension
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Show only confirmation dialog when already active */}
+                  <p>
+                    Are you sure you want to unsuspend {suspendCoach.firstName} {suspendCoach.lastName}?
+                  </p>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setSuspendOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      className="bg-green-600 text-white"
+                      onClick={async () => {
+                        const confirm = await Swal.fire({
+                          icon: 'question',
+                          title: 'Confirm Unsuspend',
+                          text: `Unsuspend ${suspendCoach.firstName}?`,
+                          showCancelButton: true,
+                          confirmButtonText: 'Yes, Unsuspend',
+                          cancelButtonText: 'Cancel',
+                        });
 
-                            Swal.fire({
-                              icon: 'success',
-                              title: 'Coach Unsuspended',
-                              text: `${suspendCoach.firstName} has been unsuspended.`,
-                            });
+                        if (!confirm.isConfirmed) return;
 
-                            setSuspendOpen(false);
-                            setSuspendCoach(null);
-                            setSuspendDays(null);
-                            window.location.reload(); // Optional
-                          } catch (err) {
-                            console.error("Unsuspension failed", err);
-                            Swal.fire({
-                              icon: 'error',
-                              title: 'Error',
-                              text: 'Could not unsuspend coach. Please try again.',
-                            });
-                          }
-                        }}
-                      >
-                        Confirm Unsuspend
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+                        try {
+                          const res = await fetch(`/api/coach/${suspendCoach.id}/suspend`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ suspend_days: 0 }), // zero triggers unsuspend
+                          });
+
+                          const result = await res.json();
+                          if (!res.ok) throw new Error('Failed to unsuspend coach');
+                          console.log(result);
+
+                          Swal.fire({
+                            icon: 'success',
+                            title: 'Coach Unsuspended',
+                            text: `${suspendCoach.firstName} has been unsuspended.`,
+                          });
+
+                          setSuspendOpen(false);
+                          setSuspendCoach(null);
+                          setSuspendDays(null);
+                          window.location.reload(); // Optional
+                        } catch (err) {
+                          console.error("Unsuspension failed", err);
+                          Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Could not unsuspend coach. Please try again.',
+                          });
+                        }
+                      }}
+                    >
+                      Confirm Unsuspend
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
 
 
 
 
-      </div>
     </div>
+    </div >
   );
 };
 

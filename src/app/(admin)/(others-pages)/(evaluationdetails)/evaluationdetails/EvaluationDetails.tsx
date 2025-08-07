@@ -21,6 +21,7 @@ import Loading from '@/components/Loading';
 import defaultImage from '@/public/default.jpg'
 import { FaFileAlt } from 'react-icons/fa';
 import Swal from 'sweetalert2';
+import { useRoleGuard } from '@/hooks/useRoleGaurd';
 
 
 //  import parse from "html-react-parser"
@@ -68,6 +69,8 @@ const radarSkills =
 
 
 function EvaluationPage() {
+          useRoleGuard();
+    
     const searchParams = useSearchParams();
     const evaluationId = searchParams.get('evaluationId');
     const [headerRatings, setHeaderRatings] = useState<number[]>(Array(headerMetrics.length).fill(0));

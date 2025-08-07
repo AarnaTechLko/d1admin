@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import Button from "@/components/ui/button/Button";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import Loading from "@/components/Loading";
+import { useRoleGuard } from "@/hooks/useRoleGaurd";
 interface Team {
   id: string;
   team_name: string;
@@ -30,6 +30,8 @@ interface Team {
 }
 
 const TeamsPage = () => {
+        useRoleGuard();
+  
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [teams, setTeams] = useState<Team[]>([]);
 
@@ -208,9 +210,9 @@ const TeamsPage = () => {
     }
   }
 
- if (loading) {
-        return <Loading />;
-    }
+//  if (loading) {
+//         return <Loading />;
+//     }
 
 
   return (

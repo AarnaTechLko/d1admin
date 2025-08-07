@@ -1,4 +1,5 @@
 'use client';
+import { useRoleGuard } from '@/hooks/useRoleGaurd';
 import React, { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 
@@ -12,6 +13,8 @@ type BlockedIP = {
 };
 
 export default function BlockIPsPage() {
+        useRoleGuard();
+  
 const [blockedList, setBlockedList] = useState<BlockedIP[]>([]);
    
     const [search, setSearch] = useState('');

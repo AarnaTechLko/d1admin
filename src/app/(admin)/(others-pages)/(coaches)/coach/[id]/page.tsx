@@ -10,6 +10,7 @@ import Link from 'next/link';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import Loading from "@/components/Loading";
+import { useRoleGuard } from "@/hooks/useRoleGaurd";
 
 interface Evaluation {
   id: string;
@@ -97,6 +98,8 @@ interface Coach {
 }
 
 export default function CoachDetailsPage() {
+        useRoleGuard();
+  
   const { id } = useParams();
   const [coach, setCoach] = useState<Coach | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);

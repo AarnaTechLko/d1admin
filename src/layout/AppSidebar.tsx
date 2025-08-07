@@ -133,6 +133,7 @@ const AppSidebar: React.FC = () => {
             subItems: [
               { name: "Add", path: "/subadmin", pro: false },
               { name: "View", path: "/view", pro: false },
+              { name: "Create Ticket", path: "/createticket", pro: false },
             ],
           },
           {
@@ -171,6 +172,77 @@ const AppSidebar: React.FC = () => {
               subItems: [{ name: "View Team", path: "/team", pro: false }],
             },
           ]
+          :role === "Executive Level 1"
+      ? [
+        {
+          name: "Ticket",
+          icon: <UserCircleIcon />,
+          subItems: [{ name: "View Ticket", path: "/ticket", pro: false }],
+        },
+        {
+          name: "Coaches",
+          icon: <ListIcon />,
+          subItems: [{ name: "Active Coach", path: "/coach", pro: false },
+          { name: "Suspended Coach", path: "/suspend", pro: false },
+          { name: "Disable Coach", path: "/disablecoach", pro: false },
+          ],
+        },
+        {
+          name: "Players",
+          icon: <UserCircleIcon />,
+          subItems: [{ name: "Active Player", path: "/player", pro: false },
+          { name: "Suspended Player", path: "/suspendplayer", pro: false },
+          { name: "Disable Player", path: "/disableplayer", pro: false },
+
+          ],
+        },
+        {
+          name: "Organizations",
+          icon: <TableIcon />,
+          subItems: [
+            { name: "Active Organizations", path: "/organization", pro: false },
+            { name: "Suspended Organization", path: "/suspendorg", pro: false },
+            { name: "Disable Organization", path: "/disableorg", pro: false },
+
+          ],
+        },
+      ]
+      :role === "Executive Level 2"
+      ? [
+        {
+          name: "Ticket",
+          icon: <UserCircleIcon />,
+          subItems: [{ name: "View Ticket", path: "/ticket", pro: false }],
+        },
+        {
+          name: "Coaches",
+          icon: <ListIcon />,
+          subItems: [{ name: "Active Coach", path: "/coach", pro: false },
+          { name: "Suspended Coach", path: "/suspend", pro: false },
+          { name: "Disable Coach", path: "/disablecoach", pro: false },
+          ],
+        },
+        {
+          name: "Players",
+          icon: <UserCircleIcon />,
+          subItems: [{ name: "Active Player", path: "/player", pro: false },
+          { name: "Suspended Player", path: "/suspendplayer", pro: false },
+          { name: "Disable Player", path: "/disableplayer", pro: false },
+
+          ],
+        },
+        {     
+          name: "Organizations",
+          icon: <TableIcon />,
+          subItems: [
+            { name: "Active Organizations", path: "/organization", pro: false },
+            { name: "Suspended Organization", path: "/suspendorg", pro: false },
+            { name: "Disable Organization", path: "/disableorg", pro: false },
+
+          ],
+        },
+      ]
+          
           : [];
 
 

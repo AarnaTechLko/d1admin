@@ -350,11 +350,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                           </TableCell>
                         ))}
 
-                      {userRole === "Customer Support" && (
-                        <TableCell className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400 text-start">
-                          Change Password
-                        </TableCell>
-                      )}
+
                     </TableRow>
                   </TableHeader>
 
@@ -516,7 +512,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                         </TableCell>
 
                         {/* Actions */}
-                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <TableCell className="px-2 py-3 text-gray-500 dark:text-gray-400">
                           <div className="flex gap-3">
                             {organization.is_deleted === 0 ? (
                               <button
@@ -594,21 +590,32 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                                 )}
                               </DialogContent>
                             </Dialog>
+                        
+                              <button
+  onClick={() => {
+    const changePassword = sessionStorage.getItem("change_password");
 
+    console.log("changepassword",changePassword);
+    if (changePassword === "1") {
+      handleOpenModal(Number(organization.id));
+    } else {
+      Swal.fire({
+        icon: "warning",
+        title: "Access Denied",
+        text: "You are not allowed to change the password.",
+      });
+    }
+  }}                                title="Change Password"
+                                className="hover:text-blue-600 "
+                              >
+                                🔒
+                              </button>
+
+                         
                           </div>
 
                         </TableCell>
-                        {userRole === "Customer Support" && (
-                          <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                            <button
-                              onClick={() => handleOpenModal(Number(organization.id))}
-                              title="Change Password"
-                              className="hover:text-blue-600 h-15 w-15"
-                            >
-                              🔒
-                            </button>
-                          </TableCell>
-                        )}
+
 
                       </TableRow>
                     ))}

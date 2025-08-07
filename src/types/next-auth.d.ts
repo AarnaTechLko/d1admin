@@ -1,12 +1,51 @@
+// // types/next-auth.d.ts
+// import NextAuth from 'next-auth';
+// console.debug(typeof NextAuth);
+// declare module 'next-auth' {
+//   interface Session {
+//     user: {
+//       id: string; // Add custom `id` field
+//       type: string; // Add custom `type` field (coach or player)
+//       role: string;
+//       username: string;
+//       email?: string | null;
+//       image?: string | null;
+//       package_id?: string | null;
+//       club_id?: string | null;
+//       coach_id?: string | null;
+//       expectedCharge?: string | null;
+//       club_name?: string | null;
+//       added_by?: string | null;
+//       coachCurrency?: string | null;
+//       visibility?: string | null;
+//       teamId?: string | null;
+//       view_evaluation?: string | null;
+//       buy_evaluation?: string | null;
+//       isCompletedProfile?: boolean;
+//     }
+//   }
+//     interface User {
+//     id: string;
+//     role: string;
+//   }
+
+//   interface JWT {
+//     id: string;
+//     role: string;
+//   }
+// }
+// export {};
+
 // types/next-auth.d.ts
-import NextAuth from 'next-auth';
-console.debug(typeof NextAuth);
+// import NextAuth from 'next-auth';
+
 declare module 'next-auth' {
   interface Session {
     user: {
-      id: string; // Add custom `id` field
-      type: string; // Add custom `type` field (coach or player)
+      id: string;
+      type: string;
       role: string;
+      username: string;
       email?: string | null;
       image?: string | null;
       package_id?: string | null;
@@ -21,17 +60,20 @@ declare module 'next-auth' {
       view_evaluation?: string | null;
       buy_evaluation?: string | null;
       isCompletedProfile?: boolean;
-    }
+    };
   }
-    interface User {
+
+  interface User {
     id: string;
     role: string;
   }
+}
 
+declare module 'next-auth/jwt' {
   interface JWT {
     id: string;
     role: string;
   }
 }
-export {};
 
+export {};
