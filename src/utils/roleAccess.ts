@@ -1,68 +1,55 @@
 // utils/roleAccess.ts
 
-export const roleBasedAccess: Record<string, string[]> = {
-  admin: [
-    "/dashboard",
-    "/blocks",
-    "/coach",
-    "/suspend",
-    "/disablecoach",
-    "/player",
-    "/suspendplayer",
-    "/disableplayer",
-    "/organization",
-    "/suspendorg",
-    "/disableorg",
-    "/team",
-    "/suspendteam",
-    "/disableteam",
-    "/notification",
-    "/subadmin",
-    "/view",
-    "/createticket",
-    "/ticket"
-  ],
+export const roleBasedAccess: Record<string, string[] | "*"> = {
+  admin: "*",
+
   "Customer Support": [
-    "/ticket",
-    "/coach",
+    "/ticket*",
+    "/coach*",
     "/suspend",
     "/disablecoach",
-    "/player",
+    "/player*",
     "/suspendplayer",
     "/disableplayer",
-    "/organization",
+    "/organization*",
     "/suspendorg",
+    "/evaluationdetails",
     "/disableorg"
   ],
   Manager: [
-    "/dashboard",
-    "/coach",
-    "/player",
-    "/organization",
-    "/team"
+    "/dashboard*",
+    "/coach*",
+    "/player*",
+    "/organization*",
+    "/team*",
+    "/evaluationdetails"
   ],
   "Executive Level 1": [
-    "/ticket",
-    "/coach",
+    "/ticket*",
+    "/coach*",
     "/suspend",
     "/disablecoach",
-    "/player",
+    "/player*",
     "/suspendplayer",
     "/disableplayer",
-    "/organization",
+    "/organization*",
     "/suspendorg",
-    "/disableorg"
+    "/disableorg",
+     "/evaluationdetails"
+
   ],
   "Executive Level 2": [
-    "/ticket",
-    "/coach",
+    "/ticket*",
+    "/coach*",
     "/suspend",
     "/disablecoach",
-    "/player",
+    "/player*",
     "/suspendplayer",
     "/disableplayer",
-    "/organization",
+    "/organization*",
     "/suspendorg",
-    "/disableorg"
+    "/disableorg",
+    "/evaluationdetails"
+
   ]
 };
