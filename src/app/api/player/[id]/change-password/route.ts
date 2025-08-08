@@ -28,13 +28,18 @@
 // }
 
 import { db } from '@/lib/db';
-import { users, role } from '@/lib/schema';
+import { users } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const playerId = Number((await params).id);
+    console.log("player id",playerId);
+    if (isNaN(playerId)) {
+      return NextResponse.json({ error: "Invalid organization ID" }, { status: 400 });
+    }
     const { user_id, newPassword } = await req.json();
     const userId = Number(user_id); // from localStorage (client)
 console.log("userid",userId);
@@ -46,7 +51,7 @@ console.log("userid",userId);
     }
 
     // Step 1: Get role record by user_id
-    const roleRes = await db
+    /* const roleRes = await db
       .select({ changePassword: role.change_password })
       .from(role)
       .where(eq(role.user_id, userId))
@@ -65,7 +70,7 @@ console.log("userid",userId);
         { status: 403 }
       );
     }
-
+ */
     // Step 3: Hash and update password
     const hashed = await bcrypt.hash(newPassword, 10);
 
