@@ -10,13 +10,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (isNaN(orgId)) {
       return NextResponse.json({ error: "Invalid organization ID" }, { status: 400 });
     }
-
     const { newPassword } = await req.json();
-
     if (!newPassword || newPassword.length < 6) {
       return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
     }
-
     const hashed = await bcrypt.hash(newPassword, 10);
 
      await db

@@ -343,221 +343,223 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
                         </DialogContent>
                       </Dialog>
 
-                        <button
-                           onClick={() => {
-                             const changePassword = sessionStorage.getItem("change_password");
-                         
-                             console.log("changepassword",changePassword);
-                             if (changePassword === "1") {
-                               handleOpenCoachModal(Number(coach.id));
-                             } else {
-                               Swal.fire({
-                                 icon: "warning",
-                                 title: "Access Denied",
-                                 text: "You are not allowed to change the password.",
-                               });
-                             }
-                           }}
-                          title="Change Password"
-                          className="hover:text-blue-600"
-                        >
-                          🔒
-                        </button>
-                     
+                      <button
+                        onClick={() => {
+                          const changePassword = sessionStorage.getItem("change_password");
+
+                          console.log("changepassword", changePassword);
+                          if (changePassword === "1") {
+                            handleOpenCoachModal(Number(coach.id));
+                          } else {
+                            Swal.fire({
+                              icon: "warning",
+                              title: "Access Denied",
+                              text: "You are not allowed to change the password.",
+                            });
+                          }
+                        }}
+                        title="Change Password"
+                        className="hover:text-blue-600"
+                      >
+                        🔒
+                      </button>
+
                     </div>
-                  
-                </TableCell>
+
+                  </TableCell>
 
 
                 </TableRow>
               ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableBody>
+          </Table>
+        </div>
 
-      <div className="flex justify-end items-center gap-2 p-4 flex-wrap border-t border-gray-200 dark:border-white/[0.05]">
-        {[...Array(totalPages)].map((_, index) => (
-          <button key={index + 1} onClick={() => setCurrentPage(index + 1)} className={`px-3 py-1 rounded-md ${currentPage === index + 1 ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"}`}>{index + 1}</button>
-        ))}
-      </div>
+        <div className="flex justify-end items-center gap-2 p-4 flex-wrap border-t border-gray-200 dark:border-white/[0.05]">
+          {[...Array(totalPages)].map((_, index) => (
+            <button key={index + 1} onClick={() => setCurrentPage(index + 1)} className={`px-3 py-1 rounded-md ${currentPage === index + 1 ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"}`}>{index + 1}</button>
+          ))}
+        </div>
 
-      <Dialog open={isCoachPasswordModalOpen} onOpenChange={setCoachPasswordModalOpen}>
-        <DialogContent className="max-w-sm bg-white p-6 rounded-lg shadow-lg">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-semibold">Change Coach Password</DialogTitle>
-          </DialogHeader>
+        <Dialog open={isCoachPasswordModalOpen} onOpenChange={setCoachPasswordModalOpen}>
+          <DialogContent className="max-w-sm bg-white p-6 rounded-lg shadow-lg">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-semibold">Change Coach Password</DialogTitle>
+            </DialogHeader>
 
-          <div className="mt-4 space-y-4">
-            <input
-              type="password"
-              placeholder="Enter new password"
-              value={newCoachPassword}
-              onChange={(e) => setNewCoachPassword(e.target.value)}
-              className="w-full border px-4 py-2 rounded"
-            />
+            <div className="mt-4 space-y-4">
+              <input
+                type="password"
+                placeholder="Enter new password"
+                value={newCoachPassword}
+                onChange={(e) => setNewCoachPassword(e.target.value)}
+                className="w-full border px-4 py-2 rounded"
+              />
 
-            <div className="flex justify-end gap-2">
-              <button onClick={handleCloseCoachModal} className="text-gray-600 hover:text-black">Cancel</button>
-              <button onClick={handleChangeCoachPassword} className="bg-blue-600 text-white px-4 py-2 rounded">
-                Update
-              </button>
+              <div className="flex justify-end gap-2">
+                <button onClick={handleCloseCoachModal} className="text-gray-600 hover:text-black">Cancel</button>
+                <button onClick={handleChangeCoachPassword} className="bg-blue-600 text-white px-4 py-2 rounded">
+                  Update
+                </button>
+              </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
-      <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
-        <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {suspendCoach?.suspend === 1 ? "Unsuspend Coach" : "Suspend Coach"}
-            </DialogTitle>
-          </DialogHeader>
+        <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
+          <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">
+            <DialogHeader>
+              <DialogTitle>
+                {suspendCoach?.suspend === 1 ? "Unsuspend Coach" : "Suspend Coach"}
+              </DialogTitle>
+            </DialogHeader>
 
-          {suspendCoach && (
-            <div className="space-y-4">
-              {suspendCoach.suspend === 1 ? (
-                <>
-                  {/* Show input when coach is suspended */}
-                  <p>
-                    Suspend {suspendCoach.firstName} {suspendCoach.lastName} for how many days?
-                  </p>
+            {suspendCoach && (
+              <div className="space-y-4">
+                {suspendCoach.suspend === 1 ? (
+                  <>
+                    {/* Show input when coach is suspended */}
+                    <p>
+                      Suspend {suspendCoach.firstName} {suspendCoach.lastName} for how many days?
+                    </p>
 
-                  <input
-                    type="number"
-                    min={1}
-                    placeholder="Enter number of days"
-                    value={suspendDays ?? ''}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      setSuspendDays(isNaN(val) ? null : val);
-                    }}
-                    className="w-full p-2 border border-gray-300 rounded"
-                  />
-
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setSuspendOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button
-                      className="bg-red-500 text-white"
-                      onClick={async () => {
-                        if (!suspendCoach || suspendDays === null || suspendDays <= 0) {
-                          Swal.fire({
-                            icon: 'warning',
-                            title: 'Invalid Input',
-                            text: 'Please enter a valid number greater than 0.',
-                          });
-                          return;
-                        }
-
-                        try {
-                          const res = await fetch(`/api/coach/${suspendCoach.id}/suspend`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ suspend_days: suspendDays }),
-                          });
-
-                          const result = await res.json();
-                          console.log("api ", result);
-                          if (!res.ok) throw new Error('Failed to suspend coach');
-                          console.log(result);
-                          Swal.fire({
-                            icon: 'success',
-                            title: 'Coach Suspended',
-                            text: `${suspendCoach.firstName} suspended for ${suspendDays} day(s).`,
-                          });
-
-                          setSuspendOpen(false);
-                          setSuspendCoach(null);
-                          setSuspendDays(null);
-                          window.location.reload(); // Optional
-                        } catch (err) {
-                          console.error("Suspension failed", err);
-                          Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Could not suspend coach. Please try again.',
-                          });
-                          setSuspendOpen(false);
-
-                        }
+                    <input
+                      type="number"
+                      min={1}
+                      placeholder="Enter number of days"
+                      value={suspendDays ?? ''}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setSuspendDays(isNaN(val) ? null : val);
                       }}
-                    >
-                      Confirm Suspension
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Show only confirmation dialog when already active */}
-                  <p>
-                    Are you sure you want to unsuspend {suspendCoach.firstName} {suspendCoach.lastName}?
-                  </p>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setSuspendOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button
-                      className="bg-green-600 text-white"
-                      onClick={async () => {
-                        const confirm = await Swal.fire({
-                          icon: 'question',
-                          title: 'Confirm Unsuspend',
-                          text: `Unsuspend ${suspendCoach.firstName}?`,
-                          showCancelButton: true,
-                          confirmButtonText: 'Yes, Unsuspend',
-                          cancelButtonText: 'Cancel',
-                        });
+                      className="w-full p-2 border border-gray-300 rounded"
+                    />
 
-                        if (!confirm.isConfirmed) return;
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setSuspendOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        className="bg-red-500 text-white"
+                        onClick={async () => {
+                          if (!suspendCoach || suspendDays === null || suspendDays <= 0) {
+                            Swal.fire({
+                              icon: 'warning',
+                              title: 'Invalid Input',
+                              text: 'Please enter a valid number greater than 0.',
+                            });
+                            return;
+                          }
 
-                        try {
-                          const res = await fetch(`/api/coach/${suspendCoach.id}/suspend`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ suspend_days: 0 }), // zero triggers unsuspend
-                          });
+                          try {
+                            const res = await fetch(`/api/coach/${suspendCoach.id}/suspend`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ suspend_days: suspendDays }),
+                            });
 
-                          const result = await res.json();
-                          if (!res.ok) throw new Error('Failed to unsuspend coach');
-                          console.log(result);
+                            const result = await res.json();
+                            console.log("api ", result);
+                            if (!res.ok) throw new Error('Failed to suspend coach');
+                            console.log(result);
+                            Swal.fire({
+                              icon: 'success',
+                              title: 'Coach Suspended',
+                              text: `${suspendCoach.firstName} suspended for ${suspendDays} day(s).`,
+                            });
 
-                          Swal.fire({
-                            icon: 'success',
-                            title: 'Coach Unsuspended',
-                            text: `${suspendCoach.firstName} has been unsuspended.`,
-                          });
+                            setSuspendOpen(false);
+                            setSuspendCoach(null);
+                            setSuspendDays(null);
+                            /// window.location.reload(); // Optional
+                          } catch (err) {
+                            console.error("Suspension failed", err);
+                            Swal.fire({
+                              icon: 'error',
+                              title: 'Error',
+                              text: 'Could not suspend coach. Please try again.',
+                            });
+                            setSuspendOpen(false);
 
+                          }
+                        }}
+                      >
+                        Confirm Suspension
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Show only confirmation dialog when already active */}
+                    <p>
+                      Are you sure you want to unsuspend {suspendCoach.firstName} {suspendCoach.lastName}?
+                    </p>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setSuspendOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        className="bg-green-600 text-white"
+                        onClick={async () => {
                           setSuspendOpen(false);
-                          setSuspendCoach(null);
-                          setSuspendDays(null);
-                          window.location.reload(); // Optional
-                        } catch (err) {
-                          console.error("Unsuspension failed", err);
-                          Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Could not unsuspend coach. Please try again.',
+
+                          const confirm = await Swal.fire({
+                            icon: 'question',
+                            title: 'Confirm Unsuspend',
+                            text: `Unsuspend ${suspendCoach.firstName}?`,
+                            showCancelButton: true,
+                            confirmButtonText: 'Yes, Unsuspend',
+                            cancelButtonText: 'Cancel',
                           });
-                        }
-                      }}
-                    >
-                      Confirm Unsuspend
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+
+                          if (!confirm.isConfirmed) return;
+
+                          try {
+                            const res = await fetch(`/api/coach/${suspendCoach.id}/suspend`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ suspend_days: 0 }), // zero triggers unsuspend
+                            });
+
+                            const result = await res.json();
+                            if (!res.ok) throw new Error('Failed to unsuspend coach');
+                            console.log(result);
+
+                            Swal.fire({
+                              icon: 'success',
+                              title: 'Coach Unsuspended',
+                              text: `${suspendCoach.firstName} has been unsuspended.`,
+                            });
+
+                            setSuspendOpen(false);
+                            setSuspendCoach(null);
+                            setSuspendDays(null);
+                            window.location.reload(); // Optional
+                          } catch (err) {
+                            console.error("Unsuspension failed", err);
+                            Swal.fire({
+                              icon: 'error',
+                              title: 'Error',
+                              text: 'Could not unsuspend coach. Please try again.',
+                            });
+                          }
+                        }}
+                      >
+                        Confirm Unsuspend
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
 
 
 
 
-    </div>
+      </div>
     </div >
   );
 };

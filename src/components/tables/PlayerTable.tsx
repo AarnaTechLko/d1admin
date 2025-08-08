@@ -763,6 +763,8 @@ console.log("userid",userId);
                         <Button
                           className="bg-green-600 text-white"
                           onClick={async () => {
+                                setSuspendOpen(false);
+
                             const confirm = await Swal.fire({
                               icon: 'question',
                               title: 'Confirm Unsuspend',
