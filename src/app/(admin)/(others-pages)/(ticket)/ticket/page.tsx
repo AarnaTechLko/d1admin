@@ -182,7 +182,7 @@ const TicketsPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/ticket?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}`
+          `/api/tickets?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}`
         );
 
         if (!response.ok) throw new Error("Failed to fetch tickets");

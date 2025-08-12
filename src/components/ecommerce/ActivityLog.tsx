@@ -10,6 +10,7 @@ import EvaluationTable, { Evaluation } from "../tables/EvaluationTable";
 import PaymentTable from "../tables/PaymentTable";
 import { Payment } from "../types/types";
 import { Loader2 } from "lucide-react";
+  import Swal from "sweetalert2";
 
 const tabs = [
   "Player",
@@ -98,23 +99,67 @@ export default function TabbedDataView() {
     console.log("Reply clicked:", ticket);
   };
 
-  const handleHidePayment = async (evaluationId: number) => {
-    try {
-      await fetch(`/api/payments/hide/${evaluationId}`, { method: "PATCH" });
-      fetchData("Payment", currentPage, timeRange);
-    } catch (err) {
-      console.error("Hide payment failed:", err);
-    }
-  };
 
-  const handleRevertPayment = async (evaluationId: number) => {
-    try {
-      await fetch(`/api/payments/revert/${evaluationId}`, { method: "PATCH" });
-      fetchData("Payment", currentPage, timeRange);
-    } catch (err) {
-      console.error("Revert payment failed:", err);
+const handleHidePayment = async (evaluationId: number) => {
+  try {
+    const confirmResult = await Swal.fire({
+      title: "Are you sure?",
+      text: "This payment will be hidden.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, hide it!",
+    });
+
+    if (confirmResult.isConfirmed) {
+      const res = await fetch(`/api/payments/hide/${evaluationId}`, {
+        method: "PATCH",
+      });
+
+      if (res.ok) {
+        Swal.fire("Hidden!", "The payment has been hidden.", "success");
+        fetchData("Payment", currentPage, timeRange);
+      } else {
+        Swal.fire("Error!", "Failed to hide the payment.", "error");
+      }
     }
-  };
+  } catch (err) {
+    console.error("Hide payment failed:", err);
+    Swal.fire("Error!", "An error occurred while hiding payment.", "error");
+  }
+};
+
+const handleRevertPayment = async (evaluationId: number) => {
+  try {
+    const confirmResult = await Swal.fire({
+      title: "Are you sure?",
+      text: "This payment will be reverted.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, revert it!",
+    });
+
+    if (confirmResult.isConfirmed) {
+      const res = await fetch(`/api/payments/revert/${evaluationId}`, {
+        method: "PATCH",
+      });
+
+      if (res.ok) {
+        Swal.fire("Reverted!", "The payment has been reverted.", "success");
+        fetchData("Payment", currentPage, timeRange);
+      } else {
+        Swal.fire("Error!", "Failed to revert the payment.", "error");
+      }
+    }
+  } catch (err) {
+    console.error("Revert payment failed:", err);
+    Swal.fire("Error!", "An error occurred while reverting payment.", "error");
+  }
+};
+
 
   return (
     <div className="p-6 w-full mx-auto">

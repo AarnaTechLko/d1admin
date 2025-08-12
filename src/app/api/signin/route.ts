@@ -1,3 +1,171 @@
+// import { NextResponse } from "next/server";
+// import { db } from "@/lib/db";
+// import { admin, block_ips, ip_logs, role } from "@/lib/schema";
+// import { eq, and, or, sql } from "drizzle-orm";
+// import bcrypt from "bcryptjs";
+// import jwt from "jsonwebtoken";
+
+// type GeoLocation = {
+//   ip?: string;
+//   city?: string;
+//   region?: string;
+//   country?: string;
+//   postal?: string;
+//   org?: string;
+//   loc?: string;
+//   timezone?: string;
+// };
+
+// const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key";
+
+// async function getGeoLocation(): Promise<GeoLocation | null> {
+//   try {
+//     const token = '750b64ff1566ad';
+//     const res = await fetch(`https://ipinfo.io/json?token=${token}`);
+//     if (!res.ok) throw new Error("Failed to fetch IP info");
+//     return await res.json();
+//   } catch (error) {
+//     console.error("IPINFO fetch error:", error);
+//     return null;
+//   }
+// }
+
+// export async function POST(req: Request) {
+//   try {
+//     const { email, password } = await req.json();
+//     const datag = await getGeoLocation();
+
+//     if (!datag || !datag.ip) {
+//       return NextResponse.json(
+//         { message: 'Unable to determine your IP/location.', blocked: true },
+//         { status: 400 }
+//       );
+//     }
+
+//     const trimmedIp = datag.ip.trim();
+//     const trimmedCountry = datag.country?.trim() || '';
+//     const trimmedCity = datag.city?.trim() || '';
+//     const trimmedRegion = datag.region?.trim() || '';
+
+//     // Blocked IP/location check
+//     const [blockedEntry] = await db
+//       .select()
+//       .from(block_ips)
+//       .where(
+//         and(
+//           eq(block_ips.status, 'block'),
+//           or(
+//             eq(block_ips.block_ip_address, trimmedIp),
+//             eq(block_ips.block_ip_address, trimmedCountry),
+//             eq(block_ips.block_ip_address, trimmedCity),
+//             eq(block_ips.block_ip_address, trimmedRegion)
+//           )
+//         )
+//       )
+//       .execute();
+
+//     if (blockedEntry) {
+//       const blockedValue = blockedEntry.block_ip_address;
+//       const blockReasons: Record<string, string> = {
+//         [trimmedIp]: `Access denied: Your IP (${trimmedIp}) is blocked.`,
+//         [trimmedCountry]: `Access denied: Your country (${trimmedCountry}) is blocked.`,
+//         [trimmedCity]: `Access denied: Your city (${trimmedCity}) is blocked.`,
+//         [trimmedRegion]: `Access denied: Your region (${trimmedRegion}) is blocked.`,
+//       };
+//       const message = blockReasons[blockedValue] || 'Access denied: Your location is blocked.';
+//       return NextResponse.json({ message, blocked: true }, { status: 403 });
+//     }
+
+//     // Fetch admin + role (JOIN to get change_password)
+//     const result = await db
+//       .select({
+//         id: admin.id,
+//         email: admin.email,
+//         username: admin.username,
+//         password_hash: admin.password_hash,
+//         role: admin.role,
+        
+//          // If role is 'admin', set changePassword to 1, else use role.change_password
+//     changePassword: sql`CASE 
+//       WHEN ${admin.role} = 'admin' THEN 1 
+//       ELSE ${role.change_password} 
+//     END`.as("changePassword"),
+//         // changePassword: role.change_password,
+//       })
+//       .from(admin)
+//       .leftJoin(role, eq(admin.id, role.user_id))
+//       .where(eq(admin.email, email))
+//       .limit(1);
+
+//     if (!result || result.length === 0) {
+//       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+//     }
+
+//     const currentUser = result[0];
+//     const isPasswordValid = await bcrypt.compare(password, currentUser.password_hash);
+//     if (!isPasswordValid) {
+//       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+//     }
+
+//     const token = jwt.sign(
+//       {
+//         id: currentUser.id,
+//         email: currentUser.email,
+//         role: currentUser.role,
+//       },
+//       SECRET_KEY,
+//       { expiresIn: "1h" }
+//     );
+
+//     // Log IP
+//     await db.insert(ip_logs).values({
+//       userId: currentUser.id,
+//       ip_address: datag.ip?.toString() || '',
+//       type: 'admin',
+//       login_time: new Date(),
+//       logout_time: null,
+//       created_at: new Date(),
+//       city: datag.city || null,
+//       region: datag.region || null,
+//       country: datag.country || null,
+//       postal: datag.postal || null,
+//       org: datag.org || null,
+//       loc: datag.loc || null,
+//       timezone: datag.timezone || null,
+//     });
+
+//     // Set session cookies including change_password
+//     const cookieOptions = "HttpOnly; Path=/; Max-Age=3600; Secure; SameSite=Strict";
+//     const headers = new Headers();
+//     headers.append("Set-Cookie", `session_token=${token}; ${cookieOptions}`);
+//     headers.append("Set-Cookie", `user_id=${currentUser.id}; ${cookieOptions}`);
+//     headers.append("Set-Cookie", `user_name=${currentUser.username}; ${cookieOptions}`);
+//     headers.append("Set-Cookie", `role=${currentUser.role}; ${cookieOptions}`);
+//     headers.append("Set-Cookie", `change_password=${currentUser.changePassword || 0}; ${cookieOptions}`);
+//     headers.append("Content-Type", "application/json");
+
+//     return new Response(
+//       JSON.stringify({
+//         success: true,
+//         message: "Signin successful",
+//         token,
+//         user_id: currentUser.id,
+//         role: currentUser.role,
+//         username: currentUser.username,
+//         change_password: currentUser.changePassword || 0,
+//       }),
+//       {
+//         status: 200,
+//         headers,
+//       }
+//     );
+//   } catch (error) {
+//     console.error("Signin error:", error);
+//     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+//   }
+// }
+
+
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { admin, block_ips, ip_logs, role } from "@/lib/schema";
@@ -20,7 +188,7 @@ const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key";
 
 async function getGeoLocation(): Promise<GeoLocation | null> {
   try {
-    const token = '750b64ff1566ad';
+    const token = "750b64ff1566ad";
     const res = await fetch(`https://ipinfo.io/json?token=${token}`);
     if (!res.ok) throw new Error("Failed to fetch IP info");
     return await res.json();
@@ -37,15 +205,15 @@ export async function POST(req: Request) {
 
     if (!datag || !datag.ip) {
       return NextResponse.json(
-        { message: 'Unable to determine your IP/location.', blocked: true },
+        { message: "Unable to determine your IP/location.", blocked: true },
         { status: 400 }
       );
     }
 
     const trimmedIp = datag.ip.trim();
-    const trimmedCountry = datag.country?.trim() || '';
-    const trimmedCity = datag.city?.trim() || '';
-    const trimmedRegion = datag.region?.trim() || '';
+    const trimmedCountry = datag.country?.trim() || "";
+    const trimmedCity = datag.city?.trim() || "";
+    const trimmedRegion = datag.region?.trim() || "";
 
     // Blocked IP/location check
     const [blockedEntry] = await db
@@ -53,7 +221,7 @@ export async function POST(req: Request) {
       .from(block_ips)
       .where(
         and(
-          eq(block_ips.status, 'block'),
+          eq(block_ips.status, "block"),
           or(
             eq(block_ips.block_ip_address, trimmedIp),
             eq(block_ips.block_ip_address, trimmedCountry),
@@ -72,11 +240,13 @@ export async function POST(req: Request) {
         [trimmedCity]: `Access denied: Your city (${trimmedCity}) is blocked.`,
         [trimmedRegion]: `Access denied: Your region (${trimmedRegion}) is blocked.`,
       };
-      const message = blockReasons[blockedValue] || 'Access denied: Your location is blocked.';
+      const message =
+        blockReasons[blockedValue] ||
+        "Access denied: Your location is blocked.";
       return NextResponse.json({ message, blocked: true }, { status: 403 });
     }
 
-    // Fetch admin + role (JOIN to get change_password)
+    // Fetch admin + role (JOIN to get change_password) with is_deleted check
     const result = await db
       .select({
         id: admin.id,
@@ -84,26 +254,43 @@ export async function POST(req: Request) {
         username: admin.username,
         password_hash: admin.password_hash,
         role: admin.role,
-         // If role is 'admin', set changePassword to 1, else use role.change_password
-    changePassword: sql`CASE 
-      WHEN ${admin.role} = 'admin' THEN 1 
-      ELSE ${role.change_password} 
-    END`.as("changePassword"),
-        // changePassword: role.change_password,
+        is_deleted: admin.is_deleted,
+        changePassword: sql`CASE 
+          WHEN ${admin.role} = 'admin' THEN 1 
+          ELSE ${role.change_password} 
+        END`.as("changePassword"),
       })
       .from(admin)
       .leftJoin(role, eq(admin.id, role.user_id))
-      .where(eq(admin.email, email))
+      .where(and(eq(admin.email, email), eq(admin.is_deleted, 1))) // ✅ Block deleted accounts
       .limit(1);
 
     if (!result || result.length === 0) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 }
+      );
     }
 
     const currentUser = result[0];
-    const isPasswordValid = await bcrypt.compare(password, currentUser.password_hash);
+
+    // ✅ Extra safeguard
+    if (currentUser.is_deleted === 0) {
+      return NextResponse.json(
+        { error: "Account has been deleted. Please contact admin." },
+        { status: 403 }
+      );
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      currentUser.password_hash
+    );
     if (!isPasswordValid) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 }
+      );
     }
 
     const token = jwt.sign(
@@ -119,8 +306,8 @@ export async function POST(req: Request) {
     // Log IP
     await db.insert(ip_logs).values({
       userId: currentUser.id,
-      ip_address: datag.ip?.toString() || '',
-      type: 'admin',
+      ip_address: datag.ip?.toString() || "",
+      type: "admin",
       login_time: new Date(),
       logout_time: null,
       created_at: new Date(),
@@ -134,13 +321,20 @@ export async function POST(req: Request) {
     });
 
     // Set session cookies including change_password
-    const cookieOptions = "HttpOnly; Path=/; Max-Age=3600; Secure; SameSite=Strict";
+    const cookieOptions =
+      "HttpOnly; Path=/; Max-Age=3600; Secure; SameSite=Strict";
     const headers = new Headers();
     headers.append("Set-Cookie", `session_token=${token}; ${cookieOptions}`);
     headers.append("Set-Cookie", `user_id=${currentUser.id}; ${cookieOptions}`);
-    headers.append("Set-Cookie", `user_name=${currentUser.username}; ${cookieOptions}`);
+    headers.append(
+      "Set-Cookie",
+      `user_name=${currentUser.username}; ${cookieOptions}`
+    );
     headers.append("Set-Cookie", `role=${currentUser.role}; ${cookieOptions}`);
-    headers.append("Set-Cookie", `change_password=${currentUser.changePassword || 0}; ${cookieOptions}`);
+    headers.append(
+      "Set-Cookie",
+      `change_password=${currentUser.changePassword || 0}; ${cookieOptions}`
+    );
     headers.append("Content-Type", "application/json");
 
     return new Response(
@@ -160,6 +354,9 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     console.error("Signin error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
