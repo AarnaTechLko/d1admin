@@ -471,7 +471,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
                             setSuspendOpen(false);
                             setSuspendCoach(null);
                             setSuspendDays(null);
-                            /// window.location.reload(); // Optional
+                            window.location.reload(); // Optional
                           } catch (err) {
                             console.error("Suspension failed", err);
                             Swal.fire({

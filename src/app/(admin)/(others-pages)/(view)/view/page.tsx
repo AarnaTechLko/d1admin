@@ -2,24 +2,32 @@
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Table, TableCell, TableBody, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash } from "lucide-react";
+import { ShieldCheck, Trash } from "lucide-react";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import Loading from "@/components/Loading";
 import { User, Mail, Shield, MoreHorizontal } from "lucide-react"; // Import at the top
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+type Permission = {
+  change_password: number;
+  refund: number;
+  monitor_activity: number;
+  view_finance: number;
+  access_ticket: number;
+};
 
 interface Admin {
   id: number;
   username: string;
   email: string;
   role: string;
+  permission: Permission;
   is_deleted?: boolean;
 }
 
 const AdminListPage = () => {
-      useRoleGuard();
-  
+  useRoleGuard();
+
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const [admins, setAdmins] = useState<Admin[]>([]);
@@ -133,6 +141,11 @@ const AdminListPage = () => {
                       <Shield size={16} /> Role
                     </div>
                   </TableCell>
+                  <TableCell className="px-5 py-3 text-sm font-bold text-gray-500 text-start dark:text-gray-400">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck  size={16} /> Permission
+                    </div>
+                  </TableCell>
 
                   <TableCell className="px-5 py-3 text-sm font-bold text-gray-500 text-start dark:text-gray-400">
                     <div className="flex items-center gap-2">
@@ -144,14 +157,17 @@ const AdminListPage = () => {
               </TableHeader>
 
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {admins.map((admin) => {
+                {admins.map((admin,index) => {
                   // const isDeleted = admin.is_deleted ?? false;
 
                   return (
-                    <TableRow key={admin.id}>
+                    <TableRow key={`${admin.id}-${index}`}>
                       <TableCell className="px-4 py-3 text-xs text-gray-800 dark:text-white/90">{admin.username}</TableCell>
                       <TableCell className="px-4 py-3 text-xs text-gray-800 dark:text-white/90">{admin.email}</TableCell>
                       <TableCell className="px-4 py-3 text-xs text-gray-800 dark:text-white/90">{admin.role}</TableCell>
+                      <TableCell className="px-4 py-3 text-xs text-gray-800 dark:text-white/90"> {Object.keys(admin.permission)
+    .filter(key => admin.permission[key as keyof Permission] === 1)
+    .join(", ") || "—"}</TableCell>
                       <TableCell className="px-4 py-3 text-xs text-gray-800 dark:text-white/90">
                         <div className="flex gap-3">
                           <button

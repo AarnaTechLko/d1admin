@@ -593,6 +593,7 @@ export const admin = pgTable("admin", {
   }).notNull(),
   password_hash: text("password_hash").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
+  is_deleted: integer("is_deleted").default(1).notNull(),
 });
 
 

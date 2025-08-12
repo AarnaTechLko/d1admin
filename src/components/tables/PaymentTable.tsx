@@ -63,19 +63,21 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
           <div className="flex gap-2 justify-center">
             {p.is_deleted === 0 ? (
               <button
+              type="button"
                 onClick={() => onRevert(p.evaluation_id)}
                 title="Revert"
                 className="text-red-600 hover:underline"
               >
-                🛑 Revert
+                🛑
               </button>
             ) : (
               <button
+               type="button"
                 onClick={() => onHide(p.evaluation_id)}
                 title="Hide"
                 className="text-green-600 hover:underline"
               >
-                ♻️ Hide
+                ♻️ 
               </button>
             )}
           </div>
