@@ -38,12 +38,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const playerId = Number((await params).id);
     console.log("player id",playerId);
     if (isNaN(playerId)) {
-      return NextResponse.json({ error: "Invalid organization ID" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid player ID" }, { status: 400 });
     }
     const { user_id, newPassword } = await req.json();
     const userId = Number(user_id); // from localStorage (client)
 console.log("userid",userId);
-    if (!userId || !newPassword || newPassword.length < 6) {
+    if (!userId || !playerId||!newPassword || newPassword.length < 6) {
       return NextResponse.json(
         { error: "Invalid user or password too short" },
         { status: 400 }      
@@ -73,11 +73,10 @@ console.log("userid",userId);
  */
     // Step 3: Hash and update password
     const hashed = await bcrypt.hash(newPassword, 10);
-
     await db
       .update(users)
       .set({ password: hashed })
-      .where(eq(users.id, userId)); // using login id
+      .where(eq(users.id, playerId)); // using login id
 
     return NextResponse.json({ success: true });
   } catch (error) {

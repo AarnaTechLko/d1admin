@@ -68,8 +68,8 @@ interface Player {
 }
 
 export default function OrganizationDetailsPage() {
-        useRoleGuard();
-  
+  useRoleGuard();
+
   const { id } = useParams();
   const [orgData, setOrgData] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,244 +87,244 @@ export default function OrganizationDetailsPage() {
 
         const data = await res.json();
         setOrgData(data);
-         setLoading(false);
-      }catch (error: unknown) {
-  if (error instanceof Error) {
-    setError(error.message);
-  } else {
-    setError("Internal Server error");
-  }
-   setLoading(false);
-}
+        setLoading(false);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError("Internal Server error");
+        }
+        setLoading(false);
+      }
     }
 
     if (id) fetchOrganization();
   }, [id]);
 
- // --- Separate Hide/Revert for Team ---
-async function handleHideTeam(teamId: string) {
-  const confirmResult = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'This team will be marked as hidden.',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, hide it!',
-    cancelButtonText: 'Cancel',
-  });
-  if (!confirmResult.isConfirmed) return;
-
-  try {
-    const res = await fetch(`/api/organization/team/${teamId}`, {
-      method: 'DELETE',
+  // --- Separate Hide/Revert for Team ---
+  async function handleHideTeam(teamId: string) {
+    const confirmResult = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This team will be marked as hidden.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, hide it!',
+      cancelButtonText: 'Cancel',
     });
-    if (!res.ok) throw new Error('Failed to hide team');
+    if (!confirmResult.isConfirmed) return;
 
-    setOrgData((prev) => {
-      if (!prev) return prev;
-      const updatedTeams = prev.teams.map((team) =>
-        team.id === teamId ? { ...team, is_deleted: 0 } : team
-      );
-      return { ...prev, teams: updatedTeams };
-    });
+    try {
+      const res = await fetch(`/api/organization/team/${teamId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to hide team');
+
+      setOrgData((prev) => {
+        if (!prev) return prev;
+        const updatedTeams = prev.teams.map((team) =>
+          team.id === teamId ? { ...team, is_deleted: 0 } : team
+        );
+        return { ...prev, teams: updatedTeams };
+      });
 
       await MySwal.fire('Updated!', 'Team hidden successfully.', 'success');
 
-  } catch (error) {
-    console.error('Hide team error:', error);
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: (error as Error).message || 'Failed to hide team',
-    });
+    } catch (error) {
+      console.error('Hide team error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: (error as Error).message || 'Failed to hide team',
+      });
+    }
   }
-}
 
-async function handleRevertTeam(teamId: string) {
-  const confirmResult = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'This will revert the team data.',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, revert it!',
-    cancelButtonText: 'Cancel',
-  });
-  if (!confirmResult.isConfirmed) return;
-
-  try {
-    const res = await fetch(`/api/organization/team/${teamId}`, {
-      method: 'PATCH',
+  async function handleRevertTeam(teamId: string) {
+    const confirmResult = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This will revert the team data.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, revert it!',
+      cancelButtonText: 'Cancel',
     });
-    if (!res.ok) throw new Error('Failed to revert team');
+    if (!confirmResult.isConfirmed) return;
 
-    setOrgData((prev) => {
-      if (!prev) return prev;
-      const updatedTeams = prev.teams.map((team) =>
-        team.id === teamId ? { ...team, is_deleted: 1 } : team
-      );
-      return { ...prev, teams: updatedTeams };
-    });
+    try {
+      const res = await fetch(`/api/organization/team/${teamId}`, {
+        method: 'PATCH',
+      });
+      if (!res.ok) throw new Error('Failed to revert team');
 
-        await MySwal.fire('Updated!', 'Team reverted successfully.', 'success');
+      setOrgData((prev) => {
+        if (!prev) return prev;
+        const updatedTeams = prev.teams.map((team) =>
+          team.id === teamId ? { ...team, is_deleted: 1 } : team
+        );
+        return { ...prev, teams: updatedTeams };
+      });
 
-  } catch (error) {
-    console.error('Revert team error:', error);
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: (error as Error).message || 'Failed to revert team',
-    });
+      await MySwal.fire('Updated!', 'Team reverted successfully.', 'success');
+
+    } catch (error) {
+      console.error('Revert team error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: (error as Error).message || 'Failed to revert team',
+      });
+    }
   }
-}
 
-// --- Separate Hide/Revert for Coach ---
-async function handleHideCoach(coachId: string) {
-  const confirmResult = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'This coach will be marked as hidden.',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, hide it!',
-    cancelButtonText: 'Cancel',
-  });
-  if (!confirmResult.isConfirmed) return;
-
-  try {
-    const res = await fetch(`/api/organization/coach/${coachId}`, {
-      method: 'DELETE',
+  // --- Separate Hide/Revert for Coach ---
+  async function handleHideCoach(coachId: string) {
+    const confirmResult = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This coach will be marked as hidden.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, hide it!',
+      cancelButtonText: 'Cancel',
     });
-    if (!res.ok) throw new Error('Failed to hide coach');
+    if (!confirmResult.isConfirmed) return;
 
-    setOrgData((prev) => {
-      if (!prev) return prev;
-      const updatedCoaches = prev.coaches.map((coach) =>
-        coach.id === coachId ? { ...coach, is_deleted: 0 } : coach
-      );
-      return { ...prev, coaches: updatedCoaches };
-    });
+    try {
+      const res = await fetch(`/api/organization/coach/${coachId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to hide coach');
 
-        await MySwal.fire('Updated!', 'Coach hidden successfully.', 'success');
+      setOrgData((prev) => {
+        if (!prev) return prev;
+        const updatedCoaches = prev.coaches.map((coach) =>
+          coach.id === coachId ? { ...coach, is_deleted: 0 } : coach
+        );
+        return { ...prev, coaches: updatedCoaches };
+      });
 
-  } catch (error) {
-    console.error('Hide coach error:', error);
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: (error as Error).message || 'Failed to hide coach',
-    });
+      await MySwal.fire('Updated!', 'Coach hidden successfully.', 'success');
+
+    } catch (error) {
+      console.error('Hide coach error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: (error as Error).message || 'Failed to hide coach',
+      });
+    }
   }
-}
 
-async function handleRevertCoach(coachId: string) {
-  const confirmResult = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'This will revert the coach data.',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, revert it!',
-    cancelButtonText: 'Cancel',
-  });
-  if (!confirmResult.isConfirmed) return;
-
-  try {
-    const res = await fetch(`/api/organization/coach/${coachId}`, {
-      method: 'PATCH',
+  async function handleRevertCoach(coachId: string) {
+    const confirmResult = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This will revert the coach data.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, revert it!',
+      cancelButtonText: 'Cancel',
     });
-    if (!res.ok) throw new Error('Failed to revert coach');
+    if (!confirmResult.isConfirmed) return;
 
-    setOrgData((prev) => {
-      if (!prev) return prev;
-      const updatedCoaches = prev.coaches.map((coach) =>
-        coach.id === coachId ? { ...coach, is_deleted: 1 } : coach
-      );
-      return { ...prev, coaches: updatedCoaches };
-    });
+    try {
+      const res = await fetch(`/api/organization/coach/${coachId}`, {
+        method: 'PATCH',
+      });
+      if (!res.ok) throw new Error('Failed to revert coach');
+
+      setOrgData((prev) => {
+        if (!prev) return prev;
+        const updatedCoaches = prev.coaches.map((coach) =>
+          coach.id === coachId ? { ...coach, is_deleted: 1 } : coach
+        );
+        return { ...prev, coaches: updatedCoaches };
+      });
 
       await MySwal.fire('Updated!', 'Coach reverted successfully.', 'success');
 
-  } catch (error) {
-    console.error('Revert coach error:', error);
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: (error as Error).message || 'Failed to revert coach',
-    });
+    } catch (error) {
+      console.error('Revert coach error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: (error as Error).message || 'Failed to revert coach',
+      });
+    }
   }
-}
 
-// --- Separate Hide/Revert for Player ---
-async function handleHidePlayer(playerId: string) {
-  const confirmResult = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'This player will be marked as hidden.',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, hide it!',
-    cancelButtonText: 'Cancel',
-  });
-  if (!confirmResult.isConfirmed) return;
-
-  try {
-    const res = await fetch(`/api/organization/player/${playerId}`, {
-      method: 'DELETE',
+  // --- Separate Hide/Revert for Player ---
+  async function handleHidePlayer(playerId: string) {
+    const confirmResult = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This player will be marked as hidden.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, hide it!',
+      cancelButtonText: 'Cancel',
     });
-    if (!res.ok) throw new Error('Failed to hide player');
+    if (!confirmResult.isConfirmed) return;
 
-    setOrgData((prev) => {
-      if (!prev) return prev;
-      const updatedPlayers = prev.players.map((player) =>
-        player.id === playerId ? { ...player, is_deleted: 0 } : player
-      );
-      return { ...prev, players: updatedPlayers };
-    });
+    try {
+      const res = await fetch(`/api/organization/player/${playerId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to hide player');
 
-       await MySwal.fire('Updated!', 'Player hidden successfully.', 'success');
+      setOrgData((prev) => {
+        if (!prev) return prev;
+        const updatedPlayers = prev.players.map((player) =>
+          player.id === playerId ? { ...player, is_deleted: 0 } : player
+        );
+        return { ...prev, players: updatedPlayers };
+      });
 
-  } catch (error) {
-    console.error('Hide player error:', error);
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: (error as Error).message || 'Failed to hide player',
-    });
+      await MySwal.fire('Updated!', 'Player hidden successfully.', 'success');
+
+    } catch (error) {
+      console.error('Hide player error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: (error as Error).message || 'Failed to hide player',
+      });
+    }
   }
-}
 
-async function handleRevertPlayer(playerId: string) {
-  const confirmResult = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'This will revert the player data.',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, revert it!',
-    cancelButtonText: 'Cancel',
-  });
-  if (!confirmResult.isConfirmed) return;
-
-  try {
-    const res = await fetch(`/api/organization/player/${playerId}`, {
-      method: 'PATCH',
+  async function handleRevertPlayer(playerId: string) {
+    const confirmResult = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This will revert the player data.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, revert it!',
+      cancelButtonText: 'Cancel',
     });
-    if (!res.ok) throw new Error('Failed to revert player');
+    if (!confirmResult.isConfirmed) return;
 
-    setOrgData((prev) => {
-      if (!prev) return prev;
-      const updatedPlayers = prev.players.map((player) =>
-        player.id === playerId ? { ...player, is_deleted: 1 } : player
-      );
-      return { ...prev, players: updatedPlayers };
-    });
+    try {
+      const res = await fetch(`/api/organization/player/${playerId}`, {
+        method: 'PATCH',
+      });
+      if (!res.ok) throw new Error('Failed to revert player');
+
+      setOrgData((prev) => {
+        if (!prev) return prev;
+        const updatedPlayers = prev.players.map((player) =>
+          player.id === playerId ? { ...player, is_deleted: 1 } : player
+        );
+        return { ...prev, players: updatedPlayers };
+      });
 
       await MySwal.fire('Updated!', 'Player reverted successfully.', 'success');
 
-  } catch (error) {
-    console.error('Revert player error:', error);
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: (error as Error).message || 'Failed to revert player',
-    });
+    } catch (error) {
+      console.error('Revert player error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: (error as Error).message || 'Failed to revert player',
+      });
+    }
   }
-}
 
 
   // if (loading) {
@@ -346,14 +346,14 @@ async function handleRevertPlayer(playerId: string) {
     );
 
   return (
-    
+
     <div className="p-8 space-y-10 max-w-7xl mx-auto">
-          {loading && (
-  <div className="flex items-center justify-center gap-4 ">
-    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-    Loading...
-  </div>
-)}
+      {loading && (
+        <div className="flex items-center justify-center gap-4 ">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          Loading...
+        </div>
+      )}
       <header className="text-center">
         <h1 className="text-4xl font-bold text-gray-800 mb-2">
           Organization History
@@ -402,8 +402,8 @@ async function handleRevertPlayer(playerId: string) {
           'Status',
           'Actions',
         ]}
- onHide={(team) => handleHideTeam(team.id)}
-        onRevert={(team) => handleRevertTeam(team.id)}      />
+        onHide={(team) => handleHideTeam(team.id)}
+        onRevert={(team) => handleRevertTeam(team.id)} />
 
       {/* Coaches Table */}
       <TableSection<Coach>
@@ -552,46 +552,41 @@ function TableSection<T extends Entity>({
                     //   );
                     // }
 
-// const [loadingAction, setLoadingAction] = useState<'hide' | 'revert' | null>(null);
+                    // const [loadingAction, setLoadingAction] = useState<'hide' | 'revert' | null>(null);
 
-if (col === 'Actions') {
-  return (
-    <td key={`actions-${colIdx}`} className="px-4 py-2 flex gap-2">
-      
-      
-{/* Hide Button (icon only) */}
-{onHide && !isDeleted && (
-  <Button
-    onClick={async () => {
-      await onHide(item);
-    }}
-    className="text-red-600 rounded-full bg-transparent m-0 p-0 hover:bg-transparent"
-    title="Hide"
-  >
-    <span role="img" aria-label="Hide">🛑</span>
-  </Button>
-)}
-
-{/* Revert Button (icon only) */}
-{onRevert && isDeleted && (
-  <Button
-    onClick={async () => {
-      await onRevert(item);
-    }}
-    className="text-green-600 rounded-full bg-transparent m-0 p-0 hover:bg-transparent"
-    title="Revert"
-  >
-    <span role="img" aria-label="Revert">♻️</span>
-  </Button>
-)}
+                    if (col === 'Actions') {
+                      return (
+                        <td key={`actions-${colIdx}`} className="px-4 py-2 flex gap-2">
 
 
+                          {/* Hide Button (icon only) */}
+                          {onHide && !isDeleted && (
+                            <Button
+                              onClick={async () => {
+                                await onHide(item);
+                              }}
+                              className="text-red-600 rounded-full bg-transparent m-0 p-0 hover:bg-transparent"
+                              title="Hide"
+                            >
+                              <span role="img" aria-label="Hide">🛑</span>
+                            </Button>
+                          )}
 
-
-     
-    </td>
-  );
-}
+                          {/* Revert Button (icon only) */}
+                          {onRevert && isDeleted && (
+                            <Button
+                              onClick={async () => {
+                                await onRevert(item);
+                              }}
+                              className="text-green-600 rounded-full bg-transparent m-0 p-0 hover:bg-transparent"
+                              title="Revert"
+                            >
+                              <span role="img" aria-label="Revert">♻️</span>
+                            </Button>
+                          )}
+                        </td>
+                      );
+                    }
 
                     const cellValue = item[col];
 
@@ -633,10 +628,9 @@ if (col === 'Actions') {
                         </td>
                       );
                     }
-
                     return (
                       <td key={String(col)} className="px-4 py-2">
-              {String(cellValue)}
+                        {String(cellValue)}
                       </td>
                     );
                   })}

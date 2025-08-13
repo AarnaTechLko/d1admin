@@ -169,7 +169,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { admin, block_ips, ip_logs, role } from "@/lib/schema";
-import { eq, and, or, sql } from "drizzle-orm";
+import { eq, and, or, sql, SQL } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -246,24 +246,37 @@ export async function POST(req: Request) {
       return NextResponse.json({ message, blocked: true }, { status: 403 });
     }
 
-    // Fetch admin + role (JOIN to get change_password) with is_deleted check
-    const result = await db
-      .select({
-        id: admin.id,
-        email: admin.email,
-        username: admin.username,
-        password_hash: admin.password_hash,
-        role: admin.role,
-        is_deleted: admin.is_deleted,
-        changePassword: sql`CASE 
-          WHEN ${admin.role} = 'admin' THEN 1 
-          ELSE ${role.change_password} 
-        END`.as("changePassword"),
-      })
-      .from(admin)
-      .leftJoin(role, eq(admin.id, role.user_id))
-      .where(and(eq(admin.email, email), eq(admin.is_deleted, 1))) // ✅ Block deleted accounts
-      .limit(1);
+const isAdminCase = (trueValue: number | SQL<number>, falseValue: number | SQL<number>) =>
+  sql<number>`CASE 
+    WHEN ${admin.role} = 'admin' THEN ${trueValue} 
+    ELSE ${falseValue} 
+  END`;
+
+const result = await db
+  .select({
+    id: admin.id,
+    email: admin.email,
+    username: admin.username,
+    password_hash: admin.password_hash,
+    role: admin.role,
+    is_deleted: admin.is_deleted,
+
+     changePassword: isAdminCase(1, sql`${role.change_password}`).as("changePassword"),
+
+    monitor_activity: isAdminCase(1, sql`${role.monitor_activity}`).as("monitor_activity"),
+    view_finance: isAdminCase(1, sql`${role.view_finance}`).as("view_finance"),
+    access_ticket: isAdminCase(1, sql`${role.access_ticket}`).as("access_ticket"),
+  })
+  .from(admin)
+  .leftJoin(role, eq(admin.id, role.user_id))
+  .where(
+    and(
+      eq(admin.email, email),
+      eq(admin.is_deleted, 1) // Only active accounts
+    )
+  )
+  .limit(1)
+  .execute();
 
     if (!result || result.length === 0) {
       return NextResponse.json(
@@ -274,7 +287,6 @@ export async function POST(req: Request) {
 
     const currentUser = result[0];
 
-    // ✅ Extra safeguard
     if (currentUser.is_deleted === 0) {
       return NextResponse.json(
         { error: "Account has been deleted. Please contact admin." },
@@ -320,7 +332,7 @@ export async function POST(req: Request) {
       timezone: datag.timezone || null,
     });
 
-    // Set session cookies including change_password
+    // Set cookies with permissions
     const cookieOptions =
       "HttpOnly; Path=/; Max-Age=3600; Secure; SameSite=Strict";
     const headers = new Headers();
@@ -335,6 +347,18 @@ export async function POST(req: Request) {
       "Set-Cookie",
       `change_password=${currentUser.changePassword || 0}; ${cookieOptions}`
     );
+    headers.append(
+      "Set-Cookie",
+      `monitor_activity=${currentUser.monitor_activity || 0}; ${cookieOptions}`
+    );
+    headers.append(
+      "Set-Cookie",
+      `view_finance=${currentUser.view_finance || 0}; ${cookieOptions}`
+    );
+    headers.append(
+      "Set-Cookie",
+      `access_ticket=${currentUser.access_ticket || 0}; ${cookieOptions}`
+    );
     headers.append("Content-Type", "application/json");
 
     return new Response(
@@ -346,6 +370,9 @@ export async function POST(req: Request) {
         role: currentUser.role,
         username: currentUser.username,
         change_password: currentUser.changePassword || 0,
+        monitor_activity: currentUser.monitor_activity || 0,
+        view_finance: currentUser.view_finance || 0,
+        access_ticket: currentUser.access_ticket || 0,
       }),
       {
         status: 200,

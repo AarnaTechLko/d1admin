@@ -24,7 +24,7 @@ export async function GET(
   if (isNaN(coachId)) {
     return NextResponse.json({ message: 'Invalid coach ID' }, { status: 400 });
   }
-
+  console.log("coach data:",coachId);
   try {
     // Fetch coach basic info with aggregates
     const coachData = await db
@@ -59,7 +59,7 @@ export async function GET(
         earnings: sql<number>`COALESCE(SUM(${coachaccount.amount}), 0)`,
       })
       .from(coaches)
-      .leftJoin(countries, eq(countries.id, sql<number>`CAST(${coaches.country} AS INTEGER)`))
+    .leftJoin(countries, eq(countries.id, sql<number>`CAST(${coaches.country} AS INTEGER)`))
       .leftJoin(licenses, eq(licenses.assigned_to, coaches.id))
       .leftJoin(coachaccount, eq(coachaccount.coach_id, coaches.id))
       .where(eq(coaches.id, coachId))
@@ -91,7 +91,7 @@ export async function GET(
         countries.name
       )
       .limit(1);
-
+console.log("coach data:",coachData);
     if (!coachData.length) {
       return NextResponse.json({ message: 'Coach not found' }, { status: 404 });
     }

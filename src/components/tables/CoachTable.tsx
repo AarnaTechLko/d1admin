@@ -5,10 +5,12 @@ import Badge from "../ui/badge/Badge";
 import Image from "next/image";
 import Button from "../ui/button/Button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import Link from "next/link";
+
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { Coach } from "@/app/types/types";
+// import router from "next/router";
+import { useRouter } from "next/navigation";
 
 interface CoachTableProps {
   data: Coach[];
@@ -36,7 +38,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
   const [selectedCoachId, setSelectedCoachId] = useState<number | null>(null);
   const [newCoachPassword, setNewCoachPassword] = useState("");
   // const userRole = sessionStorage.getItem("role");
-
+ const router = useRouter();
   const handleOpenCoachModal = (coachId: number) => {
     setSelectedCoachId(coachId);
     setCoachPasswordModalOpen(true);
@@ -251,9 +253,34 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
                       )}
                     </Dialog>
                   </TableCell>
-                  <TableCell className="px-2 py-3">
+                  {/* <TableCell className="px-2 py-3">
                     <Link href={`/coach/${coach.id}`}><Button className="text-xs">Open</Button></Link>
-                  </TableCell>
+                  </TableCell> */}
+              
+                    <TableCell className="px-2 py-3">
+                      <Button
+                        onClick={() => {
+                          const monitorActivity = sessionStorage.getItem("monitor_activity");
+
+                          console.log("monitor_activity", monitorActivity);
+                          if (monitorActivity === "1") {
+                            router.push(`/coach/${coach.id}`);
+                          } else {
+                            Swal.fire({
+                              icon: "warning",
+                              title: "Access Denied",
+                              text: "You are not allowed to open history.",
+                            });
+                          }
+                        }}
+                        title="Open History"
+                        className="text-xs "
+                      >
+                        Open
+                      </Button>
+                    </TableCell>
+
+            
                   <TableCell className="px-2 py-3">
                     <button
                       className="underline text-sm"

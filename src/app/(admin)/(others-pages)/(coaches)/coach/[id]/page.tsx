@@ -98,8 +98,8 @@ interface Coach {
 }
 
 export default function CoachDetailsPage() {
-        useRoleGuard();
-  
+  useRoleGuard();
+
   const { id } = useParams();
   const [coach, setCoach] = useState<Coach | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -327,9 +327,9 @@ export default function CoachDetailsPage() {
 
 
   }, [id]);
-if (loading) {
-        return <Loading />;
-    }
+  if (loading) {
+    return <Loading />;
+  }
   // if (loading) {
   //   return (
   //     <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
@@ -339,7 +339,8 @@ if (loading) {
   //   );
   // }
   if (!coach) return <div className="p-6 text-center text-red-500">Coach not found.</div>;
- 
+         const view_finance = Number(sessionStorage.getItem("view_finance") || 0);
+
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
       {/* Header */} <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow p-6 mb-6">
@@ -454,18 +455,17 @@ if (loading) {
         <div><strong className="text-gray-700">Coaching License Type:</strong> {coach.license_type}</div>
         {/* <div><strong className="text-gray-500">Consumed Licenses:</strong> {coach.consumeLicenseCount}</div> */}
         {/* <div><strong className="text-gray-500">Assigned Licenses:</strong> {coach.assignedLicenseCount}</div> */}
-        <div><strong className="text-gray-700">Total Earnings:</strong><span className='ml-2 px-2 py-1 rounded-full  text-xs bg-blue-200 '> ${coach.payments
-          .filter((p: Payment) => p.is_deleted !== 0)
+        <div><strong className="text-gray-700">Total Earnings:</strong><span className='ml-2 px-2 py-1 rounded-full  text-xs bg-blue-200 '> 
+          ${coach.payments.filter((p: Payment) => p.is_deleted !== 0)
           .reduce((sum, p) => sum + Number(p.amount), 0)
           .toFixed(2)}</span></div>
         <div><strong className="text-gray-700">Qualifications:</strong> {coach.qualifications}</div>
- {coach?.latestLoginIp && (
-                        <div className="mb-2">
-                            <strong className="text-gray-700">Latest Login IP:</strong>{" "}
-                            <span className="text-black">{coach.latestLoginIp}</span>
-                        </div>
-                    )}
-
+        {coach?.latestLoginIp && (
+          <div className="mb-2">
+            <strong className="text-gray-700">Latest Login IP:</strong>{" "}
+            <span className="text-black">{coach.latestLoginIp}</span>
+          </div>
+        )}
       </div>
       <div>  <h2 className="text-lg font-semibold mt-5  bg-customBlue text-black p-4 rounded-lg">
         Background
@@ -627,7 +627,9 @@ if (loading) {
       </section >
 
       {/* Payments */}
-      {payments.length > 0 && (
+      
+     
+{view_finance === 1 && payments.length > 0 && (
 
         < section className="p-6 max-w-7xl mx-auto space-y-8" >
 

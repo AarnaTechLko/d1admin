@@ -7,9 +7,10 @@ import d1 from "@/public/images/signin/d1.png";
 import Button from "../ui/button/Button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import Badge from "../ui/badge/Badge";
-import Link from "next/link";
+
 import Swal from "sweetalert2";
 import withReactContent from 'sweetalert2-react-content';
+import { useRouter } from "next/navigation";
 
 interface Player {
 
@@ -51,6 +52,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
   // setCurrentPage = () => { },
 }) => {
   const MySwal = withReactContent(Swal);
+ const router = useRouter();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -482,12 +484,29 @@ console.log("userid",userId);
 
 
                         {/** palyer history */}
-                        <TableCell className="px-2 py-3 text-gray-500 dark:text-gray-400">
+                     <TableCell className="px-2 py-3">
+                      <Button
+                        onClick={() => {
+                          const monitorActivity = sessionStorage.getItem("monitor_activity");
 
-                          <Link href={`/player/${player.id}`}>
-                            <Button className="text-xs">Open</Button>
-                          </Link>
-                        </TableCell>
+                          console.log("monitor_activity", monitorActivity);
+                          if (monitorActivity === "1") {
+                            router.push(`/player/${player.id}`);
+                          } else {
+                            Swal.fire({
+                              icon: "warning",
+                              title: "Access Denied",
+                              text: "You are not allowed to open history.",
+                            });
+                          }
+                        }}
+                        title="Open History"
+                        className="text-xs "
+                      >
+                        Open
+                      </Button>
+                    </TableCell>
+
 
                         <TableCell className="px-2 py-3">
                           <button

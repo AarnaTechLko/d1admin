@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users, countries, playerEvaluation, coachearnings, payments, evaluationResults,ip_logs } from '@/lib/schema';
+import { users, countries, playerEvaluation, coachearnings, payments, evaluationResults, ip_logs, role } from '@/lib/schema';
 import { eq, sql } from 'drizzle-orm';
 
 export async function GET(
@@ -52,18 +52,23 @@ export async function GET(
         countrycode: users.countrycode,
         coachName: sql`coa."firstName"`.as("coachName"),
         coachLastName: sql`coa."lastName"`.as("coachLastName"),
-        enterpriseName: sql`ent."organizationName"`.as("enterpriseName")
+        enterpriseName: sql`ent."organizationName"`.as("enterpriseName"),
+        view_finance: role.view_finance // ✅ pulling from role table
+
       })
       .from(users)
       .leftJoin(countries, eq(countries.id, sql<number>`CAST(${users.country} AS INTEGER)`))
 
       .leftJoin(sql`enterprises AS ent`, sql`NULLIF(${users.enterprise_id}, '')::integer = ent.id`)
       .leftJoin(sql`coaches AS coa`, sql`NULLIF(${users.coach_id}, '')::integer = coa.id`)
+  .leftJoin(role, eq(role.user_id, users.id)) // join role table
+
       .where(eq(users.id, id))
       .limit(1)
       .execute();
 
     const player = playerResult[0];
+    console.log("playerghsfhsd",player);
 
     if (!player) {
       return NextResponse.json({ message: 'Player not found' }, { status: 404 });
@@ -131,7 +136,7 @@ export async function GET(
       .from(evaluationResults)
       .where(eq(evaluationResults.playerId, id))
       .execute();
- const latestIpResult = await db
+    const latestIpResult = await db
       .select({
         ip: ip_logs.ip_address,
         created_at: ip_logs.created_at
