@@ -120,10 +120,11 @@ interface Evaluation {
 }
 
 export default function PlayerDetailPage() {
-          useRoleGuard();
-    
+    useRoleGuard();
+
     const { id } = useParams();
     const [data, setData] = useState<{
+        view_finance: number;
         player: Player;
         evaluations: Evaluation[];
         earnings: Earnings[];
@@ -321,7 +322,7 @@ export default function PlayerDetailPage() {
             try {
                 const res = await fetch(`/api/player/${id}`);
                 const json = await res.json();
-                console.log("playerdata", json); 
+                console.log("playerdata", json);
                 if (res.ok) {
                     setData(json);
                 } else {
@@ -345,6 +346,7 @@ export default function PlayerDetailPage() {
 
     const { player } = data;
 
+         const view_finance = Number(sessionStorage.getItem("view_finance") || 0);
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-8">
@@ -411,12 +413,12 @@ export default function PlayerDetailPage() {
 
 
                 <div className="bg-white shadow-md rounded-2xl p-6 border border-gray-200
-  grid 
-  grid-cols-1       
-  sm:grid-cols-2      
-  md:grid-cols-3     
-  gap-4
-  text-sm
+                        grid 
+                        grid-cols-1       
+                        sm:grid-cols-2      
+                        md:grid-cols-3     
+                        gap-4
+                        text-sm
 ">                    {/* <div>
           <strong className="text-gray-500">Name:</strong> {player.first_name} {player.last_name}
         </div> */}
@@ -629,104 +631,107 @@ export default function PlayerDetailPage() {
                 </div>
             </section>
             {/* Payments */}
-            <section className="p-6 max-w-7xl mx-auto space-y-8">
-                <h2 className="text-2xl font-semibold mb-4">Payments</h2>
-                <div className='flex justify-between'>
 
-                    <div className="text-gray-700">Total: {data.payments.length}</div>
-                    {/* <div className="text-gray-700">
+{view_finance === 1 && (
+
+                <section className="p-6 max-w-7xl mx-auto space-y-8">
+                    <h2 className="text-2xl font-semibold mb-4">Payments</h2>
+                    <div className='flex justify-between'>
+
+                        <div className="text-gray-700">Total: {data.payments.length}</div>
+                        {/* <div className="text-gray-700">
                     Total Earnings: $
                     {coach.payments
                         .filter((p: Payment) => p.is_deleted !== 0)
                         .reduce((sum, p) => sum + Number(p.amount), 0)
                         .toFixed(2)}
                 </div> */}
-                </div>
-                <div className="overflow-x-auto bg-white shadow-md rounded-2xl border border-gray-200">
-                    {data.payments.length === 0 ? (
-                        <p className="p-6 text-gray-600">No payments found.</p>
-                    ) : (
-                        <>
-                            <table className="w-full text-sm text-left border-collapse">
-                                <thead className="bg-gray-50 border-b text-gray-700 uppercase text-xs">
-                                    <tr>
-                                        <th className="px-4 py-3">Player</th>
-                                        <th className="px-4 py-3">Evaluation</th>
-                                        <th className="px-4 py-3">Amount</th>
-                                        <th className="px-4 py-3">Status</th>
-                                        <th className="px-4 py-3">Description</th>
-                                        <th className="px-4 py-3">Created At</th>
-                                        <th className="px-4 py-3">Action</th>
+                    </div>
+                    <div className="overflow-x-auto bg-white shadow-md rounded-2xl border border-gray-200">
+                        {data.payments.length === 0 ? (
+                            <p className="p-6 text-gray-600">No payments found.</p>
+                        ) : (
+                            <>
+                                <table className="w-full text-sm text-left border-collapse">
+                                    <thead className="bg-gray-50 border-b text-gray-700 uppercase text-xs">
+                                        <tr>
+                                            <th className="px-4 py-3">Player</th>
+                                            <th className="px-4 py-3">Evaluation</th>
+                                            <th className="px-4 py-3">Amount</th>
+                                            <th className="px-4 py-3">Status</th>
+                                            <th className="px-4 py-3">Description</th>
+                                            <th className="px-4 py-3">Created At</th>
+                                            <th className="px-4 py-3">Action</th>
 
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {paginatedPayments.map((p: Payment) => (
-                                        <tr
-                                            key={p.id}
-                                            className={`transition-colors duration-300 ${p.is_deleted === 0 ? 'bg-red-100' : 'bg-white'
-                                                }`}
-                                        >
-                                            <td className="px-4 py-3">{p.playerFirstName}</td>
-                                            <td className="px-4 py-3">{p.review_title}</td>
-                                            <td className="px-4 py-3">${p.amount}</td>
-                                            <td className="px-4 py-3">{p.status}</td>
-                                            <td className="px-4 py-3">{p.description}</td>
-                                            <td className="px-4 py-3">{new Date(p.created_at).toLocaleDateString()}</td>
-                                            <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
-                                                {p.is_deleted === 0 ? (
-                                                    <button
-                                                        onClick={() => handleRevertPayment(p.evaluation_id)}
-                                                        title="Revert Payment"
-
-                                                        style={{
-                                                            fontSize: '1.2rem',
-                                                            marginRight: '8px',
-                                                        }}
-                                                    >
-                                                        🛑
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => handleHidePayment(p.evaluation_id)}
-                                                        title="Hide Payment"
-                                                        style={{
-                                                            fontSize: '1.2rem',
-                                                        }}
-                                                    >
-                                                        ♻️
-                                                    </button>
-                                                )}
-                                            </td>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            {/* Pagination Controls */}
-                            <div className="flex justify-between items-center p-4 border-t">
-                                <button
-                                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
-                                    onClick={() => setPaymentPage((prev) => Math.max(prev - 1, 1))}
-                                    disabled={paymentPage === 1}
-                                >
-                                    Previous
-                                </button>
-                                <div className="text-sm text-gray-700">
-                                    Page {paymentPage}
-                                </div>
-                                <button
-                                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
-                                    onClick={() => setPaymentPage((prev) => Math.min(prev + 1, totalPaymentPages))}
-                                    disabled={paymentPage === totalPaymentPages}
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </section >
+                                    </thead>
+                                    <tbody>
+                                        {paginatedPayments.map((p: Payment) => (
+                                            <tr
+                                                key={p.id}
+                                                className={`transition-colors duration-300 ${p.is_deleted === 0 ? 'bg-red-100' : 'bg-white'
+                                                    }`}
+                                            >
+                                                <td className="px-4 py-3">{p.playerFirstName}</td>
+                                                <td className="px-4 py-3">{p.review_title}</td>
+                                                <td className="px-4 py-3">${p.amount}</td>
+                                                <td className="px-4 py-3">{p.status}</td>
+                                                <td className="px-4 py-3">{p.description}</td>
+                                                <td className="px-4 py-3">{new Date(p.created_at).toLocaleDateString()}</td>
+                                                <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
+                                                    {p.is_deleted === 0 ? (
+                                                        <button
+                                                            onClick={() => handleRevertPayment(p.evaluation_id)}
+                                                            title="Revert Payment"
 
+                                                            style={{
+                                                                fontSize: '1.2rem',
+                                                                marginRight: '8px',
+                                                            }}
+                                                        >
+                                                            🛑
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleHidePayment(p.evaluation_id)}
+                                                            title="Hide Payment"
+                                                            style={{
+                                                                fontSize: '1.2rem',
+                                                            }}
+                                                        >
+                                                            ♻️
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                {/* Pagination Controls */}
+                                <div className="flex justify-between items-center p-4 border-t">
+                                    <button
+                                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
+                                        onClick={() => setPaymentPage((prev) => Math.max(prev - 1, 1))}
+                                        disabled={paymentPage === 1}
+                                    >
+                                        Previous
+                                    </button>
+                                    <div className="text-sm text-gray-700">
+                                        Page {paymentPage}
+                                    </div>
+                                    <button
+                                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
+                                        onClick={() => setPaymentPage((prev) => Math.min(prev + 1, totalPaymentPages))}
+                                        disabled={paymentPage === totalPaymentPages}
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </section >
+            )}
 
         </div >
     );

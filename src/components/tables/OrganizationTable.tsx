@@ -9,9 +9,9 @@ import d1 from "@/public/images/signin/d1.png";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import Button from "../ui/button/Button";
 // import { enterprises } from "@/lib/schema";
-import Link from "next/link";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { useRouter } from "next/navigation";
 
 interface Organization {
 
@@ -79,6 +79,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
     setSelectedUserId(userId);
     setPasswordModalOpen(true);
   };
+  const router = useRouter();
 
   const handleCloseModal = () => {
     setSelectedUserId(null);
@@ -484,10 +485,27 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                           </Dialog>
                         </TableCell>
                         {/** history */}
-                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                          <Link href={`/organization/${organization.id}`}>
-                            <Button>Open</Button>
-                          </Link>
+                        <TableCell className="px-2 py-3">
+                          <Button
+                            onClick={() => {
+                              const monitorActivity = sessionStorage.getItem("monitor_activity");
+
+                              console.log("monitor_activity", monitorActivity);
+                              if (monitorActivity === "1") {
+                                router.push(`/organization/${organization.id}`);
+                              } else {
+                                Swal.fire({
+                                  icon: "warning",
+                                  title: "Access Denied",
+                                  text: "You are not allowed to open history.",
+                                });
+                              }
+                            }}
+                            title="Open History"
+                            className="text-xs "
+                          >
+                            Open
+                          </Button>
                         </TableCell>
                         <TableCell className="px-2 py-3">
                           <button
@@ -590,28 +608,28 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                                 )}
                               </DialogContent>
                             </Dialog>
-                        
-                              <button
-  onClick={() => {
-    const changePassword = sessionStorage.getItem("change_password");
 
-    console.log("changepassword",changePassword);
-    if (changePassword === "1") {
-      handleOpenModal(Number(organization.id));
-    } else {
-      Swal.fire({
-        icon: "warning",
-        title: "Access Denied",
-        text: "You are not allowed to change the password.",
-      });
-    }
-  }}                                title="Change Password"
-                                className="hover:text-blue-600 "
-                              >
-                                🔒
-                              </button>
+                            <button
+                              onClick={() => {
+                                const changePassword = sessionStorage.getItem("change_password");
 
-                         
+                                console.log("changepassword", changePassword);
+                                if (changePassword === "1") {
+                                  handleOpenModal(Number(organization.id));
+                                } else {
+                                  Swal.fire({
+                                    icon: "warning",
+                                    title: "Access Denied",
+                                    text: "You are not allowed to change the password.",
+                                  });
+                                }
+                              }} title="Change Password"
+                              className="hover:text-blue-600 "
+                            >
+                              🔒
+                            </button>
+
+
                           </div>
 
                         </TableCell>
@@ -764,7 +782,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                         <Button
                           className="bg-green-600 text-white"
                           onClick={async () => {
-                           setSuspendOpen(false);
+                            setSuspendOpen(false);
 
                             const confirm = await Swal.fire({
                               icon: 'question',

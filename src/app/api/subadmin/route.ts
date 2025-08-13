@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const existingAdmin = await db
       .select()
       .from(admins)
-      .where(and(eq(admins.email, email), eq(admins.is_deleted, 0)));
+      .where(and(eq(admins.email, email), eq(admins.is_deleted, 1)));
 
     if (existingAdmin.length > 0) {
       return NextResponse.json({ error: "Email already in use" }, { status: 400 });
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       email,
       password_hash: hashedPassword,
       role,
-      is_deleted: 0,
+      is_deleted: 1,
     }) .returning();
 console.log("data",insertedAdmin );
     return NextResponse.json(  { success: "Admin added successfully", user_id: insertedAdmin[0].id }, { status: 201 });
@@ -108,7 +108,7 @@ export async function GET(req: Request) {
     const limit = parseInt(url.searchParams.get("limit") || "10", 10);
     const offset = (page - 1) * limit;
 
-    const baseCondition = eq(admins.is_deleted, 0);
+    const baseCondition = eq(admins.is_deleted, 1);
     const searchCondition = search
       ? or(
           ilike(admins.username, `%${search}%`),
@@ -117,7 +117,9 @@ export async function GET(req: Request) {
         )
       : undefined;
 
-    const whereClause = searchCondition ? and(baseCondition, searchCondition) : baseCondition;
+    const whereClause = searchCondition
+      ? and(baseCondition, searchCondition)
+      : baseCondition;
 
     const [adminsData, totalResult] = await Promise.all([
       db
@@ -126,18 +128,16 @@ export async function GET(req: Request) {
           username: admins.username,
           email: admins.email,
           role: admins.role,
-          permission: {
-            change_password: role.change_password,
-            refund: role.refund,
-            monitor_activity: role.monitor_activity,
-            view_finance: role.view_finance,
-            access_ticket: role.access_ticket,
-          },
+          change_password: role.change_password,
+          refund: role.refund,
+          monitor_activity: role.monitor_activity,
+          view_finance: role.view_finance,
+          access_ticket: role.access_ticket,
           created_at: admins.created_at,
           is_deleted: admins.is_deleted,
         })
         .from(admins)
-        .leftJoin(role, eq(admins.role, role.role_name))
+        .leftJoin(role, eq(admins.id, role.user_id))
         .where(whereClause)
         .orderBy(desc(admins.created_at))
         .offset(offset)
@@ -150,8 +150,25 @@ export async function GET(req: Request) {
         .then((res) => res[0]?.count || 0),
     ]);
 
+    // Filter only permissions with value = 1
+    const adminsWithFilteredPermissions = adminsData.map((admin) => {
+      const { change_password, refund, monitor_activity, view_finance, access_ticket, ...rest } = admin;
+      const permissions: Record<string, number> = {};
+
+      if (change_password === 1) permissions.change_password = 1;
+      if (refund === 1) permissions.refund = 1;
+      if (monitor_activity === 1) permissions.monitor_activity = 1;
+      if (view_finance === 1) permissions.view_finance = 1;
+      if (access_ticket === 1) permissions.access_ticket = 1;
+
+      return {
+        ...rest,
+        permission: permissions,
+      };
+    });
+console.log('all darta:',adminsWithFilteredPermissions);
     return NextResponse.json({
-      admins: adminsData,
+      admins: adminsWithFilteredPermissions,
       currentPage: page,
       totalPages: Math.ceil(totalResult / limit),
       hasNextPage: page * limit < totalResult,
@@ -160,7 +177,10 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error("GET /api/subadmin error:", error);
     return NextResponse.json(
-      { message: "Failed to fetch admins", error: error instanceof Error ? error.message : String(error) },
+      {
+        message: "Failed to fetch admins",
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
@@ -186,7 +206,7 @@ export async function DELETE(req: Request) {
 
     await db
       .update(admins)
-      .set({ is_deleted: 1 }) // 👈 Mark as deleted using 1
+      .set({ is_deleted: 0 }) // 👈 Mark as deleted using 1
       .where(eq(admins.id, Number(adminId)));
 
     return NextResponse.json({ message: "Admin deleted successfully" }, { status: 200 });

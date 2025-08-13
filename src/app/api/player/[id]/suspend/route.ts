@@ -14,6 +14,32 @@ export async function POST(
     if (isNaN(playerId) || suspend_days == null || suspend_days < 0) {
       return new NextResponse('Invalid data', { status: 400 });
     }
+     const player = await db.query.users.findFirst({
+      where: eq(users.id, playerId),
+    });
+
+    if (player?.suspend === 0 && player.suspend_end_date) {
+      const today = new Date();
+      const endDate = new Date(player.suspend_end_date);
+
+      if (today > endDate) {
+        // Auto-unsuspend
+        await db
+          .update(users)
+          .set({
+            suspend: 1,
+            suspend_days: null,
+            suspend_start_date: null,
+            suspend_end_date: null,
+          })
+          .where(eq(users.id, playerId));
+
+        return NextResponse.json({
+          success: true,
+          action: 'auto-unsuspended',
+        });
+      }
+    }
 
     const today = new Date();
     const endDate = new Date(today);

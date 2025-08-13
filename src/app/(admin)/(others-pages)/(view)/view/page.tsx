@@ -143,7 +143,7 @@ const AdminListPage = () => {
                   </TableCell>
                   <TableCell className="px-5 py-3 text-sm font-bold text-gray-500 text-start dark:text-gray-400">
                     <div className="flex items-center gap-2">
-                      <ShieldCheck  size={16} /> Permission
+                      <ShieldCheck size={16} /> Permission
                     </div>
                   </TableCell>
 
@@ -157,7 +157,7 @@ const AdminListPage = () => {
               </TableHeader>
 
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {admins.map((admin,index) => {
+                {admins.map((admin, index) => {
                   // const isDeleted = admin.is_deleted ?? false;
 
                   return (
@@ -166,14 +166,14 @@ const AdminListPage = () => {
                       <TableCell className="px-4 py-3 text-xs text-gray-800 dark:text-white/90">{admin.email}</TableCell>
                       <TableCell className="px-4 py-3 text-xs text-gray-800 dark:text-white/90">{admin.role}</TableCell>
                       <TableCell className="px-4 py-3 text-xs text-gray-800 dark:text-white/90"> {Object.keys(admin.permission)
-    .filter(key => admin.permission[key as keyof Permission] === 1)
-    .join(", ") || "—"}</TableCell>
+                        .filter(key => admin.permission[key as keyof Permission] === 1)
+                        .join(", ") || "—"}</TableCell>
                       <TableCell className="px-4 py-3 text-xs text-gray-800 dark:text-white/90">
                         <div className="flex gap-3">
                           <button
                             onClick={() => handleDelete(admin.id)}
                             className="p-2 text-red-500 hover:text-red-600 disabled:opacity-30"
-                          // disabled={isDeleted}
+                          //  disabled={admin.is_deleted}
                           >
                             <Trash size={18} />
                           </button>
