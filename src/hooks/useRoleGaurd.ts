@@ -68,7 +68,7 @@ export const useRoleGuard = () => {
 
   useEffect(() => {
     const role = sessionStorage.getItem("role");
-
+console.log('rolde data:',role);
     if (role) {
       const allowedRoutes = roleBasedAccess[role];
 
@@ -89,7 +89,7 @@ export const useRoleGuard = () => {
           const regex = new RegExp(`^${regexPath}$`);
           return regex.test(basePath);
         }
-
+console.log("route path:", basePath);
         return route === basePath;
       });
 

@@ -116,8 +116,10 @@ const SupportModal1: React.FC<SupportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded shadow-lg w-1/2">
+<div className="fixed p-6 inset-0 bg-black/40  flex items-center justify-center">
+  {/* Backdrop with blur and dark overlay */}
+  {/* <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" /> */}
+        <div className="bg-white p-6 mt-10 rounded shadow-lg w-1/2">
         <h2 className="text-xl font-bold mb-4">Create a New Ticket</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4 flex space-x-4">

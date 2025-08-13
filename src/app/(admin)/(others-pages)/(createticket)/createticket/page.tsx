@@ -629,7 +629,7 @@ const TicketsPage = () => {
                 onClick={() => setSelectedTicket((prev) => prev ? { ...prev, assign_to: subAdmin.id } : null)}
               >
                 {subAdmin.username}
-                {/* ({subAdmin.email}) */}
+                ({subAdmin.email})
               </li>
             ))}
           </ul>

@@ -1,7 +1,7 @@
 // utils/roleAccess.ts
 
 export const roleBasedAccess: Record<string, string[] | "*"> = {
-  admin: "*",
+  admin: "*", // Full access for admin
 
   "Customer Support": [
     "/ticket*",
@@ -13,9 +13,10 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
     "/disableplayer",
     "/organization*",
     "/suspendorg",
-    "/evaluationdetails",
-    "/disableorg"
+    "/disableorg",
+    "/evaluationdetails"
   ],
+
   Manager: [
     "/dashboard*",
     "/coach*",
@@ -24,21 +25,9 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
     "/team*",
     "/evaluationdetails"
   ],
-  "Executive Level 1": [
-    "/ticket*",
-    "/coach*",
-    "/suspend",
-    "/disablecoach",
-    "/player*",
-    "/suspendplayer",
-    "/disableplayer",
-    "/organization*",
-    "/suspendorg",
-    "/disableorg",
-     "/evaluationdetails"
 
-  ],
-  "Executive Level 2": [
+  "Executive Level 1": [
+    "/dashboard*",
     "/ticket*",
     "/coach*",
     "/suspend",
@@ -50,6 +39,20 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
     "/suspendorg",
     "/disableorg",
     "/evaluationdetails"
+  ],
 
+  "Executive Level 2": [
+    "/dashboard*",
+    "/ticket*",
+    "/coach*",
+    "/suspend",
+    "/disablecoach",
+    "/player*",
+    "/suspendplayer",
+    "/disableplayer",
+    "/organization*",
+    "/suspendorg",
+    "/disableorg",
+    "/evaluationdetails"
   ]
 };
