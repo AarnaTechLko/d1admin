@@ -42,7 +42,10 @@ const AppSidebar: React.FC = () => {
         {
           name: "Ticket",
           icon: <UserCircleIcon />,
-          subItems: [{ name: "View Ticket", path: "/ticket", pro: false }],
+          subItems: [{ name: "View Ticket", path: "/ticket", pro: false },
+          { name: "Create Ticket", path: "/createticket", pro: false },
+
+          ],
         },
         {
           name: "Coaches",
@@ -133,13 +136,15 @@ const AppSidebar: React.FC = () => {
             subItems: [
               { name: "Add", path: "/subadmin", pro: false },
               { name: "View", path: "/view", pro: false },
-              { name: "Create Ticket", path: "/createticket", pro: false },
             ],
           },
           {
             name: "Ticket",
             icon: <UserCircleIcon />,
-            subItems: [{ name: "View Ticket", path: "/ticket", pro: false }],
+            subItems: [{ name: "View Ticket", path: "/ticket", pro: false },
+            { name: "Create Ticket", path: "/createticket", pro: false },
+
+            ],
           },
         ]
         : role === "Manager"
@@ -177,7 +182,10 @@ const AppSidebar: React.FC = () => {
         {
           name: "Ticket",
           icon: <UserCircleIcon />,
-          subItems: [{ name: "View Ticket", path: "/ticket", pro: false }],
+          subItems: [{ name: "View Ticket", path: "/ticket", pro: false },
+         { name: "Create Ticket", path: "/createticket", pro: false },
+
+          ],
         },
         {
           name: "Coaches",
@@ -212,7 +220,10 @@ const AppSidebar: React.FC = () => {
         {
           name: "Ticket",
           icon: <UserCircleIcon />,
-          subItems: [{ name: "View Ticket", path: "/ticket", pro: false }],
+          subItems: [{ name: "View Ticket", path: "/ticket", pro: false },
+          { name: "Create Ticket", path: "/createticket", pro: false },
+
+          ],
         },
         {
           name: "Coaches",

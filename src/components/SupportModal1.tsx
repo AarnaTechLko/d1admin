@@ -114,7 +114,6 @@ const SupportModal1: React.FC<SupportModalProps> = ({
       setIsSubmitting(false);
     }
   };
-
   return (
 <div className="fixed p-6 inset-0 bg-black/40  flex items-center justify-center">
   {/* Backdrop with blur and dark overlay */}
