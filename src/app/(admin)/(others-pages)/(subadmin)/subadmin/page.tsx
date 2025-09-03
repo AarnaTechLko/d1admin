@@ -8,6 +8,7 @@ import Button from "@/components/ui/button/Button";
 import { Eye, EyeOff, User, Mail, Lock } from "lucide-react";
 import Loading from "@/components/Loading";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import Swal from "sweetalert2";
 
 const permissionOptions = [
   { label: "Change Password", value: "changePassword" },
@@ -56,8 +57,22 @@ export default function CreateSubAdminWithRole() {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-    setLoading(true);
+ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(formData.email)) {
+    Swal.fire("Invalid Email", "Please enter a valid email address.", "warning");
+    return;
+  }
 
+   // ✅ Password validation
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+  if (!passwordRegex.test(formData.password)) {
+    Swal.fire(
+      "Weak Password",
+      "Password must be at least 6 characters long and include a letter, a number, and a special character.",
+      "warning"
+    );
+    return;
+  }
     try {
       // Step 1: Create subadmin
       const res = await fetch("/api/subadmin", {
@@ -202,8 +217,8 @@ useEffect(() => {
           >
             <option value="Manager">Manager</option>
             <option value="Customer Support">Customer Support</option>
-            <option value="Executive Level 1">Executive Level 1</option>
-            <option value="Executive Level 2">Executive Level 2</option>
+            <option value="Executive Level 1">Executive Level</option>
+            <option value="Tech">Tech</option>
           </select>
         </div>
       </div>

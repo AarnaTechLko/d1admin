@@ -177,7 +177,7 @@ const AppSidebar: React.FC = () => {
               subItems: [{ name: "View Team", path: "/team", pro: false }],
             },
           ]
-          :role === "Executive Level 1"
+          :role === "Executive Level"
       ? [
         {
           name: "Ticket",
@@ -215,7 +215,7 @@ const AppSidebar: React.FC = () => {
           ],
         },
       ]
-      :role === "Executive Level 2"
+      :role === "Tech"
       ? [
         {
           name: "Ticket",

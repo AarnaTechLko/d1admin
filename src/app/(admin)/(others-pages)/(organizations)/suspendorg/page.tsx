@@ -21,6 +21,8 @@ interface Organization {
   city: string;
   logo: string;
   status: string;
+    totalUsers: number;
+
   totalPlayers: number;
   totalCoaches: number;
   totalTeams: number;

@@ -23,6 +23,8 @@ interface Organization {
   status: string;
   totalPlayers: number;
   totalCoaches: number;
+    totalUsers: number;
+
   totalTeams: number;
   history?: string;
   facebook: string;

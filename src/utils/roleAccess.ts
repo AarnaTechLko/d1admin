@@ -5,6 +5,8 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
 
   "Customer Support": [
     "/ticket*",
+    "/dashboard*",
+    "/createticket*",
     "/coach*",
     "/suspend",
     "/disablecoach",
@@ -41,7 +43,7 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
     "/evaluationdetails"
   ],
 
-  "Executive Level 2": [
+  "Tech": [
     "/dashboard*",
     "/ticket*",
     "/coach*",

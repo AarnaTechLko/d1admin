@@ -18,8 +18,8 @@ export default function AccessDeniedPage() {
       <p className="mt-2 text-gray-600 dark:text-gray-300">
         You do not have permission to view this page.
       </p>
-      <Button className="mt-6" onClick={() => router.push("/signin")}>
-        Go Back to Login Page
+      <Button className="mt-6" onClick={() => router.push("/dashboard")}>
+        Go Back to Dashboard Page
       </Button>
     </div>
   );

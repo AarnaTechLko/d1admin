@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 import Badge from "../ui/badge/Badge";
 import Image from "next/image";
@@ -11,7 +11,12 @@ import withReactContent from "sweetalert2-react-content";
 import { Coach } from "@/app/types/types";
 // import router from "next/router";
 import { useRouter } from "next/navigation";
-
+import axios from "axios";
+type RecentMessage = {
+  id: number;
+  message: string;
+  created_at: string;
+};
 interface CoachTableProps {
   data: Coach[];
   currentPage: number;
@@ -36,13 +41,34 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
   const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const [isCoachPasswordModalOpen, setCoachPasswordModalOpen] = useState(false);
   const [selectedCoachId, setSelectedCoachId] = useState<number | null>(null);
+  const [selectedCoachid, setSelectedCoachid] = useState<number | null>(null);
+
   const [newCoachPassword, setNewCoachPassword] = useState("");
+  const [messageText, setMessageText] = useState("");
+  const [sendEmail, setSendEmail] = useState(false);
+  const [sendSMS, setSendSMS] = useState(false);
+  const [sendInternal, setSendInternal] = useState(false);
+  const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
+
   // const userRole = sessionStorage.getItem("role");
- const router = useRouter();
+  const router = useRouter();
   const handleOpenCoachModal = (coachId: number) => {
     setSelectedCoachId(coachId);
     setCoachPasswordModalOpen(true);
   };
+
+  useEffect(() => {
+    if (selectedCoachid) {
+      (async () => {
+        try {
+          const res = await axios.get(`/api/messages?type=coach&id=${selectedCoachid}`);
+          setRecentMessages(res.data.messages || []);
+        } catch (err) {
+          console.error("Error fetching messages:", err);
+        }
+      })();
+    }
+  }, [selectedCoachid]);
 
   const handleCloseCoachModal = () => {
     setSelectedCoachId(null);
@@ -256,31 +282,31 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
                   {/* <TableCell className="px-2 py-3">
                     <Link href={`/coach/${coach.id}`}><Button className="text-xs">Open</Button></Link>
                   </TableCell> */}
-              
-                    <TableCell className="px-2 py-3">
-                      <Button
-                        onClick={() => {
-                          const monitorActivity = sessionStorage.getItem("monitor_activity");
 
-                          console.log("monitor_activity", monitorActivity);
-                          if (monitorActivity === "1") {
-                            router.push(`/coach/${coach.id}`);
-                          } else {
-                            Swal.fire({
-                              icon: "warning",
-                              title: "Access Denied",
-                              text: "You are not allowed to open history.",
-                            });
-                          }
-                        }}
-                        title="Open History"
-                        className="text-xs "
-                      >
-                        Open
-                      </Button>
-                    </TableCell>
+                  <TableCell className="px-2 py-3">
+                    <Button
+                      onClick={() => {
+                        const monitorActivity = sessionStorage.getItem("monitor_activity");
 
-            
+                        console.log("monitor_activity", monitorActivity);
+                        if (monitorActivity === "1") {
+                          router.push(`/coach/${coach.id}`);
+                        } else {
+                          Swal.fire({
+                            icon: "warning",
+                            title: "Access Denied",
+                            text: "You are not allowed to open history.",
+                          });
+                        }
+                      }}
+                      title="Open History"
+                      className="text-xs "
+                    >
+                      Open
+                    </Button>
+                  </TableCell>
+
+
                   <TableCell className="px-2 py-3">
                     <button
                       className="underline text-sm"
@@ -390,6 +416,160 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
                       >
                         🔒
                       </button>
+                      <button
+                        onClick={() => setSelectedCoachid(Number(coach.id))}
+                        title="Send Message"
+                        className="text-purple-600 text-sm hover:underline"
+                      >
+                        💬
+                      </button>
+
+
+                      <Dialog
+                        open={selectedCoachid === Number(coach.id)}
+                        onOpenChange={(isOpen) => {
+                          if (!isOpen) {
+                            setSelectedCoachid(null);
+                            setRecentMessages([]);
+                          }
+                        }}
+                      >
+                        <DialogContent className="max-w-md w-full bg-white rounded-2xl shadow-xl p-6 space-y-4">
+                          <DialogHeader className="border-b pb-2">
+                            <DialogTitle className="text-lg font-semibold text-gray-800">
+                              Send Message
+                            </DialogTitle>
+                            <p className="text-sm text-gray-500">
+                              Send a message to{" "}
+                              <span className="font-medium text-black">
+                                {coach.firstName} {coach.lastName}
+                              </span>
+                            </p>
+                          </DialogHeader>
+
+                          {/* Message Type Checkboxes */}
+                          <div className="flex gap-4 text-sm">
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={sendEmail}
+                                onChange={() => setSendEmail(!sendEmail)}
+                              />
+                              Email
+                            </label>
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={sendSMS}
+                                onChange={() => setSendSMS(!sendSMS)}
+                              />
+                              SMS
+                            </label>
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={sendInternal}
+                                onChange={() => setSendInternal(!sendInternal)}
+                              />
+                              Internal Message
+                            </label>
+                          </div>
+
+                          {/* Message Textarea */}
+                          <textarea
+                            rows={5}
+                            value={messageText}
+                            onChange={(e) => setMessageText(e.target.value)}
+                            className="w-full border rounded-lg p-2 text-sm text-gray-800"
+                            placeholder="Enter your message..."
+                          />
+
+                          {/* Recent Messages */}
+                          <div className="border-t pt-3">
+                            <h3 className="text-sm font-medium text-gray-700 mb-2">Recent Messages</h3>
+                            <div className="max-h-32 overflow-y-auto space-y-2">
+                              {recentMessages.length === 0 ? (
+                                <p className="text-xs text-gray-500">No previous messages</p>
+                              ) : (
+                                recentMessages.map((msg, idx) => (
+                                  <div
+                                    key={msg.id ?? idx}
+                                    className="p-2 rounded-lg bg-gray-100 text-sm text-gray-800"
+                                  >
+                                    <p>{msg.message}</p>
+                                    <span className="block text-xs text-gray-500">
+                                      {new Date(msg.created_at).toLocaleString()}
+                                    </span>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex justify-end gap-3 pt-2">
+                            <button
+                              onClick={() => setSelectedCoachid(null)}
+                              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!messageText.trim()) {
+                                  Swal.fire("Warning", "Please enter a message before sending.", "warning");
+                                  return;
+                                }
+
+                                if (!sendEmail && !sendSMS && !sendInternal) {
+                                  Swal.fire(
+                                    "Warning",
+                                    "Please select at least one method (Email, SMS, Internal).",
+                                    "warning"
+                                  );
+                                  return;
+                                }
+
+                                try {
+                                  // send message via POST API
+                                  await axios.post(`/api/geolocation/coach`, {
+                                    type: "coach",
+                                    targetIds: [coach.id],
+                                    message: messageText,
+                                    methods: {
+                                      email: sendEmail,
+                                      sms: sendSMS,
+                                      internal: sendInternal,
+                                    },
+                                  });
+
+                                  Swal.fire("Success", "Message sent successfully!", "success");
+                                  setSelectedCoachid(null);
+
+                                  setMessageText("");
+
+                                  // refresh messages
+                                  const res = await axios.get(
+                                    `/api/messages?type=coach&id=${coach.id}`
+                                  );
+                                  setRecentMessages(res.data.messages || []);
+                                } catch (err) {
+                                  console.error(err);
+                                  setSelectedCoachid(null);
+
+                                  Swal.fire("Error", "Failed to send message.", "error");
+                                }
+                              }}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                              Send
+                            </button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+
+
+
 
                     </div>
 

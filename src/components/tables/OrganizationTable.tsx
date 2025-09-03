@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FacebookIcon, Instagram, Youtube, Linkedin } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 import Badge from "../ui/badge/Badge";
@@ -12,6 +12,12 @@ import Button from "../ui/button/Button";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { useRouter } from "next/navigation";
+import axios from "axios";
+type RecentMessage = {
+  id: number;
+  message: string;
+  created_at: string;
+};
 
 interface Organization {
 
@@ -29,7 +35,7 @@ interface Organization {
   city: string;
   logo: string;
   status: string;
-  totalPlayers: number;
+  totalUsers: number;
   totalCoaches: number;
   suspend: number;
   suspend_days: number;
@@ -70,10 +76,16 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
   const [ipOpen, setIpOpen] = useState<number | null>(null);
   const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
   // Read role safely
+  const [messageText, setMessageText] = useState("");
+  const [sendEmail, setSendEmail] = useState(false);
+  const [sendSMS, setSendSMS] = useState(false);
+  const [sendInternal, setSendInternal] = useState(false);
+  const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
   const userRole = sessionStorage.getItem("role");;
   console.log("User role from session:", userRole);
   const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedUserid, setSelectedUserid] = useState<number | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const handleOpenModal = (userId: number) => {
     setSelectedUserId(userId);
@@ -102,7 +114,18 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
       console.error("Failed to fetch IP logs:", error);
     }
   };
-
+  useEffect(() => {
+    if (selectedUserid) {
+      (async () => {
+        try {
+          const res = await axios.get(`/api/messages?type=organization&id=${selectedUserid}`);
+          setRecentMessages(res.data.messages || []);
+        } catch (err) {
+          console.error("Error fetching messages:", err);
+        }
+      })();
+    }
+  }, [selectedUserid]);
   const handleChangePassword = async () => {
     if (!newPassword) {
       Swal.fire({
@@ -438,7 +461,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                         <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                           Coaches: {organization.totalCoaches || 0}
                           <br />
-                          Players: <span className="text-blue-500">{organization.totalPlayers || "0"}</span>
+                          Users: <span className="text-blue-500">{organization.totalUsers || "0"}</span>
                           <br />
                           Teams: <span className="font-medium">{organization.totalTeams || "0"}</span>
                         </TableCell>
@@ -628,6 +651,154 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                             >
                               🔒
                             </button>
+                            <button
+                              onClick={() => setSelectedUserid(Number(organization.id))}
+                              title="Send Message"
+                              className="text-purple-600 text-sm hover:underline"
+                            >
+                              💬
+                            </button>
+
+                            {/* Message Modal */}
+                            <Dialog
+                              open={selectedUserid === Number(organization.id)}
+                              onOpenChange={(isOpen) => {
+                                if (!isOpen) {
+                                  setSelectedUserid(null);
+                                  setRecentMessages([]);
+                                }
+                              }}
+                            >
+                              <DialogContent className="max-w-md w-full bg-white rounded-2xl shadow-xl p-6 space-y-4">
+                                <DialogHeader className="border-b pb-2">
+                                  <DialogTitle className="text-lg font-semibold text-gray-800">
+                                    Send Message
+                                  </DialogTitle>
+                                  <p className="text-sm text-gray-500">
+                                    Send a message to{" "}
+                                    <span className="font-medium text-black">
+                                      {organization.organizationName}
+                                    </span>
+                                  </p>
+                                </DialogHeader>
+
+                                {/* ✅ Message Type Checkboxes */}
+                                <div className="flex gap-4 text-sm">
+                                  <label className="flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={sendEmail}
+                                      onChange={() => setSendEmail(!sendEmail)}
+                                    />
+                                    Email
+                                  </label>
+                                  <label className="flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={sendSMS}
+                                      onChange={() => setSendSMS(!sendSMS)}
+                                    />
+                                    SMS
+                                  </label>
+                                  <label className="flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={sendInternal}
+                                      onChange={() => setSendInternal(!sendInternal)}
+                                    />
+                                    Internal Message
+                                  </label>
+                                </div>
+
+                                {/* ✅ Message Textarea */}
+                                <textarea
+                                  rows={5}
+                                  value={messageText}
+                                  onChange={(e) => setMessageText(e.target.value)}
+                                  className="w-full border rounded-lg p-2 text-sm text-gray-800"
+                                  placeholder="Enter your message..."
+                                />
+
+                                {/* Recent Messages */}
+                                <div className="max-h-32 overflow-y-auto space-y-2">
+                                  {!Array.isArray(recentMessages) || recentMessages.length === 0 ? (
+                                    <p className="text-xs text-gray-500">No previous messages</p>
+                                  ) : (
+                                    recentMessages.map((msg, idx) => (
+                                      <div
+                                        key={msg.id ?? idx}
+                                        className="p-2 rounded-lg bg-gray-100 text-sm text-gray-800"
+                                      >
+                                        <p>{msg.message}</p>
+                                        <span className="block text-xs text-gray-500">
+                                          {new Date(msg.created_at).toLocaleString()}
+                                        </span>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+
+
+                                {/* Actions */}
+                                <div className="flex justify-end gap-3 pt-2">
+                                  <button
+                                    onClick={() => setSelectedUserid(null)}
+                                    className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      if (!messageText.trim()) {
+                                        Swal.fire("Warning", "Please enter a message before sending.", "warning");
+                                        return;
+                                      }
+
+                                      if (!sendEmail && !sendSMS && !sendInternal) {
+                                        Swal.fire(
+                                          "Warning",
+                                          "Please select at least one method (Email, SMS, Internal).",
+                                          "warning"
+                                        );
+                                        return;
+                                      }
+
+                                      try {
+                                        await axios.post(`/api/geolocation/organization`, {
+                                          type: "organization",
+                                          targetIds: [organization.id],
+                                          message: messageText,
+                                          methods: {
+                                            email: sendEmail,
+                                            sms: sendSMS,
+                                            internal: sendInternal,
+                                          },
+                                        });
+
+                                        Swal.fire("Success", "Message sent successfully!", "success");
+                                        setSelectedUserid(null);
+
+                                        setMessageText("");
+
+                                        // ✅ Refresh messages list after sending
+                                        const res = await axios.get(`/api/messages?type=organization&id=${organization.id}`);
+                                        setRecentMessages(res.data || []);
+                                      } catch (err) {
+                                        console.error(err);
+                                        setSelectedUserid(null);
+
+                                        Swal.fire("Error", "Failed to send message.", "error");
+                                      }
+                                    }}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                  >
+                                    Send
+                                  </button>
+                                </div>
+
+
+                              </DialogContent>
+                            </Dialog>
 
 
                           </div>

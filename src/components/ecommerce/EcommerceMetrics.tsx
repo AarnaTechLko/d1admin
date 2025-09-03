@@ -87,7 +87,7 @@ export const EcommerceMetrics = () => {
           const data = await response.json();
     
           console.log("API Response:", data); // ✅ Debugging line
-          setplayers(data.players || []);
+          setplayers(data.player || []);
 
         } catch (err) {
           console.error('err',err);

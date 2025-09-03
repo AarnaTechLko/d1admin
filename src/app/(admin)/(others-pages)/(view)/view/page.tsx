@@ -30,7 +30,7 @@ const AdminListPage = () => {
 
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const [admins, setAdmins] = useState<Admin[]>([]);
+  const [admin, setAdmin] = useState<Admin[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
@@ -46,8 +46,8 @@ const AdminListPage = () => {
         if (!response.ok) throw new Error("Failed to fetch admin data");
 
         const data = await response.json();
-
-        setAdmins(data.admins);
+console.log("data",data);
+        setAdmin(data.admin);
         setTotalPages(data.totalPages);
       } catch (err) {
         setError((err as Error).message);
@@ -81,7 +81,7 @@ const AdminListPage = () => {
       }
 
       // Update state to remove deleted admin
-      setAdmins(prev => prev.filter(admin => admin.id !== adminID));
+      setAdmin(prev => prev.filter(admin => admin.id !== adminID));
 
       await MySwal.fire('Deleted!', 'Admin has been deleted.', 'success');
     } catch (error) {
@@ -117,7 +117,7 @@ const AdminListPage = () => {
 
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
             <div className="p-4 text-gray-700 dark:text-gray-300">
-              Total Admins: {admins.length}
+              Total admin: {admin.length}
             </div>
 
             <Table>
@@ -157,7 +157,7 @@ const AdminListPage = () => {
               </TableHeader>
 
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {admins.map((admin, index) => {
+                {admin.map((admin, index) => {
                   // const isDeleted = admin.is_deleted ?? false;
 
                   return (

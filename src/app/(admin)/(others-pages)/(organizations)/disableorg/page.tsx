@@ -33,6 +33,8 @@ interface Organization {
   is_deleted:number;
   suspend: number;
   suspend_days: number;
+    totalUsers: number;
+
 }
 
 const OrganizationsPage = () => {
