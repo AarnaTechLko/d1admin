@@ -695,10 +695,8 @@ export const admin_message = pgTable("admin_message", {
 
   sender_id: integer("sender_id").default(1),
   receiver_id: integer("receiver_id").notNull(),
-
+methods: text("methods").$type<string>(), // store JSON string
   message: text("message").notNull(),
-
-
   status: integer("status").default(1),   // e.g., 1 = active, 0 = deleted/inactive
   read: integer("read").default(0),       // e.g., 0 = unread, 1 = read
 
@@ -761,3 +759,5 @@ export const role = pgTable("role", {
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
+
+

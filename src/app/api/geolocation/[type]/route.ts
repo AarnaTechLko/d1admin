@@ -134,6 +134,7 @@ export async function POST(req: NextRequest) {
     if (!type || !message || !Array.isArray(targetIds) || targetIds.length === 0) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
+
     const twilioClient = twilio(
       process.env.TWILIO_TEST_ACCOUNT_SID,
       process.env.TWILIO_TEST_AUTH_TOKEN
@@ -144,22 +145,26 @@ export async function POST(req: NextRequest) {
     const host = req.headers.get("host");
     const baseUrl = `${protocol}://${host}`;
 
-    console.log("telephone:",TWILIO_PHONE);
-const smsResponses: MessageInstance[] = []; // ✅ properly typed array
+    const smsResponses: MessageInstance[] = [];
 
-    // ---------- Save Internal Message ----------
-    if (methods.internal) {
-      const messages = targetIds.map((receiverId: string) => ({
-        sender_id: 1,
-        receiver_id: Number(receiverId),
-        message,
-        status: 1,
-        read: 0,
-        created_at: now,
-        updated_at: now,
-      }));
-      await db.insert(admin_message).values(messages);
-    }
+    // ---------- Prepare selected methods as array ----------
+    const selectedMethods: string[] = [];
+if (methods.email) selectedMethods.push("email");
+if (methods.sms) selectedMethods.push("sms");
+if (methods.internal) selectedMethods.push("internal");
+
+const messages = targetIds.map((receiverId: string) => ({
+  sender_id: 1,
+  receiver_id: Number(receiverId),
+  message,
+  methods: JSON.stringify(selectedMethods), // ✅ store array as JSON string
+  status: 1,
+  read: 0,
+  created_at: now,
+  updated_at: now,
+}));
+
+await db.insert(admin_message).values(messages);
 
     // ---------- Save Chat Records ----------
     const chatData = targetIds.map((receiverId: string) => {
@@ -170,7 +175,7 @@ const smsResponses: MessageInstance[] = []; // ✅ properly typed array
     });
     await db.insert(chats).values(chatData);
 
-    // ---------- Send Notifications ----------
+    // ---------- Send Notifications (Email/SMS) ----------
     for (const receiverId of targetIds) {
       const id = Number(receiverId);
 
@@ -182,20 +187,19 @@ const smsResponses: MessageInstance[] = []; // ✅ properly typed array
           await sendEmail({
             to: coach.email,
             subject: "📢 New Admin Message",
-            html: `
-              Dear ${coach.firstName},<br/><br/>
-              You’ve received a new message from Admin:<br/>
-              <blockquote>${message}</blockquote>
-              <a href="${baseUrl}/login">Login</a> to view the message.<br/><br/>
-              Regards,<br/>D1 Admin`,
+            html: `Dear ${coach.firstName},<br/><br/>
+                   You’ve received a new message from Admin:<br/>
+                   <blockquote>${message}</blockquote>
+                   <a href="${baseUrl}/login">Login</a> to view the message.<br/><br/>
+                   Regards,<br/>D1 Admin`,
             text: message,
           });
         }
 
         // Send SMS
         if (methods.sms && coach?.phoneNumber) {
-           const formattedNumber = coach.phoneNumber.startsWith("+")
-            ?coach.phoneNumber
+          const formattedNumber = coach.phoneNumber.startsWith("+")
+            ? coach.phoneNumber
             : `+91${coach.phoneNumber.replace(/\D/g, "")}`;
           await twilioClient.messages.create({
             from: TWILIO_PHONE!,
@@ -212,12 +216,11 @@ const smsResponses: MessageInstance[] = []; // ✅ properly typed array
           await sendEmail({
             to: player.email,
             subject: "📢 New Admin Message",
-            html: `
-              Dear ${player.first_name},<br/><br/>
-              You’ve received a new message from Admin:<br/>
-              <blockquote>${message}</blockquote>
-              <a href="${baseUrl}/login">Login</a> to view the message.<br/><br/>
-              Regards,<br/>D1 Admin`,
+            html: `Dear ${player.first_name},<br/><br/>
+                   You’ve received a new message from Admin:<br/>
+                   <blockquote>${message}</blockquote>
+                   <a href="${baseUrl}/login">Login</a> to view the message.<br/><br/>
+                   Regards,<br/>D1 Admin`,
             text: message,
           });
         }
@@ -226,7 +229,6 @@ const smsResponses: MessageInstance[] = []; // ✅ properly typed array
           const formattedNumber = player.number.startsWith("+")
             ? player.number
             : `+91${player.number.replace(/\D/g, "")}`;
-
           const smsRes = await twilioClient.messages.create({
             from: TWILIO_PHONE!,
             to: formattedNumber,
@@ -243,18 +245,17 @@ const smsResponses: MessageInstance[] = []; // ✅ properly typed array
           await sendEmail({
             to: org.email,
             subject: "📢 New Admin Message",
-            html: `
-              Dear ${org.organizationName},<br/><br/>
-              You’ve received a new message from Admin:<br/>
-              <blockquote>${message}</blockquote>
-              <a href="${baseUrl}/login">Login</a> to view the message.<br/><br/>
-              Regards,<br/>D1 Admin`,
+            html: `Dear ${org.organizationName},<br/><br/>
+                   You’ve received a new message from Admin:<br/>
+                   <blockquote>${message}</blockquote>
+                   <a href="${baseUrl}/login">Login</a> to view the message.<br/><br/>
+                   Regards,<br/>D1 Admin`,
             text: message,
           });
         }
 
         if (methods.sms && org?.mobileNumber) {
-           const formattedNumber = org.mobileNumber.startsWith("+")
+          const formattedNumber = org.mobileNumber.startsWith("+")
             ? org.mobileNumber
             : `+91${org.mobileNumber.replace(/\D/g, "")}`;
           await twilioClient.messages.create({
@@ -269,12 +270,13 @@ const smsResponses: MessageInstance[] = []; // ✅ properly typed array
     return NextResponse.json({
       success: true,
       message: "Notification sent successfully (email/internal/SMS).",
-      sentMessage: message, // ✅ include the actual message text
-      smsResponses,  
+      sentMessage: message,
+      smsResponses,
     });
   } catch (error) {
     console.error("❌ POST Error sending notification:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
 
