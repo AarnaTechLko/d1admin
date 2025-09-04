@@ -194,9 +194,12 @@ const smsResponses: MessageInstance[] = []; // ✅ properly typed array
 
         // Send SMS
         if (methods.sms && coach?.phoneNumber) {
+           const formattedNumber = coach.phoneNumber.startsWith("+")
+            ?coach.phoneNumber
+            : `+91${coach.phoneNumber.replace(/\D/g, "")}`;
           await twilioClient.messages.create({
             from: TWILIO_PHONE!,
-            to: coach.phoneNumber,
+            to: formattedNumber,
             body: `📢 Admin Message: ${message}`,
           });
         }
@@ -251,9 +254,12 @@ const smsResponses: MessageInstance[] = []; // ✅ properly typed array
         }
 
         if (methods.sms && org?.mobileNumber) {
+           const formattedNumber = org.mobileNumber.startsWith("+")
+            ? org.mobileNumber
+            : `+91${org.mobileNumber.replace(/\D/g, "")}`;
           await twilioClient.messages.create({
             from: TWILIO_PHONE!,
-            to: org.mobileNumber,
+            to: formattedNumber,
             body: `📢 Admin Message: ${message}`,
           });
         }
