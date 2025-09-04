@@ -3,3 +3,4 @@ node_modules/
 Archive.zip
 app/api/auth/[...nextauth]/route.ts
 app/api/auth/[...nextauth]/route.ts.DS_Store.env
+.env
