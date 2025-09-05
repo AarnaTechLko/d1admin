@@ -1,5 +1,6 @@
 'use client';
 import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter } from "lucide-react";
+import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
 
 import { FaFileAlt } from 'react-icons/fa';
 // import { useRouter } from 'next/navigation';
@@ -350,7 +351,7 @@ export default function CoachDetailsPage() {
           <div className="flex-shrink-0">
             {coach.image && (
               <Image
-                src={coach.image}
+                src={ `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${coach.image}`}
                 alt={`${coach.firstName} ${coach.lastName}`}
                 width={96}
                 height={96}

@@ -5,6 +5,7 @@ import Badge from "../ui/badge/Badge";
 import Image from "next/image";
 import Button from "../ui/button/Button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
 
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -246,7 +247,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
                 <TableRow key={`${coach.id}-${coach.is_deleted}`} className={coach.is_deleted === 0 ? "bg-red-100" : "bg-white"}>
                   <TableCell className="px-4 py-3 text-start">
                     <div className="flex items-center gap-3">
-                      <Image width={40} height={40} src={!coach.image || coach.image === "null" ? "/images/signin/d1.png" : coach.image} alt={`${coach.firstName ?? "Coach"} ${coach.lastName ?? ""}`} className="rounded-full" />
+                      <Image width={40} height={40} src={!coach.image || coach.image === "null" ? "/images/signin/d1.png" : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${coach.image}`} alt={`${coach.firstName ?? "Coach"} ${coach.lastName ?? ""}`} className="rounded-full" />
                       <div>
                         <span className="block font-medium text-gray-800 dark:text-white/90">{coach.firstName} {coach.lastName}</span>
                       </div>

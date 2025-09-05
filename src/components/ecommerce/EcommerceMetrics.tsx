@@ -140,7 +140,7 @@ export const EcommerceMetrics = () => {
         <div className="flex items-end justify-between mt-5">
           <div>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              Coches
+              Coaches
             </span>
             <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
             {coaches.length}
@@ -162,7 +162,7 @@ export const EcommerceMetrics = () => {
         <div className="flex items-end justify-between mt-5">
           <div>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              player
+              Players
             </span>
             <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
             {players.length}
@@ -181,7 +181,7 @@ export const EcommerceMetrics = () => {
         <div className="flex items-end justify-between mt-5">
           <div>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              Organization
+              Organizations
             </span>
             <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
             {organizations.length}

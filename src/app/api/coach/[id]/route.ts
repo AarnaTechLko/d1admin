@@ -157,6 +157,11 @@ console.log("coach data:",coachData);
         )
 
     ]);
+
+    console.log("Results: ", evaluationResultsList);
+
+    console.log("Earnings: ", earningsList);
+
     const latestIpResult = await db
       .select({
         ip: ip_logs.ip_address,
@@ -170,6 +175,8 @@ console.log("coach data:",coachData);
 
     const latestIp = latestIpResult[0]?.ip || null;
 
+    console.log("IP: ", latestIpResult)
+
     return NextResponse.json({
       ...coachData[0],
       evaluations,
@@ -180,6 +187,8 @@ console.log("coach data:",coachData);
 
     });
   } catch (error) {
+    console.log("Error: ", String(error))
+
     return NextResponse.json(
       {
         message: 'Failed to fetch coach data',

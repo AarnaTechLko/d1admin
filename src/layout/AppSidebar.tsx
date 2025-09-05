@@ -75,7 +75,7 @@ const AppSidebar: React.FC = () => {
           ],
         },
       ]
-      : role === "admin"
+      : role === "Admin"
         ? [
           {
             icon: <GridIcon />,

@@ -6,6 +6,9 @@ export const COMMISSIONPERCENTAGE=18;
 const startYear = 1985; // Starting year
 const endYear = 2050; 
 
+export const NEXT_PUBLIC_AWS_S3_BUCKET_LINK = 
+  process.env.NEXT_PUBLIC_AWS_S3_BUCKET_LINK;
+
 
 export const Grades=Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
 export const currencies=[

@@ -11,6 +11,8 @@ import {
   decimal,
   boolean,
   integer,
+  foreignKey,
+  json,
   bigint,
   numeric
 } from "drizzle-orm/pg-core";
@@ -29,7 +31,8 @@ export const users = pgTable(
     location: varchar("location"),
     birthday: date("birthday"),
     gender: varchar("gender"),
-    sport: varchar("sport"),
+    sport: integer('sport').references(() => sports.id),
+    parent_email: varchar('parent_email').unique(),
     team: varchar("team"),
     jersey: varchar("jersey"),
     position: varchar("position"),
@@ -49,7 +52,9 @@ export const users = pgTable(
     slug: text("slug"),
     playingcountries: text("playingcountries"),
     height: text("height"),
+    height_unit: varchar('height_unit', { length: 10 }).notNull().default('cm'),
     weight: text("weight"),
+    weight_unit: varchar('weight_unit', { length: 10 }).notNull().default('kg'),
     parent_id: integer("parent_id"),
     gpa: text("gpa"),
     graduation: text("graduation"),
@@ -65,8 +70,12 @@ export const users = pgTable(
     status: varchar("status").default("Pending"),
     visibility: varchar("visibility").default("off"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
+    is_email_verified: boolean('is_email_verified').default(false),
+    last_login_attempt: timestamp('last_login_attempt'),
+    blocked_time: timestamp('blocked_time'),
+    no_of_attempts: integer('no_of_attempts').default(0),
+    tiktok: text('tiktok'),
     is_deleted: integer("is_deleted").default(1).notNull(),
-
     isCompletedProfile: boolean("isCompletedProfile").default(false),
     suspend: integer("suspend").default(1).notNull(),
     suspend_days: integer("suspend_days"),
@@ -98,7 +107,7 @@ export const coaches = pgTable(
     phoneNumber: varchar("phoneNumber"),
     gender: varchar("gender"),
     location: varchar("location"),
-    sport: varchar("sport"),
+    sport: integer('sport').references(() => sports.id),
     clubName: varchar("clubName"),
     qualifications: text("qualifications"),
     expectedCharge: decimal("expectedCharge", { precision: 10, scale: 2 }), // Decimal type with precision and scale
@@ -127,8 +136,18 @@ export const coaches = pgTable(
     status: varchar("status").default("Pending"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     is_deleted: integer("is_deleted").default(1).notNull(),
-
     isCompletedProfile: boolean("isCompletedProfile").default(false),
+    avgReviewRating: decimal('avgReviewRating', {
+      precision: 10,
+      scale: 1,
+    }).default('0'),
+    is_email_verified: boolean('is_email_verified').default(false),
+    last_login_attempt: timestamp('last_login_attempt'),
+    blocked_time: timestamp('blocked_time'),
+    no_of_attempts: integer('no_of_attempts').default(0),
+    stripe_acount_id: text('stripe_acount_id'),
+    approved_or_denied: integer('approved_or_denied').default(0),
+    tiktok: text('tiktok'),
     suspend: integer("suspend").default(1).notNull(),
     suspend_days: integer("suspend_days"),
     suspend_start_date: date("suspend_start_date"),
@@ -141,6 +160,47 @@ export const coaches = pgTable(
     };
   }
 );
+
+export const review = pgTable(
+  'review',
+  {
+    id: serial('id').primaryKey(),
+    player_id: integer('player_id'),
+    coach_id: integer('coach_id'),
+    // rating: integer('rating'),
+    rating: decimal('rating', { precision: 3, scale: 1 }),
+    title: varchar('title', { length: 100 }),
+    comment: varchar('comment', { length: 5000 }),
+    createdAt: timestamp('createdAt').defaultNow().notNull(),
+  },
+  table => ({
+    fk_player_id: foreignKey({
+      columns: [table.player_id],
+      foreignColumns: [users.id],
+    }),
+    fk_coach_id: foreignKey({
+      columns: [table.coach_id],
+      foreignColumns: [coaches.id],
+    }),
+  }),
+);
+
+export const parent_consents = pgTable(
+  'parent_consents',
+  {
+    id: serial('id').primaryKey(),
+    player_id: integer('player_id').notNull(),
+    parent_name: varchar('parent_name', { length: 100 }).notNull(),
+    consent_date: timestamp('consent_date').defaultNow().notNull(),
+  },
+  table => ({
+    parent_consents_player_id_fkey: foreignKey({
+      columns: [table.player_id],
+      foreignColumns: [users.id],
+    }),
+  }),
+);
+
 
 // Player Evaluation table
 
@@ -192,6 +252,7 @@ export const playerEvaluation = pgTable(
     updated_at: timestamp("updated_at").defaultNow().notNull(),
     is_deleted: integer("is_deleted").default(1).notNull(),
     review_status: integer("review_status").default(1).notNull(),
+    pdf_filename: text('pdf_filename'),
 
   }
 );
@@ -267,18 +328,21 @@ export const evaluationResults = pgTable('evaluation_results', {
   club_id: integer("club_id"),
   evaluationId: integer('evaluation_id').notNull(),
   finalRemarks: text('finalRemarks'),           // Long text for final remarks
-  physicalRemarks: text('physicalRemarks'),     // Long text for physical remarks
-  tacticalRemarks: text('tacticalRemarks'),     // Long text for tactical remarks
-  technicalRemarks: text('technicalRemarks'),
-  organizationalRemarks: text('organizationalRemarks'),
-  distributionRemarks: text('distributionRemarks'),
-  // Long text for tactical remarks
-  physicalScores: text('physicalScores').notNull(), // JSON field for physical scores
-  tacticalScores: text('tacticalScores').notNull(), // JSON field for tactical scores
-  technicalScores: text('technicalScores').notNull(),
-  distributionScores: text('distributionScores'),
-  organizationScores: text('organizationScores'),
-  overallAverage: numeric('overallAverage', { precision: 5, scale: 2 }),
+
+  coach_input: json('coach_input'),
+  eval_average: numeric('eval_average'),
+  // physicalRemarks: text('physicalRemarks'),     // Long text for physical remarks
+  // tacticalRemarks: text('tacticalRemarks'),     // Long text for tactical remarks
+  // technicalRemarks: text('technicalRemarks'),
+  // organizationalRemarks: text('organizationalRemarks'),
+  // distributionRemarks: text('distributionRemarks'),
+  // // Long text for tactical remarks
+  // physicalScores: text('physicalScores').notNull(), // JSON field for physical scores
+  // tacticalScores: text('tacticalScores').notNull(), // JSON field for tactical scores
+  // technicalScores: text('technicalScores').notNull(),
+  // distributionScores: text('distributionScores'),
+  // organizationScores: text('organizationScores'),
+  // overallAverage: numeric('overallAverage', { precision: 5, scale: 2 }),
 
   document: text('document'),
   position: text('position'),
@@ -321,6 +385,7 @@ export const enterprises = pgTable('enterprises', {
   youtube: text('youtube'),
   website: text('website'),
   status: text('status').default('Active'),
+  last_login_attempt: timestamp('last_login_attempt'),
   is_deleted: integer("is_deleted").default(1).notNull(),
 
   createdAt: timestamp('createdAt').defaultNow().notNull(),
@@ -328,7 +393,10 @@ export const enterprises = pgTable('enterprises', {
   suspend_days: integer("suspend_days"),
   suspend_start_date: date("suspend_start_date"),
   suspend_end_date: date("suspend_end_date"),
-
+  blocked_time: timestamp('blocked_time'),
+  no_of_attempts: integer('no_of_attempts').default(0),
+  is_email_verified: boolean('is_email_verified').default(false),
+  isCompletedProfile: boolean('isCompletedProfile').default(false),
 });
 
 //What is this for?
@@ -522,9 +590,11 @@ export const messages = pgTable('messages', {
   id: serial('id').primaryKey(),
   chatId: integer('chat_id').notNull(),
   senderId: integer('sender_id').notNull(),
+  receiver_id: integer('receiver_id').notNull(),
   club_id: integer('club_id'),
   message: text('message').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
+  read: boolean('read').default(false),
 });
 
 export const modules = pgTable("modules", {
@@ -627,6 +697,7 @@ export const ticket_messages = pgTable("ticket_messages", {
 
 
 export const userOrgStatus = pgTable("userOrgStatus", {
+  id: serial('id').primaryKey(),
   org_user_id: integer("org_user_id"),
   enterprise_id: integer("enterprise_id").references(() => enterprises.id),
   status: text("status").default("Pending").notNull(),
@@ -695,7 +766,7 @@ export const admin_message = pgTable("admin_message", {
 
   sender_id: integer("sender_id").default(1),
   receiver_id: integer("receiver_id").notNull(),
-methods: text("methods").$type<string>(), // store JSON string
+  methods: text("methods").$type<string>(), // store JSON string
   message: text("message").notNull(),
   status: integer("status").default(1),   // e.g., 1 = active, 0 = deleted/inactive
   read: integer("read").default(0),       // e.g., 0 = unread, 1 = read
@@ -760,4 +831,46 @@ export const role = pgTable("role", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
+export const unsubscribes = pgTable('unsubscribes', {
+  email: varchar('email', { length: 255 }).notNull(),
+  unsubscribeToken: varchar('unsubscribe_token', { length: 64 }).notNull(),
+  unsubscribedAt: timestamp('unsubscribed_at', { withTimezone: true }),
+});
 
+export const waitlisted_players = pgTable('waitlisted_players', {
+  id: serial('id').primaryKey(),
+  email: varchar('email').notNull().unique(),
+});
+
+export const sports = pgTable('sports', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 50 }),
+  display_order: integer('display_order'),
+  is_removed: boolean('is_removed').default(false),
+});
+
+export const positions = pgTable('positions', {
+  id: serial('id').primaryKey(),
+  sport_id: integer('sport_id').references(() => sports.id),
+  name: varchar('name', { length: 50 }).notNull(),
+  display_order: integer('display_order').notNull(),
+  is_removed: boolean('is_removed').default(false),
+});
+
+export const categories = pgTable('categories', {
+  id: serial('id').primaryKey(),
+  position_id: integer('position_id').references(() => positions.id),
+  name: varchar('name', { length: 50 }).notNull(),
+  display_order: integer('display_order').notNull(),
+  optional: boolean('optional').default(false),
+  is_removed: boolean('is_removed').default(false),
+});
+
+export const categories_attributes = pgTable('categories_attributes', {
+  id: serial('id').primaryKey(),
+  categories_id: integer('categories_id').references(() => categories.id),
+  name: varchar('name', { length: 50 }).notNull(),
+  data_type: text().notNull(),
+  display_order: integer('display_order'),
+  is_removed: boolean('is_removed').default(false),
+});

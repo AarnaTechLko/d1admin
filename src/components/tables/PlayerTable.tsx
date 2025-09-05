@@ -7,6 +7,7 @@ import d1 from "@/public/images/signin/d1.png";
 import Button from "../ui/button/Button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import Badge from "../ui/badge/Badge";
+import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
 
 import Swal from "sweetalert2";
 import withReactContent from 'sweetalert2-react-content';
@@ -435,7 +436,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                 width={40}
                                 height={40}
                                 className="rounded-full"
-                                src={player.image && player.image.startsWith("http") ? player.image : d1}
+                                src={!player.image || player.image === "null" ? d1 : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${player.image}`}
                                 alt={`${player.first_name} ${player.last_name}`}
                                 onError={(e) => (e.currentTarget.src = "/images/default-avatar.png")} // Fallback image
                               />

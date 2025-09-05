@@ -80,7 +80,7 @@ export async function POST(req: Request) {
 
 const isAdminCase = (trueValue: number | SQL<number>, falseValue: number | SQL<number>) =>
   sql<number>`CASE 
-    WHEN ${admin.role} = 'admin' THEN ${trueValue} 
+    WHEN ${admin.role} = 'Admin' THEN ${trueValue} 
     ELSE ${falseValue} 
   END`;
 

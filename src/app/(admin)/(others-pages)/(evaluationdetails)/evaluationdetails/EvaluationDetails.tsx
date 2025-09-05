@@ -1,5 +1,3 @@
-
-
 "use client";
 export const dynamic = "force-dynamic";
 
@@ -170,80 +168,7 @@ function EvaluationPage() {
 
 
 
-    const fetchEvaluationData = async () => {
-        // const session = await getSession();
-        // if (session) {
-        //     setUserType(session.user.type);
-        //     setPlayerId(Number(session.user.id)); // Assuming 'role' is stored in session
-        // }
-        try {
-            const response = await fetch(`/api/evaluationdetails?evaluationId=${evaluationId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-            if (!response.ok) {
-                setLoading(false);
-                throw new Error('Failed to fetch evaluation data');
-            }
 
-            const data = await response.json();
-            console.log("evaluation", data);
-
-            if (!data?.result) {
-                throw new Error("No evaluation data found in response");
-            }
-            setEvaluationData(data.result as Evaluation); // Type assertion here
-            console.log("evaliation data:", data.result as Evaluation);
-            setPhysicalScores(JSON.parse(data.result.physicalScores));
-            setTacticalScores(JSON.parse(data.result.tacticalScores));
-            setTechnicalScores(JSON.parse(data.result.technicalScores));
-            setOrganizationScores(JSON.parse(data.result.organizationScores));
-            setDistributionScores(JSON.parse(data.result.distributionScores));
-            setDistributionScores(JSON.parse(data.result.distributionScores));
-            setFormData({
-                speed: data.result.speed || "",
-                comm_persistence: data.result.comm_persistence || "",
-                comm_aggression: data.result.comm_aggression || "",
-                comm_alertness: data.result.comm_alertness || "",
-                exe_scoring: data.result.exe_scoring || "",
-                exe_receiving: data.result.exe_receiving || "",
-                exe_passing: data.result.exe_passing || "",
-                dec_mobility: data.result.dec_mobility || "",
-                dec_anticipation: data.result.dec_anticipation || "",
-                dec_pressure: data.result.dec_pressure || "",
-                soc_speedEndurance: data.result.soc_speedEndurance || "",
-                soc_strength: data.result.soc_strength || "",
-                soc_explosiveMovements: data.result.soc_explosiveMovements || "",
-                // ratings: data.ratings || "",
-                superStrengths: data.result.superStrengths || "",
-                developmentAreas: data.result.developmentAreas || "",
-                idpGoals: data.result.idpGoals || "",
-                keySkills: data.result.keySkills || "",
-                attacking: data.result.attacking || "",
-                defending: data.result.defending || "",
-                transitionDefending: data.result.transitionDefending || "",
-                transitionAttacking: data.result.transitionAttacking || "",
-            });
-            setHeaderRatings([
-                data.result.technicalAverage,
-
-                data.result.tacticalAverage,
-                data.result.distributionAverage,
-                data.result.physicalAverage,
-                data.result.organizationAverage,
-            ]);
-
-            setSkillRatings(radarSkills.map(skill => data.result[skill.key] || 0));
-
-            setLoading(false);
-            // Set the fetched evaluation data
-        } catch (error) {
-            console.error('Error fetching evaluation data:', error);
-            setError('Failed to fetch evaluation data'); // Set error message
-        }
-    };
     const calculateAverage = (scores: Record<string, string | number>) => {
         const values = Object.values(scores)
             .map(Number)
@@ -253,9 +178,83 @@ function EvaluationPage() {
         return Math.round(avg * 10) / 10; // Round to 1 decimal
     };
     useEffect(() => {
+        const fetchEvaluationData = async () => {
+            // const session = await getSession();
+            // if (session) {
+            //     setUserType(session.user.type);
+            //     setPlayerId(Number(session.user.id)); // Assuming 'role' is stored in session
+            // }
+            try {
+                const response = await fetch(`/api/evaluationdetails?evaluationId=${evaluationId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                if (!response.ok) {
+                    setLoading(false);
+                    throw new Error('Failed to fetch evaluation data');
+                }
+
+                const data = await response.json();
+                console.log("evaluation", data);
+
+                if (!data?.result) {
+                    throw new Error("No evaluation data found in response");
+                }
+                setEvaluationData(data.result as Evaluation); // Type assertion here
+                console.log("evaliation data:", data.result as Evaluation);
+                setPhysicalScores(JSON.parse(data.result.physicalScores));
+                setTacticalScores(JSON.parse(data.result.tacticalScores));
+                setTechnicalScores(JSON.parse(data.result.technicalScores));
+                setOrganizationScores(JSON.parse(data.result.organizationScores));
+                setDistributionScores(JSON.parse(data.result.distributionScores));
+                setDistributionScores(JSON.parse(data.result.distributionScores));
+                setFormData({
+                    speed: data.result.speed || "",
+                    comm_persistence: data.result.comm_persistence || "",
+                    comm_aggression: data.result.comm_aggression || "",
+                    comm_alertness: data.result.comm_alertness || "",
+                    exe_scoring: data.result.exe_scoring || "",
+                    exe_receiving: data.result.exe_receiving || "",
+                    exe_passing: data.result.exe_passing || "",
+                    dec_mobility: data.result.dec_mobility || "",
+                    dec_anticipation: data.result.dec_anticipation || "",
+                    dec_pressure: data.result.dec_pressure || "",
+                    soc_speedEndurance: data.result.soc_speedEndurance || "",
+                    soc_strength: data.result.soc_strength || "",
+                    soc_explosiveMovements: data.result.soc_explosiveMovements || "",
+                    // ratings: data.ratings || "",
+                    superStrengths: data.result.superStrengths || "",
+                    developmentAreas: data.result.developmentAreas || "",
+                    idpGoals: data.result.idpGoals || "",
+                    keySkills: data.result.keySkills || "",
+                    attacking: data.result.attacking || "",
+                    defending: data.result.defending || "",
+                    transitionDefending: data.result.transitionDefending || "",
+                    transitionAttacking: data.result.transitionAttacking || "",
+                });
+                setHeaderRatings([
+                    data.result.technicalAverage,
+
+                    data.result.tacticalAverage,
+                    data.result.distributionAverage,
+                    data.result.physicalAverage,
+                    data.result.organizationAverage,
+                ]);
+
+                setSkillRatings(radarSkills.map(skill => data.result[skill.key] || 0));
+
+                setLoading(false);
+                // Set the fetched evaluation data
+            } catch (error) {
+                console.error('Error fetching evaluation data:', error);
+                setError('Failed to fetch evaluation data'); // Set error message
+            }
+        };
 
         fetchEvaluationData();
-    }, []);
+    }, [evaluationId]);
     if (loading) {
         return <Loading />;
     }

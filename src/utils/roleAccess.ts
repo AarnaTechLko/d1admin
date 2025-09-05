@@ -1,7 +1,7 @@
 // utils/roleAccess.ts
 
 export const roleBasedAccess: Record<string, string[] | "*"> = {
-  admin: "*", // Full access for admin
+  Admin: "*", // Full access for admin
 
   "Customer Support": [
     "/ticket*",

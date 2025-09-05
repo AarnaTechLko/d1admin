@@ -1,10 +1,17 @@
 import "@/lib/config";
-import { drizzle } from "drizzle-orm/vercel-postgres";
-import { sql } from "@vercel/postgres";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from 'pg';
 import { users } from "./schema";
 import * as schema from "./schema";
 
-export const db = drizzle(sql, { schema });
+const pool = new Pool({
+  connectionString: process.env.POSTGRES_URL, // Aurora connection string injected via ECS
+  ssl: { rejectUnauthorized: false }, // Aurora requires SSL
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+});
+export const db = drizzle(pool, { schema });
 
 export const getUsers = async () => {
   const selectResult = await db.select().from(users);

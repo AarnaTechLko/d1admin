@@ -103,13 +103,29 @@ const TicketTable: React.FC<Props> = ({
   };
 
   useEffect(() => {
+    
+  const fetchTickets = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/tickets?search=${searchQuery}&page=${page}&limit=10`);
+      if (!response.ok) throw new Error("Failed to fetch tickets");
+      const data = await response.json();
+      setTickets(data.ticket ?? []);
+    } catch (err) {
+      setError((err as Error).message);
+      setTickets([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
     if (data === undefined) {
       fetchTickets();
     } else {
       setTickets(data);
       setLoading(false);
     }
-  }, [searchQuery, page, data, currentPage]);
+  }, [searchQuery, page, data, currentPage,]);
 
   const handleReplyClick = async (ticket: Ticket) => {
     setSelectedTicket(ticket);
