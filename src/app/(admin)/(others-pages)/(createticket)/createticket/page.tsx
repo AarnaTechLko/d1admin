@@ -14,6 +14,7 @@ import Swal from "sweetalert2";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 
+
 interface Ticket {
   id: number;
   name: string;
@@ -26,6 +27,7 @@ interface Ticket {
   status: string;
   ticket_from: number;
   role: string;
+  escalate: boolean; // ✅ fix type to boolean
 }
 interface Admin {
   id: number;
@@ -204,7 +206,7 @@ const TicketsPage = () => {
         }
 
         const data = await response.json();
-        setSubAdmins(data.admins);
+        setSubAdmins(data.admin);
       } catch (err) {
         console.error("Error fetching sub-admins:", err);
         setError((err as Error).message);
@@ -338,6 +340,25 @@ const TicketsPage = () => {
         }
       }
     };
+const handleEscalate = async () => {
+  if (!selectedTicket) return; // ✅ prevents null errors
+
+  try {
+    const res = await fetch(`/api/tickets/${selectedTicket.id}/escalate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!res.ok) throw new Error("Failed to escalate ticket");
+
+    setSelectedTicket((prev) => prev ? { ...prev, escalate: true } : null);
+  } catch (err) {
+    console.error("Error escalating ticket:", err);
+  }
+};
+
+
+
   return (
     <div>
       {/* <div>
@@ -397,6 +418,7 @@ const TicketsPage = () => {
                   <td className="px-5 py-3 font-medium border-none  text-start">Email</td>
                   <td className="px-5 py-3 font-medium border-none  text-start">Subject</td>
                   <td className="px-5 py-3 font-medium border-none  text-start">Message</td>
+                  <td className="px-5 py-3 font-medium border-none  text-start">Escalate</td>
                   <td className="px-5 py-3 font-medium border-none  text-start">Assigned</td>
 
 
@@ -419,6 +441,8 @@ const TicketsPage = () => {
                       <td className="px-4 py-3 text-xs text-gray-500  border-none dark:text-gray-400">
                         {ticket.message.slice(0, 60)}...
                       </td>
+                   <td className="px-4 py-3 text-xs text-gray-500  border-none dark:text-gray-400">{ticket.escalate}</td>
+
                       <td className="px-4 py-3 text-gray-500  border-none dark:text-gray-400">
                         <button
                           className="text-blue-500 hover:underline text-xs"
@@ -464,147 +488,174 @@ const TicketsPage = () => {
 
 
 
-            <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
-                <DialogContent className="p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
-                <DialogTitle>Reply to Ticket</DialogTitle>
+         <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
+  <DialogContent className="p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <DialogTitle>Reply to Ticket</DialogTitle>
 
-                {/* Previous Messages */}
-                <div>
-                  <h3 className="text-sm font-medium mb-2 text-blue-600">Previous Messages</h3>
-                  <div className="border border-blue-300 rounded-md p-3 max-h-60 overflow-y-auto bg-gray-50 space-y-4 custom-scrollbar">
-                    {ticketReplies.length === 0 ? (
-                      <p className="text-gray-400 text-sm">No messages yet.</p>
-                    ) : (
-                      ticketReplies.map((reply) => (
-                        <div key={reply.id} className="border-b pb-3">
-                         <div className="flex justify-between items-start mb-1">
-                          <p className="text-sm text-gray-700">
-                            <span className="font-semibold">Message:</span> {reply.message}
-                          </p>
-                          <button
-                            onClick={() => handleDeleteReply(reply.id)}
-                            className="text-red-500 hover:text-red-700"
-                            title="Delete reply"
-                          >
-                            <Trash className="w-4 h-4" />
-                          </button>
-                        </div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-sm">Status:</span>
-                            <Badge
-                              color={
-                                reply.status.toLowerCase() === "Closed" ? "error" :
-                                  reply.status.toLowerCase() === "Open" ? "info" :
-                                    reply.status.toLowerCase() === "Fixed" ? "success" :
-                                      reply.status.toLowerCase() === "Pending" ? "warning" :
-                                        "light"
-                              }
-                            >
-                              {reply.status}
-                            </Badge>
-                          </div>
-                          {reply.filename && (
-                          <div className="flex items-center gap-2 text-sm mb-1">
-                            <span className="font-semibold text-sm">Attachment:</span>
-
-                            <a
-                              href={reply.filename}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center hover:underline text-blue-500"
-                            >
-                              <Download className="w-4 h-4 mr-1" />
-                              Download
-                            </a>
-                          </div>
-                        )}
-                          <div className="text-sm text-gray-700">
-                            <span className="font-semibold">Date:</span> {reply.repliedBy}  {new Date(reply.createdAt).toLocaleString()}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-
-
-                {/* New Message Input */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-blue-700 mb-1">New Message</label>
-                    <textarea
-                      className="w-full p-3 border rounded-md resize-none"
-                      placeholder="text"
-                      rows={2}
-                      value={replyMessage}
-                      onChange={(e) => setReplyMessage(e.target.value)}
-                    />
-                  </div>
-                     {/* Attachment Upload */}
-              <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
-                Attachment (Image or PDF)
-              </label>
-              <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 hover:border-blue-400 transition">
-                <input
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <div className="flex flex-col items-center justify-center space-y-2">
-                  <UploadCloud className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm text-gray-600">
-                    Click or drag to upload file
-                  </span>
-                  {attachmentFile && (
-                    <p className="text-xs text-green-600 font-medium">
-                      Selected: {attachmentFile.name}
-                    </p>
-                  )}
-                </div>
+    {/* Previous Messages */}
+    <div>
+      <h3 className="text-sm font-medium mb-2 text-blue-600">Previous Messages</h3>
+      <div className="border border-blue-300 rounded-md p-3 max-h-60 overflow-y-auto bg-gray-50 space-y-4 custom-scrollbar">
+        {ticketReplies.length === 0 ? (
+          <p className="text-gray-400 text-sm">No messages yet.</p>
+        ) : (
+          ticketReplies.map((reply) => (
+            <div key={reply.id} className="border-b pb-3">
+              <div className="flex justify-between items-start mb-1">
+                <p className="text-sm text-gray-700">
+                  <span className="font-semibold">Message:</span> {reply.message}
+                </p>
+                <button
+                  onClick={() => handleDeleteReply(reply.id)}
+                  className="text-red-500 hover:text-red-700"
+                  title="Delete reply"
+                >
+                  <Trash className="w-4 h-4" />
+                </button>
               </div>
-
-                  {/* Status Selection */}
-                  <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label> 
-                    <select
-                      className="w-full p-3 border rounded-md"
-                      value={replyStatus}
-                      onChange={(e) => setReplyStatus(e.target.value)}
-                    >
-                      <option value="Pending">Pending</option>
-                      <option value="Open">Open</option>
-                      <option value="Fixed">Fixed</option>
-                      <option value="Closed">Closed</option>
-                    </select>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="mt-6 flex justify-end gap-3">
-                    <button
-                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md"
-                      onClick={() => setIsReplyModalOpen(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md flex items-center justify-center"
-                      onClick={handleReplySubmit}
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <>
-                          <Loader2 className="animate-spin text-blue-300 mr-2" size={16} /> Submitting...
-                        </>
-                      ) : (
-                        "Submit"
-                      )}
-                    </button>
-                  </div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-semibold text-sm">Status:</span>
+                <Badge
+                  color={
+                    reply.status.toLowerCase() === "closed"
+                      ? "error"
+                      : reply.status.toLowerCase() === "open"
+                      ? "info"
+                      : reply.status.toLowerCase() === "fixed"
+                      ? "success"
+                      : reply.status.toLowerCase() === "pending"
+                      ? "warning"
+                      : "light"
+                  }
+                >
+                  {reply.status}
+                </Badge>
+              </div>
+              {reply.filename && (
+                <div className="flex items-center gap-2 text-sm mb-1">
+                  <span className="font-semibold text-sm">Attachment:</span>
+                  <a
+                    href={reply.filename}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center hover:underline text-blue-500"
+                  >
+                    <Download className="w-4 h-4 mr-1" />
+                    Download
+                  </a>
                 </div>
-              </DialogContent>
-            </Dialog>
+              )}
+              <div className="text-sm text-gray-700">
+                <span className="font-semibold">Date:</span> {reply.repliedBy}{" "}
+                {new Date(reply.createdAt).toLocaleString()}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+
+    {/* New Message Input */}
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-blue-700 mb-1">
+          New Message
+        </label>
+        <textarea
+          className="w-full p-3 border rounded-md resize-none"
+          placeholder="text"
+          rows={2}
+          value={replyMessage}
+          onChange={(e) => setReplyMessage(e.target.value)}
+        />
+      </div>
+
+      {/* Attachment Upload */}
+      <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
+        Attachment (Image or PDF)
+      </label>
+      <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 hover:border-blue-400 transition">
+        <input
+          type="file"
+          accept="image/*,application/pdf"
+          onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        />
+        <div className="flex flex-col items-center justify-center space-y-2">
+          <UploadCloud className="w-4 h-4 text-blue-500" />
+          <span className="text-sm text-gray-600">
+            Click or drag to upload file
+          </span>
+          {attachmentFile && (
+            <p className="text-xs text-green-600 font-medium">
+              Selected: {attachmentFile.name}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Status Selection */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Status
+        </label>
+        <select
+          className="w-full p-3 border rounded-md"
+          value={replyStatus}
+          onChange={(e) => setReplyStatus(e.target.value)}
+        >
+          <option value="Pending">Pending</option>
+          <option value="Open">Open</option>
+          <option value="Fixed">Fixed</option>
+          <option value="Closed">Closed</option>
+        </select>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="mt-6 flex justify-between items-center">
+        {/* Escalate button */}
+        <button
+          className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md"
+          onClick={handleEscalate}
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="animate-spin text-yellow-300 mr-2" size={16} />
+              Escalating...
+            </>
+          ) : (
+            "Escalate"
+          )}
+        </button>
+
+        <div className="flex gap-3">
+          <button
+            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md"
+            onClick={() => setIsReplyModalOpen(false)}
+          >
+            Cancel
+          </button>
+          <button
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md flex items-center justify-center"
+            onClick={handleReplySubmit}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="animate-spin text-blue-300 mr-2" size={16} />
+                Submitting...
+              </>
+            ) : (
+              "Submit"
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  </DialogContent>
+</Dialog>
+
 
 
 

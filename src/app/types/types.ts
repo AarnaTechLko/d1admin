@@ -179,6 +179,8 @@ export interface Ticket{
   assignee_name: string;
   ticket_from: string;
   role: string;
+    escalate: boolean; // ✅ fix type to boolean
+
 }
 export interface Team {
   id: number;

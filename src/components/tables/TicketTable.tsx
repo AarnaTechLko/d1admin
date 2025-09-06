@@ -26,6 +26,7 @@ interface Ticket {
   assignee_name: string;
   ticket_from:string;
   role:string;
+  escalate:boolean;
 }
 
 interface SubAdmin {
@@ -221,6 +222,7 @@ const TicketTable: React.FC<Props> = ({
                     <TableCell className="px-5 py-3">Email</TableCell>
                     <TableCell className="px-5 py-3">Subject</TableCell>
                     <TableCell className="px-5 py-3">Message</TableCell>
+                    <TableCell className="px-5 py-3">Escalate</TableCell>
                     <TableCell className="px-5 py-3">Assign To</TableCell>
                     <TableCell className="px-5 py-3">Status</TableCell>
                     <TableCell className="px-5 py-3">Actions</TableCell>
@@ -233,6 +235,7 @@ const TicketTable: React.FC<Props> = ({
                       <TableCell className="px-4 py-3">{ticket.email}</TableCell>
                       <TableCell className="px-4 py-3">{ticket.subject}</TableCell>
                       <TableCell className="px-4 py-3">{ticket.message}</TableCell>
+                      <TableCell className="px-4 py-3">{ticket.escalate}</TableCell>
                       <TableCell className="px-4 py-3">
                         <button className="text-blue-500 hover:underline" onClick={() => handleAssignToClick(ticket)}>
                           {ticket.assign_to_username || "Assign To"}

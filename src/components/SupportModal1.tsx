@@ -14,6 +14,8 @@ interface Ticket {
   status: string;
   ticket_from: number;
   role: string;
+    escalate: boolean; // ✅ fix type to boolean
+
 }
 interface SupportModalProps {
   setSupportOpen: (open: boolean) => void;

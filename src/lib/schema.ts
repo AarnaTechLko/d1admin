@@ -681,6 +681,7 @@ export const ticket = pgTable("ticket", {
   status: varchar("status").default("Pending"),
   role: varchar("role"),
   message: text("message").notNull(),
+    escalate: boolean("escalate").default(false), // ✅ new column
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 

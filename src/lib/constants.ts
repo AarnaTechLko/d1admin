@@ -5,7 +5,6 @@ export const SECRET_KEY = process.env.SECRET_KEY || 'JHGJHG&^*&^*&HGJHGJ65766876
 export const COMMISSIONPERCENTAGE=18;
 const startYear = 1985; // Starting year
 const endYear = 2050; 
-
 export const NEXT_PUBLIC_AWS_S3_BUCKET_LINK = 
   process.env.NEXT_PUBLIC_AWS_S3_BUCKET_LINK;
 

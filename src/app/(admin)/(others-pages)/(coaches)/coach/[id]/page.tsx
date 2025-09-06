@@ -340,7 +340,42 @@ export default function CoachDetailsPage() {
   //   );
   // }
   if (!coach) return <div className="p-6 text-center text-red-500">Coach not found.</div>;
-         const view_finance = Number(sessionStorage.getItem("view_finance") || 0);
+  const view_finance = Number(sessionStorage.getItem("view_finance") || 0);
+
+
+
+const handleCoachApproval = async (coachId: number, isApproved: boolean) => {
+  try {
+    const response = await fetch(`/api/coach/${coachId}/approval`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ approved: isApproved }),
+    });
+
+    if (!response.ok) throw new Error("Failed to update coach status");
+
+    const result = await response.json();
+
+    Swal.fire({
+      icon: "success",
+      title: "Success",
+      text: result.message,
+      timer: 2000,
+      showConfirmButton: false,
+    });
+
+    // Optional: update UI locally
+  } catch (error) {
+    console.error(error);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Something went wrong while updating the coach status.",
+    });
+  }
+};
+
+
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
@@ -351,7 +386,7 @@ export default function CoachDetailsPage() {
           <div className="flex-shrink-0">
             {coach.image && (
               <Image
-                src={ `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${coach.image}`}
+                src={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${coach.image}`}
                 alt={`${coach.firstName} ${coach.lastName}`}
                 width={96}
                 height={96}
@@ -415,6 +450,20 @@ export default function CoachDetailsPage() {
 
           {/* Download Buttons */}
           <div className="flex flex-col items-center sm:items-end lg:items-end space-y-2">
+            <div className="flex space-x-2">
+              <button
+                className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition"
+                onClick={() => handleCoachApproval(Number(coach.id), true)}
+              >
+                Approve
+              </button>
+              <button
+                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
+                onClick={() => handleCoachApproval(Number(coach.id), false)}
+              >
+                Decline
+              </button>
+            </div>
             <button
               className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-700 hover:text-blue-600 transition"
               onClick={() => handleDownload(coach.cv)}
@@ -456,10 +505,10 @@ export default function CoachDetailsPage() {
         <div><strong className="text-gray-700">Coaching License Type:</strong> {coach.license_type}</div>
         {/* <div><strong className="text-gray-500">Consumed Licenses:</strong> {coach.consumeLicenseCount}</div> */}
         {/* <div><strong className="text-gray-500">Assigned Licenses:</strong> {coach.assignedLicenseCount}</div> */}
-        <div><strong className="text-gray-700">Total Earnings:</strong><span className='ml-2 px-2 py-1 rounded-full  text-xs bg-blue-200 '> 
+        <div><strong className="text-gray-700">Total Earnings:</strong><span className='ml-2 px-2 py-1 rounded-full  text-xs bg-blue-200 '>
           ${coach.payments.filter((p: Payment) => p.is_deleted !== 0)
-          .reduce((sum, p) => sum + Number(p.amount), 0)
-          .toFixed(2)}</span></div>
+            .reduce((sum, p) => sum + Number(p.amount), 0)
+            .toFixed(2)}</span></div>
         <div><strong className="text-gray-700">Qualifications:</strong> {coach.qualifications}</div>
         {coach?.latestLoginIp && (
           <div className="mb-2">
@@ -628,9 +677,9 @@ export default function CoachDetailsPage() {
       </section >
 
       {/* Payments */}
-      
-     
-{view_finance === 1 && payments.length > 0 && (
+
+
+      {view_finance === 1 && payments.length > 0 && (
 
         < section className="p-6 max-w-7xl mx-auto space-y-8" >
 

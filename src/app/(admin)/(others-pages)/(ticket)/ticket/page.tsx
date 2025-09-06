@@ -46,8 +46,8 @@ interface TicketReply {
 }
 
 const TicketsPage = () => {
-      useRoleGuard();
-  
+  useRoleGuard();
+
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -107,7 +107,7 @@ const TicketsPage = () => {
   };
 
   const handleReplySubmit = async () => {
-          setIsReplyModalOpen(false); 
+    setIsReplyModalOpen(false);
 
     if (!selectedTicket) {
       Swal.fire("Error", "No ticket selected.", "error");
@@ -218,7 +218,7 @@ const TicketsPage = () => {
         }
 
         const data = await response.json();
-        setSubAdmins(data.admins);
+        setSubAdmins(data.admin);
       } catch (err) {
         console.error("Error fetching sub-admins:", err);
         setError((err as Error).message);
@@ -304,7 +304,7 @@ const TicketsPage = () => {
   };
 
   const handleDeleteReply = async (replyId: number) => {
-      setIsReplyModalOpen(false); 
+    setIsReplyModalOpen(false);
 
     const confirmed = await Swal.fire({
       title: "Are you sure?",
@@ -593,19 +593,27 @@ const TicketsPage = () => {
           <DialogTitle>Assign Subadmin</DialogTitle>
           <p className="text-gray-500">Select a sub-admin to assign:</p>
 
-          {/* Sub-admin selection */}
           <ul className="mt-4 space-y-2">
-            {subAdmins.map((subAdmin) => (
-              <li
-                key={subAdmin.id}
-                className={`p-2 border rounded-md cursor-pointer 
-             ${selectedTicket?.assign_to === subAdmin.id ? "bg-blue-200 dark:bg-blue-700" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
-                onClick={() => setSelectedTicket((prev) => prev ? { ...prev, assign_to: subAdmin.id } : null)}
-              >
-                {subAdmin.username}
-                {/* ({subAdmin.email}) */}
-              </li>
-            ))}
+            {subAdmins?.length > 0 ? (
+              subAdmins.map((subAdmin) => (
+                <li
+                  key={subAdmin.id}
+                  className={`p-2 border rounded-md cursor-pointer 
+          ${selectedTicket?.assign_to === subAdmin.id
+                      ? "bg-blue-200 dark:bg-blue-700"
+                      : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+                  onClick={() =>
+                    setSelectedTicket((prev) =>
+                      prev ? { ...prev, assign_to: subAdmin.id } : null
+                    )
+                  }
+                >
+                  {subAdmin.username}
+                </li>
+              ))
+            ) : (
+              <p className="text-gray-500 text-sm">No sub-admins available</p>
+            )}
           </ul>
 
           {/* Submit & Cancel Buttons */}
