@@ -19,7 +19,7 @@ export async function PATCH(
       .set({ escalate: true }) // ✅ assumes you added a boolean "escalate" column in schema
       .where(eq(ticket.id, ticketId))
       .returning();
-
+console.log("updated",updated);
     if (updated.length === 0) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }

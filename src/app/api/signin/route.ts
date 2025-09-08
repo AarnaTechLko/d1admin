@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       .select()
       .from(block_ips)
       .where(
-        and(
+        and(   
           eq(block_ips.status, "block"),
           or(
             eq(block_ips.block_ip_address, trimmedIp),
