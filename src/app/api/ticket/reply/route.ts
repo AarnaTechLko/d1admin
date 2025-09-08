@@ -1,52 +1,93 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { ticket, ticket_messages } from '@/lib/schema';
-import { eq } from 'drizzle-orm';
-import { put } from '@vercel/blob';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { ticket, ticket_messages } from "@/lib/schema";
+import { eq } from "drizzle-orm";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION!,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
-    const ticketId = formData.get("ticketId");
-    const repliedBy = formData.get("repliedBy");
-    const message = formData.get("message");
-    const status = formData.get("status");
+
+    const ticketId = formData.get("ticketId")?.toString();
+    const repliedBy = formData.get("repliedBy")?.toString();
+    const message = formData.get("message")?.toString();
+    const status = formData.get("status")?.toString();
     const file = formData.get("attachment") as File | null;
 
     if (!ticketId || !repliedBy || !message || !status) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
-    let filename = '';
+    let filename = "";
 
+    // ✅ Upload to S3
     if (file && file.size > 0) {
-      const blob = await put(file.name, file, { access: 'public' });
-      filename = blob.url;
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      const key = `tickets/${Date.now()}-${file.name}`;
+
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: process.env.AWS_BUCKET_NAME!,
+          Key: key,
+          Body: buffer,
+          ContentType: file.type,
+        })
+      );
+
+      // Use CloudFront URL if available, otherwise fallback to S3 URL
+      filename = process.env.NEXT_PUBLIC_AWS_S3_BUCKET_LINK
+        ? `${process.env.NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${key}`
+        : `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
     }
 
-    const insertedReply = await db.insert(ticket_messages).values({ 
-      ticket_id: Number(ticketId),
-      replied_by: repliedBy.toString(),
-      message: message.toString(),
-      status: status.toString(),
-      createdAt: new Date(),
-      filename,
-    }).returning();
+    // ✅ Insert reply
+    const [insertedReply] = await db
+      .insert(ticket_messages)
+      .values({
+        ticket_id: Number(ticketId),
+        replied_by: repliedBy,
+        message,
+        status,
+        createdAt: new Date(),
+        filename,
+      })
+      .returning();
 
-    await db.update(ticket)
+    // ✅ Update ticket status + last message
+    await db
+      .update(ticket)
       .set({
-        status: status.toString(),
-        message: message.toString(),
+        status,
+        message,
       })
       .where(eq(ticket.id, Number(ticketId)));
 
-    return NextResponse.json({ success: true, reply: insertedReply }, { status: 200 });
-
+    return NextResponse.json(
+      { success: true, reply: insertedReply },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error uploading file or saving ticket reply:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error", details: (error as Error).message },
+      { status: 500 }
+    );
   }
 }
+
 export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
@@ -60,6 +101,9 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Delete reply error:", error);
-    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete", details: (error as Error).message },
+      { status: 500 }
+    );
   }
 }

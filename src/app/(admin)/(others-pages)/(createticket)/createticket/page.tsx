@@ -75,6 +75,7 @@ const TicketsPage = () => {
   const router = useRouter();
 
 
+
   const handleReplyClick = async (ticket: Ticket) => {
     setSelectedTicket(ticket);
     setIsReplyModalOpen(true);
@@ -340,20 +341,41 @@ const TicketsPage = () => {
         }
       }
     };
+
 const handleEscalate = async () => {
   if (!selectedTicket) return; // ✅ prevents null errors
 
   try {
     const res = await fetch(`/api/tickets/${selectedTicket.id}/escalate`, {
-      method: "POST",
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
     });
 
-    if (!res.ok) throw new Error("Failed to escalate ticket");
+    if (!res.ok) {
+      throw new Error("Failed to escalate ticket");
+    }
 
-    setSelectedTicket((prev) => prev ? { ...prev, escalate: true } : null);
+    setSelectedTicket((prev) =>
+      prev ? { ...prev, escalate: true } : null
+    );
+
+    // ✅ Success alert
+    Swal.fire({
+      icon: "success",
+      title: "Escalated!",
+      text: "The ticket has been escalated successfully.",
+      timer: 2000,
+      showConfirmButton: false,
+    });
   } catch (err) {
     console.error("Error escalating ticket:", err);
+
+    // ❌ Error alert
+    Swal.fire({
+      icon: "error",
+      title: "Oops...",
+      text: "Failed to escalate ticket. Please try again.",
+    });
   }
 };
 
@@ -441,7 +463,11 @@ const handleEscalate = async () => {
                       <td className="px-4 py-3 text-xs text-gray-500  border-none dark:text-gray-400">
                         {ticket.message.slice(0, 60)}...
                       </td>
-                   <td className="px-4 py-3 text-xs text-gray-500  border-none dark:text-gray-400">{ticket.escalate}</td>
+                   <td className="px-4 py-3 text-xs text-gray-500  border-none dark:text-gray-400"> {ticket.escalate ? (
+                  <span className="text-green-600 font-bold">Yes</span>
+                ) : (
+                  <span className="text-red-600">No</span>
+                )}</td>
 
                       <td className="px-4 py-3 text-gray-500  border-none dark:text-gray-400">
                         <button
@@ -621,7 +647,7 @@ const handleEscalate = async () => {
         >
           {loading ? (
             <>
-              <Loader2 className="animate-spin text-yellow-300 mr-2" size={16} />
+              <Loader2 className="animate-spin text-yellow-900 mr-2" size={16} />
               Escalating...
             </>
           ) : (
