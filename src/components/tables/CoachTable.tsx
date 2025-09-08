@@ -30,7 +30,7 @@ interface CoachTableProps {
   setCurrentPage: (page: number) => void;
 }
 
-const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurrentPage }) => {
+const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPages, setCurrentPage }) => {
   const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -42,9 +42,16 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [ipOpen, setIpOpen] = useState<number | null>(null);
   const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
-  const itemsPerPage = 10;
-  const totalPages = Math.ceil(data.length / itemsPerPage);
-  const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  // const itemsPerPage = 10;
+  // const numberOfPages = Math.ceil(totalPages / itemsPerPage);
+
+  // console.log("Total: ", numberOfPages);
+  // console.log("Data: ", data)
+
+  // const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // console.log("Paginated: ", paginatedData);
+
   const [isCoachPasswordModalOpen, setCoachPasswordModalOpen] = useState(false);
   const [selectedCoachId, setSelectedCoachId] = useState<number | null>(null);
   const [selectedCoachid, setSelectedCoachid] = useState<number | null>(null);
@@ -243,7 +250,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, setCurr
             </TableHeader>
 
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {paginatedData.map((coach) => (
+              {data.map((coach) => (
                 <TableRow key={`${coach.id}-${coach.is_deleted}`} className={coach.is_deleted === 0 ? "bg-red-100" : "bg-white"}>
                   <TableCell className="px-4 py-3 text-start">
                     <div className="flex items-center gap-3">

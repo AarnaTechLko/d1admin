@@ -2,12 +2,12 @@
 import React, { useEffect, useState } from "react";
 
 import { GroupIcon } from "lucide-react";
-interface Coach {
-  id: string; 
-}
-interface player {
-  id: string;
-}
+// interface Coach {
+//   id: string; 
+// }
+// interface player {
+//   id: string;
+// }
 interface Organization {
   id: string;
 }
@@ -16,8 +16,8 @@ export const EcommerceMetrics = () => {
     // const [totalPages, setTotalPages] = useState<number>(1);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [totalCount, setTotalCount] = useState<number>(0);
-     const [players, setplayers] = useState<player[]>([]);
-    const [coaches, setCoaches] = useState<Coach[]>([]);
+     const [players, setPlayers] = useState<number>(0);
+    const [coaches, setCoaches] = useState<number>(0);
     // const [error, setError] = useState<string | null>(null);
     // const [loading, setLoading] = useState<boolean>(true);
     // const router = useRouter();
@@ -54,13 +54,12 @@ export const EcommerceMetrics = () => {
         // setLoading(true);
         // setError(null);
         try {
-          const id = "someId"; // Set your id here
-          const response = await fetch(`/api/coach?id=${id}`);
+          const response = await fetch(`/api/coachCount`);
           
           const data = await response.json();
     
-          console.log("API Response:", data); // ✅ Debugging line
-          setCoaches(data.coaches || []);
+          console.log("Coach Count:", data.coachCount[0].count); // ✅ Debugging line
+          setCoaches(data.coachCount[0].count);
 
         } catch (err) {
           console.log("error",err);
@@ -81,13 +80,12 @@ export const EcommerceMetrics = () => {
         // setLoading(true);
         // setError(null);
         try {
-          const id = "someId"; // Set your id here
-          const response = await fetch(`/api/player?id=${id}`);
+          const response = await fetch(`/api/playerCount`);
           
           const data = await response.json();
     
-          console.log("API Response:", data); // ✅ Debugging line
-          setplayers(data.player || []);
+          console.log("Player Count:", data.playerCount[0].count); // ✅ Debugging line
+          setPlayers(data.playerCount[0].count);
 
         } catch (err) {
           console.error('err',err);
@@ -108,13 +106,12 @@ export const EcommerceMetrics = () => {
         // setLoading(true);
         // setError(null);
         try {
-          const id = "someId"; // Set your id here
-          const response = await fetch(`/api/organization?id=${id}`);
+          const response = await fetch(`/api/organizationCount`);
           
           const data = await response.json();
     
-          console.log("API Response:", data); // ✅ Debugging line
-          setOrganizations(data.enterprises || []);
+          console.log("Organization Count:", data.organizationCount[0].count); // ✅ Debugging line
+          setOrganizations(data.organizationCount[0].count);
 
         } catch (err) {
           console.error("error", err);
@@ -143,7 +140,7 @@ export const EcommerceMetrics = () => {
               Coaches
             </span>
             <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
-            {coaches.length}
+            {coaches}
             </h4>
           </div>
           {/* <Badge color="success">
@@ -165,7 +162,7 @@ export const EcommerceMetrics = () => {
               Players
             </span>
             <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
-            {players.length}
+            {players}
             </h4>
           </div>
 
