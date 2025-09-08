@@ -28,7 +28,7 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
     "/evaluationdetails"
   ],
 
-  "Executive Level 1": [
+  "Executive Level": [
     "/dashboard*",
     "/ticket*",
     "/coach*",
