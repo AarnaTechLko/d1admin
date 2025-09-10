@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from "react";
-// import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
+import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
 import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
 import ActivityLog from "@/components/ecommerce/ActivityLog";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
@@ -26,7 +26,7 @@ export default function Ecommerce() {
     return (
       <div className="grid grid-cols-12 gap-4 md:gap-6">
         <div className="col-span-12 space-y-6">
-          {/* <EcommerceMetrics /> */}
+          <EcommerceMetrics />
         </div>
       </div>
     );
@@ -35,7 +35,7 @@ export default function Ecommerce() {
   return (
     <div className="grid grid-cols-12 gap-4 md:gap-6">
       <div className="col-span-12 space-y-6 xl:col-span-12">
-        {/* <EcommerceMetrics /> */}
+        <EcommerceMetrics />
         <MonthlySalesChart />
         <ActivityLog />
       </div>
