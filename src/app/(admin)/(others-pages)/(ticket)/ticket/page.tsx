@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
 import { Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
-import Loading from "@/components/Loading";
+// import Loading from "@/components/Loading";
 // import { useSession } from 'next-auth/react';
 import { UploadCloud } from "lucide-react";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
@@ -333,9 +333,9 @@ const TicketsPage = () => {
       }
     }
   };
-  if (loading) {
-    return <Loading />;
-  }
+  // if (loading) {
+  //   return <Loading />;
+  // }
 
   return (
     <div>

@@ -41,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${outfit.variable} dark:bg-gray-900 z-40`}>
-        <SessionProvider> {/* ✅ Wrap children with SessionProvider */}
+        <SessionProvider> 
           <SidebarProvider>{children}</SidebarProvider>
         </SessionProvider>
       </body>

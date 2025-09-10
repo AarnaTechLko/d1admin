@@ -16,7 +16,7 @@ import axios from "axios";
 type RecentMessage = {
   sender_id: string;
   from: string;
-  methods: string[]; 
+  methods: string[];
   id: number;
   message: string;
   created_at: string;
@@ -498,49 +498,49 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                           />
 
                           {/* Recent Messages */}
-                        <div className="border-t pt-3">
-  <h3 className="text-sm font-medium text-gray-700 mb-2">Recent Messages</h3>
-  <div className="max-h-40 overflow-y-auto space-y-3">
-    {recentMessages.length === 0 ? (
-      <p className="text-xs text-gray-500">No previous messages</p>
-    ) : (
-      recentMessages.map((msg, idx) => {
-        // Format methods nicely (if you want uppercase labels)
-        const methodLabels = msg.methods.length
-          ? msg.methods.map((m) => m.toUpperCase()).join(", ")
-          : "N/A";
+                          <div className="border-t pt-3">
+                            <h3 className="text-sm font-medium text-gray-700 mb-2">Recent Messages</h3>
+                            <div className="max-h-40 overflow-y-auto space-y-3">
+                              {recentMessages.length === 0 ? (
+                                <p className="text-xs text-gray-500">No previous messages</p>
+                              ) : (
+                                recentMessages.map((msg, idx) => {
+                                  // Format methods nicely (if you want uppercase labels)
+                                  const methodLabels = msg.methods.length
+                                    ? msg.methods.map((m) => m.toUpperCase()).join(", ")
+                                    : "N/A";
 
-        // Set alignment and bg color
-        const alignment =
-          msg.position === "left" ? "justify-start" : "justify-end";
-        const bgColor =
-          msg.bgColor === "green" ? "bg-green-100" : "bg-blue-100";
+                                  // Set alignment and bg color
+                                  const alignment =
+                                    msg.position === "left" ? "justify-start" : "justify-end";
+                                  const bgColor =
+                                    msg.bgColor === "green" ? "bg-green-100" : "bg-blue-100";
 
-        return (
-          <div
-            key={msg.id ?? idx}
-            className={`flex ${alignment}`}
-          >
-            <div className={`p-3 rounded-xl shadow-sm ${bgColor} w-full`}>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-semibold">
-                  From: { `${coach.firstName} ${coach.lastName}`}
-                </span>
-                <span className="text-[10px] text-gray-500">
-                  {new Date(msg.created_at).toLocaleString()}
-                </span>
-              </div>
-              <div className="text-xs text-gray-700">
-                <p>{msg.message}</p>
-                <p className="text-gray-500">Methods: {methodLabels}</p>
-              </div>
-            </div>
-          </div>
-        );
-      })
-    )}
-  </div>
-</div>
+                                  return (
+                                    <div
+                                      key={msg.id ?? idx}
+                                      className={`flex ${alignment}`}
+                                    >
+                                      <div className={`p-3 rounded-xl shadow-sm ${bgColor} w-full`}>
+                                        <div className="flex justify-between items-center mb-1">
+                                          <span className="text-xs font-semibold">
+                                            From: {`${coach.firstName} ${coach.lastName}`}
+                                          </span>
+                                          <span className="text-[10px] text-gray-500">
+                                            {new Date(msg.created_at).toLocaleString()}
+                                          </span>
+                                        </div>
+                                        <div className="text-xs text-gray-700">
+                                          <p>{msg.message}</p>
+                                          <p className="text-gray-500">Methods: {methodLabels}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
 
                           {/* Actions */}
                           <div className="flex justify-end gap-3 pt-2">
@@ -554,7 +554,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                               onClick={async () => {
                                 if (!messageText.trim()) {
                                   Swal.fire("Warning", "Please enter a message before sending.", "warning");
-                                  return;
+                                  return;     
                                 }
 
                                 if (!sendEmail && !sendSMS && !sendInternal) {
@@ -594,13 +594,14 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                                   setSelectedCoachid(null);
                                   setMessageText("");
 
-                            
 
-                                  
+
+
                                 } catch (err) {
                                   console.error(err);
                                   setSelectedCoachid(null);
                                   Swal.fire("Error", "Failed to send message.", "error");
+                                  
                                 }
                               }}
                               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"

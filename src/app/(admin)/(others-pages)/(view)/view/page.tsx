@@ -5,7 +5,7 @@ import { Table, TableCell, TableBody, TableHeader, TableRow } from "@/components
 import { ShieldCheck, Trash } from "lucide-react";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import Loading from "@/components/Loading";
+// import Loading from "@/components/Loading";
 import { User, Mail, Shield, MoreHorizontal } from "lucide-react"; // Import at the top
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 type Permission = {
@@ -46,7 +46,7 @@ const AdminListPage = () => {
         if (!response.ok) throw new Error("Failed to fetch admin data");
 
         const data = await response.json();
-console.log("data",data);
+        console.log("data", data);
         setAdmin(data.admin);
         setTotalPages(data.totalPages);
       } catch (err) {
@@ -89,9 +89,9 @@ console.log("data",data);
       await MySwal.fire('Error!', `Failed to delete admin: ${error}`, 'error');
     }
   };
-  if (loading) {
-    return <Loading />;
-  }
+  // if (loading) {
+  //   return <Loading />;
+  // }
 
   return (
     <div>

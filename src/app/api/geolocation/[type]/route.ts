@@ -7,6 +7,7 @@ import {
   countries,
   admin_message,
   chats,
+  admin,
 } from '@/lib/schema';
 import { and, isNotNull, ne, eq, sql } from 'drizzle-orm';
 import { sendEmail } from '@/lib/helpers';
@@ -48,7 +49,7 @@ export async function GET(
     const { type } = await params;
     let data: LocationItem[] = [];
 
-    if (type === 'player') {
+    if (type === "player") {
       const players = await db
         .select({
           id: users.id,
@@ -61,8 +62,11 @@ export async function GET(
           countryName: countries.name,
         })
         .from(users)
-        .leftJoin(countries, eq(users.country, sql`CAST(${countries.id} AS TEXT)`))
-        .where(and(isNotNull(users.first_name), ne(users.first_name, '')));
+        .leftJoin(
+          countries,
+          eq(users.country, sql`CAST(${countries.id} AS TEXT)`)
+        )
+        .where(and(isNotNull(users.first_name), ne(users.first_name, "")));
 
       data = players.map((p) => ({
         id: String(p.id),
@@ -73,7 +77,7 @@ export async function GET(
         state: p.state,
         city: p.city,
       }));
-    } else if (type === 'coach') {
+    } else if (type === "coach") {
       const coachList = await db
         .select({
           id: coaches.id,
@@ -84,8 +88,11 @@ export async function GET(
           countryName: countries.name,
         })
         .from(coaches)
-        .leftJoin(countries, eq(coaches.country, sql`CAST(${countries.id} AS TEXT)`))
-        .where(and(isNotNull(coaches.firstName), ne(coaches.firstName, '')));
+        .leftJoin(
+          countries,
+          eq(coaches.country, sql`CAST(${countries.id} AS TEXT)`)
+        )
+        .where(and(isNotNull(coaches.firstName), ne(coaches.firstName, "")));
 
       data = coachList.map((c) => ({
         id: String(c.id),
@@ -94,7 +101,7 @@ export async function GET(
         state: c.state,
         city: c.city,
       }));
-    } else if (type === 'organization') {
+    } else if (type === "organization") {
       const orgs = await db
         .select({
           id: enterprises.id,
@@ -104,8 +111,16 @@ export async function GET(
           countryName: countries.name,
         })
         .from(enterprises)
-        .leftJoin(countries, eq(enterprises.country, sql`CAST(${countries.id} AS TEXT)`))
-        .where(and(isNotNull(enterprises.organizationName), ne(enterprises.organizationName, '')));
+        .leftJoin(
+          countries,
+          eq(enterprises.country, sql`CAST(${countries.id} AS TEXT)`)
+        )
+        .where(
+          and(
+            isNotNull(enterprises.organizationName),
+            ne(enterprises.organizationName, "")
+          )
+        );
 
       data = orgs.map((o) => ({
         id: String(o.id),
@@ -114,16 +129,42 @@ export async function GET(
         state: o.state,
         city: o.city,
       }));
+    } else if (type === "staff") {
+      // --- Staff/Admin list ---
+      const staffList = await db
+        .select({
+          id: admin.id,
+          username: admin.username,
+          email: admin.email,
+          role: admin.role,
+        })
+        .from(admin)
+        .where(eq(admin.is_deleted, 1));
+
+      data = staffList.map((s) => ({
+        id: String(s.id),
+        name: s.username,
+        country: null,
+        state: null,
+        city: null,
+      }));
     } else {
-      return NextResponse.json({ error: 'Invalid type provided.' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid type provided." },
+        { status: 400 }
+      );
     }
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('❌ GET Error fetching recipients:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("❌ GET Error fetching recipients:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
+
 
 // -------------------- POST Handler --------------------
 export async function POST(req: NextRequest) {

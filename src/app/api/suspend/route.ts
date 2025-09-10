@@ -56,20 +56,21 @@ export async function GET(req: NextRequest) {
       eq(coaches.suspend, 0) // ✅ Only suspended coaches
     );
 
-    const searchCondition = search
-      ? or(
-          ilike(coaches.firstName, `%${search}%`),
-          ilike(coaches.lastName, `%${search}%`),
-          ilike(coaches.email, `%${search}%`),
-          ilike(coaches.phoneNumber, `%${search}%`),
-          ilike(coaches.sport, `%${search}%`),
-          ilike(coaches.status, `%${search}%`),
-          ilike(countries.name, `%${search}%`),
-          ilike(coaches.state, `%${search}%`),
-          ilike(coaches.city, `%${search}%`),
-          ilike(coaches.gender, `%${search}%`)
-        )
-      : undefined;
+ const searchCondition = search
+  ? or(
+ ilike(coaches.firstName, `%${search}%`),
+ ilike(coaches.lastName, `%${search}%`),
+ ilike(countries.name, `%${search}%`),
+ ilike(coaches.gender, `%${search}%`),
+ ilike(coaches.state, `%${search}%`),
+ ilike(coaches.city, `%${search}%`),
+//  ilike(coaches.slug, `%${search}%`),
+//  ilike(coaches.status, `%${search}%`),
+//  ilike(coaches.sport, `%${search}%`),
+   
+     
+    )
+  : undefined;
 
     const whereClause = and(
       baseCondition,

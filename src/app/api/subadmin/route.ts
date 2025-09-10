@@ -62,7 +62,7 @@ export async function GET(req: Request) {
       ? or(
           ilike(admin.username, `%${search}%`),
           ilike(admin.email, `%${search}%`),
-          ilike(admin.role, `%${search}%`)
+          // ilike(admin.role, `%${search}%`)
         )
       : undefined;
 

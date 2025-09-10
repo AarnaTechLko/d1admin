@@ -25,13 +25,8 @@ interface SupportModalProps {
 
 interface User {
   id: number;
-  name?: string;
-  email?: string;
-  country?: string;
-  state?: string;
-  city?: string;
-  gender?: string;
-  position?: string;
+  name: string;
+  email: string;
 }
 
 const SupportModal1: React.FC<SupportModalProps> = ({
@@ -50,22 +45,12 @@ const SupportModal1: React.FC<SupportModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: session } = useSession();
 
- 
-
-  // Fetch users based on selected type and filters
-  const fetchUsers = async () => {
+  // Fetch users based on selected type
+  const fetchUsers = async (type: string) => {
     try {
-      const query = new URLSearchParams({
-        type: userType,
-       
-      });
-
-      const res = await fetch(`/api/geolocation/${userType}?${query}`);
+      const res = await fetch(`/api/users?type=${type}`);
       const data = await res.json();
-      const arr = Array.isArray(data) ? data : [];
-      setUsers(arr);
-
-      
+      setUsers(data.users || []);
     } catch (err) {
       console.error(err);
       setUsers([]);
@@ -89,10 +74,18 @@ const SupportModal1: React.FC<SupportModalProps> = ({
       email: storedEmail ?? "",
     }));
 
-    fetchUsers();
-  }, [session, setSupportOpen, userType,]);
+    // Fetch initial users
+    fetchUsers(userType);
+  }, [session, setSupportOpen]);
 
-
+  // Update users when userType changes
+  useEffect(() => {
+    fetchUsers(userType);
+    setFormData((prev) => ({
+      ...prev,
+      assign_to: 0, // reset selection
+    }));
+  }, [userType]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -110,7 +103,9 @@ const SupportModal1: React.FC<SupportModalProps> = ({
     try {
       const response = await fetch("/api/ticket", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(formData),
       });
 
@@ -145,7 +140,7 @@ const SupportModal1: React.FC<SupportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 mt-20">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 overflow-y-auto max-h-[90vh]">
         <h2 className="text-xl font-bold mb-4">Create a New Ticket</h2>
 
@@ -165,11 +160,11 @@ const SupportModal1: React.FC<SupportModalProps> = ({
           ))}
         </div>
 
-     
-
         {/* Assign To Dropdown */}
         <div className="mb-4">
-          <label htmlFor="assign_to" className="block mb-2">Assign To</label>
+          <label htmlFor="assign_to" className="block mb-2">
+            Select {userType.charAt(0).toUpperCase() + userType.slice(1)}
+          </label>
           <select
             id="assign_to"
             className="w-full p-2 border rounded"
@@ -186,18 +181,49 @@ const SupportModal1: React.FC<SupportModalProps> = ({
           </select>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
-          {/* Name & Email */}
           <div className="mb-4 flex space-x-4">
-            <input type="text" id="name" value={formData.name} readOnly className="w-1/2 p-2 border rounded" />
-            <input type="email" id="email" value={formData.email} readOnly className="w-1/2 p-2 border rounded" />
+            <div className="w-1/2">
+              <label htmlFor="name" className="block mb-2">
+                Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                className="w-full p-2 border rounded"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                readOnly
+              />
+            </div>
+            <div className="w-1/2">
+              <label htmlFor="email" className="block mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                className="w-full p-2 border rounded"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                readOnly
+              />
+            </div>
           </div>
 
-          {/* Subject */}
           <div className="mb-4">
-            <label htmlFor="subject" className="block mb-2">Subject</label>
-            <select id="subject" className="w-full p-2 border rounded" value={formData.subject} onChange={handleChange} required>
+            <label htmlFor="subject" className="block mb-2">
+              Subject
+            </label>
+            <select
+              id="subject"
+              className="w-full p-2 border rounded"
+              value={formData.subject}
+              onChange={handleChange}
+              required
+            >
               <option value="">Select a subject</option>
               <option value="General Inquiry">General Inquiry</option>
               <option value="Technical Support">Technical Support</option>
@@ -206,13 +232,56 @@ const SupportModal1: React.FC<SupportModalProps> = ({
             </select>
           </div>
 
-          {/* Message */}
-          <textarea id="message" value={formData.message} onChange={handleChange} rows={5} required className="w-full p-2 border rounded mb-4" />
+          <div className="mb-4">
+            <label htmlFor="message" className="block mb-2">
+              Message
+            </label>
+            <textarea
+              id="message"
+              className="w-full p-2 border rounded"
+              value={formData.message}
+              onChange={handleChange}
+              required
+              rows={5}
+            />
+          </div>
 
           <div className="flex justify-end space-x-2">
-            <button type="button" className="bg-gray-500 text-white px-4 py-2 rounded" onClick={() => setSupportOpen(false)}>Close</button>
-            <button type="submit" disabled={isSubmitting} className="bg-blue-500 text-white px-4 py-2 rounded">
-              {isSubmitting ? "Submitting..." : "Submit Ticket"}
+            <button
+              type="button"
+              className="bg-gray-500 text-white px-4 py-2 rounded"
+              onClick={() => setSupportOpen(false)}
+            >
+              Close
+            </button>
+            <button
+              type="submit"
+              className="bg-blue-500 text-white px-4 py-2 rounded flex items-center space-x-2"
+              disabled={isSubmitting}
+            >
+              {isSubmitting && (
+                <svg
+                  className="animate-spin h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  />
+                </svg>
+              )}
+              <span>{isSubmitting ? "Submitting..." : "Submit Ticket"}</span>
             </button>
           </div>
         </form>

@@ -160,9 +160,9 @@ export default function CreateSubAdminWithRole() {
 
       {/* Username & Email */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="relative">
+        <div className="relative ">
           <Label>
-            User Name <span className="text-error-500">*</span>
+          Name <span className="text-error-500">*</span>
           </Label>
           <User className="absolute left-3 top-1/2 transform translate-y-1 text-gray-400" />
           <Input
