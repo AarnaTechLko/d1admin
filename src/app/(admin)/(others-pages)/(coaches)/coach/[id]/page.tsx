@@ -12,6 +12,7 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import Loading from "@/components/Loading";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import { FaSpinner } from "react-icons/fa"; // optional: react-icons
 
 interface Evaluation {
   id: string;
@@ -63,8 +64,9 @@ interface Payment {
 
 }
 interface Coach {
+  approved_or_denied: number;
   latestLoginIp: string;
-  id: string;
+  id: number;
   first_name: string;
   last_name: string;
   firstName: string;
@@ -100,6 +102,7 @@ interface Coach {
 
 export default function CoachDetailsPage() {
   useRoleGuard();
+  const [loadingId, setLoadingId] = useState<number | null>(null);
 
   const { id } = useParams();
   const [coach, setCoach] = useState<Coach | null>(null);
@@ -344,35 +347,63 @@ export default function CoachDetailsPage() {
 
 
 
-const handleCoachApproval = async (coachId: number, isApproved: boolean) => {
+
+
+const handleCoachApproval = async (
+  coachId: number,
+  action: "approve" | "decline"
+) => {
   try {
-    const response = await fetch(`/api/coach/${coachId}/approval`, {
+      setLoadingId(coachId); // ✅ start spinner
+    const res = await fetch(`/api/coach/${coachId}/approval`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ approved: isApproved }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action }),
     });
 
-    if (!response.ok) throw new Error("Failed to update coach status");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Something went wrong");
 
-    const result = await response.json();
-
-    Swal.fire({
-      icon: "success",
-      title: "Success",
-      text: result.message,
-      timer: 2000,
-      showConfirmButton: false,
+    // ✅ SweetAlert
+    await Swal.fire({
+      icon: action === "approve" ? "success" : "success",
+      title: action === "approve" ? "Coach Approved" : "Coach Declined",
+      text: data.message,
+      confirmButtonColor: action === "approve" ? "#28a745" : "#28a745",
     });
+    window.location.reload();
 
-    // Optional: update UI locally
-  } catch (error) {
-    console.error(error);
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "Something went wrong while updating the coach status.",
-    });
-  }
+    // ✅ Update state without refresh
+setCoach((prev) => {
+  if (!prev) return prev;
+  if (prev.id !== Number(coachId)) return prev;
+
+  return {
+    ...prev,
+    approved_or_denied: action === "approve" ? 1 : 2,
+  };
+});
+  } catch (err) {
+  const message =
+    err instanceof Error
+      ? err.message
+      : typeof err === "string"
+      ? err
+      : "Something went wrong. Please try again.";
+
+  console.error("Error caught:", err);
+
+  await Swal.fire({
+    icon: "error",
+    title: "Error",
+    text: message,
+  });
+} finally {
+  setLoadingId(null); // ✅ stop spinner
+}
+
 };
 
 
@@ -450,20 +481,32 @@ const handleCoachApproval = async (coachId: number, isApproved: boolean) => {
 
           {/* Download Buttons */}
           <div className="flex flex-col items-center sm:items-end lg:items-end space-y-2">
-            <div className="flex space-x-2">
-              <button
-                className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition"
-                onClick={() => handleCoachApproval(Number(coach.id), true)}
-              >
-                Approve
-              </button>
-              <button
-                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
-                onClick={() => handleCoachApproval(Number(coach.id), false)}
-              >
-                Decline
-              </button>
-            </div>
+   <div className="flex space-x-2">
+      {coach.approved_or_denied === 1 ? (
+        // ✅ Already approved → show Decline only
+        <button
+          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition flex items-center space-x-2"
+          onClick={() => handleCoachApproval(Number(coach.id), "decline")}
+          disabled={loadingId === Number(coach.id)} // disable button while loading
+        >
+          {loadingId === Number(coach.id) && <FaSpinner className="animate-spin" />}
+          <span>Decline</span>
+        </button>
+      ) : coach.approved_or_denied === 2 || coach.approved_or_denied === 0 ? (
+        // ✅ Declined or Pending → show Approve only
+        <button
+          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition flex items-center space-x-2"
+          onClick={() => handleCoachApproval(Number(coach.id), "approve")}
+          disabled={loadingId === Number(coach.id)} // disable button while loading
+        >
+          {loadingId === Number(coach.id) && <FaSpinner className="animate-spin" />}
+          <span>Approve</span>
+        </button>
+      ) : null}
+    </div>
+
+
+
             <button
               className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-700 hover:text-blue-600 transition"
               onClick={() => handleDownload(coach.cv)}

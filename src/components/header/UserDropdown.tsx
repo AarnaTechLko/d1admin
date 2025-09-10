@@ -9,6 +9,8 @@ import d1 from "@/public/images/img/d1.png";
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter(); // ✅ Define useRouter inside the component body
+  const [email, setEmail] = useState(""); // ✅ State to hold email
+  const [user, setUser] = useState(""); // ✅ State to hold email
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -17,8 +19,13 @@ export default function UserDropdown() {
         window.history.pushState(null, "", window.location.href);
       };
     }
-  }, []);
+       const storedEmail = sessionStorage.getItem("email");
+       const storedUser = sessionStorage.getItem("username");
+    if (storedEmail) setEmail(storedEmail);
+    if (storedUser) setUser(storedUser);
+    console.log("email",storedEmail);
 
+  }, []);
   const handleLogout = async () => {
     try {
       await fetch("/api/logout", { method: "POST" });
@@ -71,10 +78,10 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            D1 Notes
+          {user|| "D1 Notes"}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            randomuser@pimjo.com
+        {email || "randomuser@pimjo.com"}
           </span>
         </div>
 

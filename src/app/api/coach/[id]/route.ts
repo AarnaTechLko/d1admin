@@ -38,6 +38,7 @@ export async function GET(
         phoneNumber: coaches.phoneNumber,
         slug: coaches.slug,
         sport: coaches.sport,
+        approved_or_denied: coaches.approved_or_denied,
         qualifications: coaches.qualifications,
         status: coaches.status,
         country: coaches.country,

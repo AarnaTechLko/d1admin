@@ -326,7 +326,7 @@ const TicketTable: React.FC<Props> = ({
         <DialogContent>
           <DialogTitle>Assign Subadmin</DialogTitle>
           <ul className="mt-4 space-y-2">
-            {subAdmins.map((subAdmin) => (
+            {subAdmins?.map((subAdmin) => (
               <li
                 key={subAdmin.id}
                 onClick={() => handleAssignSubAdmin(subAdmin)}

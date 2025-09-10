@@ -5,6 +5,7 @@ import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { Eye, EyeOff } from "lucide-react"; // Lucide React icons
 import React, { useState } from "react";
+import { FaSpinner } from "react-icons/fa";
 
 export default function SignInForm() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function SignInForm() {
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,6 +26,8 @@ export default function SignInForm() {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+
     setError(null);
     setSuccess(null);
 
@@ -60,11 +64,11 @@ export default function SignInForm() {
       sessionStorage.setItem("access_ticket", data.access_ticket);
 
 
-       const redirectPath = data.role === "Customer Support" ? "/ticket" : "/dashboard";
+      const redirectPath = data.role === "Customer Support" ? "/ticket" : "/dashboard";
 
-    setTimeout(() => {
-      router.push(redirectPath);
-    }, 2000);
+      setTimeout(() => {
+        router.push(redirectPath);
+      }, 2000);
 
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -73,6 +77,8 @@ export default function SignInForm() {
       } else {
         setError("An unknown error occurred.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -146,8 +152,14 @@ export default function SignInForm() {
               {success && <p className="text-green-500">{success}</p>}
 
               <div>
-                <Button className="w-full" size="sm" type="submit">
-                  Sign in
+                <Button
+                  className="w-full flex items-center justify-center space-x-2"
+                  size="sm"
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading && <FaSpinner className="animate-spin" />}
+                  <span>{loading ? "Signing in..." : "Sign in"}</span>
                 </Button>
               </div>
             </div>
