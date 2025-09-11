@@ -57,19 +57,15 @@ export async function GET(req: NextRequest) {
       ? or(
           ilike(users.first_name, `%${search}%`),
           ilike(users.last_name, `%${search}%`),
-          ilike(users.email, `%${search}%`),
-          ilike(users.sport, `%${search}%`),
-          ilike(users.position, `%${search}%`),
-          ilike(users.grade_level, `%${search}%`),
-          ilike(users.age_group, `%${search}%`),
-          ilike(users.height, `%${search}%`),
-          ilike(users.weight, `%${search}%`),
-          ilike(users.status, `%${search}%`),
-          ilike(users.gender, `%${search}%`),
-          ilike(countries.name, `%${search}%`),
-          ilike(users.state, `%${search}%`),
-          ilike(users.city, `%${search}%`),
-          ilike(users.league, `%${search}%`)
+          ilike(users.last_name, `%${search}%`),          
+          ilike(users.grade_level, `%${search}%`),          
+          ilike(users.position, `%${search}%`),          
+          ilike(users.state, `%${search}%`),          
+          ilike(users.city, `%${search}%`),          
+          ilike(users.league, `%${search}%`),          
+          ilike(users.gender, `%${search}%`),          
+
+          
         )
       : undefined;
 

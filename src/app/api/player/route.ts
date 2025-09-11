@@ -143,3 +143,42 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+
+
+export async function PUT(req: NextRequest) {
+  try {
+    const { playerId, newStatus } = await req.json();
+
+    if (!playerId || !newStatus) {
+      return NextResponse.json(
+        { message: "Player ID and new status are required" },
+        { status: 400 }
+      );
+    }
+
+    if (newStatus !== "Active" && newStatus !== "Inactive") {
+      return NextResponse.json(
+        {
+          message: "Invalid status. Only Active or Inactive are allowed.",
+        },
+        { status: 400 }
+      );
+    }
+
+    await db
+      .update(users)
+      .set({ status: newStatus })
+      .where(eq(users.id, playerId));
+
+    return NextResponse.json({ message: "Player status updated successfully" });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        message: "Failed to update status",
+        error: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
+}

@@ -66,24 +66,23 @@ export async function GET(req: NextRequest) {
       isNotNull(coaches.firstName),
       ne(coaches.firstName, ""),
       eq(coaches.suspend, 1),
-      eq(coaches.is_deleted, 1)
+      eq(coaches.is_deleted, 1),
+      eq(coaches.approved_or_denied, 1) // ✅ NEW condition
     );
 
     // 🔍 search filters
-   const searchCondition = search
-  ? or(
- ilike(coaches.firstName, `%${search}%`),
- ilike(coaches.lastName, `%${search}%`),
- ilike(countries.name, `%${search}%`),
- ilike(coaches.gender, `%${search}%`),
- ilike(coaches.state, `%${search}%`),
- ilike(coaches.city, `%${search}%`),
- ilike(coaches.slug, `%${search}%`),
- ilike(coaches.status, `%${search}%`),
-   
-     
-    )
-  : undefined;
+    const searchCondition = search
+      ? or(
+          ilike(coaches.firstName, `%${search}%`),
+          ilike(coaches.lastName, `%${search}%`),
+          ilike(countries.name, `%${search}%`),
+          ilike(coaches.gender, `%${search}%`),
+          ilike(coaches.state, `%${search}%`),
+          ilike(coaches.city, `%${search}%`),
+          ilike(coaches.slug, `%${search}%`),
+          ilike(coaches.status, `%${search}%`)
+        )
+      : undefined;
 
     // 📌 final where clause
     const whereClause = and(
@@ -111,6 +110,7 @@ export async function GET(req: NextRequest) {
         status: coaches.status,
         suspend: coaches.suspend,
         suspend_days: coaches.suspend_days,
+        approved_or_denied: coaches.approved_or_denied,
         is_deleted: coaches.is_deleted,
         consumeLicenseCount: sql<number>`COUNT(CASE WHEN ${licenses.status} = 'Consumed' THEN 1 END)`,
         assignedLicenseCount: sql<number>`COUNT(CASE WHEN ${licenses.status} = 'Assigned' THEN 1 END)`,
@@ -143,7 +143,8 @@ export async function GET(req: NextRequest) {
         coaches.is_deleted,
         countries.name,
         coaches.state,
-        coaches.city
+        coaches.city,
+        coaches.approved_or_denied
       )
       .orderBy(desc(coaches.createdAt))
       .limit(limit)
@@ -179,6 +180,7 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
 
 export async function DELETE(req: NextRequest) {
   try {
