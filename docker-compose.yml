@@ -1,0 +1,21 @@
+services:
+  super-admin:
+    build:
+      context: .
+      target: super-admin
+      args:
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
+        NEXT_PUBLIC_AWS_S3_BUCKET_LINK: ${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}
+        NEXT_PUBLIC_SWAGGER_PASS: ${NEXT_PUBLIC_SWAGGER_PASS}
+        NEXT_PUBLIC_CHAT_SOCKET_URL: ${NEXT_PUBLIC_CHAT_SOCKET_URL}
+        NEXT_PUBLIC_REDIS_HOST: ${NEXT_PUBLIC_REDIS_HOST}
+        NEXT_PUBLIC_REDIS_PORT: ${NEXT_PUBLIC_REDIS_PORT}
+    image: d1admin-super-admin:latest
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
