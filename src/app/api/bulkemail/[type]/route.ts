@@ -13,9 +13,7 @@ import { and, isNotNull, ne, eq, sql} from 'drizzle-orm';
 // import { sendEmail } from '@/lib/helpers';
 import twilio from "twilio";
 import { MessageInstance } from 'twilio/lib/rest/api/v2010/account/message';
-import { sendEmail } from '@/lib/email-service';
-
-
+import { sendEmail, sendEmailWithAttachments } from '@/lib/bulkemail-service';
 
 // -------------------- Types --------------------
 type LocationItem = {
@@ -304,15 +302,15 @@ await db.insert(admin_message).values(messages);
 
         // Send Email
         if (methods.email && coach?.email) {
-          await sendEmail({
+          await sendEmailWithAttachments({
             to: coach.email,
-            subject: "📢 New Admin Message",
-            html: `Dear ${coach.firstName},<br/><br/>
-                   You’ve received a new message from Admin:<br/>
-                   <blockquote>${message}</blockquote>
-                   <a href="${baseUrl}/login">Login</a> to view the message.<br/><br/>
-                   Regards,<br/>D1 Admin`,
-            text: message,
+            subject: "D1 Notes — Complete/Enhance Your Profile",
+            html: `Hi Coach,<br/><br/>
+                   <blockquote>${message}</blockquote>`,
+            attachments: [
+    'https://d2gpzaycuwue25.cloudfront.net/meta/sample_coach_profile_1.png',
+    'https://d2gpzaycuwue25.cloudfront.net/meta/sample_coach_profile_2.png'
+  ]
           });
         }
 
