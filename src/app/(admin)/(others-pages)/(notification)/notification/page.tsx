@@ -17,12 +17,16 @@ interface Entity {
   city?: string;
   gender?: string;
   position?: string;
+  email?: string;
 }
 
 export default function NotificationPage() {
       useRoleGuard();
   
   const [type, setType] = useState('');
+  const [status, setStatus] = useState('');
+
+
   const [entities, setEntities] = useState<Entity[]>([]);
 
   const [country, setCountry] = useState('');
@@ -62,9 +66,27 @@ export default function NotificationPage() {
   useEffect(() => {
     if (!type) return;
 
+    // console.log("Type: ", type);
+
+
+      const queryParams = new URLSearchParams({
+        status,
+      });
+
+      //   if (status){
+      //     console.log("Stat: ", status);
+      //       queryParams.append("status", status)
+      //   }
+
+      // console.log("queryParams: ", queryParams.toString())
+
+      //   const res = await axios.get(`/api/geolocation/${queryParams.toString()}`);
+
+    console.log("Status: ", status);
+    
     const fetchData = async () => {
       try {
-        const res = await axios.get(`/api/geolocation/${type}`);
+        const res = await axios.get(`/api/geolocation/${type}?${queryParams.toString()}`);
         const data = Array.isArray(res.data) ? res.data : [];
         setEntities(data);
 
@@ -85,7 +107,7 @@ export default function NotificationPage() {
     };
 
     fetchData();
-  }, [type]);
+  }, [type, status]);
 
   useEffect(() => {
     if (!country) {
@@ -214,6 +236,21 @@ export default function NotificationPage() {
           </div>
 
           <div>
+            <Label>Status</Label>
+            <select className="w-full p-2 mt-1 border rounded-lg bg-white" value={status} onChange={(e) => setStatus(e.target.value)}  disabled={!type}>
+              <option value="">Select Status</option>
+              <option value="no-profile">Profile Not Completed</option>
+              <option value="profile">Profile Completed</option>
+              <option value="unsuspend">Unsuspended</option>
+              <option value="suspend">Suspended</option>
+              <option className={type !=="coach" ? 'hidden' : ''} value="unapproved">Unapproved</option>
+              <option className={type !=="coach" ? 'hidden' : ''} value="approved">Approved</option>
+              <option value="inactive">Inactive</option>
+              <option value="active">Active</option>
+            </select>
+          </div>
+
+          <div>
             <Label>Country</Label>
             <select className="w-full p-2 mt-1 border rounded-lg bg-white" value={country} onChange={(e) => setCountry(e.target.value)}>
               <option value="">Select Country</option>
@@ -291,7 +328,11 @@ export default function NotificationPage() {
               {matchingEntities.map((entity) => (
                 <label key={entity.id} className="flex items-center gap-2">
                   <input type="checkbox" checked={selectedIds.includes(entity.id)} onChange={() => handleCheckboxChange(entity.id)} />
-                  <span className="text-xs">{entity.name || `ID: ${entity.id}`}</span>
+
+                  <span className={status !=="no-profile" ? 'text-xs' : 'hidden'}>{entity.name || `ID: ${entity.id}`}</span>
+
+                  <span className={status ==="no-profile" ? 'text-xs' : 'hidden'}>{entity.email}</span>        
+
                 </label>
               ))}
             </div>

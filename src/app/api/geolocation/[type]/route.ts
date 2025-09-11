@@ -9,10 +9,13 @@ import {
   chats,
   admin,
 } from '@/lib/schema';
-import { and, isNotNull, ne, eq, sql } from 'drizzle-orm';
-import { sendEmail } from '@/lib/helpers';
+import { and, isNotNull, ne, eq, sql} from 'drizzle-orm';
+// import { sendEmail } from '@/lib/helpers';
 import twilio from "twilio";
 import { MessageInstance } from 'twilio/lib/rest/api/v2010/account/message';
+import { sendEmail } from '@/lib/email-service';
+
+
 
 // -------------------- Types --------------------
 type LocationItem = {
@@ -46,10 +49,50 @@ export async function GET(
   { params }: { params: Promise<{ type: string }> }
 ) {
   try {
+
+    const { searchParams } = new URL(req.url);
+
+    // const type = searchParams.get('type');
+
+    const status = searchParams.get('status') || '';
+
+
     const { type } = await params;
+
+    // let status = '';
+
+    console.log("Status: ", status);
+
     let data: LocationItem[] = [];
 
-    if (type === "player") {
+    if (type === 'player') {
+
+
+      const conditions = [
+
+        isNotNull(users.first_name), 
+        ne(users.first_name, '')
+
+      ]
+
+      const whereClause = status === "no-profile" 
+        ? eq(users.isCompletedProfile, false) 
+        : status === "profile" 
+        ? eq(users.isCompletedProfile, true)
+        : status === "unsuspend"
+        ? eq(users.suspend, 1)
+        : status === "suspend"
+        ? eq(users.suspend, 0)
+        : status === "inactive"
+        ? eq(users.visibility, "off")
+        : status === "active"
+        ? eq(users.visibility, "on")
+        : undefined
+
+        if (whereClause){
+          conditions.push(whereClause)
+        }
+
       const players = await db
         .select({
           id: users.id,
@@ -62,11 +105,8 @@ export async function GET(
           countryName: countries.name,
         })
         .from(users)
-        .leftJoin(
-          countries,
-          eq(users.country, sql`CAST(${countries.id} AS TEXT)`)
-        )
-        .where(and(isNotNull(users.first_name), ne(users.first_name, "")));
+        .leftJoin(countries, eq(users.country, sql`CAST(${countries.id} AS TEXT)`))
+        .where(and(...conditions));
 
       data = players.map((p) => ({
         id: String(p.id),
@@ -77,7 +117,43 @@ export async function GET(
         state: p.state,
         city: p.city,
       }));
-    } else if (type === "coach") {
+    } else if (type === 'coach') {
+
+
+      const conditions = []
+
+      const whereClause = status === "no-profile" 
+        ? eq(coaches.isCompletedProfile, false) 
+        : status === "profile" 
+        ? eq(coaches.isCompletedProfile, true)
+        : status === "unsuspend"
+        ? eq(coaches.suspend, 1)
+        : status === "suspend"
+        ? eq(coaches.suspend, 0)
+        : status === "inactive"
+        ? eq(coaches.visibility, "off")
+        : status === "active"
+        ? eq(coaches.visibility, "on")
+        : status === "unapproved"
+        ? eq(coaches.approved_or_denied, 0) 
+        : status === "approved"
+        ? eq(coaches.approved_or_denied, 1)
+        : undefined
+
+        if (status === "no-profile"){
+          conditions.push(whereClause)
+        }
+        else if (whereClause){
+
+          conditions.push(isNotNull(coaches.firstName)), 
+          conditions.push(ne(coaches.firstName, ''))
+          conditions.push(whereClause)
+        }
+        else {
+          conditions.push(isNotNull(coaches.firstName)), 
+          conditions.push(ne(coaches.firstName, ''))  
+        }
+
       const coachList = await db
         .select({
           id: coaches.id,
@@ -86,13 +162,12 @@ export async function GET(
           state: coaches.state,
           city: coaches.city,
           countryName: countries.name,
+          email: coaches.email,
         })
         .from(coaches)
-        .leftJoin(
-          countries,
-          eq(coaches.country, sql`CAST(${countries.id} AS TEXT)`)
-        )
-        .where(and(isNotNull(coaches.firstName), ne(coaches.firstName, "")));
+        .leftJoin(countries, eq(coaches.country, sql`CAST(${countries.id} AS TEXT)`))
+        .where(and(...conditions));
+
 
       data = coachList.map((c) => ({
         id: String(c.id),
@@ -100,8 +175,12 @@ export async function GET(
         country: c.countryName,
         state: c.state,
         city: c.city,
+        email: c.email,
       }));
-    } else if (type === "organization") {
+
+      console.log("DATA: ", data);
+
+    } else if (type === 'organization') {
       const orgs = await db
         .select({
           id: enterprises.id,

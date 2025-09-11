@@ -90,7 +90,8 @@ const AppSidebar: React.FC = () => {
           {
             name: "Coaches",
             icon: <ListIcon />,
-            subItems: [{ name: "Active Coach", path: "/coach", pro: false },
+            subItems: [{name: "Incomplete Coaches", path:"/incompletecoach", pro:false},
+            { name: "Active Coach", path: "/coach", pro: false },
             { name: "Suspended Coach", path: "/suspend", pro: false },
             { name: "Disable Coach", path: "/disablecoach", pro: false },
             ],
@@ -98,7 +99,8 @@ const AppSidebar: React.FC = () => {
           {
             name: "Players",
             icon: <UserCircleIcon />,
-            subItems: [{ name: "Active Player", path: "/player", pro: false },
+            subItems: [{name: "Incomplete Players", path:"/incompleteplayer", pro:false},
+            { name: "Active Player", path: "/player", pro: false },
             { name: "Suspended Player", path: "/suspendplayer", pro: false },
             { name: "Disable Player", path: "/disableplayer", pro: false },
 
@@ -190,7 +192,8 @@ const AppSidebar: React.FC = () => {
         {
           name: "Coaches",
           icon: <ListIcon />,
-          subItems: [{ name: "Active Coach", path: "/coach", pro: false },
+          subItems: [{name: "Incomplete Coaches", path:"/incompletecoach", pro:false},
+          { name: "Active Coach", path: "/coach", pro: false },
           { name: "Suspended Coach", path: "/suspend", pro: false },
           { name: "Disable Coach", path: "/disablecoach", pro: false },
           ],
@@ -198,7 +201,8 @@ const AppSidebar: React.FC = () => {
         {
           name: "Players",
           icon: <UserCircleIcon />,
-          subItems: [{ name: "Active Player", path: "/player", pro: false },
+          subItems: [{name: "Incomplete Players", path:"/incompleteplayer", pro:false},
+          { name: "Active Player", path: "/player", pro: false },
           { name: "Suspended Player", path: "/suspendplayer", pro: false },
           { name: "Disable Player", path: "/disableplayer", pro: false },
 
@@ -228,7 +232,8 @@ const AppSidebar: React.FC = () => {
         {
           name: "Coaches",
           icon: <ListIcon />,
-          subItems: [{ name: "Active Coach", path: "/coach", pro: false },
+          subItems: [{name: "Incomplete Coaches", path:"/incompletecoach", pro:false},
+          { name: "Active Coach", path: "/coach", pro: false },
           { name: "Suspended Coach", path: "/suspend", pro: false },
           { name: "Disable Coach", path: "/disablecoach", pro: false },
           ],
@@ -236,7 +241,8 @@ const AppSidebar: React.FC = () => {
         {
           name: "Players",
           icon: <UserCircleIcon />,
-          subItems: [{ name: "Active Player", path: "/player", pro: false },
+          subItems: [{name: "Incomplete Players", path:"/incompleteplayer", pro:false},
+          { name: "Active Player", path: "/player", pro: false },
           { name: "Suspended Player", path: "/suspendplayer", pro: false },
           { name: "Disable Player", path: "/disableplayer", pro: false },
 
