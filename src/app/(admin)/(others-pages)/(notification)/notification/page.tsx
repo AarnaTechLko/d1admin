@@ -1,12 +1,14 @@
 'use client';
-
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import Label from '@/components/form/Label';
-import TextArea from '@/components/form/input/TextArea';
+// import TextArea from '@/components/form/input/TextArea';
 import Button from '@/components/ui/button/Button';
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import 'react-quill-new/dist/quill.snow.css';
+
 
 interface Entity {
   id: string;
@@ -19,10 +21,11 @@ interface Entity {
   position?: string;
   email?: string;
 }
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
 export default function NotificationPage() {
       useRoleGuard();
-  
+
   const [type, setType] = useState('');
   const [status, setStatus] = useState('');
 
@@ -86,7 +89,7 @@ export default function NotificationPage() {
     
     const fetchData = async () => {
       try {
-        const res = await axios.get(`/api/geolocation/${type}?${queryParams.toString()}`);
+        const res = await axios.get(`/api/bulkemail/${type}?${queryParams.toString()}`);
         const data = Array.isArray(res.data) ? res.data : [];
         setEntities(data);
 
@@ -178,7 +181,7 @@ export default function NotificationPage() {
     setIsSubmitting(true);
 
     try {
-      await axios.post(`/api/geolocation/${type}`, payload);
+      await axios.post(`/api/bulkemail/${type}`, payload);
       Swal.fire({
         icon: 'success',
         title: 'Notification Sent',
@@ -339,10 +342,30 @@ export default function NotificationPage() {
           </div>
         )}
 
-        <div>
+        {/* <div>
           <Label>Message</Label>
           <TextArea className="w-full mt-1 border rounded-lg text-black" rows={5} value={message} placeholder="Enter your notification message here..." onChange={(value: string) => setMessage(value)} />
-        </div>
+        </div> */}
+
+        <div>
+  <Label>Message</Label>
+  <ReactQuill
+    theme="snow"
+    value={message}
+    onChange={setMessage}
+    placeholder="Write your message here..."
+    modules={{
+      toolbar: [
+        [{ 'header': [1, 2, false] }],
+        ['bold', 'italic', 'underline'],
+        ['link'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        ['clean']
+      ],
+    }}
+    style={{ height: '200px', marginBottom: '50px' }}
+  />
+</div>
 
         <div className="pt-4 text-right">
           <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-xl transition">
