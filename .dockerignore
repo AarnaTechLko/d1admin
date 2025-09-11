@@ -1,0 +1,36 @@
+# Dependency directories
+node_modules
+.next
+
+# Local build output (Vercel, etc.)
+.vercel
+
+# Logs and debug files
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Environment files (never copy secrets into image)
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+# Git and VCS
+.git
+.gitignore
+
+# IDE/editor settings
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test and coverage output
+coverage
+*.lcov
+.eslintrc.json
