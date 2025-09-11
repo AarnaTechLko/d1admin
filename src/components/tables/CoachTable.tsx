@@ -13,6 +13,8 @@ import { Coach } from "@/app/types/types";
 // import router from "next/router";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { FaSpinner } from "react-icons/fa";
+import { Eye, EyeOff } from "lucide-react";
 type RecentMessage = {
   sender_id: string;
   from: string;
@@ -42,6 +44,9 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [ipOpen, setIpOpen] = useState<number | null>(null);
   const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
+  const [loadingCoachId, setLoadingCoachId] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
   // const itemsPerPage = 10;
   // const numberOfPages = Math.ceil(totalPages / itemsPerPage);
 
@@ -106,50 +111,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
     }
   };
 
-  const handleChangeCoachPassword = async () => {
-    if (!newCoachPassword || newCoachPassword.length < 6) {
-      Swal.fire({
-        icon: "warning",
-        title: "Weak Password",
-        text: "Password must be at least 6 characters long.",
-      });
-      return;
-    }
 
-    try {
-      const res = await fetch(`/api/coach/${selectedCoachId}/change-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newPassword: newCoachPassword }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: "Coach password updated successfully!",
-          timer: 2000,
-          showConfirmButton: false,
-        });
-        handleCloseCoachModal();
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: data.error || "Failed to change coach password.",
-        });
-      }
-    } catch (error) {
-      console.error("Change coach password error:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Network Error",
-        text: "An error occurred. Please try again.",
-      });
-    }
-  };
 
 
   const getBadgeColor = (status: string) => {
@@ -296,28 +258,24 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                     <Link href={`/coach/${coach.id}`}><Button className="text-xs">Open</Button></Link>
                   </TableCell> */}
 
+                  {/** palyer history */}
+
                   <TableCell className="px-2 py-3">
                     <Button
                       onClick={() => {
-                        const monitorActivity = sessionStorage.getItem("monitor_activity");
-
-                        console.log("monitor_activity", monitorActivity);
-                        if (monitorActivity === "1") {
-                          router.push(`/coach/${coach.id}`);
-                        } else {
-                          Swal.fire({
-                            icon: "warning",
-                            title: "Access Denied",
-                            text: "You are not allowed to open history.",
-                          });
-                        }
+                        setLoadingCoachId(coach.id); // only this coach shows spinner
+                        router.push(`/coach/${coach.id}`);
                       }}
                       title="Open History"
-                      className="text-xs "
+                      className="w-full flex items-center justify-center space-x-2 text-xs"
+                      disabled={loadingCoachId === coach.id}
                     >
-                      Open
+                      {loadingCoachId === coach.id && <FaSpinner className="animate-spin" />}
+                      <span>{loadingCoachId === coach.id ? "Opening..." : "Open"}</span>
                     </Button>
                   </TableCell>
+
+
 
 
                   <TableCell className="px-2 py-3">
@@ -554,7 +512,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                               onClick={async () => {
                                 if (!messageText.trim()) {
                                   Swal.fire("Warning", "Please enter a message before sending.", "warning");
-                                  return;     
+                                  return;
                                 }
 
                                 if (!sendEmail && !sendSMS && !sendInternal) {
@@ -601,7 +559,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                                   console.error(err);
                                   setSelectedCoachid(null);
                                   Swal.fire("Error", "Failed to send message.", "error");
-                                  
+
                                 }
                               }}
                               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -632,7 +590,6 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
             <button key={index + 1} onClick={() => setCurrentPage(index + 1)} className={`px-3 py-1 rounded-md ${currentPage === index + 1 ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"}`}>{index + 1}</button>
           ))}
         </div>
-
         <Dialog open={isCoachPasswordModalOpen} onOpenChange={setCoachPasswordModalOpen}>
           <DialogContent className="max-w-sm bg-white p-6 rounded-lg shadow-lg">
             <DialogHeader>
@@ -640,23 +597,74 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
             </DialogHeader>
 
             <div className="mt-4 space-y-4">
-              <input
-                type="password"
-                placeholder="Enter new password"
-                value={newCoachPassword}
-                onChange={(e) => setNewCoachPassword(e.target.value)}
-                className="w-full border px-4 py-2 rounded"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter new password"
+                  value={newCoachPassword}
+                  onChange={(e) => setNewCoachPassword(e.target.value)}
+                  className="w-full border px-4 py-2 rounded pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
 
               <div className="flex justify-end gap-2">
-                <button onClick={handleCloseCoachModal} className="text-gray-600 hover:text-black">Cancel</button>
-                <button onClick={handleChangeCoachPassword} className="bg-blue-600 text-white px-4 py-2 rounded">
-                  Update
+                <button
+                  onClick={handleCloseCoachModal}
+                  className="text-gray-600 hover:text-black"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                  onClick={async () => {
+                    if (!newCoachPassword) {
+                      Swal.fire("Warning", "Password is required", "warning");
+                      return;
+                    }
+                    if (newCoachPassword.length < 6) {
+                      Swal.fire("Warning", "Password must be at least 6 characters", "warning");
+                      return;
+                    }
+
+                    try {
+                      const res = await fetch(`/api/coach/${selectedCoachId}/change-password`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ newPassword: newCoachPassword }),
+                      });
+
+                      const data = await res.json();
+
+                      if (!res.ok) throw new Error(data.error || "Failed to update password");
+
+                      Swal.fire("Success", "Password updated successfully", "success");
+                      setNewCoachPassword("");
+                      setCoachPasswordModalOpen(false);
+                    } catch (err) {
+                      console.error("Password updation failed", err);
+                      Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to update Password. Please try again.',
+                      });
+                    }
+                  }}
+                >
+                  Assign Password
                 </button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
+
 
         <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
           <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">

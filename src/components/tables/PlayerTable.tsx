@@ -13,6 +13,8 @@ import Swal from "sweetalert2";
 import withReactContent from 'sweetalert2-react-content';
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { FaSpinner } from "react-icons/fa";
+import { Eye, EyeOff } from "lucide-react";
 
 type RecentMessage = {
   id: number;
@@ -67,7 +69,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
   const [status, setStatus] = useState<string | null>(null);
   const [open, setOpen] = useState(false); // State for modal visibility
   const [showConfirmation, setShowConfirmation] = useState(false); // State for confirmation modal visibility
-  const [confirmationCallback, setConfirmationCallback] = useState<() => void>(() => () => { }); // Callback for confirmation
   const itemsPerPage = 10;
   const [ipOpen, setIpOpen] = useState<number | null>(null);
   const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
@@ -82,6 +83,9 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
   const [sendSMS, setSendSMS] = useState(false);
   const [sendInternal, setSendInternal] = useState(false);
   const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
+  const [loadingPlayerId, setLoadingPlayerId] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [newPlayerPassword, setNewPlayerPassword] = useState("");
 
   const getBadgeColor = (status: string) => {
     switch (status) {
@@ -97,7 +101,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
   };
   const [isPlayerPasswordModalOpen, setPlayerPasswordModalOpen] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
-  const [newPlayerPassword, setNewPlayerPassword] = useState("");
   // const userRole = sessionStorage.getItem("role");;
   const [selectedPlayerid, setSelectedPlayerid] = useState<number | null>(null);
 
@@ -139,50 +142,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
       console.error("Failed to fetch IP logs:", error);
     }
   };
-  const handleChangePlayerPassword = async () => {
-    if (!newPlayerPassword || newPlayerPassword.length < 6) {
-      Swal.fire({
-        icon: "warning",
-        title: "Weak Password",
-        text: "Password must be at least 6 characters.",
-      }); return;
-    }
-    const userId = sessionStorage.getItem("user_id");
-    console.log("userid", userId);
-    try {
-      const res = await fetch(`/api/player/${selectedPlayerId}/change-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, newPassword: newPlayerPassword }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: "Player password updated successfully!",
-          timer: 2000,
-          showConfirmButton: false,
-        });
-        handleClosePlayerModal();
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Failed",
-          text: data.error || "Failed to change player password.",
-        });
-      }
-    } catch (error) {
-      console.error("Change player password error:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Network Error",
-        text: "An error occurred. Please try again.",
-      });
-    }
-  };
 
 
   // Function to handle status change after confirmation
@@ -198,6 +157,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
           newStatus: status,
         }),
       });
+      console.log("response", response);
       if (!response.ok) throw new Error("Failed to update status");
 
       setOpen(false); // Close the popup after saving
@@ -208,10 +168,10 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
     }
   };
 
-  const confirmChange = () => {
-    setShowConfirmation(true); // Show the confirmation dialog
-    setConfirmationCallback(() => handleStatusChange); // Set the confirmation callback
-  };
+  // const confirmChange = () => {
+  //   setShowConfirmation(true); // Show the confirmation dialog
+  //   setConfirmationCallback(() => handleStatusChange); // Set the confirmation callback
+  // };
 
 
 
@@ -348,7 +308,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
               </Button>
               <Button
                 onClick={() => {
-                  confirmationCallback(); // Proceed with the status change
                   setShowConfirmation(false); // Close the confirmation dialog
                 }}
                 className="bg-blue-500 text-white px-4 py-2 rounded-md"
@@ -467,7 +426,10 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                           <Dialog open={open} onOpenChange={setOpen}>
                             <DialogTrigger asChild>
                               <button
-                                onClick={() => { setSelectedPlayer(player); setStatus(player.status); }}
+                                onClick={() => {
+                                  setSelectedPlayer(player);
+                                  setStatus(player.status);
+                                }}
                               >
                                 <Badge color={getBadgeColor(player.status) ?? undefined} >
                                   {player.status}
@@ -495,7 +457,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                     </select>
 
                                     <div className="flex justify-center mt-4">
-                                      <Button onClick={confirmChange} className="bg-blue-500  text-white px-4 py-2 rounded-md">
+                                      <Button onClick={handleStatusChange} className="bg-blue-500  text-white px-4 py-2 rounded-md">
                                         Save
                                       </Button>
                                     </div>
@@ -514,25 +476,22 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                         <TableCell className="px-2 py-3">
                           <Button
                             onClick={() => {
-                              const monitorActivity = sessionStorage.getItem("monitor_activity");
-
-                              console.log("monitor_activity", monitorActivity);
-                              if (monitorActivity === "1") {
-                                router.push(`/player/${player.id}`);
-                              } else {
-                                Swal.fire({
-                                  icon: "warning",
-                                  title: "Access Denied",
-                                  text: "You are not allowed to open history.",
-                                });
-                              }
+                              setLoadingPlayerId(player.id); // ✅ only this row shows spinner
+                              router.push(`/player/${player.id}`);
                             }}
                             title="Open History"
-                            className="text-xs "
+                            className="w-full flex items-center justify-center space-x-2 text-xs"
+                            disabled={loadingPlayerId === player.id}
                           >
-                            Open
+                            {loadingPlayerId === player.id && (
+                              <FaSpinner className="animate-spin" />
+                            )}
+                            <span>
+                              {loadingPlayerId === player.id ? "Opening..." : "Open"}
+                            </span>
                           </Button>
                         </TableCell>
+
 
 
                         <TableCell className="px-2 py-3">
@@ -655,7 +614,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                 }
                               }}
                               title="Change Password"
-                              className="text-blue-600 hover:text-blue-800"
+                              className="hover:text-blue-600"
                             >
                               🔒
                             </button>
@@ -850,27 +809,78 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
           <Dialog open={isPlayerPasswordModalOpen} onOpenChange={setPlayerPasswordModalOpen}>
             <DialogContent className="max-w-sm bg-white p-6 rounded-lg shadow-lg">
               <DialogHeader>
-                <DialogTitle className="text-lg font-semibold">Change Player Password</DialogTitle>
+                <DialogTitle className="text-lg font-semibold">Change Coach Password</DialogTitle>
               </DialogHeader>
 
               <div className="mt-4 space-y-4">
-                <input
-                  type="password"
-                  placeholder="Enter new password"
-                  value={newPlayerPassword}
-                  onChange={(e) => setNewPlayerPassword(e.target.value)}
-                  className="w-full border px-4 py-2 rounded"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter new password"
+                    value={newPlayerPassword}
+                    onChange={(e) => setNewPlayerPassword(e.target.value)}
+                    className="w-full border px-4 py-2 rounded pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
 
                 <div className="flex justify-end gap-2">
-                  <button onClick={handleClosePlayerModal} className="text-gray-600 hover:text-black">Cancel</button>
-                  <button onClick={handleChangePlayerPassword} className="bg-blue-600 text-white px-4 py-2 rounded">
-                    Update
+                  <button
+                    onClick={handleClosePlayerModal}
+                    className="text-gray-600 hover:text-black"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    className="bg-blue-600 text-white px-4 py-2 rounded"
+                    onClick={async () => {
+                      if (!newPlayerPassword) {
+                        Swal.fire("Warning", "Password is required", "warning");
+                        return;
+                      }
+                      if (newPlayerPassword.length < 6) {
+                        Swal.fire("Warning", "Password must be at least 6 characters", "warning");
+                        return;
+                      }
+
+                      try {
+                        const res = await fetch(`/api/player/${selectedPlayerId}/change-password`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ newPassword: newPlayerPassword }),
+                        });
+
+                        const data = await res.json();
+
+                        if (!res.ok) throw new Error(data.error || "Failed to update password");
+
+                        Swal.fire("Success", "Password updated successfully", "success");
+                        setNewPlayerPassword("");
+                        setPlayerPasswordModalOpen(false);
+                      } catch (err) {
+                        console.error("Password Updation failed", err);
+                        Swal.fire({
+                          icon: 'error',
+                          title: 'Error',
+                          text: 'Could not update Password. Please try again.',
+                        });
+                      }
+                    }}
+                  >
+                    Assign Password
                   </button>
                 </div>
               </div>
             </DialogContent>
           </Dialog>
+
 
 
           <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>

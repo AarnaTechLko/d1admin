@@ -13,6 +13,7 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { FaSpinner } from "react-icons/fa";
 type RecentMessage = {
   id: number;
   message: string;
@@ -87,6 +88,8 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedUserid, setSelectedUserid] = useState<number | null>(null);
   const [newPassword, setNewPassword] = useState("");
+    const [loadingOrganizationId, setLoadingOrganizationId] = useState<string | null>(null);
+
   const handleOpenModal = (userId: number) => {
     setSelectedUserId(userId);
     setPasswordModalOpen(true);
@@ -508,28 +511,26 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                           </Dialog>
                         </TableCell>
                         {/** history */}
+                      {/** palyer history */}
                         <TableCell className="px-2 py-3">
-                          <Button
-                            onClick={() => {
-                              const monitorActivity = sessionStorage.getItem("monitor_activity");
-
-                              console.log("monitor_activity", monitorActivity);
-                              if (monitorActivity === "1") {
-                                router.push(`/organization/${organization.id}`);
-                              } else {
-                                Swal.fire({
-                                  icon: "warning",
-                                  title: "Access Denied",
-                                  text: "You are not allowed to open history.",
-                                });
-                              }
-                            }}
-                            title="Open History"
-                            className="text-xs "
-                          >
-                            Open
-                          </Button>
+                           <Button
+              onClick={() => {
+                setLoadingOrganizationId(organization.id); // ✅ only this org shows spinner
+                router.push(`/organization/${organization.id}`);
+              }}
+              title="Open History"
+              className="w-full flex items-center justify-center space-x-2 text-xs"
+              disabled={loadingOrganizationId === organization.id}
+            >
+              {loadingOrganizationId === organization.id && (
+                <FaSpinner className="animate-spin" />
+              )}
+              <span>
+                {loadingOrganizationId === organization.id ? "Opening..." : "Open"}
+              </span>
+            </Button>
                         </TableCell>
+
                         <TableCell className="px-2 py-3">
                           <button
                             className="underline text-sm"
