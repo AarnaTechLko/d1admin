@@ -1,6 +1,8 @@
 
 export interface Evaluation {
-
+//     coach_status: string;
+//     player_status: string;
+// coachInput:string;
   id: number;
   reviewTitle: string;
   primary_video_link: string;
@@ -193,3 +195,4 @@ export interface Team {
   team_year: number;
   status: string;
 }
+
