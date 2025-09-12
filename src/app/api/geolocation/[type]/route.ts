@@ -9,10 +9,13 @@ import {
   chats,
   admin,
 } from '@/lib/schema';
-import { and, isNotNull, ne, eq, sql } from 'drizzle-orm';
-import { sendEmail } from '@/lib/helpers';
+import { and, isNotNull, ne, eq, sql} from 'drizzle-orm';
+// import { sendEmail } from '@/lib/helpers';
 import twilio from "twilio";
 import { MessageInstance } from 'twilio/lib/rest/api/v2010/account/message';
+import { sendEmail } from '@/lib/email-service';
+
+
 
 // -------------------- Types --------------------
 type LocationItem = {
@@ -46,10 +49,50 @@ export async function GET(
   { params }: { params: Promise<{ type: string }> }
 ) {
   try {
+
+    const { searchParams } = new URL(req.url);
+
+    // const type = searchParams.get('type');
+
+    const status = searchParams.get('status') || '';
+
+
     const { type } = await params;
+
+    // let status = '';
+
+    console.log("Status: ", status);
+
     let data: LocationItem[] = [];
 
-    if (type === "player") {
+    if (type === 'player') {
+
+
+      const conditions = [
+
+        isNotNull(users.first_name), 
+        ne(users.first_name, '')
+
+      ]
+
+      const whereClause = status === "no-profile" 
+        ? eq(users.isCompletedProfile, false) 
+        : status === "profile" 
+        ? eq(users.isCompletedProfile, true)
+        : status === "unsuspend"
+        ? eq(users.suspend, 1)
+        : status === "suspend"
+        ? eq(users.suspend, 0)
+        : status === "inactive"
+        ? eq(users.visibility, "off")
+        : status === "active"
+        ? eq(users.visibility, "on")
+        : undefined
+
+        if (whereClause){
+          conditions.push(whereClause);
+        }
+
       const players = await db
         .select({
           id: users.id,
@@ -63,11 +106,8 @@ export async function GET(
           countryName: countries.name,
         })
         .from(users)
-        .leftJoin(
-          countries,
-          eq(users.country, sql`CAST(${countries.id} AS TEXT)`)
-        )
-        .where(and(isNotNull(users.first_name), ne(users.first_name, "")));
+        .leftJoin(countries, eq(users.country, sql`CAST(${countries.id} AS TEXT)`))
+        .where(and(...conditions));
 
       data = players.map((p) => ({
         id: String(p.id),
@@ -79,7 +119,43 @@ export async function GET(
         state: p.state,
         city: p.city,
       }));
-    } else if (type === "coach") {
+    } else if (type === 'coach') {
+
+
+      const conditions = []
+
+      const whereClause = status === "no-profile" 
+        ? eq(coaches.isCompletedProfile, false) 
+        : status === "profile" 
+        ? eq(coaches.isCompletedProfile, true)
+        : status === "unsuspend"
+        ? eq(coaches.suspend, 1)
+        : status === "suspend"
+        ? eq(coaches.suspend, 0)
+        : status === "inactive"
+        ? eq(coaches.visibility, "off")
+        : status === "active"
+        ? eq(coaches.visibility, "on")
+        : status === "unapproved"
+        ? eq(coaches.approved_or_denied, 0) 
+        : status === "approved"
+        ? eq(coaches.approved_or_denied, 1)
+        : undefined
+
+        if (status === "no-profile"){
+          conditions.push(whereClause);
+        }
+        else if (whereClause){
+
+          conditions.push(isNotNull(coaches.firstName)); 
+          conditions.push(ne(coaches.firstName, ''));
+          conditions.push(whereClause);
+        }
+        else {
+          conditions.push(isNotNull(coaches.firstName));
+          conditions.push(ne(coaches.firstName, ''));
+        }
+
       const coachList = await db
         .select({
           id: coaches.id,
@@ -89,13 +165,12 @@ export async function GET(
           state: coaches.state,
           city: coaches.city,
           countryName: countries.name,
+          email: coaches.email,
         })
         .from(coaches)
-        .leftJoin(
-          countries,
-          eq(coaches.country, sql`CAST(${countries.id} AS TEXT)`)
-        )
-        .where(and(isNotNull(coaches.firstName), ne(coaches.firstName, "")));
+        .leftJoin(countries, eq(coaches.country, sql`CAST(${countries.id} AS TEXT)`))
+        .where(and(...conditions));
+
 
       data = coachList.map((c) => ({
         id: String(c.id),
@@ -104,8 +179,12 @@ export async function GET(
         country: c.countryName,
         state: c.state,
         city: c.city,
+        email: c.email,
       }));
-    } else if (type === "organization") {
+
+      console.log("DATA: ", data);
+
+    } else if (type === 'organization') {
       const orgs = await db
         .select({
           id: enterprises.id,
@@ -182,7 +261,7 @@ export async function POST(req: NextRequest) {
     if (!type || !message || !Array.isArray(targetIds) || targetIds.length === 0) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
-
+    const subject = body.subject || "📢 New Admin Message";
     const twilioClient = twilio(
       process.env.TWILIO_TEST_ACCOUNT_SID,
       process.env.TWILIO_TEST_AUTH_TOKEN
@@ -205,6 +284,7 @@ const messages = targetIds.map((receiverId: string) => ({
   sender_id: 1,
   receiver_id: Number(receiverId),
   message,
+  subject: subject,
   methods: JSON.stringify(selectedMethods), // ✅ store array as JSON string
   status: 1,
   read: 0,
@@ -234,7 +314,7 @@ await db.insert(admin_message).values(messages);
         if (methods.email && coach?.email) {
           await sendEmail({
             to: coach.email,
-            subject: "📢 New Admin Message",
+            subject: subject,
             html: `Dear ${coach.firstName},<br/><br/>
                    You’ve received a new message from Admin:<br/>
                    <blockquote>${message}</blockquote>
@@ -263,7 +343,7 @@ await db.insert(admin_message).values(messages);
         if (methods.email && player?.email) {
           await sendEmail({
             to: player.email,
-            subject: "📢 New Admin Message",
+            subject: subject,
             html: `Dear ${player.first_name},<br/><br/>
                    You’ve received a new message from Admin:<br/>
                    <blockquote>${message}</blockquote>
@@ -292,7 +372,7 @@ await db.insert(admin_message).values(messages);
         if (methods.email && org?.email) {
           await sendEmail({
             to: org.email,
-            subject: "📢 New Admin Message",
+            subject: subject,
             html: `Dear ${org.organizationName},<br/><br/>
                    You’ve received a new message from Admin:<br/>
                    <blockquote>${message}</blockquote>

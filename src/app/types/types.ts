@@ -111,7 +111,10 @@ export interface Player {
   suspend_days: number;
 }
 
-
+export interface inCompletePlayer {
+  id: string;
+  email: string;
+}
 export interface Coach {
   
   // [x: string]: number;
@@ -135,6 +138,11 @@ export interface Coach {
   earnings: number;
   is_deleted: number;
  evaluations?: Evaluation[];
+}
+
+export interface inCompleteCoach {
+  id: string;
+  email: string;
 }
 
 export interface Organization {

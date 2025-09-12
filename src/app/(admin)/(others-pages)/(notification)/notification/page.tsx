@@ -1,12 +1,14 @@
 'use client';
-
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import Label from '@/components/form/Label';
-import TextArea from '@/components/form/input/TextArea';
+// import TextArea from '@/components/form/input/TextArea';
 import Button from '@/components/ui/button/Button';
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import 'react-quill-new/dist/quill.snow.css';
+
 
 interface Entity {
   id: string;
@@ -17,12 +19,17 @@ interface Entity {
   city?: string;
   gender?: string;
   position?: string;
+  email?: string;
 }
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
 export default function NotificationPage() {
       useRoleGuard();
-  
+
   const [type, setType] = useState('');
+  const [status, setStatus] = useState('');
+
+
   const [entities, setEntities] = useState<Entity[]>([]);
 
   const [country, setCountry] = useState('');
@@ -42,6 +49,7 @@ export default function NotificationPage() {
   const [sendEmail, setSendEmail] = useState(false);
   const [sendSMS, setSendSMS] = useState(false);
   const [sendInternal, setSendInternal] = useState(false);
+  const [subject, setSubject] = useState('');
 
   const matchingEntities = Array.isArray(entities)
     ? entities.filter((item) => {
@@ -62,9 +70,27 @@ export default function NotificationPage() {
   useEffect(() => {
     if (!type) return;
 
+    // console.log("Type: ", type);
+
+
+      const queryParams = new URLSearchParams({
+        status,
+      });
+
+      //   if (status){
+      //     console.log("Stat: ", status);
+      //       queryParams.append("status", status)
+      //   }
+
+      // console.log("queryParams: ", queryParams.toString())
+
+      //   const res = await axios.get(`/api/geolocation/${queryParams.toString()}`);
+
+    console.log("Status: ", status);
+    
     const fetchData = async () => {
       try {
-        const res = await axios.get(`/api/geolocation/${type}`);
+        const res = await axios.get(`/api/bulkemail/${type}?${queryParams.toString()}`);
         const data = Array.isArray(res.data) ? res.data : [];
         setEntities(data);
 
@@ -85,7 +111,7 @@ export default function NotificationPage() {
     };
 
     fetchData();
-  }, [type]);
+  }, [type, status]);
 
   useEffect(() => {
     if (!country) {
@@ -128,11 +154,11 @@ export default function NotificationPage() {
   };
 
   const handleSubmit = async () => {
-    if (!type || selectedIds.length === 0 || !message) {
+    if (!type || selectedIds.length === 0 || !subject || !message) {
       Swal.fire({
         icon: 'warning',
         title: 'Missing Fields',
-        text: 'Please select a type, message, and at least one recipient.',
+        text: 'Please select a type, subject, message, and at least one recipient.',
       });
       return;
     }
@@ -144,6 +170,7 @@ export default function NotificationPage() {
       city,
       gender: type === 'player' ? gender : undefined,
       position: type === 'player' ? position : undefined,
+      subject,
       message,
       targetIds: selectedIds,
       methods: {
@@ -156,12 +183,13 @@ export default function NotificationPage() {
     setIsSubmitting(true);
 
     try {
-      await axios.post(`/api/geolocation/${type}`, payload);
+      await axios.post(`/api/bulkemail/${type}`, payload);
       Swal.fire({
         icon: 'success',
         title: 'Notification Sent',
         text: 'Your message has been successfully delivered.',
       });
+      setSubject('');
       setMessage('');
       setSelectedIds([]);
     } catch (err) {
@@ -210,6 +238,21 @@ export default function NotificationPage() {
               <option value="organization">Organization</option>
               <option value="player">Player</option>
               <option value="coach">Coach</option>
+            </select>
+          </div>
+
+          <div>
+            <Label>Status</Label>
+            <select className="w-full p-2 mt-1 border rounded-lg bg-white" value={status} onChange={(e) => setStatus(e.target.value)}  disabled={!type}>
+              <option value="">Select Status</option>
+              <option value="no-profile">Profile Not Completed</option>
+              <option value="profile">Profile Completed</option>
+              <option value="unsuspend">Unsuspended</option>
+              <option value="suspend">Suspended</option>
+              <option className={type !=="coach" ? 'hidden' : ''} value="unapproved">Unapproved</option>
+              <option className={type !=="coach" ? 'hidden' : ''} value="approved">Approved</option>
+              <option value="inactive">Inactive</option>
+              <option value="active">Active</option>
             </select>
           </div>
 
@@ -291,17 +334,50 @@ export default function NotificationPage() {
               {matchingEntities.map((entity) => (
                 <label key={entity.id} className="flex items-center gap-2">
                   <input type="checkbox" checked={selectedIds.includes(entity.id)} onChange={() => handleCheckboxChange(entity.id)} />
-                  <span className="text-xs">{entity.name || `ID: ${entity.id}`}</span>
+
+                  <span className={status !=="no-profile" ? 'text-xs' : 'hidden'}>{entity.name || `ID: ${entity.id}`}</span>
+
+                  <span className={status ==="no-profile" ? 'text-xs' : 'hidden'}>{entity.email}</span>        
+
                 </label>
               ))}
             </div>
           </div>
         )}
 
-        <div>
+        {/* <div>
           <Label>Message</Label>
           <TextArea className="w-full mt-1 border rounded-lg text-black" rows={5} value={message} placeholder="Enter your notification message here..." onChange={(value: string) => setMessage(value)} />
-        </div>
+        </div> */}
+<div>
+  <Label>Subject</Label>
+  <input
+    type="text"
+    className="w-full p-2 mt-1 border rounded-lg bg-white"
+    value={subject}
+    onChange={(e) => setSubject(e.target.value)}
+    placeholder="Enter notification subject..."
+  />
+</div>
+        <div>
+  <Label>Message</Label>
+  <ReactQuill
+    theme="snow"
+    value={message}
+    onChange={setMessage}
+    placeholder="Write your message here..."
+    modules={{
+      toolbar: [
+        [{ 'header': [1, 2, false] }],
+        ['bold', 'italic', 'underline'],
+        ['link'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        ['clean']
+      ],
+    }}
+    style={{ height: '200px', marginBottom: '50px' }}
+  />
+</div>
 
         <div className="pt-4 text-right">
           <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-xl transition">
