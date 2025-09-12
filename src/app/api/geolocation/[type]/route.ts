@@ -96,6 +96,7 @@ export async function GET(
       const players = await db
         .select({
           id: users.id,
+          email: users.email,
           firstName: users.first_name,
           lastName: users.last_name,
           state: users.state,
@@ -111,6 +112,7 @@ export async function GET(
       data = players.map((p) => ({
         id: String(p.id),
         name: `${p.firstName} ${p.lastName}`,
+        email: p.email ?? null, // ✅ include email
         country: p.countryName,
         gender: p.gender ?? undefined,
         position: p.position ?? undefined,
@@ -157,6 +159,7 @@ export async function GET(
       const coachList = await db
         .select({
           id: coaches.id,
+          email: coaches.email, // ✅ add email in select
           firstName: coaches.firstName,
           lastName: coaches.lastName,
           state: coaches.state,
@@ -172,6 +175,7 @@ export async function GET(
       data = coachList.map((c) => ({
         id: String(c.id),
         name: `${c.firstName} ${c.lastName}`,
+        email: c.email ?? null, // ✅ include email
         country: c.countryName,
         state: c.state,
         city: c.city,
@@ -184,6 +188,7 @@ export async function GET(
       const orgs = await db
         .select({
           id: enterprises.id,
+          email: enterprises.email, // ✅ make sure org has email in schema
           organizationName: enterprises.organizationName,
           state: enterprises.state,
           city: enterprises.city,
@@ -204,6 +209,7 @@ export async function GET(
       data = orgs.map((o) => ({
         id: String(o.id),
         name: o.organizationName,
+        email: o.email ?? null, // ✅ include email
         country: o.countryName,
         state: o.state,
         city: o.city,
@@ -223,6 +229,7 @@ export async function GET(
       data = staffList.map((s) => ({
         id: String(s.id),
         name: s.username,
+        email: s.email ?? null, // ✅ include email
         country: null,
         state: null,
         city: null,

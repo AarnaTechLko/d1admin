@@ -82,7 +82,7 @@ const AppSidebar: React.FC = () => {
             name: "Dashboard",
             path: "/dashboard",
           },
-           {
+          {
             icon: <GridIcon />,
             name: "Block List",
             path: "/blocks",
@@ -160,6 +160,13 @@ const AppSidebar: React.FC = () => {
               path: "/dashboard",
             },
             {
+              name: "Ticket",
+              icon: <UserCircleIcon />,
+              subItems: [{ name: "View Ticket", path: "/ticket", pro: false },
+
+              ],
+            },
+            {
               name: "Coaches",
               icon: <ListIcon />,
               subItems: [{ name: "View Coach", path: "/coach", pro: false }],
@@ -182,12 +189,12 @@ const AppSidebar: React.FC = () => {
               subItems: [{ name: "View Team", path: "/team", pro: false }],
             },
           ]
-          :role === "Executive Level"
-      ? [
-        {
-          name: "Ticket",
-          icon: <UserCircleIcon />,
-          subItems: [{ name: "View Ticket", path: "/ticket", pro: false },
+          : role === "Executive Level"
+            ? [
+              {
+                name: "Ticket",
+                icon: <UserCircleIcon />,
+                subItems: [{ name: "View Ticket", path: "/ticket", pro: false },
 
           ],
         },
@@ -208,25 +215,25 @@ const AppSidebar: React.FC = () => {
           { name: "Suspended Player", path: "/suspendplayer", pro: false },
           { name: "Disable Player", path: "/disableplayer", pro: false },
 
-          ],
-        },
-        {
-          name: "Organizations",
-          icon: <TableIcon />,
-          subItems: [
-            { name: "Active Organizations", path: "/organization", pro: false },
-            { name: "Suspended Organization", path: "/suspendorg", pro: false },
-            { name: "Disable Organization", path: "/disableorg", pro: false },
+                ],
+              },
+              {
+                name: "Organizations",
+                icon: <TableIcon />,
+                subItems: [
+                  { name: "Active Organizations", path: "/organization", pro: false },
+                  { name: "Suspended Organization", path: "/suspendorg", pro: false },
+                  { name: "Disable Organization", path: "/disableorg", pro: false },
 
-          ],
-        },
-      ]
-      :role === "Tech"
-      ? [
-        {
-          name: "Ticket",
-          icon: <UserCircleIcon />,
-          subItems: [{ name: "View Ticket", path: "/ticket", pro: false },
+                ],
+              },
+            ]
+            : role === "Tech"
+              ? [
+                {
+                  name: "Ticket",
+                  icon: <UserCircleIcon />,
+                  subItems: [{ name: "View Ticket", path: "/ticket", pro: false },
 
           ],
         },
@@ -247,21 +254,21 @@ const AppSidebar: React.FC = () => {
           { name: "Suspended Player", path: "/suspendplayer", pro: false },
           { name: "Disable Player", path: "/disableplayer", pro: false },
 
-          ],
-        },
-        {     
-          name: "Organizations",
-          icon: <TableIcon />,
-          subItems: [
-            { name: "Active Organizations", path: "/organization", pro: false },
-            { name: "Suspended Organization", path: "/suspendorg", pro: false },
-            { name: "Disable Organization", path: "/disableorg", pro: false },
+                  ],
+                },
+                {
+                  name: "Organizations",
+                  icon: <TableIcon />,
+                  subItems: [
+                    { name: "Active Organizations", path: "/organization", pro: false },
+                    { name: "Suspended Organization", path: "/suspendorg", pro: false },
+                    { name: "Disable Organization", path: "/disableorg", pro: false },
 
-          ],
-        },
-      ]
-          
-          : [];
+                  ],
+                },
+              ]
+
+              : [];
 
 
 

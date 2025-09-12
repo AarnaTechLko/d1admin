@@ -1,6 +1,8 @@
 
 export interface Evaluation {
-
+    coach_status: string;
+    player_status: string;
+coachInput:string;
   id: number;
   reviewTitle: string;
   primary_video_link: string;
@@ -200,4 +202,21 @@ export interface Team {
   team_type: string;
   team_year: number;
   status: string;
+}
+
+export interface PolarChartValues {
+  labels: string[];
+  data: number[];
+  enableHover: boolean;
+}
+export interface Attribute {
+  id: number;
+  name: string;
+}
+
+
+export interface Category {
+  id: string;
+  name: string;
+  attributes: Attribute[] | null;
 }

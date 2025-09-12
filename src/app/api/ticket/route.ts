@@ -27,13 +27,28 @@ function getTimeFilterCondition(column: typeof ticket.createdAt, range: TimeRang
   }
 }
 
-/**
- * ✅ POST /api/tickets → Create a new ticket
- */
+
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, subject, message = "", assign_to, status } = body;
+    const {
+      name,
+      email,
+      subject,
+      message = "",
+      ticket_from,
+      status,
+      recipientType, // ✅ comes from frontend
+      user_id,       // ✅ logged-in user ID from frontend
+    } = body;
+
+    if (!name || !email || !subject || !message || !recipientType || !user_id) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
 
     const result = await db
       .insert(ticket)
@@ -42,19 +57,23 @@ export async function POST(req: Request) {
         email,
         subject,
         message,
-        assign_to,
-        status,
+        ticket_from: Number(ticket_from) || 0,
+        status: status || "Pending",
+        role: recipientType,       // ✅ store recipient type in role
         createdAt: new Date(),
       })
       .returning();
 
     return NextResponse.json(
-      { message: "Ticket created successfully", result },
+      { message: "Ticket created successfully", ticket: result[0] },
       { status: 200 }
     );
   } catch (error) {
     console.error("❌ Error creating ticket:", error);
-    return NextResponse.json({ error: "Failed to create ticket" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create ticket" },
+      { status: 500 }
+    );
   }
 }
 

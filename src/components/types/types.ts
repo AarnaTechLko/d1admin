@@ -104,3 +104,4 @@ export interface Payment {
   created_at: string;
   is_deleted: number;
 }
+
