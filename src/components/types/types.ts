@@ -105,8 +105,3 @@ export interface Payment {
   is_deleted: number;
 }
 
-// export interface PolarChartValues {
-//   labels: string[];
-//   data: number[];
-//   enableHover: boolean;
-// }

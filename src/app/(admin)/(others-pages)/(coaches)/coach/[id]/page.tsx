@@ -590,7 +590,7 @@ setCoach((prev) => {
 
       {/* Evaluations */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-semibold">Evaluations</h2>
+        <h2 className="text-2xl font-semibold">Evaluation</h2>
         <div className="text-gray-700">
 
 

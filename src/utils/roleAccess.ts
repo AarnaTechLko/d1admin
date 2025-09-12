@@ -21,6 +21,7 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
 
   Manager: [
     "/dashboard*",
+      "/ticket*",
     "/coach*",
     "/player*",
     "/organization*",

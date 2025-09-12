@@ -1,1320 +1,1436 @@
-"use client";
-export const dynamic = "force-dynamic";
+'use client';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 
-import { useSearchParams } from 'next/navigation';
-
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Evaluation } from '@/app/types/types';
-import {
-    Radar,
-    RadarChart,
-    PolarGrid,
-    PolarAngleAxis,
-    PolarRadiusAxis,
-    ResponsiveContainer,
-} from 'recharts';
+// import {
+//   Radar,
+//   RadarChart,
+//   PolarGrid,
+//   PolarAngleAxis,
+//   PolarRadiusAxis,
+//   ResponsiveContainer,
+// } from 'recharts';
+import Loading from '@/components/Loading';
 import { format } from 'date-fns';
 import Image from 'next/image';
-import Loading from '@/components/Loading';
+import { getSession } from 'next-auth/react';
+// import defaultImage from '../../public/default.jpg';
 import defaultImage from '@/public/default.jpg'
-import { FaFileAlt } from 'react-icons/fa';
-import Swal from 'sweetalert2';
+import { FaFileAlt, FaSpinner } from 'react-icons/fa';
+// import { showError } from '@/components/Toastr';
+
+// import EvaluationPolarCharts from '@/components/coach/EvaluationPolarCharts';
+// import {PolarChartValues} from '@/app/types/types'
+import {  useSearchParams } from 'next/navigation';
+import { Clock } from 'lucide-react';
+import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
+import Link from 'next/link';
+import { Category } from '@mui/icons-material';
+// import PitcherComponent from '@/components/coach/pitcherComponent';
 import { useRoleGuard } from '@/hooks/useRoleGaurd';
 
-
-//  import parse from "html-react-parser"
 // type EvaluationPageProps = {
 //   searchParams: {
 //     evaluationId: string;
-
 //   };
 // };
 type FileData = {
-    filename: string;
-    comments: string;
-    size?: number; // Add size as an optional property
-
+  filename: string;
+  comments: string;
+  size?: number; // Add size as an optional property
 };
-
+type TimeInterval = {
+  start: string;
+  end: string;
+  description: string;
+};
 type AbilityData = {
-    evaluationId: string;
-    files: {
-        file1?: FileData;
-        file2?: FileData;
-        file3?: FileData;
-        file4?: FileData;
-        file5?: FileData;
-    };
+  evaluationId: string;
+  files: {
+    file1?: FileData;
+    file2?: FileData;
+    file3?: FileData;
+    file4?: FileData;
+    file5?: FileData;
+  };
 };
-const position = "Goalkeeper"; // or any dynamic value
 
-const headerMetrics = ['Technical Average', 'Tactical Average', 'Distribution Average', 'Physical Average', 'Organization Average'];
+// type RadarSkill = {
+//   label: string;
+//   key:
+//     | 'technicalAverage'
+//     | 'tacticalAverage'
+//     | 'distributionAverage'
+//     | 'physicalAverage'
+//     | 'organizationAverage';
+// };
 
-const radarSkills =
-    position === "Goalkeeper"
-        ? [
-            { label: 'Technical Average', key: 'technicalAverage' },
-            { label: 'Tactical Average', key: 'tacticalAverage' },
-            { label: 'Distribution Average', key: 'distributionAverage' },
-            { label: 'Physical Average', key: 'physicalAverage' },
-            { label: 'Organization Average', key: 'organizationAverage' }
-        ]
-        : [
-            { label: 'Technical Average', key: 'technicalAverage' },
-            { label: 'Tactical Average', key: 'tacticalAverage' },
-            { label: 'Physical Average', key: 'physicalAverage' }
-        ];
+// 2. Pre-define each set for clarity:
+// const goalkeeperRadarSkills: RadarSkill[] = [
+//   { label: 'Technical Average', key: 'technicalAverage' },
+//   { label: 'Tactical Average', key: 'tacticalAverage' },
+//   { label: 'Distribution Average', key: 'distributionAverage' },
+//   { label: 'Physical Average', key: 'physicalAverage' },
+//   { label: 'Organization Average', key: 'organizationAverage' },
+// ];
 
+// const outfieldRadarSkills: RadarSkill[] = [
+//   { label: 'Technical Average', key: 'technicalAverage' },
+//   { label: 'Tactical Average', key: 'tacticalAverage' },
+//   { label: 'Physical Average', key: 'physicalAverage' },
+// ];
 
+// type sectionScoreResults = {
+//   avg: number;
+//   count: number;
+// };
+interface Attribute {
+  id: number;
+  name: string;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  attributes: Attribute[] | null;
+}
+
+interface EvaluationTemplateItem {
+  sport: string;
+  position: string;
+  categories: Category[] | null;
+}
 function EvaluationPage() {
           useRoleGuard();
-    
-    const searchParams = useSearchParams();
+  // let position = 'Field Player'; // or any dynamic value
+
+//   const [position, setPosition] = useState<string>();
+//   const [headerMetrics, setHeaderMetrics] = useState<string[]>([]);
+//   const [radarSkills, setRadarSkills] = useState<RadarSkill[]>([]);
+
+//   const router = useRouter();
+  const searchParams = useSearchParams();
     const evaluationId = searchParams.get('evaluationId');
-    const [headerRatings, setHeaderRatings] = useState<number[]>(Array(headerMetrics.length).fill(0));
-    const [skillRatings, setSkillRatings] = useState<number[]>(Array(radarSkills.length).fill(0));
-    const [isSubmitting, setIsSubmitting] = useState(false);
+  // const [headerRatings, setHeaderRatings] = useState<number[]>(
+  //   Array(headerMetrics.length).fill(0),
+  // );
+  // const [skillRatings, setSkillRatings] = useState<number[]>(
+  //   Array(radarSkills.length).fill(0),
+  // );
+//   const [headerRatings, setHeaderRatings] = useState<number[]>([]);
+//   const [skillRatings, setSkillRatings] = useState<number[]>([]);
 
-    // const {evaluationId } = searchParams; // Get evaluationId from searchParams
+//   const { evaluationId } = searchParams; // Get evaluationId from searchParams
     const [evaluationData, setEvaluationData] = useState<Evaluation | null>(null); // State to store evaluation data
-    const [error, setError] = useState<string | null>(null); // State to handle errors
-    const [technicalScores, setTechnicalScores] = useState<{ [key: string]: string }>({});
-    const [tacticalScores, setTacticalScores] = useState<{ [key: string]: string }>({});
-    const [physicalScores, setPhysicalScores] = useState<{ [key: string]: string }>({});
-    const [distributionScores, setDistributionScores] = useState<{ [key: string]: string }>({});
-    const [organizationScores, setOrganizationScores] = useState<{ [key: string]: string }>({});
-    const [loading, setLoading] = useState<boolean>(true);
-    // const [userType, setUserType] = useState<string | null>(null);
-    // const [playerId, setPlayerId] = useState<number>(0);
-    const [data, setData] = useState<AbilityData | null>(null);
-    // const [abilities, setAbilities] = useState<AbilityData[]>([]);
-    const MAX_FILE_SIZE = 9 * 1024 * 1024; // 9MB
+  const [evaluationTemplateData, setEvaluationTemplateData] =
+    useState<EvaluationTemplateItem | null>(null);
+//   const [error, setError] = useState<string | null>(null); // State to handle errors
+//   const [technicalScores, setTechnicalScores] = useState<{
+//     [key: string]: string;
+//   }>({});
+//   const [tacticalScores, setTacticalScores] = useState<{
+//     [key: string]: string;
+//   }>({});
+//   const [physicalScores, setPhysicalScores] = useState<{[key: string]: string;}>({});
+  // const [distributionScores, setDistributionScores] = useState<{
+  //   [key: string]: string;
+  // }>({});
+  // const [organizationScores, setOrganizationScores] = useState<{
+  //   [key: string]: string;
+  // }>({});
+  const [loading, setLoading] = useState<boolean>(true);
 
-    const [showModal, setShowModal] = useState(false);
-    const [newRemarks, setNewRemarks] = useState<string>(evaluationData?.remarks ?? '');
+  const [downloadingPDF, setDownloadingPDF] = useState<boolean>(false);
 
-    const [newRating, setNewRating] = useState(evaluationData?.rating || 0);
-    // const [isHidden, setIsHidden] = useState(false);
+  const [userType, setUserType] = useState<string | null>(null);
+//   const [playerId, setPlayerId] = useState<number>(0);
+  const [data, setData] = useState<AbilityData | null>(null);
 
-    // const [rating, setRating] = useState<number>(0);
-    // const [hover, setHover] = useState<number>(0);
-    // const [remarks, setRemarks] = useState<string>('');
-    // const [isRatingSubmitted, setIsRatingSubmitted] = useState(false);
+  //These statehooks are for retrieving the averages from each section of the evaluation form
+  const [evaluationAverage, setEvaluationAverage] = useState<number>(0);
+//   const [technicalAverage, setTechnicalAverage] = useState<number>(0);
+//   const [tacticalAverage, setTacticalAverage] = useState<number>(0);
+//   const [physicalAverage, setPhysicalAverage] = useState<number>(0);
+  // const [distributionAverage, setDistributionAverage] = useState<number>(0);
+  // const [organizationAverage, setOrganizationAverage] = useState<number>(0);
 
-    const formattedDate = evaluationData?.updated_at ? format(new Date(evaluationData.updated_at), 'MM/dd/yyyy') : '';
+  // const [abilities, setAbilities] = useState<AbilityData[]>([]);
+  const MAX_FILE_SIZE = 9 * 1024 * 1024; // 9MB
 
-    const pdfRef = useRef<HTMLDivElement>(null);
+  const [rating, setRating] = useState<number>(0);
+  const [hover, setHover] = useState<number>(0);
+//   const [remarks, setRemarks] = useState<string>('');
+//   const [isRatingSubmitted, setIsRatingSubmitted] = useState(false);
+  const [videoOneTimeStamps, setVideoOneTimeStamps] = useState<TimeInterval[]>([
+    { start: '', end: '', description: '' },
+  ]);
+  const [videoTwoTimeStamps, setVideoTwoTimeStamps] = useState<TimeInterval[]>([
+    { start: '', end: '', description: '' },
+  ]);
 
-    const [formData, setFormData] = useState({
+  const formattedDate = evaluationData?.updated_at
+    ? format(new Date(evaluationData.updated_at), 'MM/dd/yyyy')
+    : '';
 
-        speed: '',
-        comm_persistence: '',
-        comm_aggression: '',
-        comm_alertness: '',
-        exe_scoring: '',
-        exe_receiving: '',
-        exe_passing: '',
-        dec_mobility: '',
-        dec_anticipation: '',
-        dec_pressure: '',
-        soc_speedEndurance: '',
-        soc_strength: '',
-        soc_explosiveMovements: '',
+//   const pdfRef = useRef<HTMLDivElement>(null);
 
-        superStrengths: '',
-        developmentAreas: '',
-        idpGoals: '',
-        keySkills: '',
-        attacking: '',
-        defending: '',
-        transitionDefending: '',
-        transitionAttacking: '',
+//   const [formData, setFormData] = useState({
+//     speed: '',
+//     comm_persistence: '',
+//     comm_aggression: '',
+//     comm_alertness: '',
+//     exe_scoring: '',
+//     exe_receiving: '',
+//     exe_passing: '',
+//     dec_mobility: '',
+//     dec_anticipation: '',
+//     dec_pressure: '',
+//     soc_speedEndurance: '',
+//     soc_strength: '',
+//     soc_explosiveMovements: '',
+
+//     superStrengths: '',
+//     developmentAreas: '',
+//     idpGoals: '',
+//     keySkills: '',
+//     attacking: '',
+//     defending: '',
+//     transitionDefending: '',
+//     transitionAttacking: '',
+//   });
+
+//   const [pitcherCategories, setPitcherCategories] = useState<Category[]>([]);
+//   const [isPitcherPosition, setIsPitcherPosition] = useState(false);
+
+//   const getRatingBgClass = (value: string) => {
+//     switch (value.toLowerCase()) {
+//       case 'excellent':
+//         return ' text-yellow-400 rounded';
+//       case 'positive':
+//         return ' text-cyan-400  rounded';
+//       case 'neutral':
+//         return ' text-blue-300 rounded';
+//       default:
+//         return '';
+//     }
+//   };
+
+  //Generates the PDF
+  const downloadPDF = async () => {
+    // console.log("Evaluation Id: ", evaluationId);
+
+    setDownloadingPDF(true);
+
+    setDownloadingPDF(true);
+
+    const payload = JSON.stringify({
+      evaluationData: evaluationData,
+      evaluationAverage: evaluationAverage,
+      evaluationTemplateData: evaluationTemplateData,
     });
 
-    // const getRatingBgClass = (value: string) => {
-    //   switch (value.toLowerCase()) {
-    //     case "excellent":
-    //       return " text-yellow-400 rounded";
-    //     case "positive":
-    //       return " text-cyan-400  rounded";
-    //     case "neutral":
-    //       return " text-blue-300 rounded";
-    //     default:
-    //       return "";
-    //   }
-    // };
+    // if (!response.ok) {
+    //   const errorData = await response.json(); // Assuming the API returns a JSON error message
+    //   console.error("API Error Response:", errorData);
+    //   throw new Error(`Failed to assign sub-admin: ${errorData?.error || "Unknown error"}`);
+    // }
 
-    useEffect(() => {
-        if (evaluationId) {
-            fetch(`/api/ability?evaluationId=${evaluationId}`)
-                .then((res) => res.json())
-                .then((result) => {
-                    console.log("API result:", result); // Log the full response
-                    if (result.ability) {
-                        setData(result.ability); // If ability data exists, update the state
-                    } else {
-                        // alert('Unable to fetch data');
-                        console.log('Unable to fetch data ');
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error fetching data:', error);
-                    alert('Error fetching data');
-                });
-        }
-    }, [evaluationId]);
-
-
-
-
-
-
-    const calculateAverage = (scores: Record<string, string | number>) => {
-        const values = Object.values(scores)
-            .map(Number)
-            .filter((v) => !isNaN(v));
-        if (values.length === 0) return 0;
-        const avg = values.reduce((a, b) => a + b, 0) / values.length;
-        return Math.round(avg * 10) / 10; // Round to 1 decimal
-    };
-    useEffect(() => {
-        const fetchEvaluationData = async () => {
-            // const session = await getSession();
-            // if (session) {
-            //     setUserType(session.user.type);
-            //     setPlayerId(Number(session.user.id)); // Assuming 'role' is stored in session
-            // }
-            try {
-                const response = await fetch(`/api/evaluationdetails?evaluationId=${evaluationId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-                if (!response.ok) {
-                    setLoading(false);
-                    throw new Error('Failed to fetch evaluation data');
-                }
-
-                const data = await response.json();
-                console.log("evaluation", data);
-
-                if (!data?.result) {
-                    throw new Error("No evaluation data found in response");
-                }
-                setEvaluationData(data.result as Evaluation); // Type assertion here
-                console.log("evaliation data:", data.result as Evaluation);
-                setPhysicalScores(JSON.parse(data.result.physicalScores));
-                setTacticalScores(JSON.parse(data.result.tacticalScores));
-                setTechnicalScores(JSON.parse(data.result.technicalScores));
-                setOrganizationScores(JSON.parse(data.result.organizationScores));
-                setDistributionScores(JSON.parse(data.result.distributionScores));
-                setDistributionScores(JSON.parse(data.result.distributionScores));
-                setFormData({
-                    speed: data.result.speed || "",
-                    comm_persistence: data.result.comm_persistence || "",
-                    comm_aggression: data.result.comm_aggression || "",
-                    comm_alertness: data.result.comm_alertness || "",
-                    exe_scoring: data.result.exe_scoring || "",
-                    exe_receiving: data.result.exe_receiving || "",
-                    exe_passing: data.result.exe_passing || "",
-                    dec_mobility: data.result.dec_mobility || "",
-                    dec_anticipation: data.result.dec_anticipation || "",
-                    dec_pressure: data.result.dec_pressure || "",
-                    soc_speedEndurance: data.result.soc_speedEndurance || "",
-                    soc_strength: data.result.soc_strength || "",
-                    soc_explosiveMovements: data.result.soc_explosiveMovements || "",
-                    // ratings: data.ratings || "",
-                    superStrengths: data.result.superStrengths || "",
-                    developmentAreas: data.result.developmentAreas || "",
-                    idpGoals: data.result.idpGoals || "",
-                    keySkills: data.result.keySkills || "",
-                    attacking: data.result.attacking || "",
-                    defending: data.result.defending || "",
-                    transitionDefending: data.result.transitionDefending || "",
-                    transitionAttacking: data.result.transitionAttacking || "",
-                });
-                setHeaderRatings([
-                    data.result.technicalAverage,
-
-                    data.result.tacticalAverage,
-                    data.result.distributionAverage,
-                    data.result.physicalAverage,
-                    data.result.organizationAverage,
-                ]);
-
-                setSkillRatings(radarSkills.map(skill => data.result[skill.key] || 0));
-
-                setLoading(false);
-                // Set the fetched evaluation data
-            } catch (error) {
-                console.error('Error fetching evaluation data:', error);
-                setError('Failed to fetch evaluation data'); // Set error message
-            }
-        };
-
-        fetchEvaluationData();
-    }, [evaluationId]);
-    if (loading) {
-        return <Loading />;
+    const response = await fetch(
+      `/api/generatepdf?evaluationId=${evaluationId}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: payload,
+      },
+    );
+    if (!response.ok) {
+      setDownloadingPDF(false);
+      throw new Error('Error occurred when generating PDF');
     }
 
-    const chartData = radarSkills
-        .filter((skill) => {
-            if (evaluationData?.position.toString() === "Goalkeeper") {
-                return true; // Include all skills for Goalkeeper
-            }
-            // Exclude Distribution and Organization for non-Goalkeepers
-            return skill.key !== "distributionAverage" && skill.key !== "organizationAverage";
+    const { path } = await response.json();
+
+    // console.log("Path: ", path);
+
+    // Create a download link that automatically gets pressed
+    const link = document.createElement('a');
+    link.href = `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${path}`;
+    link.download = 'Evaluation Form';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setDownloadingPDF(false);
+    // Revoke object URL to free memory
+    // setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+  };
+
+  useEffect(() => {
+    if (evaluationId) {
+      fetch(`/api/ability?evaluationId=${evaluationId}`)
+        .then(res => res.json())
+        .then(result => {
+          // console.log('API result:', result); // Log the full response
+          if (result.ability) {
+            setData(result.ability); // If ability data exists, update the state
+          } else {
+            // alert('Unable to fetch data');
+            console.log('Unable to fetch data ');
+          }
         })
-        .map((skill) => {
-            let averageValue = 0;
-
-            // Get the average value for each skill
-            switch (skill.key) {
-                case "technicalAverage":
-                    averageValue = calculateAverage(technicalScores); // Use the average for technical scores
-                    break;
-                case "tacticalAverage":
-                    averageValue = calculateAverage(tacticalScores); // Use the average for tactical scores
-                    break;
-                case "distributionAverage":
-                    averageValue = calculateAverage(distributionScores); // Use the average for distribution scores
-                    break;
-                case "physicalAverage":
-                    averageValue = calculateAverage(physicalScores); // Use the average for physical scores
-                    break;
-                case "organizationAverage":
-                    averageValue = calculateAverage(organizationScores); // Use the average for organization scores
-                    break;
-                default:
-                    averageValue = 0; // Default to 0 if no match
-            }
-
-            return {
-                subject: skill.label,
-                A: averageValue, // Use the calculated average value
-            };
+        .catch(error => {
+          console.error('Error fetching data:', error);
+          alert('Error fetching data');
         });
+    }
+  }, [evaluationId]);
 
-    const calculateOverallAverage = () => {
-        let total = 0;
-        let count = 0;
+//   useEffect(() => {
+//     if (evaluationTemplateData?.categories) {
+//       const pitcherCats = evaluationTemplateData.categories.filter(
+//         (cat: Category) => cat.id === 122 || cat.id === 125,
+//       );
+//     //   setPitcherCategories(pitcherCats);
+//     //   setIsPitcherPosition(pitcherCats.length > 0);
+//     }
+//   }, [evaluationTemplateData]);
 
-        // Add averages if they exist (ensuring no undefined values)
-        if (technicalScores) {
-            total += calculateAverage(technicalScores);
-            count += 1;
-        }
-        if (tacticalScores) {
-            total += calculateAverage(tacticalScores);
-            count += 1;
-        }
-        if (evaluationData?.position.toString()=== "Goalkeeper") {
-            if (distributionScores) {
-                total += calculateAverage(distributionScores);
-                count += 1;
-            }
-            if (organizationScores) {
-                total += calculateAverage(organizationScores);
-                count += 1;
-            }
-        }
-        if (physicalScores) {
-            total += calculateAverage(physicalScores);
-            count += 1;
-        }
+//   const handleSubmitRating = async () => {
+//     if (rating <= 0) {
+//       showError('Please select rating');
+//       return;
+//     }
+//     try {
+//       const response = await fetch('/api/submitRating', {
+//         method: 'PUT',
+//         headers: {
+//           'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({ evaluationId, rating, remarks, playerId }),
+//       });
 
-        // Calculate and return the overall average
-        return count > 0 ? (total / count).toFixed(2) : "N/A";
-    };
-    const handleEdit = () => {
-        setNewRating(evaluationData?.rating || 0);
-        setNewRemarks(evaluationData?.remarks ?? '');
+//       if (!response.ok) {
+//         throw new Error('Failed to submit rating');
+//       }
 
-        setShowModal(true);
-    };
+//       setIsRatingSubmitted(true);
+//     } catch (error) {
+//       console.error('Error submitting rating:', error);
+//       // Handle error, e.g., show an error message
+//     }
+//   };
 
-    const submitEdit = async () => {
-        if (!evaluationData) return;
-    setIsSubmitting(true);
+  const fetchEvaluationData = async () => {
+    const session = await getSession();
 
-        const res = await fetch(`/api/evaluationdetails/${evaluationId}/rating`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                rating: newRating,
-                remarks: newRemarks,
+    if (session) {
+      setUserType(session.user.type);
+    //   setPlayerId(Number(session.user.id)); // Assuming 'role' is stored in session
+    }
+    try {
+      const response = await fetch(
+        `/api/evaluationdetails?evaluationId=${evaluationId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      if (!response.ok) {
+        setLoading(false);
+        throw new Error('Failed to fetch evaluation data');
+      }
 
-            }),
-        });
+      const data = await response.json();
+      const evalTemplateResponse = await fetch(
+        `/api/evaluationDetailsTemplate?position=${data.result.position}&sport_id=${data.result.sport}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      const evalTemplate = await evalTemplateResponse.json();
+      // console.log(evalTemplate[0]);
 
-        if (res.ok) {
-            setShowModal(false);
-            await Swal.fire({
-                icon: 'success',
-                title: 'Rating Updated',
-                text: 'The player rating has been updated successfully.',
-                timer: 2000,
-                showConfirmButton: false,
-            });
-            location.reload();
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Update Failed',
-                text: 'Failed to update the rating. Please try again.',
-            });
-                setIsSubmitting(true);
+      setEvaluationTemplateData(evalTemplate[0]);
+      setEvaluationData(data.result as Evaluation); // Type assertion here
+      setRating(data.result.rating);
+      // setPosition(data.position);
+      // setPhysicalScores(JSON.parse(data.result.physicalScores));
+      // setTacticalScores(JSON.parse(data.result.tacticalScores));
+      // setTechnicalScores(JSON.parse(data.result.technicalScores));
+      // setOrganizationScores(JSON.parse(data.result.organizationScores));
+      // setDistributionScores(JSON.parse(data.result.distributionScores));
+      // setDistributionScores(JSON.parse(data.result.distributionScores));
 
-        }
-    };
+      setEvaluationAverage(data.result.evalAverage);
+      // setTechnicalAverage(data.result.techAverage);
+      // setTacticalAverage(data.result.tactAverage);
+      // setDistributionAverage(data.result.distAverage);
+      // setPhysicalAverage(data.physAverage);
+      // setOrganizationAverage(data.result.orgAverage);
 
-    const handleDelete = async () => {
-        if (!evaluationData) return;
+      // setData()
+      // setFormData({
+      //     speed: data.result.speed || '',
+      //     comm_persistence: data.result.comm_persistence || '',
+      //     comm_aggression: data.result.comm_aggression || '',
+      //     comm_alertness: data.result.comm_alertness || '',
+      //     exe_scoring: data.result.exe_scoring || '',
+      //     exe_receiving: data.result.exe_receiving || '',
+      //     exe_passing: data.result.exe_passing || '',
+      //     dec_mobility: data.result.dec_mobility || '',
+      //     dec_anticipation: data.result.dec_anticipation || '',
+      //     dec_pressure: data.result.dec_pressure || '',
+      //     soc_speedEndurance: data.result.soc_speedEndurance || '',
+      //     soc_strength: data.result.soc_strength || '',
+      //     soc_explosiveMovements: data.result.soc_explosiveMovements || '',
+      //     // ratings: data.ratings || "",
+      //     superStrengths: data.result.superStrengths || '',
+      //     developmentAreas: data.result.developmentAreas || '',
+      //     idpGoals: data.result.idpGoals || '',
+      //     keySkills: data.result.keySkills || '',
+      //     attacking: data.result.attacking || '',
+      //     defending: data.result.defending || '',
+      //     transitionDefending: data.result.transitionDefending || '',
+      //     transitionAttacking: data.result.transitionAttacking || '',
+      // });
+    //   setHeaderMetrics(
+    //     position === 'Goalkeeper'
+    //       ? [
+    //           'Technical Average',
+    //           'Tactical Average',
+    //           'Distribution Average',
+    //           'Physical Average',
+    //           'Organization Average',
+    //         ]
+    //       : ['Technical Average', 'Tactical Average', 'Physical Average'],
+    //   );
 
-        const result = await Swal.fire({
-            title: 'Are you sure?',
-            text: "This will hide the rating, not delete it.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, hide it!',
-        });
+      // setRadarSkills(
+      //   position === 'Goalkeeper'
+      //     ? [
+      //         { label: 'Technical Average', key: 'technicalAverage' },
+      //         { label: 'Tactical Average', key: 'tacticalAverage' },
+      //         { label: 'Distribution Average', key: 'distributionAverage' },
+      //         { label: 'Physical Average', key: 'physicalAverage' },
+      //         { label: 'Organization Average', key: 'organizationAverage' },
+      //       ]
+      //     : [
+      //         { label: 'Technical Average', key: 'technicalAverage' },
+      //         { label: 'Tactical Average', key: 'tacticalAverage' },
+      //         { label: 'Physical Average', key: 'physicalAverage' },
+      //       ],
+      // );
 
-        if (result.isConfirmed) {
-            const res = await fetch(`/api/evaluationdetails/${evaluationId}/hide-rating`, {
-                method: 'PATCH',
-            });
+      // console.log("Position baby: ", data.result.position);
 
-            if (res.ok) {
-                setEvaluationData(prev => prev ? { ...prev, reviewStatus: 0 } : prev);
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Rating Hidden',
-                    text: 'The rating has been hidden successfully.',
-                    timer: 2000,
-                    showConfirmButton: false,
-                });
-                location.reload();
+      // setRadarSkills(
+      //     data.result.position === 'Goalkeeper'
+      //         ? goalkeeperRadarSkills
+      //         : outfieldRadarSkills,
+      // );
 
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Failed to Hide',
-                    text: 'Failed to hide the rating. Please try again.',
-                });
-            }
-        }
-    };
+      // setHeaderRatings([
+      //     data.result.technicalAverage,
+      //     data.result.tacticalAverage,
+      //     data.result.distributionAverage,
+      //     data.result.physicalAverage,
+      //     data.result.organizationAverage,
+      // ]);
 
-    const handleRevert = async () => {
-        if (!evaluationData) return;
+      // setSkillRatings(radarSkills.map(skill => data.result[skill.key] || 0));
 
-        const result = await Swal.fire({
-            title: 'Revert Rating Visibility',
-            text: 'Are you sure you want to make the rating visible again?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, revert it',
-        });
+      setLoading(false);
+      if (data?.result.videoOneTiming) {
+        const parsed = JSON.parse(data.result.videoOneTiming);
+        setVideoOneTimeStamps(parsed);
+      }
+      if (data?.result.videoTwoTiming) {
+        const parsed = JSON.parse(data.result.videoTwoTiming);
+        setVideoTwoTimeStamps(parsed);
+      }
+      // Set the fetched evaluation data
+    } catch (error) {
+      console.error('Error fetching evaluation data:', error);
+    //   setError('Failed to fetch evaluation data'); // Set error message
+    }
+  };
+  // const calculateAverage = (scores: Record<string, string | number>): sectionScoreResults => {
+  //   const values = Object.values(scores)
+  //     .map(Number)
+  //     .filter(v => !isNaN(v));
+  //   if (values.length === 0) return {avg: 0, count: 0};
+  //   const avg = values.reduce((a, b) => a + b, 0) / values.length;
+  //   return {avg: Math.round(avg * 100) / 100, count: values.length}; // Round to 2 decimal
+  // };
+  useEffect(() => {
+    fetchEvaluationData();
+  }, []); 
+  if (loading) {
+    return <Loading />; // Loading indicator
+  }
 
-        if (!result.isConfirmed) return;
+  //USED for smaller screens (not needed but will keep in case of future use )
+//   const sectionChartDataSmallScreen = (type: string) => {
+//     if (type === 'tech') {
+//       const chartData = Object.values(technicalScores).map((value, index) => ({
+//         subject: String(index),
+//         scores: Number(value) ? Number(value) : 0,
+//       }));
 
-        const res = await fetch(`/api/evaluationdetails/${evaluationId}/revert`, {
-            method: 'PATCH',
-        });
+//       return chartData;
+//     } else if (type === 'tact') {
+//       const chartData = Object.values(tacticalScores).map((value, index) => ({
+//         subject: String(index),
+//         scores: Number(value) ? Number(value) : 0,
+//       }));
 
-        if (res.ok) {
-            setEvaluationData(prev => prev ? { ...prev, reviewStatus: 1 } : prev);
-            Swal.fire({
-                icon: 'success',
-                title: 'Rating Reverted',
-                text: 'The rating is now visible again.',
-                timer: 2000,
-                showConfirmButton: false,
-            });
-            location.reload();
+//       return chartData;
+//     } else {
+//       const chartData = Object.values(physicalScores).map((value, index) => ({
+//         subject: String(index),
+//         scores: Number(value) ? Number(value) : 0,
+//       }));
 
-        } else {
-            const { error } = await res.json();
-            Swal.fire({
-                icon: 'error',
-                title: 'Failed to Revert',
-                text: error || 'Could not revert rating visibility.',
-            });
-        }
-    };
+//       return chartData;
+//     }
+//   };
 
+  //Formats the data from each section to be used for polar charts
+//   const sectionChartData = (category: Category) => {
+//     const labelsPolar = Object.keys(category);
 
+//     const scoresPolar = Object.values(category).map(
+//       value => Number(value) || 0,
+//     );
 
+//     const chartData: PolarChartValues = {
+//       data: scoresPolar,
+//       labels: labelsPolar,
+//       enableHover: true,
+//     };
 
-    return (
-        <>
-            {/* Hidden ratings section */}
-            <div style={{ display: 'none' }}>
-                {headerRatings.map((rating, index) => (
-                    <div key={index}>
-                        <h4>{headerMetrics[index]}</h4>
-                        <p>Rating: {rating}</p>
-                    </div>
-                ))}
+//     return chartData;
+//   };
 
-                {skillRatings.map((rating, index) => (
-                    <div key={index}>
-                        <p>Rating: {rating}</p>
-                    </div>
-                ))}
+  return (
+    <>
+      <div className="rounded-lg border border-gray-300 p-6 font-sans">
+        <button
+          onClick={downloadPDF}
+          className="mt-4 rounded bg-blue-500 p-2 text-white"
+          disabled={downloadingPDF}
+        >
+          {downloadingPDF ? (
+            <span>
+              Downloading
+              <FaSpinner className="mr-2 inline-block animate-spin" />{' '}
+            </span>
+          ) : (
+            <>Download PDF</>
+          )}
+        </button>
+      </div>
+      <div className="mx-auto w-full bg-white">
+        <div className="rounded-lg border border-gray-300 p-6 font-sans">
+          {/* Evaluation Form Header - Full Width */}
+          <div className="mb-0 w-full">
+            <div className="rounded-lg border border-gray-300 bg-white p-6">
+              <div className="mb-0 flex flex-wrap justify-between border-b border-gray-300 pb-3">
+                <h2 className="text-xl font-bold">Evaluation Form</h2>
+                <div className="flex flex-col items-end">
+                  {/* <span className="text-white bg-blue-500  px-3 py-2 rounded ">Completed</span> */}
+                  <div className="h-8 w-24 rounded bg-green-600 text-center text-sm uppercase leading-8 text-white shadow-md">
+                    Completed
+                  </div>
+                </div>
+              </div>
+              <b>NOTE: </b>
+              <p>
+                All scores are meant for your viewing purposes only so that you
+                can have some reference point of your performance. Scoring is
+                always subjective depending on the coach (one coach may be
+                “easy” and another may be “hard”) so treat whatever scores you
+                receive as a baseline for tracking improvement over time, not
+                the “end all be all” of your play.
+              </p>
 
-                {error && (
-                    <div className="text-red-600 mb-4">
-                        <p>Error: {error}</p>
-                    </div>
-                )}
-
-                <h2>Form Data</h2>
-                {Object.entries(formData).map(([key, value]) => (
-                    <div key={key}>
-                        <h4>{key}</h4>
-                        <p>{value}</p>
-                    </div>
-                ))}
+              <p className="mt-2">
+                If a coach enters an “N/A” for a category in your evaluation,
+                that category will not be counted when averaging scores; thus,
+                your scores will only reflect what a coach could actually
+                evaluate from your game film. Have fun with this feature as
+                seeking any improvement over time is what matters!
+              </p>
             </div>
+          </div>
 
+          {/* Player Information and Key Information - Side by Side */}
+          {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4"> */}
+          {/* Player Information */}
 
-            <div className="w-full  mx-auto bg-white">
-                <div className="p-6 border border-gray-300 rounded-lg font-sans" >
-                    {/* Evaluation Form Header - Full Width */}
-                    <div className="w-full mb-0">
-                        <div className="bg-white p-6 border border-gray-300 rounded-lg">
-                            <div className="flex justify-between border-b border-gray-300 pb-3 mb-0 flex-wrap">
-                                <h2 className="text-xl font-bold">Evaluation Form</h2>
-                                <div className="flex flex-col items-end">
-                                    {/* <span className="text-white bg-blue-500  px-3 py-2 rounded ">Completed</span> */}
-                                    <div
-                                        className=" bg-green-600 text-white text-sm w-24 h-8 leading-8 text-center rounded uppercase shadow-md cursor-pointer">
-                                        Completed
-                                    </div>
+          <div className="grid grid-cols-1 gap-4 p-4 sm:p-6 md:grid-cols-3">
+            {/* Player Information Section */}
+            {/* <div className="bg-white p-4 sm:p-6 border border-gray-300 rounded-lg md:col-span-2 relative"> */}
+            <div className="relative rounded-lg border border-gray-300 bg-white p-4 sm:p-6 md:col-span-2">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {/* LEFT COLUMN */}
+                <div className="space-y-4">
+                  {/* Review Title */}
+                  <div>
+                    <h3 className="break-words text-lg font-semibold">
+                      Review Title:{' '}
+                      <span className="font-normal">
+                        {evaluationData?.reviewTitle || 'N/A'}
+                      </span>
+                    </h3>
+                  </div>
 
-                                </div>
-                            </div>
+                  {/* Player Info */}
+                  <div className="flex items-center gap-3">
+                    <strong>Player:</strong>
+                    <Image
+                      src={
+                        evaluationData?.image &&
+                        evaluationData?.image !== 'null'
+                          ? evaluationData.player_status === 'Deactivated'
+                            ? defaultImage
+                            : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${evaluationData?.image}`
+                          : defaultImage
+                      }
+                      alt="Player Avatar"
+                      className="h-12 w-12 rounded-full object-cover"
+                      width={48}
+                      height={48}
+                    />
+                    <span className="break-words text-gray-700">
+                      {evaluationData?.player_status === 'Deactivated' ? (
+                        <div>
+                          {evaluationData?.first_name}{' '}
+                          {evaluationData?.last_name}
                         </div>
+                      ) : (
+                        <a
+                          href={`/players/${evaluationData?.playerSlug}`}
+                          className="text-blue-700"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {evaluationData?.first_name}{' '}
+                          {evaluationData?.last_name}
+                        </a>
+                      )}
+                    </span>
+                  </div>
+
+                  {/* Coach Info */}
+                  <div className="flex items-center gap-3">
+                    <strong>Coach:</strong>
+                    <Image
+                      src={
+                        evaluationData?.coachimage &&
+                        evaluationData?.coachimage !== 'null'
+                          ? evaluationData.coach_status === 'Deactivated'
+                            ? defaultImage
+                            : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${evaluationData?.coachimage}`
+                          : defaultImage
+                      }
+                      alt="Coach Avatar"
+                      className="h-12 w-12 rounded-full object-cover"
+                      width={48}
+                      height={48}
+                    />
+                    <span className="break-words text-gray-700">
+                      {evaluationData?.coach_status === 'Deactivated' ? (
+                        <div>
+                          {evaluationData?.coachFirstName}{' '}
+                          {evaluationData?.coachLastName}
+                        </div>
+                      ) : (
+                        <a
+                          href={`/coach/${evaluationData?.coachSlug}`}
+                          className="text-blue-700"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {evaluationData?.coachFirstName}{' '}
+                          {evaluationData?.coachLastName}
+                        </a>
+                      )}
+                    </span>
+                  </div>
+
+                  <div>
+                    <strong>Date Completed:</strong>{' '}
+                    <span>{formattedDate}</span>
+                  </div>
+
+                  {evaluationData?.document && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <strong>View / Download Additional Document:</strong>
+                      <a
+                        href={evaluationData?.document}
+                        className="flex items-center gap-1 text-sm text-blue-700"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <FaFileAlt />
+                        <span>Download</span>
+                      </a>
                     </div>
-
-                    {/* Player Information and Key Information - Side by Side */}
-                    {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4"> */}
-                    {/* Player Information */}
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 sm:p-6">
-                        {/* Player Information Section */}
-                        {/* <div className="bg-white p-4 sm:p-6 border border-gray-300 rounded-lg md:col-span-2 relative"> */}
-                        <div className="relative bg-white p-4 sm:p-6 border border-gray-300 rounded-lg md:col-span-2">
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* LEFT COLUMN */}
-                                <div className="space-y-4">
-                                    {/* Review Title */}
-                                    <div>
-                                        <h3 className="text-lg font-semibold break-words">
-                                            Review Title:{" "}
-                                            <span className="font-normal">
-                                                {evaluationData?.reviewTitle || "N/A"}
-                                            </span>
-
-                                        </h3>
-                                    </div>
-
-                                    {/* Player Info */}
-                                    <div className="flex items-center gap-3">
-                                        <strong>Player:</strong>
-                                        <Image
-                                            src={
-                                                evaluationData?.image && evaluationData?.image !== "null"
-                                                    ? evaluationData?.image
-                                                    : defaultImage
-                                            }
-                                            alt="Player Avatar"
-                                            className="w-12 h-12 rounded-full object-cover"
-                                            width={48}
-                                            height={48}
-                                        />
-                                        <span className="text-gray-700 break-words">
-                                            <a
-                                                href={`/players/${evaluationData?.playerSlug}`}
-                                                className="text-blue-700"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                {evaluationData?.first_name} {evaluationData?.last_name}
-                                            </a>
-                                        </span>
-                                    </div>
-
-                                    {/* Coach Info */}
-                                    <div className="flex items-center gap-3">
-                                        <strong>Coach:</strong>
-                                        <Image
-                                            src={
-                                                evaluationData?.coachimage &&
-                                                    evaluationData?.coachimage !== "null"
-                                                    ? evaluationData?.coachimage
-                                                    : defaultImage
-                                            }
-                                            alt="Coach Avatar"
-                                            className="w-12 h-12 rounded-full object-cover"
-                                            width={48}
-                                            height={48}
-                                        />
-                                        <span className="text-gray-700 break-words">
-                                            <a
-                                                href={`/coach/${evaluationData?.coachSlug}`}
-                                                className="text-blue-700"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                {evaluationData?.coachFirstName} {evaluationData?.coachLastName}
-                                            </a>
-                                        </span>
-                                    </div>
-
-                                    <div>
-                                        <strong>Date Completed:</strong> <span>{formattedDate}</span>
-                                    </div>
-
-                                    {evaluationData?.document && (
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <strong>View / Download Additional Document:</strong>
-                                            <a
-                                                href={evaluationData?.document}
-                                                className="text-blue-700 text-sm flex items-center gap-1"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                <FaFileAlt />
-                                                <span>Download</span>
-                                            </a>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* RIGHT COLUMN - Score Box */}
-                                {/* RIGHT COLUMN */}
-                                <div className="md:relative">
-                                    {/* Only shows at md and up: top-right */}
-                                    <div className="hidden md:block absolute top-0 right-0 m-4">
-                                        <div className="flex flex-col items-center justify-center border rounded-xl p-4 bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg w-36 md:w-40">
-                                            <div className="text-sm md:text-base font-semibold mb-2 text-center">Overall Average</div>
-                                            <div className="bg-white text-blue-700 border-4 border-white rounded-full font-bold text-lg md:text-xl shadow-inner w-16 h-16 md:w-20 md:h-20 flex items-center justify-center">
-                                                {calculateOverallAverage()}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Only shows on small screens: below Date Completed */}
-                                    <div className="block md:hidden mt-4">
-                                        <div className="flex flex-col items-center justify-center border rounded-xl p-4 bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg w-full max-w-xs mx-auto">
-                                            <div className="text-sm font-semibold mb-2 text-center">Overall Average</div>
-                                            <div className="bg-white text-blue-700 border-4 border-white rounded-full font-bold text-lg shadow-inner w-16 h-16 flex items-center justify-center">
-                                                {calculateOverallAverage()}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-
-                            </div>
-
-                            {/* Videos */}
-                            <div className="mt-6 space-y-6">
-                                {/* Video 1 */}
-                                <fieldset className="border border-gray-300 rounded-md p-4">
-                                    <legend className="text-lg font-semibold text-gray-700">Video 1</legend>
-                                    <div className="mb-2 text-sm text-gray-800">
-                                        <strong>Link:</strong>{" "}
-                                        <a
-                                            href={evaluationData?.primary_video_link}
-                                            className="text-blue-500 underline"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            View Video
-                                        </a>{" "}
-                                        <span className="mx-1">|</span>
-                                        <strong>Length:</strong> {evaluationData?.videoOneTiming} min{" "}
-                                        <span className="mx-1">|</span>
-                                        <strong>Jersey Color:</strong> {evaluationData?.jerseyColorOne}{" "}
-                                        <span className="mx-1">|</span>
-                                        <strong>Number:</strong> {evaluationData?.jerseyNumber}{" "}
-                                        <span className="mx-1">|</span>
-                                        <strong>Position(s):</strong> {evaluationData?.positionOne}
-                                    </div>
-                                    <div className="text-sm text-gray-700">
-                                        <strong>Description:</strong> {evaluationData?.video_description}
-                                    </div>
-                                </fieldset>
-
-                                {/* Video 2 */}
-                                {evaluationData?.video_link_two && (
-                                    <fieldset className="border border-gray-300 rounded-md p-4">
-                                        <legend className="text-lg font-semibold text-gray-700">
-                                            Video 2
-                                        </legend>
-                                        <div className="mb-2 text-sm text-gray-800">
-                                            <strong>Link:</strong>{" "}
-                                            <a
-                                                href={evaluationData?.video_link_two}
-                                                className="text-blue-500 underline"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                View Video
-                                            </a>{" "}
-                                            <span className="mx-1">|</span>
-                                            <strong>Length:</strong> {evaluationData?.videoTwoTiming} min{" "}
-                                            <span className="mx-1">|</span>
-                                            <strong>Jersey Color:</strong> {evaluationData?.jerseyColorTwo}{" "}
-                                            <span className="mx-1">|</span>
-                                            <strong>Number:</strong> {evaluationData?.jerseyNumberTwo}{" "}
-                                            <span className="mx-1">|</span>
-                                            <strong>Position:</strong> {evaluationData?.positionTwo}
-                                        </div>
-                                        <div className="text-sm text-gray-700">
-                                            <strong>Description:</strong> {evaluationData?.video_descriptionTwo}
-                                        </div>
-                                    </fieldset>
-                                )}
-
-                                {/* Video 3 */}
-                                {evaluationData?.video_link_three && (
-                                    <fieldset className="border border-gray-300 rounded-md p-4">
-                                        <legend className="text-lg font-semibold text-gray-700">
-                                            Video 3
-                                        </legend>
-                                        <div className="mb-2 text-sm text-gray-800">
-                                            <strong>Link:</strong>{" "}
-                                            <a
-                                                href={evaluationData?.video_link_three}
-                                                className="text-blue-500 underline"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                View Video
-                                            </a>{" "}
-                                            <span className="mx-1">|</span>
-                                            <strong>Length:</strong> {evaluationData?.videoThreeTiming} min{" "}
-                                            <span className="mx-1">|</span>
-                                            <strong>Jersey Color:</strong> {evaluationData?.jerseyColorThree}{" "}
-                                            <span className="mx-1">|</span>
-                                            <strong>Number:</strong> {evaluationData?.jerseyNumberThree}{" "}
-                                            <span className="mx-1">|</span>
-                                            <strong>Position:</strong> {evaluationData?.positionThree}
-                                        </div>
-                                        <div className="text-sm text-gray-700">
-                                            <strong>Description:</strong>{" "}
-                                            {evaluationData?.video_descriptionThree}
-                                        </div>
-                                    </fieldset>
-                                )}
-                            </div>
-                        </div>
-                        {/* </div> */}
-
-                        {/* Key Information */}
-                        <div className="bg-white p-6 border border-gray-300 rounded-lg md:col-span-1">
-                            <h4 className="text-lg font-semibold mb-3">Key</h4>
-                            <ul className="list-none space-y-2">
-                                <li>[1] Significantly below competition level – Needs major improvement</li>
-                                <li>[2] Far below competition level – Needs substantial improvement</li>
-                                <li>[3] Below competition level – Needs improvement</li>
-                                <li>[4] Slightly below competition level – Shows potential but needs significant work</li>
-                                <li>[5] Approaching competition level – Almost there but still inconsistent</li>
-                                <li>[6] At competition level – Meets standard expectations</li>
-                                <li>[7] Slightly above competition level – Consistently performs well</li>
-                                <li>[8] Above competition level – Strong competitor</li>
-                                <li>[9] Highly above competition level – Among the top performers</li>
-                                <li>[10] Elite competition level – Exceptional, top-tier performance</li>
-                            </ul>
-                        </div>
-                    </div>
+                  )}
                 </div>
-                {/* Body: Skills sidebar + Radar */}
-                <div className="p-5 flex flex-row gap-8">
-                    <div className="flex flex-col gap-2">
-                        {radarSkills.map((skill, i) => (
-                            <div key={i} className="flex items-center justify-center gap-2">
-                                {/* Conditionally render skills based on position */}
-                                {(evaluationData?.position?.toString()  === "Goalkeeper" || (evaluationData?.position?.toString()  !== "Goalkeeper" && skill.key !== "distributionAverage" && skill.key !== "organizationAverage")) && (
-                                    <div>
 
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                {/* RIGHT COLUMN - Score Box */}
+                {/* RIGHT COLUMN */}
+                <div className="md:relative">
+                  {/* Only shows at md and up: top-right */}
+                  <div className="absolute right-0 top-0 m-4 hidden md:block">
+                    <div className="flex w-36 flex-col items-center justify-center rounded-xl border bg-gradient-to-br from-blue-500 to-indigo-600 p-4 text-white shadow-lg md:w-40">
+                      <div className="mb-2 text-center text-sm font-semibold md:text-base">
+                        Overall Average
+                      </div>
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-white text-lg font-bold text-blue-700 shadow-inner md:h-20 md:w-20 md:text-xl">
+                        {evaluationAverage}
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Only shows on small screens: below Date Completed */}
+                  <div className="mt-4 block md:hidden">
+                    <div className="mx-auto flex w-full max-w-xs flex-col items-center justify-center rounded-xl border bg-gradient-to-br from-blue-500 to-indigo-600 p-4 text-white shadow-lg">
+                      <div className="mb-2 text-center text-sm font-semibold">
+                        Overall Average
+                      </div>
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-white text-lg font-bold text-blue-700 shadow-inner">
+                        {evaluationAverage}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="radar-chart-container px-4 py-6">
-                    <div
-                        ref={pdfRef}
-                        className="flex flex-col md:flex-row gap-8 items-stretch justify-center"
-                    >
-                        {/* Left: Radar Chart Column */}
-                        <div className="w-full sm:w-[75%] md:w-[45%] lg:w-[50%] xl:w-[40%] h-[250px] sm:h-[300px] md:h-[400px] lg:h-[450px] xl:h-[500px] border border-gray-300 rounded-xl shadow-md bg-white flex items-center justify-center">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <RadarChart
-                                    cx="50%"
-                                    cy="50%"
-                                    outerRadius="50%"
-                                    data={chartData}
-                                >
-                                    <PolarGrid />
-                                    <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10 }} />
-                                    <PolarRadiusAxis angle={80} domain={[0, 10]} tickCount={11} tick={{ fontSize: 10 }} />
-                                    <Radar
-                                        name="Player"
-                                        dataKey="A"
-                                        stroke="#1e40af"
-                                        fill="#3b82f6"
-                                        fillOpacity={0.5}
-                                    />
-                                </RadarChart>
-                            </ResponsiveContainer>
-                        </div>
+              </div>
 
-                        {/* Right: Metrics Table Column */}
-                        <div className="flex-1 border border-gray-300 rounded-xl shadow-md p-6 bg-white flex flex-col items-center">
-                            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 ">
-                                {[
-                                    { title: 'Technical', value: calculateAverage(technicalScores) },
-                                    { title: 'Tactical', value: calculateAverage(tacticalScores) },
-                                    evaluationData?.position?.toString()  === 'Goalkeeper' && { title: 'Distribution', value: calculateAverage(distributionScores) },
-                                    { title: 'Physical', value: calculateAverage(physicalScores) },
-                                    evaluationData?.position?.toString() === 'Goalkeeper' && { title: 'Organization', value: calculateAverage(organizationScores) },
-                                ]
-                                    .filter((metric): metric is { title: string; value: number } => metric !== false)
-                                    .map((metric, index) => (
-                                        <div
-                                            key={index}
-                                            className="aspect-square w-[160px] h-[140px]  p-4 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex flex-col items-center justify-center shadow-md"
-                                        >
-                                            <div className="text-white font-semibold text-sm mb-2 text-center">
-                                                {metric.title} Average
-                                            </div>
-                                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white flex items-center justify-center">
-                                                <span className="text-blue-700 font-bold text-lg sm:text-xl">
-                                                    {metric.value}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
-                            </div>
-                        </div>
-                    </div>
-
-
-                </div>
-                {/* <h1 className="p-4 text-xl font-bold mt-6 text-start text-gray-800  border-b border-gray-300">
-          Goalkeeper Evaluation Form
-        </h1> */}
-                <div className="p-2">
-                    <h1 className="p-4 text-xl font-bold mt-6 text-start text-gray-800 border-b border-gray-300">
-                        {evaluationData?.position?.toString() === 'Goalkeeper'
-                            ? 'Goalkeeper Evaluation Form'
-                            : 'Player Evaluation Form'}
-                    </h1>
-
-                    <div className={` ${evaluationData?.position.toString() === 'Goalkeeper' ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 ' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'} gap-4 mt-6`}>
-
-                        {/* Technical Section */}
-                        <div className="text-black border border-gray-300 rounded-md flex flex-col overflow-hidden shadow-md">
-                            {/* Heading Row */}
-                            <div className="bg-blue-600 text-white px-4 py-4">
-                                <h1 className="text-sm">Technical</h1>
-                            </div>
-                            {/* Content Section with fixed height and flex column layout */}
-                            <div className="p-4 flex flex-col justify-between h-auto">
-                                {/* Score List */}
-                                <div className="flex-grow overflow-y-auto">
-                                    {technicalScores ? (
-                                        <ul className="list-disc list-inside space-y-1 text-sm">
-                                            {Object.entries(technicalScores).map(([key, value]) => (
-                                                <li key={key}>
-                                                    <span className="font-medium">{key}</span>: {value}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    ) : (
-                                        <p className="text-sm italic">No Technical scores available.</p>
-                                    )}
-                                </div>
-                                {/* Comment Section */}
-                                <div className="mt-4  w-full border border-gray-300 bg-white rounded-md p-3">
-                                    <label htmlFor={`remarks-tech`} className="text-sm font-medium font-bold block mb-2">
-                                        Comments:
-                                    </label>
-                                    <div className="text-sm text-gray-700">
-                                        {evaluationData?.technicalRemarks || "No remarks provided."}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {/* Tactical Section */}
-                        <div className="text-black border border-gray-300 rounded-md flex flex-col overflow-hidden shadow-md">
-                            <div className="bg-blue-600 text-white px-4 py-4">
-                                <h1 className="text-sm ">Tactical</h1>
-                            </div>
-                            {/* Main content wrapper to push comments to bottom */}
-                            <div className="p-4 flex flex-col justify-between h-auto"> {/* Adjust height as needed */}
-                                <div className="flex-grow overflow-y-auto">
-                                    {tacticalScores ? (
-                                        <ul className="list-disc list-inside space-y-1 text-sm">
-                                            {Object.entries(tacticalScores).map(([key, value]) => (
-                                                <li key={key}>
-                                                    <span className="font-medium">{key}</span>: {value}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    ) : (
-                                        <p>No Tactical scores available.</p>
-                                    )}
-                                </div>
-                                {/* Comment section at bottom */}
-                                <div className="mt-4 border border-gray-300 bg-white rounded-md p-3">
-                                    <label htmlFor={`remarks-tact`} className="text-sm font-medium">Comments:</label>
-                                    <div className="text-sm text-gray-700">
-                                        {evaluationData?.tacticalRemarks}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {evaluationData?.position.toString() === 'Goalkeeper' && (
-                            <div className="text-black border border-gray-300 rounded-md flex flex-col overflow-hidden shadow-md">
-                                <div className="bg-blue-600 text-white px-4 py-4">
-                                    <h1 className="text-sm">Distribution</h1>
-                                </div>
-                                {/* Content section with consistent layout */}
-                                <div className="p-4 flex flex-col justify-between h-auto">
-                                    {/* Score List */}
-                                    <div className="flex-grow overflow-y-auto">
-                                        {distributionScores ? (
-                                            <ul className="list-disc list-inside space-y-1 text-sm">
-                                                {Object.entries(distributionScores).map(([key, value]) => (
-                                                    <li key={key}>
-                                                        <span className="font-medium">{key}</span>: {value}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        ) : (
-                                            <p className="text-sm italic">No Distribution scores available.</p>
-                                        )}
-                                    </div>
-                                    {/* Comment Section */}
-                                    <div className="mt-4 border border-gray-300 bg-white rounded-md p-3">
-                                        <label htmlFor={`remarks-distribution`} className="text-sm font-medium block mb-2">
-                                            Comments:
-                                        </label>
-                                        <div className="text-sm text-gray-700">
-                                            {evaluationData?.distributionRemarks || "No remarks provided."}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        <div className="text-black border border-gray-300 rounded-md flex flex-col overflow-hidden shadow-md">
-                            <div className="bg-blue-600 text-white px-4 py-4">
-                                <h1 className="text-sm">Physical</h1>
-                            </div>
-                            <div className="p-4 flex flex-col justify-between h-auto">
-                                {/* Score List */}
-                                <div className="flex-grow overflow-y-auto">
-                                    {physicalScores ? (
-                                        <ul className="list-disc list-inside space-y-1 text-sm">
-                                            {Object.entries(physicalScores).map(([key, value]) => (
-                                                <li key={key}>
-                                                    <span className="font-medium">{key}</span>: {value}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    ) : (
-                                        <p className="text-sm italic">No physical scores available.</p>
-                                    )}
-                                </div>
-
-                                {/* Comment Section */}
-                                <div className="mt-4 border border-gray-300 bg-white rounded-md p-3">
-                                    <label htmlFor={`remarks-tech`} className="text-sm font-medium  font-bold block mb-2">
-                                        Comments:
-                                    </label>
-                                    <div className="text-sm text-gray-700">
-                                        {evaluationData?.physicalRemarks || "No remarks provided."}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {evaluationData?.position.toString() === 'Goalkeeper' && (
-                            <div className="text-black border border-gray-300 rounded-md flex flex-col overflow-hidden shadow-md">
-                                <div className="bg-blue-600 text-white px-4 py-4">
-                                    <h1 className="text-sm">Organization</h1>
-                                </div>
-                                <div className="p-4 flex flex-col justify-between h-auto">
-                                    {/* Score List */}
-                                    <div className="flex-grow overflow-y-auto">
-                                        {organizationScores ? (
-                                            <ul className="list-disc list-inside space-y-1 text-sm">
-                                                {Object.entries(organizationScores).map(([key, value]) => (
-                                                    <li key={key}>
-                                                        <span className="font-medium">{key}</span>: {value}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        ) : (
-                                            <p className="text-sm italic">No Organization scores available.</p>
-                                        )}
-                                    </div>
-                                    {/* Comment Section */}
-                                    <div className="mt-4 border border-gray-300 bg-white rounded-md p-3">
-                                        <label htmlFor={`remarks-org`} className="text-sm font-medium block mb-2">Comments:</label>
-                                        <div className="text-sm text-gray-700">
-                                            {evaluationData?.organizationalRemarks || "No remarks provided."}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-
-                    {/* Final Remarks Section */}
-                    <div className="mt-12 mb-4 grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div className="text-black p-6 border border-gray-300 rounded-lg shadow-lg">
-                            <label htmlFor="final-remarks" className="text-sm font-bold text-blue-600 ">
-                                Additional Comments:
-                            </label>
-                            <p className="text-gray-800 text-base leading-relaxed">{evaluationData?.finalRemarks}</p>
-                        </div>
-                        <div className="text-black p-6 border border-gray-300 rounded-lg shadow-lg">
-                            <label htmlFor="final-remarks" className="text-sm font-bold text-blue-600 ">
-                                Things to Work On:
-                            </label>
-                            <p className="text-gray-800 text-base leading-relaxed">{evaluationData?.thingsToWork}</p>
-                        </div>
-                    </div>
-                    {data && data.files && (
-                        <div className="w-full mx-auto p-4">
-                            <h1 className='p-4 text-xl font-bold mt-8 mb-4 text-start text-gray-800  '> Evaluation Documents</h1>
-                            <div className="space-y-4 w-full">
-                                {Object.entries(data.files).map(([key, file]) =>
-                                    file ? (
-                                        // Check if file size is below the 9MB limit
-                                        file.size && file.size > MAX_FILE_SIZE ? (
-                                            <div key={key} className="grid grid-cols-1 md:grid-cols-2 gap-4 border-b p-4 rounded">
-                                                <div className="text-sm flex flex-col items-start space-y-2">
-                                                    <strong>Filename:</strong>
-                                                    <p className="text-red-600">File size exceeds 9MB. Unable to display or download.</p>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div key={key} className="grid grid-cols-1 md:grid-cols-2  gap-4 border p-4 rounded">
-                                                {/* Left Column: File preview + download */}
-                                                <div className="text-sm flex flex-col items-start space-y-2">
-                                                    <strong className="text-sm font-bold text-gray-900 ">Filename:</strong>
-
-                                                    {file.filename.match(/\.(jpg|jpeg|png)$/i) ? (
-                                                        <>
-                                                            <img
-                                                                src={file.filename}
-                                                                alt="uploaded file"
-                                                                className="w-32 h-32 object-cover border"
-                                                            />
-                                                            <a
-                                                                href={file.filename}
-                                                                download
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-green-600"
-                                                            >
-                                                                <i className="fas fa-download mr-2"></i> Download
-                                                            </a>
-                                                        </>
-                                                    ) : file.filename.endsWith('.pdf') ? (
-                                                        <>
-                                                            <img
-                                                                src="https://www.iconpacks.net/icons/2/free-pdf-download-icon-2617-thumb.png"
-                                                                alt="pdf icon"
-                                                                className="w-28 h-28"
-                                                            />
-                                                            <a
-                                                                href={file.filename}
-                                                                download
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-green-600"
-                                                            >
-                                                                <i className="fas fa-download mr-2"></i> Download
-                                                            </a>
-                                                            {/* <a
-                      href={file.filename}
-                      data-type="pdf"
+              {/* Videos */}
+              <div className="mt-6 space-y-6">
+                {/* Video 1 */}
+                <fieldset className="rounded-md border border-gray-300 p-4">
+                  <legend className="text-lg font-semibold text-gray-700">
+                    Video 1
+                  </legend>
+                  <div className="mb-2 text-sm text-gray-800">
+                    <strong>Link:</strong>{' '}
+                    <a
+                      href={evaluationData?.primary_video_link}
+                      className="text-blue-500 underline"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hidden"
-                      aria-hidden="true"
                     >
-                      {file.filename}
-                    </a> */}
-                                                        </>
-                                                    ) : file.filename.match(/\.(mp4)$/i) ? (
-                                                        <>
-                                                            <video controls width="200" height="auto" className="rounded border">
-                                                                <source src={file.filename} type="video/mp4" />
-                                                            </video>
-                                                            <a
-                                                                href={file.filename}
-                                                                download
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-green-600"
-                                                            >
-                                                                <i className="fas fa-download mr-2"></i> Download
-                                                            </a>
-                                                        </>
-                                                    ) : (
-                                                        <a
-                                                            href={file.filename}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-blue-600 underline"
-                                                        >
-                                                            {file.filename}
-                                                        </a>
-                                                    )}
-                                                </div>
-                                                {/* Right Column: Comments */}
-                                                <div className="text-sm">
-                                                    <strong className="text-sm font-bold text-gray-900 ">Comments:</strong>
-                                                    <p>{file.comments}</p>
-                                                </div>
-                                            </div>
-                                        )
-                                    ) : null
-                                )}
+                      View Video
+                    </a>{' '}
+                    <span className="mx-1">|</span>
+                    <strong>Jersey Color:</strong>{' '}
+                    {evaluationData?.jerseyColorOne}{' '}
+                    <span className="mx-1">|</span>
+                    <strong>Number:</strong> {evaluationData?.jerseyNumber}{' '}
+                    <span className="mx-1">|</span>
+                    <strong>Position(s):</strong> {evaluationData?.positionOne}
+                  </div>
+                  <div className="max-h-24 w-full overflow-y-auto break-words text-sm text-gray-700">
+                    <strong>Description:</strong>{' '}
+                    {evaluationData?.video_description}
+                  </div>
+                  <div className="mx-auto w-full max-w-4xl p-3 sm:p-6">
+                    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                      {/* Header */}
+                      <div className="bg-gradient-to-br from-blue-500 to-indigo-600 px-4 py-3 sm:px-6 sm:py-4">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <Clock className="h-5 w-5 text-white sm:h-6 sm:w-6" />
+                          <h2 className="text-lg font-semibold text-white sm:text-xl">
+                            Video Timeline
+                          </h2>
+                        </div>
+                      </div>
+
+                      {/* Desktop Table - Hidden on mobile */}
+                      <div className="hidden overflow-x-auto md:block">
+                        <div className="max-h-60 overflow-y-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-gray-200 bg-gray-50">
+                                <th className="w-24 px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                                  Start Time
+                                </th>
+                                <th className="w-24 px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                                  End Time
+                                </th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                                  Description
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                              {evaluationData?.videoOneTiming === '' ? (
+                                <tr>
+                                  <td
+                                    colSpan={3}
+                                    className="px-6 py-4 text-center text-sm text-gray-600"
+                                  >
+                                    Player played the full game.
+                                  </td>
+                                </tr>
+                              ) : (
+                                videoOneTimeStamps.map((interval, index) => (
+                                  <tr
+                                    key={index}
+                                    className="group transition-colors duration-150 hover:bg-gray-50"
+                                  >
+                                    <td className="whitespace-nowrap px-6 py-4">
+                                      <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
+                                        {interval.start}
+                                      </span>
+                                    </td>
+                                    <td className="whitespace-nowrap px-6 py-4">
+                                      <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800">
+                                        {interval.end}
+                                      </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                      <p className="text-sm leading-relaxed text-gray-900">
+                                        {interval.description}
+                                      </p>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Mobile Card Layout - Visible only on mobile */}
+                      <div className="max-h-60 divide-y divide-gray-200 overflow-y-auto md:hidden">
+                        {evaluationData?.videoOneTiming === '' ? (
+                          <div className="p-4 text-center text-sm text-gray-600">
+                            Player played the full game.
+                          </div>
+                        ) : (
+                          videoOneTimeStamps.map((interval, index) => (
+                            <div
+                              key={index}
+                              className="p-4 transition-colors duration-150 hover:bg-gray-50"
+                            >
+                              <div className="mb-3 flex items-start justify-between gap-3">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
+                                    {interval.start}
+                                  </span>
+                                  <span className="text-xs text-gray-400">
+                                    →
+                                  </span>
+                                  <span className="inline-flex items-center rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">
+                                    {interval.end}
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="text-sm leading-relaxed text-gray-900">
+                                {interval.description}
+                              </p>
                             </div>
-
-                        </div>
-                    )}
-
-
-                    {/* {evaluationData && evaluationData.rating !== null && (
-
-    <div className="p-4 bg-white shadow-md rounded-md max-w-md mx-auto">
-            <h3 className="text-lg font-semibold mb-2">Player Feedback</h3>
-            <div className="flex items-center mb-2">
-                {Array.from({ length: 5 }, (_, index) => index + 1).map(star => (
-                    <svg
-                        key={star}
-                        className={`w-6 h-6 ${star <= evaluationData.rating ? 'text-yellow-500' : 'text-gray-300'}`}
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
-                    </svg>
-                ))}
-            </div>
-
-            <div className="flex gap-2">
-                <button onClick={handleEdit} className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600">
-                    Edit
-                </button>
-                <button onClick={handleDelete} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">
-                    Delete
-                </button>
-            </div>
-
-            {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-md shadow-lg w-[90%] max-w-sm">
-                        <h3 className="text-lg font-bold mb-4">Edit Rating</h3>
-                        <div className="flex justify-center gap-2 mb-4">
-                            {Array.from({ length: 5 }, (_, index) => index + 1).map(star => (
-                                <svg
-                                    key={star}
-                                    onClick={() => setNewRating(star)}
-                                    className={`w-8 h-8 cursor-pointer ${star <= newRating ? 'text-yellow-500' : 'text-gray-300'}`}
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
-                                </svg>
-                            ))}
-                        </div>
-                        <div className="flex justify-end gap-2">
-                            <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-300 rounded-md">Cancel</button>
-                            <button onClick={submitEdit} className="px-4 py-2 bg-green-500 text-white rounded-md">Save</button>
-                        </div>
+                          ))
+                        )}
+                      </div>
                     </div>
+                  </div>
+                </fieldset>
+
+                {/* Video 2 */}
+                {evaluationData?.video_link_two && (
+                  <fieldset className="rounded-md border border-gray-300 p-4">
+                    <legend className="text-lg font-semibold text-gray-700">
+                      Video 2
+                    </legend>
+                    <div className="mb-2 text-sm text-gray-800">
+                      <strong>Link:</strong>{' '}
+                      <a
+                        href={evaluationData?.video_link_two}
+                        className="text-blue-500 underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View Video
+                      </a>{' '}
+                      <span className="mx-1">|</span>
+                      <strong>Jersey Color:</strong>{' '}
+                      {evaluationData?.jerseyColorTwo}{' '}
+                      <span className="mx-1">|</span>
+                      <strong>Number:</strong> {evaluationData?.jerseyNumberTwo}{' '}
+                      <span className="mx-1">|</span>
+                      <strong>Position:</strong> {evaluationData?.positionTwo}
+                    </div>
+                    <div className="max-h-24 w-full overflow-y-auto break-words text-sm text-gray-700">
+                      <strong>Description:</strong>{' '}
+                      {evaluationData?.video_descriptionTwo}
+                    </div>
+                    <div className="mx-auto w-full max-w-4xl p-3 sm:p-6">
+                      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                        {/* Header */}
+                        <div className="bg-gradient-to-br from-blue-500 to-indigo-600 px-4 py-3 sm:px-6 sm:py-4">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <Clock className="h-5 w-5 text-white sm:h-6 sm:w-6" />
+                            <h2 className="text-lg font-semibold text-white sm:text-xl">
+                              Video Timeline 2
+                            </h2>
+                          </div>
+                        </div>
+
+                        {/* Desktop Table - Hidden on mobile */}
+                        <div className="hidden overflow-x-auto md:block">
+                          <div className="max-h-60 overflow-y-auto">
+                            <table className="w-full">
+                              <thead>
+                                <tr className="border-b border-gray-200 bg-gray-50">
+                                  <th className="w-24 px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                                    Start Time
+                                  </th>
+                                  <th className="w-24 px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                                    End Time
+                                  </th>
+                                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                                    Description
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-200">
+                                {evaluationData?.videoTwoTiming === '' ? (
+                                  <tr>
+                                    <td
+                                      colSpan={3}
+                                      className="px-6 py-4 text-center text-sm text-gray-600"
+                                    >
+                                      Player played the full game.
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  videoTwoTimeStamps.map((interval, index) => (
+                                    <tr
+                                      key={index}
+                                      className="group transition-colors duration-150 hover:bg-gray-50"
+                                    >
+                                      <td className="whitespace-nowrap px-6 py-4">
+                                        <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
+                                          {interval.start}
+                                        </span>
+                                      </td>
+                                      <td className="whitespace-nowrap px-6 py-4">
+                                        <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800">
+                                          {interval.end}
+                                        </span>
+                                      </td>
+                                      <td className="px-6 py-4">
+                                        <p className="text-sm leading-relaxed text-gray-900">
+                                          {interval.description}
+                                        </p>
+                                      </td>
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Mobile Card Layout - Visible only on mobile */}
+                        <div className="max-h-60 divide-y divide-gray-200 overflow-y-auto md:hidden">
+                          {evaluationData?.videoTwoTiming === '' ? (
+                            <div className="p-4 text-center text-sm text-gray-600">
+                              Player played the full game.
+                            </div>
+                          ) : (
+                            videoTwoTimeStamps.map((interval, index) => (
+                              <div
+                                key={index}
+                                className="p-4 transition-colors duration-150 hover:bg-gray-50"
+                              >
+                                <div className="mb-3 flex items-start justify-between gap-3">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
+                                      {interval.start}
+                                    </span>
+                                    <span className="text-xs text-gray-400">
+                                      →
+                                    </span>
+                                    <span className="inline-flex items-center rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">
+                                      {interval.end}
+                                    </span>
+                                  </div>
+                                </div>
+                                <p className="text-sm leading-relaxed text-gray-900">
+                                  {interval.description}
+                                </p>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </fieldset>
+                )}
+
+                {/* Video 3 */}
+                {evaluationData?.video_link_three && (
+                  <fieldset className="rounded-md border border-gray-300 p-4">
+                    <legend className="text-lg font-semibold text-gray-700">
+                      Video 3
+                    </legend>
+                    <div className="mb-2 text-sm text-gray-800">
+                      <strong>Link:</strong>{' '}
+                      <a
+                        href={evaluationData?.video_link_three}
+                        className="text-blue-500 underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View Video
+                      </a>{' '}
+                      <span className="mx-1">|</span>
+                      <strong>Length:</strong>{' '}
+                      {evaluationData?.videoThreeTiming} min{' '}
+                      <span className="mx-1">|</span>
+                      <strong>Jersey Color:</strong>{' '}
+                      {evaluationData?.jerseyColorThree}{' '}
+                      <span className="mx-1">|</span>
+                      <strong>Number:</strong>{' '}
+                      {evaluationData?.jerseyNumberThree}{' '}
+                      <span className="mx-1">|</span>
+                      <strong>Position:</strong> {evaluationData?.positionThree}
+                    </div>
+                    <div className="max-h-24 w-full overflow-y-auto break-words text-sm text-gray-700">
+                      <strong>Description:</strong>{' '}
+                      {evaluationData?.video_descriptionThree}
+                    </div>
+                  </fieldset>
+                )}
+              </div>
+            </div>
+            {/* </div> */}
+
+            {/* Key Information */}
+            <div className="rounded-lg border border-gray-300 bg-white p-6 md:col-span-1">
+              <h4 className="mb-3 text-lg font-semibold">Key</h4>
+              <ul className="list-none space-y-2">
+                <li>[N/A] Not enough information</li>
+                <li>
+                  [1] Significantly below competition level – Needs major
+                  improvement
+                </li>
+                <li>
+                  [2] Far below competition level – Needs substantial
+                  improvement
+                </li>
+                <li>[3] Below competition level – Needs improvement</li>
+                <li>
+                  [4] Slightly below competition level – Shows potential but
+                  needs significant work
+                </li>
+                <li>
+                  [5] Approaching competition level – Almost there but still
+                  inconsistent
+                </li>
+                <li>[6] At competition level – Meets standard expectations</li>
+                <li>
+                  [7] Slightly above competition level – Consistently performs
+                  well
+                </li>
+                <li>[8] Above competition level – Strong competitor</li>
+                <li>
+                  [9] Highly above competition level – Among the top performers
+                </li>
+                <li>
+                  [10] Elite competition level – Exceptional, top-tier
+                  performance
+                </li>
+              </ul>
+            </div>
+          </div>
+          {/* {isPitcherPosition && pitcherCategories.length > 0 && (
+           <PitcherComponent
+            categories={pitcherCategories}
+            evaluationResponses={
+                evaluationData?.coachInput
+                ? (JSON.parse(evaluationData.coachInput) as Record<string, Record<string, string | number>>)
+                : {}
+            }
+            onScoreChange={() => {}}
+            />
+
+          )} */}
+        </div>
+
+        {/* <h1 className="p-4 text-xl font-bold mt-6 text-start text-gray-800  border-b border-gray-300">
+          Goalkeeper Evaluation Form
+        </h1> */}
+        <div className="p-2">
+          <h1 className="mt-6 border-b border-gray-300 p-4 text-start text-xl font-bold text-gray-800">
+            {evaluationData?.position?.toString() === 'Goalkeeper'
+              ? 'Goalkeeper Evaluation Form'
+              : 'Player Evaluation Form'}
+          </h1>
+
+          {/* <div
+                        className={`grid grid-cols-1 ${evaluationData?.position.toString() === 'Goalkeeper' ? 'md:grid-cols-3 xl:grid-cols-5' : 'md:grid-cols-3'} mt-6 gap-4`}
+                    > */}
+           {evaluationTemplateData?.categories
+    ?.filter((category: Category) => category.id !== 122 && category.id !== 125)
+    .map((category: Category) => {
+      const valuesForCategory = evaluationData?.coachInput?.[category.id];
+
+      const attributes = category.attributes ?? [];
+
+      // Prepare chart data
+    //   const chartDataObject = attributes
+    //     .filter(
+    //       (attr: Attribute) =>
+    //         !attr.name.toLowerCase().includes('avgscore') &&
+    //         !attr.name.toLowerCase().includes('commentary')
+    //     )
+    //     .reduce<Record<string, string | number | undefined>>((acc, attr) => {
+    //       acc[attr.name] = valuesForCategory?.[attr.id];
+    //       return acc;
+    //     }, {});
+
+      // AvgScore
+      const avgScoreAttribute = attributes.find(
+        (attr: Attribute) => attr.name.toLowerCase() === 'avgscore'
+      );
+      const avgScoreValue = avgScoreAttribute
+        ? valuesForCategory?.[avgScoreAttribute.id]
+        : null;
+
+      // Commentary
+      const commentaryAttribute = attributes.find(attr =>
+        attr.name.toLowerCase().includes('commentary')
+      );
+      const commentary = commentaryAttribute
+        ? valuesForCategory?.[commentaryAttribute.id]
+        : null;
+              // console.log(commentary)
+              return (
+                <div  key={category.id}className={`mt-6 grid grid-cols-1 gap-4`}>
+                  <div className="flex flex-col gap-16 overflow-hidden rounded-md border border-gray-300 p-4 text-black shadow-md lg:flex-row">
+                    <div className="flex-[3_1_0%] flex-col rounded-md border border-gray-300 p-4 text-black">
+                      <div className="bg-blue-600 px-4 py-4 text-white">
+                        {/* Heading Row */}
+                        <h1 className="text-sm">{category.name}</h1>
+                      </div>
+                      <div className="flex h-auto flex-col justify-between p-4">
+                        {/* Score List */}
+                        <div className="flex-grow overflow-y-auto">
+                          {category.attributes ? (
+                            <ul className="list-inside list-disc space-y-1 text-sm">
+                              {category.attributes.map(
+                                (attribute: Attribute, index: number) => {
+                                  const value =
+                                    valuesForCategory?.[attribute.id];
+
+                                  if (
+                                    !attribute.name
+                                      .toLowerCase()
+                                      .includes('avgscore') &&
+                                    !attribute.name
+                                      .toLowerCase()
+                                      .includes('commentary')
+                                  ) {
+                                    return (
+                                      <li key={attribute.id}>
+                                        <span className="font-medium">
+                                          <span className="md:hidden">
+                                            ({index + 1})
+                                          </span>{' '}
+                                          {attribute.name}
+                                        </span>
+                                        : {value ?? 'N/A'}
+                                      </li>
+                                    );
+                                  }
+                                },
+                              )}
+                            </ul>
+                          ) : (
+                            <p className="text-sm italic">
+                              No scores available.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Left: Radar Chart Column */}
+                    <div className="flex h-full min-h-64 min-w-0 flex-[5_1_0%] flex-row items-center overflow-visible md:min-h-96">
+                      {/* <div className="hidden h-full w-full min-w-0 lg:block">
+                        <EvaluationPolarCharts
+                          chartData={sectionChartData(chartDataObject)}
+                        />
+                      </div>
+
+                      <div className="h-full w-full min-w-0 lg:hidden">
+                        <EvaluationPolarCharts
+                          chartData={sectionChartData(chartDataObject)}
+                        />
+                      </div> */}
+                    </div>
+                    {/* Right: Metrics Table Column */}
+                    <div className="m-auto flex h-[250px] flex-[2_1_0%] flex-col items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-gray-300 text-center shadow-md">
+                      <div className="mb-2 text-xl font-semibold text-white lg:text-2xl">
+                        {category.name} Average
+                      </div>
+                      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white lg:h-24 lg:w-24">
+                        <span className="text-2xl font-bold text-black lg:text-3xl">
+                          {avgScoreValue ?? 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Commentary Section */}
+                  <div className="mt-auto w-full rounded-md border border-gray-300 bg-white p-3">
+                    <label
+                      htmlFor={`remarks-tech`}
+                      className="mb-2 block text-sm font-bold"
+                    >
+                      {category.name} Comments:
+                    </label>
+
+                    <div className="max-h-24 w-full overflow-y-auto break-words text-sm text-gray-700">
+                      {commentary || 'No remarks provided.'}
+                    </div>
+                  </div>
                 </div>
+              );
+            })}
+
+          {/* Final Remarks Section */}
+          <div className="mb-4 mt-12 grid grid-cols-2 gap-6">
+            <div className="rounded-lg border border-gray-300 p-6 text-black shadow-lg">
+              <label
+                htmlFor="final-remarks"
+                className="text-sm font-bold text-blue-600"
+              >
+                Additional Comments:
+              </label>
+              <p className="max-h-48 w-full overflow-y-auto break-words text-base leading-relaxed text-gray-800">
+                {evaluationData?.finalRemarks}
+              </p>
+            </div>
+            <div className="rounded-lg border border-gray-300 p-6 text-black shadow-lg">
+              <label
+                htmlFor="final-remarks"
+                className="text-sm font-bold text-blue-600"
+              >
+                Things to Work On:
+              </label>
+              <p className="max-h-48 w-full overflow-y-auto break-words text-base leading-relaxed text-gray-800">
+                {evaluationData?.thingsToWork}
+              </p>
+            </div>
+          </div>
+          {data && data.files && (
+            <div className="mx-auto w-full p-4">
+              <h1 className="mb-4 mt-8 p-4 text-start text-xl font-bold text-gray-800">
+                {' '}
+                Additional Documents
+              </h1>
+              <div className="w-full space-y-4">
+                {Object.entries(data.files).map(([key, file]) =>
+                  file ? (
+                    // Check if file size is below the 9MB limit
+                    file.size && file.size > MAX_FILE_SIZE ? (
+                      <div
+                        key={key}
+                        className="grid grid-cols-2 gap-4 rounded border-b p-4"
+                      >
+                        <div className="flex flex-col items-start space-y-2 text-sm">
+                          <strong>Filename:</strong>
+                          <p className="text-red-600">
+                            File size exceeds 9MB. Unable to display or
+                            download.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        key={key}
+                        className="grid grid-cols-2 gap-4 rounded border p-4"
+                      >
+                        {/* Left Column: File preview + download */}
+                        <div className="flex flex-col items-start space-y-2 text-sm">
+                          <strong className="text-sm font-bold text-gray-900">
+                            Filename:
+                          </strong>
+
+                          {file.filename.match(/\.(jpg|jpeg|png)$/i) ? (
+                            <>
+                              <img
+                                src={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${file.filename}`}
+                                alt="uploaded file"
+                                className="h-32 w-32 border object-cover"
+                              />
+                              <a
+                                href={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${file.filename}`}
+                                download
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded bg-blue-500 px-2 py-1 text-white hover:bg-green-600"
+                              >
+                                <i className="fas fa-download mr-2"></i>{' '}
+                                Download
+                              </a>
+                            </>
+                          ) : file.filename.endsWith('.pdf') ? (
+                            <>
+                              <img
+                                src="https://www.iconpacks.net/icons/2/free-pdf-download-icon-2617-thumb.png"
+                                alt="pdf icon"
+                                className="h-28 w-28"
+                              />
+                              <a
+                                href={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${file.filename}`}
+                                download
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded bg-blue-500 px-2 py-1 text-white hover:bg-green-600"
+                              >
+                                <i className="fas fa-download mr-2"></i>{' '}
+                                Download
+                              </a>
+                            </>
+                          ) : file.filename.match(/\.(mp4)$/i) ? (
+                            <>
+                              <video
+                                controls
+                                width="200"
+                                height="auto"
+                                className="rounded border"
+                              >
+                                <source
+                                  src={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${file.filename}`}
+                                  type="video/mp4"
+                                />
+                              </video>
+                              <a
+                                href={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${file.filename}`}
+                                download
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded bg-blue-500 px-2 py-1 text-white hover:bg-green-600"
+                              >
+                                <i className="fas fa-download mr-2"></i>{' '}
+                                Download
+                              </a>
+                            </>
+                          ) : (
+                            <a
+                              href={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${file.filename}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 underline"
+                            >
+                              {file.filename}
+                            </a>
+                          )}
+                        </div>
+                        {/* Right Column: Comments */}
+                        <div className="text-sm">
+                          <strong className="text-sm font-bold text-gray-900">
+                            Comments:
+                          </strong>
+                          <p className="max-h-48 w-full overflow-y-auto break-words">
+                            {file.comments}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  ) : null,
+                )}
+              </div>
+            </div>
+          )}
+          {userType === 'player' &&
+        //   && !isRatingSubmitted &&
+         (
+            <div className="mx-auto max-w-md rounded-md bg-white p-4 shadow-md">
+              <h3 className="mb-2 text-center text-lg font-semibold">
+                {evaluationData?.rating === null
+                  ? 'Please Provide a Rating'
+                  : 'Edit Your Rating'}
+                <span className="font-red">*</span>
+              </h3>
+
+              {/* Star Rating */}
+              <div className="mb-4 flex items-center justify-center">
+                {Array.from({ length: 5 }, (_, index) => index + 1).map(
+                  star => (
+                    <svg
+                      key={star}
+                      className={`h-10 w-10 cursor-pointer ${star <= (hover || rating) ? 'text-yellow-500' : 'text-gray-300'}`}
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      onMouseEnter={() => setHover(star)}
+                      onMouseLeave={() => setHover(0)}
+                      onClick={() => setRating(star)}
+                    >
+                      <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
+                    </svg>
+                  ),
+                )}
+              </div>
+              {/* Remarks Textarea */}
+              {/* <textarea
+                                    className="mb-4 w-full resize-none rounded-md border border-gray-300 p-2"
+                                    rows={4}
+                                    placeholder="Leave a Testimonial..."
+                                    value={remarks}
+                                    onChange={e => setRemarks(e.target.value)}
+                                    /> */}
+              {/* Submit Button */}
+              <button
+                // onClick={handleSubmitRating}
+                className="w-full rounded-md bg-blue-600 px-4 py-2 text-white transition duration-300 hover:bg-blue-700"
+              >
+                Submit Feedback
+              </button>
+            </div>
+          )}
+          {userType === 'player' &&
+            // isRatingSubmitted &&
+            evaluationData?.coachSlug && (
+              <div className="mx-auto max-w-md rounded-md bg-white p-4 shadow-md">
+                <h3 className="mb-2 text-lg font-semibold">
+                  Thanks for Your Feedback!
+                </h3>
+                <p>
+                  If you have not done so already, you may leave a testimonial
+                  for this coach{''}
+                  <Link
+                    href={`/coach/${evaluationData?.coachSlug}`}
+                    className="text-blue-700 underline"
+                  >
+                    here
+                  </Link>
+                  .
+                </p>
+              </div>
             )}
         </div>
-                  )} */}
-
-
-                    {/* Stars and Edit/Delete only shown if rating is not null */}
-                  {evaluationData && (
-  <div className="p-4 bg-gray-100 rounded-md max-w-md mx-auto">
-    <h3 className="text-lg font-semibold mb-2">Player Feedback</h3>
-
-    {/* Star Rating: Always show 5 stars */}
-    <div className="flex items-center mb-3">
-      {Array.from({ length: 5 }, (_, index) => index + 1).map((star) => (
-        <svg
-          key={star}
-          className={`w-6 h-6 ${
-            Number(evaluationData.review_status) === 1 &&
-            star <= (evaluationData.rating ?? 0)
-              ? 'text-yellow-500'
-              : 'text-gray-300'
-          }`}
-          xmlns="http://www.w3.org/2000/svg"
-          fill="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
-        </svg>
-      ))}
-    </div>
-
-    {/* Feedback Textarea: Always show, filled or empty */}
-    <div className="mb-4">
-      <label className="block text-sm font-semibold text-yellow-700 mb-1">Feedback:</label>
-      <textarea
-        className="w-full p-2 text-sm text-gray-800 border rounded-md bg-white resize-none"
-        value={
-          Number(evaluationData.review_status) === 1 && evaluationData.remarks
-            ? evaluationData.remarks
-            : ''
-        }
-        placeholder="No feedback submitted yet."
-        readOnly
-        rows={4}
-      />
-    </div>
-
-    {/* Action Buttons */}
-    <div className="flex gap-2">
-      {Number(evaluationData.review_status) === 1 ? (
-        <>
-          <button
-            onClick={handleEdit}
-            className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600"
-          >
-            Edit
-          </button>
-          <button
-            onClick={handleDelete}
-            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-          >
-            Hide
-          </button>
-        </>
-      ) : Number(evaluationData.review_status) === 0 ? (
-        <button
-          onClick={handleRevert}
-          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-        >
-          Revert
-        </button>
-      ) : null}
-    </div>
-  </div>
-)}
-
-
-                    {/* Edit Modal */}
-                    {showModal && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                            <div className="bg-white p-6 rounded-md shadow-lg w-[90%] max-w-sm">
-                                <h3 className="text-lg font-bold mb-4">Edit Feedback</h3>
-
-                                {/* Star Rating */}
-                                <div className="flex justify-center gap-2 mb-4">
-                                    {Array.from({ length: 5 }, (_, index) => index + 1).map((star) => (
-                                        <svg
-                                            key={star}
-                                            onClick={() => setNewRating(star)}
-                                            className={`w-8 h-8 cursor-pointer ${star <= newRating ? 'text-yellow-500' : 'text-gray-300'
-                                                }`}
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
-                                        </svg>
-                                    ))}
-                                </div>
-
-                                {/* Textarea for Remarks */}
-                                <textarea
-                                    value={newRemarks}
-                                    onChange={(e) => setNewRemarks(e.target.value)}
-                                    placeholder="Enter feedback..."
-                                    className="w-full border border-gray-300 rounded-md p-2 mb-4"
-                                    rows={4}
-                                />
-
-                                {/* Buttons */}
-                                <div className="flex justify-end gap-2">
-                                    <button
-                                        onClick={() => setShowModal(false)}
-                                        className="px-4 py-2 bg-gray-300 rounded-md"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={submitEdit}
-                                        disabled={isSubmitting}
-                                        className="px-4 py-2 bg-green-500 text-white rounded-md flex items-center justify-center gap-2 disabled:opacity-60"
-                                    >
-                                        {isSubmitting && (
-                                            <svg
-                                                className="w-4 h-4 animate-spin text-white"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <circle
-                                                    className="opacity-25"
-                                                    cx="12"
-                                                    cy="12"
-                                                    r="10"
-                                                    stroke="currentColor"
-                                                    strokeWidth="4"
-                                                />
-                                                <path
-                                                    className="opacity-75"
-                                                    fill="currentColor"
-                                                    d="M4 12a8 8 0 018-8v8z"
-                                                />
-                                            </svg>
-                                        )}
-                                        {isSubmitting ? 'Saving...' : 'Save'}
-                                    </button>
-
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-
-                </div>
-
-                {/* )} */}
-            </div>
-        </>
-    );
+      </div>
+    </>
+  );
 };
 
 export default EvaluationPage;

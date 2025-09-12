@@ -501,7 +501,7 @@ export default function PlayerDetailPage() {
             </div>
             {/* Evaluations */}
             <section className="p-6 max-w-7xl mx-auto space-y-8">
-                <h2 className="text-2xl font-semibold mb-4">Evaluations</h2>
+                <h2 className="text-2xl font-semibold mb-4">Evaluation</h2>
                 <div className="text-gray-700">
 
 

@@ -1,749 +1,337 @@
 "use client";
 import React, { useState, useEffect } from "react";
-// import PageBreadcrumb from "@/app/components/common/PageBreadCrumb";
-// import { Table, TableBody, td, th, tr } from "@/app/components/ui/table";
-import { Dialog, DialogTitle, DialogContent } from "@/components/ui/dialog";
-import { Download, MessageSquare, Trash, UploadCloud } from "lucide-react";
-import { useRouter } from "next/navigation";
-import Badge from "@/components/ui/badge/Badge";
-import SupportModal1 from "@/components/SupportModal1";
-import { useSession } from 'next-auth/react';
-
-import { Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
-import { useRoleGuard } from "@/hooks/useRoleGaurd";
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
+import { Loader2, ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+// import { useSession } from "next-auth/react";
 
-
-interface Ticket {
-  id: number;
+interface Recipient {
+  id: string;
   name: string;
   email: string;
-  subject: string;
-  message: string;
-  assign_to: number;
-  assign_to_username: string;
-  createdAt: string;
-  status: string;
-  ticket_from: number;
-  role: string;
-  escalate: boolean; // ✅ fix type to boolean
-}
-interface Admin {
-  id: number;
-  username: string;
-  email: string;
-  role: string;
-}
-interface TicketReply {
-  filename: string;
-  id: number;
-  ticketId: number;
-  message: string;
-  status: string;
-  repliedBy: string;
-  createdAt: string;
-  fullAttachmentUrl?: string;
-  parsedFiles?: string[];
+  country?: string | null;
+  state?: string | null;
+  city?: string | null;
 }
 
-
-const TicketsPage = () => {
-    useRoleGuard();
-
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [subAdmins, setSubAdmins] = useState<Admin[]>([]);
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isReplyModalOpen, setIsReplyModalOpen] = useState<boolean>(false);
-  const [replyMessage, setReplyMessage] = useState<string>("");
-  const [replyStatus, setReplyStatus] = useState<string>("");
-  const [supportOpen, setSupportOpen] = useState(false);
-  const { data: session, status } = useSession();
-  const [ticketReplies, setTicketReplies] = useState<TicketReply[]>([]);
-
-  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
-
-   const [userId, setUserId] = useState<string | null>(null);
+const NewTicketPage = () => {
   const router = useRouter();
+  // const { data: session } = useSession();
 
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
+    ticket_from: "",
+    status: "",
+    recipientType: "", // ✅ selected type
+    role: "",          // ✅ will be saved in DB
+  });
 
+  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [isOpen, setIsOpen] = useState(false);
+const [loadingRecipients, setLoadingRecipients] = useState(false);
 
-  const handleReplyClick = async (ticket: Ticket) => {
-    setSelectedTicket(ticket);
-    setIsReplyModalOpen(true);
+  const filteredRecipients = recipients.filter((r) =>
+    r.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    try {
-      const response = await fetch(`/api/ticket/replies?ticketId=${ticket.id}`);
-      if (!response.ok) throw new Error("Failed to fetch replies");
-
-      const data = await response.json();
-      setTicketReplies(data.replies);
-      setReplyStatus(ticket.status); // Set current status for reply
-    } catch (error) {
-      console.error("Error fetching replies:", error);
-      Swal.fire("Error", "Could not load ticket messages.", "error");
-    }
-  };
-
-
-
-
-  const handleReplySubmit = async () => {
-           setIsReplyModalOpen(false); 
- 
-     if (!selectedTicket) {
-       Swal.fire("Error", "No ticket selected.", "error");
-       return;
-     }
- 
-     if (!replyMessage.trim()) {
-       Swal.fire("Error", "Message cannot be empty.", "warning");
-       return;
-     }
- 
-     setLoading(true);
- 
-     try {
-       const formData = new FormData();
-       formData.append("ticketId", String(selectedTicket.id));
-       formData.append("repliedBy", userId ?? "");
-       formData.append("message", replyMessage.trim());
-       formData.append("status", replyStatus);
- 
-       if (attachmentFile) {
-         formData.append("attachment", attachmentFile);
-       }
- 
-       const response = await fetch("/api/ticket/reply", {
-         method: "POST",
-         body: formData,
-       });
- 
-       const data = await response.json();
- 
-       if (response.ok) {
-         Swal.fire("Success", "Reply sent successfully!", "success");
- 
-         setTickets((prevTickets) =>
-           prevTickets.map((t) =>
-             t.id === selectedTicket.id
-               ? { ...t, status: replyStatus, message: replyMessage.trim() }
-               : t
-           )
-         );
- 
-         setReplyMessage("");
-         setAttachmentFile(null);
-         setIsReplyModalOpen(false);
-       } else {
-         Swal.fire("Error", data.error || "Failed to send reply.", "error");
-       }
-     } catch (error) {
-       console.error("Error submitting ticket reply:", error);
-       Swal.fire("Error", "An unexpected error occurred while sending reply.", "error");
-       setTicketReplies([]);
-     } finally {
-       setLoading(false);
-     }
-   };
- useEffect(() => {
-    const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
-    if (!storedUserId) {
-      router.push("/signin");
-    } else {
-      setUserId(storedUserId);
-    }
+  useEffect(() => {
+    const storedUserId =
+      localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
+    if (!storedUserId) router.push("/signin");
+    else setUserId(storedUserId);
   }, [router]);
 
-  useEffect(() => {
-    const fetchTickets = async () => {
-      setLoading(true);
-      setError(null);
-      const userId = sessionStorage.getItem("user_id");
-      console.log('usersd', userId);
-      try {
-        const response = await fetch(`/api/ticket?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+  // Fetch recipients whenever recipientType changes
+useEffect(() => {
+  const fetchRecipients = async () => {
+    if (!formData.recipientType) return;
 
-        if (!response.ok) throw new Error("Failed to fetch tickets");
-
-        const data = await response.json();
-        setTickets(data.ticket || []);
-
-        console.log("data", data);
-        setTotalPages(data.totalPages);
-      } catch (err) {
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTickets();
-  }, [searchQuery, currentPage]);
-
-  useEffect(() => {
-    const fetchSubAdmins = async () => {
-      try {
-        const response = await fetch(`/api/subadmin`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-        if (!response.ok) throw new Error("Failed to fetch sub-admins");
-
-        const contentType = response.headers.get("Content-Type");
-        if (!contentType || !contentType.includes("application/json")) {
-          const text = await response.text();
-          throw new Error(`Expected JSON, but got: ${text}`);
-        }
-
-        const data = await response.json();
-        setSubAdmins(data.admin);
-      } catch (err) {
-        console.error("Error fetching sub-admins:", err);
-        setError((err as Error).message);
-      }
-    };
-    fetchSubAdmins();
-  }, []);
-
-  const handleAssignToClick = (ticket: Ticket) => {
-    // If already assigned, don't open the modal
-    if (ticket.assign_to) {
-      Swal.fire('Already Assigned', 'This ticket has already been assigned to a sub-admin.', 'info');
-      return;
-    }
-
-    setSelectedTicket(ticket);
-    setIsModalOpen(true);
-  };
-
-
-  const handleAssignSubAdmin = async (subAdmin: Admin) => {
-    if (!selectedTicket) return;
-    setIsSubmitting(true);
-
-
+    setLoadingRecipients(true); // ⏳ start loader
     try {
-      const response = await fetch(`/api/ticket/assign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticketId: selectedTicket.id, assignTo: subAdmin.id }),
-      });
-
-      // Log the response status and content
-      console.log("Response Status:", response.status);
-
-      const contentType = response.headers.get("Content-Type");
-      console.log("Response Content-Type:", contentType);
-
-      if (!response.ok) {
-        const errorData = await response.json(); // Assuming the API returns a JSON error message
-        console.error("API Error Response:", errorData);
-        throw new Error(`Failed to assign sub-admin: ${errorData?.error || "Unknown error"}`);
-      }
-
-      // Check if the response is JSON
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text(); // Read the response as text if not JSON
-        console.error("Non-JSON Response:", text);
-        throw new Error(`Expected JSON, but got: ${text}`);
-      }
-
-      // const data = await response.json();
-    setTickets((prevTickets) =>
-        prevTickets.map((t) => (t.id === selectedTicket.id ? { ...t, assign_to: subAdmin.id, assign_to_username: subAdmin.username } : t))
-      );
-
-      setIsModalOpen(false); // Close modal after assigning sub-admin
+      const res = await axios.get(`/api/geolocation/${formData.recipientType}`);
+      setRecipients(res.data || []);
     } catch (err) {
-      console.error("Error assigning sub-admin:", err);
-      setError((err as Error).message); // Set the error state
+      console.error("Error fetching recipients:", err);
+      setRecipients([]);
     } finally {
-      setIsSubmitting(false);
+      setLoadingRecipients(false); // ✅ stop loader
     }
   };
 
+  fetchRecipients();
+}, [formData.recipientType]);
 
-
-
-  const handleModalSubmit = () => {
-    if (!selectedTicket) {
-      setError("No ticket selected");
-      return;
-
-    }
-    setIsSubmitting(true);
-
-
-    // Find the selected sub-admin object based on the last clicked admin (selectedTicket.assign_to)
-    const assignedSubAdmin = subAdmins.find((admin) => admin.id === selectedTicket.assign_to);
-
-    if (assignedSubAdmin) {
-      handleAssignSubAdmin(assignedSubAdmin); // Call API function to assign
-    } else {
-      setError("Please select a sub-admin before submitting.");
-    }
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-
-
-
-  useEffect(() => {
-    if (status === 'authenticated') {
-      console.log("User ID:", session?.user?.id);
-    }
-  }, [session, status]);
-
-
-  // ✅ This function is passed to modal and updates state
-
-  const handleTicketCreated = (newTicket: Ticket) => {
-    setTickets((prev) => [newTicket, ...prev]);
+  // ✅ when recipientType changes, update role too
+  const handleRecipientTypeChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      recipientType: e.target.value,
+      role: e.target.value, // ✅ store role = type
+      ticket_from: "", // reset when changing type
+    }));
+    setSearchTerm("");
   };
 
-   const handleDeleteReply = async (replyId: number) => {
-        setIsReplyModalOpen(false); 
-  
-      const confirmed = await Swal.fire({
-        title: "Are you sure?",
-        text: "This will delete the message permanently.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        confirmButtonText: "Yes, delete it!",
-      });
-  
-      if (confirmed.isConfirmed) {
-        try {
-          const res = await fetch(`/api/ticket/reply?id=${replyId}`, {
-            method: "DELETE",
-          });
-  
-          if (res.ok) {
-            Swal.fire("Deleted!", "The reply has been removed.", "success");
-            setTicketReplies((prev) => prev.filter((r) => r.id !== replyId));
-          } else {
-            Swal.fire("Error", "Failed to delete reply.", "error");
-          }
-        } catch (err) {
-          console.error("Delete error:", err);
-          Swal.fire("Error", "Something went wrong.", "error");
-        }
-      }
-    };
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setIsSubmitting(true);
 
-const handleEscalate = async () => {
-  if (!selectedTicket) return; // ✅ prevents null errors
+  //   try {
+  //     const response = await fetch("/api/ticket", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(formData), // ✅ includes role now
+  //     });
+
+  //     const result = await response.json();
+  //     if (response.ok) {
+  //       Swal.fire({
+  //         title: "Success!",
+  //         text: result.message,
+  //         icon: "success",
+  //         confirmButtonText: "OK",
+  //       });
+  //     } else {
+  //       Swal.fire({
+  //         title: "Error!",
+  //         text: result.error || "Failed to create ticket",
+  //         icon: "error",
+  //         confirmButtonText: "Try Again",
+  //       });
+  //     }
+  //   } catch (err) {
+  //     console.error("❌ Ticket submit error:", err);
+  //     Swal.fire({
+  //       title: "Error!",
+  //       text: "An error occurred while submitting the ticket.",
+  //       icon: "error",
+  //       confirmButtonText: "Try Again",
+  //     });
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsSubmitting(true);
 
   try {
-    const res = await fetch(`/api/tickets/${selectedTicket.id}/escalate`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+    const payload = {
+      ...formData,
+      user_id: userId, // ✅ include user id
+    };
+
+    const response = await fetch("/api/ticket", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     });
 
-    if (!res.ok) {
-      throw new Error("Failed to escalate ticket");
+    const result = await response.json();
+    if (response.ok) {
+      Swal.fire({
+        title: "Success!",
+        text: result.message,
+        icon: "success",
+        confirmButtonText: "OK",
+      }).then(() => {
+    window.location.reload(); // 🔄 reload the full page
+      });
+    } else {
+      Swal.fire({
+        title: "Error!",
+        text: result.error || "Failed to create ticket",
+        icon: "error",
+        confirmButtonText: "Try Again",
+      });
     }
-
-    setSelectedTicket((prev) =>
-      prev ? { ...prev, escalate: true } : null
-    );
-
-    // ✅ Success alert
-    Swal.fire({
-      icon: "success",
-      title: "Escalated!",
-      text: "The ticket has been escalated successfully.",
-      timer: 2000,
-      showConfirmButton: false,
-    });
   } catch (err) {
-    console.error("Error escalating ticket:", err);
-
-    // ❌ Error alert
+    console.error("❌ Ticket submit error:", err);
     Swal.fire({
+      title: "Error!",
+      text: "An error occurred while submitting the ticket.",
       icon: "error",
-      title: "Oops...",
-      text: "Failed to escalate ticket. Please try again.",
-    });
+      confirmButtonText: "Try Again",
+    }).then(() => {
+    window.location.reload(); // 🔄 reload the full page
+      });
+  } finally {
+    setIsSubmitting(false);
   }
 };
 
-
-
   return (
-    <div>
-      {/* <div>
-      Welcome {session?.user?.id}
-      {session?.user?.name}
-    </div> */}
-      <div className="flex justify-between items-center mx-10 mt-5 dark:border-white/[0.05] " >
-             <PageBreadcrumb pageTitle="Ticket" onSearch={setSearchQuery} /> 
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 mt-0">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full border bg-white p-8 rounded-xl shadow-md space-y-4"
+      >
+        <h2 className="text-2xl font-bold text-gray-800">Create New Ticket</h2>
 
-        <button
-          className="bg-blue-500 text-white text-sm rounded-md  p-2"
-          onClick={() => setSupportOpen(true)}
-        >
-          New Ticket
-        </button>
-      </div>
-
-      {/* Support Modal */}
-      {supportOpen && (
-        <SupportModal1 setSupportOpen={setSupportOpen}
-          onTicketCreated={handleTicketCreated}
-
-        />)}
-
-      <div className="flex justify-end items-center mx-10 mt-2   dark:border-white/[0.05]">
-        {[...Array(totalPages)].map((_, index) => {
-          const pageNumber = index + 1;
-          return (
-            <button
-              key={pageNumber}
-              onClick={() => setCurrentPage(pageNumber)}
-              className={`px-3 py-1 rounded-md ${currentPage === pageNumber ? "bg-blue-500 text-white text-xs" : "text-blue-500 hover:bg-gray-200"
-                }`}
-            >
-              {pageNumber}
-            </button>
-          );
-        })}
-      </div>
-
-      {loading && <p className="text-center py-5">Loading...</p>}
-      {error && <p className="text-center py-5 text-red-500">{error}</p>}
-
-      {!loading && !error && (
-        <>
-
-          <div className="overflow-hidden  mx-10 my-4  border  bg-white rounded-2xl shadow-md font-sans text-sm bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-            <div className="font-bold p-4 dark:text-gray-300">
-              Total Tickets: {tickets ? tickets.length : 0}
-            </div>
-
-
-            <table className=" min-w-full text-sm border-collapse ">
-              <thead className="bg-gray-300 text-gray-900   ">
-                <tr>
-                  <td className="px-5 py-3 font-medium border-none   text-start">Name</td>
-                  <td className="px-5 py-3 font-medium border-none  text-start">Email</td>
-                  <td className="px-5 py-3 font-medium border-none  text-start">Subject</td>
-                  <td className="px-5 py-3 font-medium border-none  text-start">Message</td>
-                  <td className="px-5 py-3 font-medium border-none  text-start">Escalate</td>
-                  <td className="px-5 py-3 font-medium border-none  text-start">Assigned</td>
-
-
-                  <td className="px-5 py-3 font-medium border-none  text-start">Status</td>
-                  <td className="px-5 py-3 font-medium border-none  text-start">Actions</td>
-                  {/* <td className="px-5 py-3 font-medium text-gray-500 text-start">Ticket From</td>
-                <td className="px-5 py-3 font-medium text-gray-500 text-start">Role</td> */}
-
-                </tr>
-              </thead>
-              <tbody >
-                {tickets.map((ticket) => (
-                  ticket && ticket.name ? (
-
-                    <tr key={ticket.id} className="border">
-
-                      <td className="px-4 py-3 text-xs text-gray-500 border-none  dark:text-gray-400">{ticket.name}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500 border-none  dark:text-gray-400">{ticket.email}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500  border-none dark:text-gray-400">{ticket.subject}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500  border-none dark:text-gray-400">
-                        {ticket.message.slice(0, 60)}...
-                      </td>
-                   <td className="px-4 py-3 text-xs text-gray-500  border-none dark:text-gray-400"> {ticket.escalate ? (
-                  <span className="text-green-600 font-bold">Yes</span>
-                ) : (
-                  <span className="text-red-600">No</span>
-                )}</td>
-
-                      <td className="px-4 py-3 text-gray-500  border-none dark:text-gray-400">
-                        <button
-                          className="text-blue-500 hover:underline text-xs"
-                          onClick={() => handleAssignToClick(ticket)}
-                        >
-                          {ticket.assign_to_username || 'Assign To'}
-
-                        </button>
-                      </td>
-                      <td className="px-4 py-3 text-gray-500  border-none dark:text-yellow-500">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium${(() => {
-                            const status = ticket.status?.trim().toLowerCase();
-                            if (status === "closed") return "bg-gray-100 text-gray-500";
-                            if (status === "open") return "bg-blue-50 text-blue-600";
-                            if (status === "fixed") return "bg-green-50 text-green-600";
-                            if (status === "pending") return "bg-orange-50 text-orange-500";
-                            return "bg-gray-200 text-gray-800";
-                          })()}
-    `}
-                        >
-                          {ticket.status?.trim() || "Pending"}
-                        </span>
-                      </td>
-
-                      <td className="px-4 py-3 text-gray-500 border-none  dark:text-gray-400">
-                        <div className="flex gap-3">
-                          <button className="text-green-500" onClick={() => handleReplyClick(ticket)}>
-                            <MessageSquare size={18} />
-                          </button>
-                        </div>
-
-                      </td>
-                      {/* <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.ticket_from}</td>
-                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.role}</td> */}
-
-                    </tr>
-                  ) : null
-                ))}
-              </tbody>
-            </table>
-
-
-
-
-         <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
-  <DialogContent className="p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
-    <DialogTitle>Reply to Ticket</DialogTitle>
-
-    {/* Previous Messages */}
-    <div>
-      <h3 className="text-sm font-medium mb-2 text-blue-600">Previous Messages</h3>
-      <div className="border border-blue-300 rounded-md p-3 max-h-60 overflow-y-auto bg-gray-50 space-y-4 custom-scrollbar">
-        {ticketReplies.length === 0 ? (
-          <p className="text-gray-400 text-sm">No messages yet.</p>
-        ) : (
-          ticketReplies.map((reply) => (
-            <div key={reply.id} className="border-b pb-3">
-              <div className="flex justify-between items-start mb-1">
-                <p className="text-sm text-gray-700">
-                  <span className="font-semibold">Message:</span> {reply.message}
-                </p>
-                <button
-                  onClick={() => handleDeleteReply(reply.id)}
-                  className="text-red-500 hover:text-red-700"
-                  title="Delete reply"
-                >
-                  <Trash className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-semibold text-sm">Status:</span>
-                <Badge
-                  color={
-                    reply.status.toLowerCase() === "closed"
-                      ? "error"
-                      : reply.status.toLowerCase() === "open"
-                      ? "info"
-                      : reply.status.toLowerCase() === "fixed"
-                      ? "success"
-                      : reply.status.toLowerCase() === "pending"
-                      ? "warning"
-                      : "light"
-                  }
-                >
-                  {reply.status}
-                </Badge>
-              </div>
-              {reply.filename && (
-                <div className="flex items-center gap-2 text-sm mb-1">
-                  <span className="font-semibold text-sm">Attachment:</span>
-                  <a
-                    href={reply.filename}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center hover:underline text-blue-500"
-                  >
-                    <Download className="w-4 h-4 mr-1" />
-                    Download
-                  </a>
-                </div>
-              )}
-              <div className="text-sm text-gray-700">
-                <span className="font-semibold">Date:</span> {reply.repliedBy}{" "}
-                {new Date(reply.createdAt).toLocaleString()}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-
-    {/* New Message Input */}
-    <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-blue-700 mb-1">
-          New Message
-        </label>
-        <textarea
-          className="w-full p-3 border rounded-md resize-none"
-          placeholder="text"
-          rows={2}
-          value={replyMessage}
-          onChange={(e) => setReplyMessage(e.target.value)}
-        />
-      </div>
-
-      {/* Attachment Upload */}
-      <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
-        Attachment (Image or PDF)
-      </label>
-      <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 hover:border-blue-400 transition">
-        <input
-          type="file"
-          accept="image/*,application/pdf"
-          onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-        />
-        <div className="flex flex-col items-center justify-center space-y-2">
-          <UploadCloud className="w-4 h-4 text-blue-500" />
-          <span className="text-sm text-gray-600">
-            Click or drag to upload file
-          </span>
-          {attachmentFile && (
-            <p className="text-xs text-green-600 font-medium">
-              Selected: {attachmentFile.name}
-            </p>
-          )}
+        {/* Recipient Type */}
+        <div className="space-x-4">
+          <label className="font-medium text-gray-700">Send To:</label>
+          {["player", "coach", "staff"].map((type) => (
+            <label key={type} className="inline-flex items-center space-x-2">
+              <input
+                type="radio"
+                name="recipientType"
+                value={type}
+                checked={formData.recipientType === type}
+                onChange={handleRecipientTypeChange}
+                className="form-radio"
+              />
+              <span className="capitalize">{type}</span>
+            </label>
+          ))}
         </div>
-      </div>
 
-      {/* Status Selection */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Status
-        </label>
-        <select
-          className="w-full p-3 border rounded-md"
-          value={replyStatus}
-          onChange={(e) => setReplyStatus(e.target.value)}
-        >
-          <option value="Pending">Pending</option>
-          <option value="Open">Open</option>
-          <option value="Fixed">Fixed</option>
-          <option value="Closed">Closed</option>
-        </select>
-      </div>
+        {/* Recipient Selection */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Select Recipient
+          </label>
 
-      {/* Action Buttons */}
-      <div className="mt-6 flex justify-between items-center">
-        {/* Escalate button */}
+          <div className="relative w-full">
+            <input
+              type="text"
+              placeholder="Search recipient..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setIsOpen(true);
+              }}
+              onFocus={() => setIsOpen(true)}
+              className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none pr-10"
+              required
+            />
+
+            {/* Toggle Icon */}
+            <button
+              type="button"
+              onClick={() => setIsOpen((prev) => !prev)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              <ChevronDown
+                className={`w-5 h-5 transition-transform ${
+                  isOpen ? "rotate-180" : "rotate-0"
+                }`}
+              />
+            </button>
+
+            {/* Dropdown list */}
+            {isOpen && (
+             <ul className="absolute left-0 right-0 mt-1 z-10 bg-white border rounded-md max-h-60 overflow-y-auto shadow-lg">
+  {loadingRecipients ? (
+    <li className="p-4 text-center text-gray-500">
+      <span className="animate-spin h-5 w-5 mr-2 inline-block border-2 border-blue-500 border-t-transparent rounded-full"></span>
+      Loading...
+    </li>
+  ) : filteredRecipients.length > 0 ? (
+    filteredRecipients.map((r) => (
+      <li
+        key={r.id}
+        className="p-2 cursor-pointer hover:bg-blue-100"
+        onClick={() => {
+          setFormData((prev) => ({
+            ...prev,
+            assign_to: r.id,
+            name: r.name, // ✅ save recipient name
+            email: r.email, // ✅ save recipient email
+          }));
+          setSearchTerm(r.name || r.email);
+          setIsOpen(false);
+        }}
+      >
+        {r.name} ({r.email})
+      </li>
+    ))
+  ) : (
+    <li className="p-2 text-gray-500">No results found</li>
+  )}
+</ul>
+
+            )}
+          </div>
+        </div>
+
+        {/* Subject */}
+        <div className="mb-4">
+          <label htmlFor="subject" className="block mb-2">
+            Subject
+          </label>
+          <select
+            id="subject"
+            name="subject"
+            className="w-full p-2 border rounded"
+            value={formData.subject}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select a subject</option>
+            <option value="General Inquiry">General Inquiry</option>
+            <option value="Technical Support">Technical Support</option>
+            <option value="Billing Issues">Billing Issues</option>
+            <option value="Account Issues">Account Issues</option>
+          </select>
+        </div>
+
+        {/* Message */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Message
+          </label>
+          <textarea
+            name="message"
+            value={formData.message}
+            onChange={handleChange}
+            rows={4}
+            className="w-full p-3 border rounded-md resize-none"
+            required
+          />
+        </div>
+
         <button
-          className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md"
-          onClick={handleEscalate}
-          disabled={loading}
+          type="submit"
+          className="w-full py-3 bg-blue-500 text-white font-semibold rounded-md flex items-center justify-center"
+          disabled={isSubmitting}
         >
-          {loading ? (
+          {isSubmitting ? (
             <>
-              <Loader2 className="animate-spin text-yellow-900 mr-2" size={16} />
-              Escalating...
+              <Loader2 className="animate-spin mr-2" size={16} /> Submitting...
             </>
           ) : (
-            "Escalate"
+            "Submit Ticket"
           )}
         </button>
-
-        <div className="flex gap-3">
-          <button
-            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md"
-            onClick={() => setIsReplyModalOpen(false)}
-          >
-            Cancel
-          </button>
-          <button
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md flex items-center justify-center"
-            onClick={handleReplySubmit}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="animate-spin text-blue-300 mr-2" size={16} />
-                Submitting...
-              </>
-            ) : (
-              "Submit"
-            )}
-          </button>
-        </div>
-      </div>
+      </form>
     </div>
-  </DialogContent>
-</Dialog>
-
-
-
-
-
-          </div>
-        </>
-      )}
-
-      {/* Modal for Assigning Subadmin */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="p-6">
-          <DialogTitle>Assign Subadmin</DialogTitle>
-          <p className="text-gray-500">Select a sub-admin to assign:</p>
-
-          {/* Sub-admin selection */}
-          <ul className="mt-4 space-y-2">
-            {subAdmins.map((subAdmin) => (
-              <li
-                key={subAdmin.id}
-                className={`p-2 border rounded-md cursor-pointer 
-             ${selectedTicket?.assign_to === subAdmin.id ? "bg-blue-200 dark:bg-blue-700" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
-                onClick={() => setSelectedTicket((prev) => prev ? { ...prev, assign_to: subAdmin.id } : null)}
-              >
-                {subAdmin.username}
-                ({subAdmin.email})
-              </li>
-            ))}
-          </ul>
-
-          {/* Submit & Cancel Buttons */}
-          <div className="mt-4 flex justify-end gap-3">
-            <button
-              className="px-4 py-2 bg-red-500 text-white rounded-md"
-              onClick={() => setIsModalOpen(false)}
-            >
-              Cancel
-            </button>
-            <button
-              className="px-4 py-2 bg-blue-500 text-white rounded-md"
-              onClick={handleModalSubmit}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="animate-spin inline mr-2" size={16} />Submitting...
-                </>
-              ) : (
-                "Submit"
-              )}            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-
   );
 };
 
-export default TicketsPage;
-
-
-
-
-
-
-
-
-
+export default NewTicketPage;
