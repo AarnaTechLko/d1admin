@@ -1,4 +1,4 @@
-import { SESv2Client, SendBulkEmailCommand, SendBulkEmailCommandInput, SendBulkEmailCommandOutput } from '@aws-sdk/client-sesv2';
+import { SESv2Client, SendEmailCommand, SendEmailCommandOutput } from '@aws-sdk/client-sesv2';
 import { db } from '@/lib/db';
 import { unsubscribes } from './schema';
 import { and, inArray, isNotNull } from 'drizzle-orm';
@@ -18,19 +18,19 @@ export async function sendEmail({
   text,
   html,
 }: SendEmailParams): Promise<
-  { email: string; success: boolean; info?: SendBulkEmailCommandOutput; error?: Error | unknown }[]
+  { email: string; success: boolean; info?: SendEmailCommandOutput; error?: Error | unknown }[]
 > {
   const toList = Array.isArray(to) ? [...to] : [to];
-  const results: { email: string; success: boolean; info?: SendBulkEmailCommandOutput; error?: Error | unknown }[] = [];
+  const results: { email: string; success: boolean; info?: SendEmailCommandOutput; error?: Error | unknown }[] = [];
 
   // Get unsubscribed emails
-const unsubscribedRows = await db
-  .select({ email: unsubscribes.email })
-  .from(unsubscribes)
-  .where(and(
-    inArray(unsubscribes.email, toList),
-    isNotNull(unsubscribes.unsubscribedAt)
-  ));
+  const unsubscribedRows = await db
+    .select({ email: unsubscribes.email })
+    .from(unsubscribes)
+    .where(and(
+      inArray(unsubscribes.email, toList),
+      isNotNull(unsubscribes.unsubscribedAt)
+    ));
   
   const unsubscribedEmails = new Set(unsubscribedRows.map(row => row.email));
 
@@ -47,36 +47,29 @@ const unsubscribedRows = await db
     return results;
   }
 
-  const params: SendBulkEmailCommandInput = {
-    FromEmailAddress: 'info@d1notes.com',
-    DefaultContent: {
-      Template: {
-        TemplateName: "Dynamic_Email_Template",
-        TemplateData: JSON.stringify({
-          content: html || text,
-          subject: subject,
-        })
-      }
-    },
-    BulkEmailEntries: validEmails.map((email: string) => ({
-      Destination: { ToAddresses: [email] },
-    })),
-  };
-
-  try {
-    const command = new SendBulkEmailCommand(params);
-    const info = await ses.send(command);
-
-    for (const email of validEmails) {
+  // Send individual emails
+  for (const email of validEmails) {
+    try {
+      const command = new SendEmailCommand({
+        FromEmailAddress: 'info@d1notes.com',
+        Destination: { ToAddresses: [email] },
+        Content: {
+          Simple: {
+            Subject: { Data: subject },
+            Body: {
+              Html: { Data: html },
+              ...(text && { Text: { Data: text } })
+            }
+          }
+        }
+      });
+      
+      const info = await ses.send(command);
       results.push({ email, success: true, info });
-    }
-  } catch (error) {
-    for (const email of validEmails) {
+    } catch (error) {
       results.push({ email, success: false, error });
     }
   }
 
   return results;
 }
-
-

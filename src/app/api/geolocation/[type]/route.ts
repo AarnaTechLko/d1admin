@@ -261,7 +261,7 @@ export async function POST(req: NextRequest) {
     if (!type || !message || !Array.isArray(targetIds) || targetIds.length === 0) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
-
+    const subject = body.subject || "📢 New Admin Message";
     const twilioClient = twilio(
       process.env.TWILIO_TEST_ACCOUNT_SID,
       process.env.TWILIO_TEST_AUTH_TOKEN
@@ -284,6 +284,7 @@ const messages = targetIds.map((receiverId: string) => ({
   sender_id: 1,
   receiver_id: Number(receiverId),
   message,
+  subject: subject,
   methods: JSON.stringify(selectedMethods), // ✅ store array as JSON string
   status: 1,
   read: 0,
@@ -313,7 +314,7 @@ await db.insert(admin_message).values(messages);
         if (methods.email && coach?.email) {
           await sendEmail({
             to: coach.email,
-            subject: "📢 New Admin Message",
+            subject: subject,
             html: `Dear ${coach.firstName},<br/><br/>
                    You’ve received a new message from Admin:<br/>
                    <blockquote>${message}</blockquote>
@@ -342,7 +343,7 @@ await db.insert(admin_message).values(messages);
         if (methods.email && player?.email) {
           await sendEmail({
             to: player.email,
-            subject: "📢 New Admin Message",
+            subject: subject,
             html: `Dear ${player.first_name},<br/><br/>
                    You’ve received a new message from Admin:<br/>
                    <blockquote>${message}</blockquote>
@@ -371,7 +372,7 @@ await db.insert(admin_message).values(messages);
         if (methods.email && org?.email) {
           await sendEmail({
             to: org.email,
-            subject: "📢 New Admin Message",
+            subject: subject,
             html: `Dear ${org.organizationName},<br/><br/>
                    You’ve received a new message from Admin:<br/>
                    <blockquote>${message}</blockquote>

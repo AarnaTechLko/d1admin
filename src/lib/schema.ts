@@ -771,7 +771,7 @@ export const admin_message = pgTable("admin_message", {
   message: text("message").notNull(),
   status: integer("status").default(1),   // e.g., 1 = active, 0 = deleted/inactive
   read: integer("read").default(0),       // e.g., 0 = unread, 1 = read
-
+  subject: text("subject").notNull(),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });

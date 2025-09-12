@@ -1,4 +1,4 @@
-import { CreateEmailTemplateCommand, DeleteEmailTemplateCommand, SESv2Client, SendBulkEmailCommand, SendBulkEmailCommandInput, SendBulkEmailCommandOutput, SendEmailCommand } from '@aws-sdk/client-sesv2';
+import { CreateEmailTemplateCommand, DeleteEmailTemplateCommand, SESv2Client, SendBulkEmailCommand, SendBulkEmailCommandInput, SendBulkEmailCommandOutput, SendEmailCommand, SendEmailCommandOutput } from '@aws-sdk/client-sesv2';
 import { db } from '@/lib/db';
 import { unsubscribes } from './schema';
 import { and, eq, inArray, isNotNull } from 'drizzle-orm';
@@ -103,6 +103,101 @@ const unsubscribedRows = await db
   return results;
 }
 
+// export async function sendEmailWithAttachments({
+//   to,
+//   subject,
+//   html,
+//   attachments = []
+// }: SendEmailWithAttachmentsParams) {
+//   const toList = Array.isArray(to) ? [...to] : [to];
+//   const results = [];
+
+//   // Same unsubscribe check as your current function
+//   const unsubscribedRows = await db
+//     .select({ email: unsubscribes.email })
+//     .from(unsubscribes)
+//     .where(and(
+//       inArray(unsubscribes.email, toList),
+//       isNotNull(unsubscribes.unsubscribedAt)
+//     ));
+  
+//   const unsubscribedEmails = new Set(unsubscribedRows.map(row => row.email));
+//   const validEmails = toList.filter(email => {
+//     if (unsubscribedEmails.has(email)) {
+//       results.push({ email, success: false, error: 'Recipient has unsubscribed' });
+//       return false;
+//     }
+//     return true;
+//   });
+
+//   // Download attachments
+//   const attachmentData = await Promise.all(
+//     attachments.map(async (url) => {
+//       const response = await axios.get(url, { responseType: 'arraybuffer' });
+//       return {
+//         filename: url.split('/').pop() || 'attachment',
+//         content: Buffer.from(response.data).toString('base64'),
+//         contentType: response.headers['content-type'] || 'application/octet-stream'
+//       };
+//     })
+//   );
+
+//   // Send individual emails with attachments
+//   for (const email of validEmails) {
+//     // Merge content into BASE_TEMPLATE
+//     // const finalHtml = BASE_TEMPLATE.replace('{{content}}', html);
+//     let token: string;
+// const existingUnsubscribe = await db
+//   .select({ unsubscribeToken: unsubscribes.unsubscribeToken })
+//   .from(unsubscribes)
+//   .where(eq(unsubscribes.email, email))
+//   .limit(1);
+
+// if (existingUnsubscribe.length > 0) {
+//   token = existingUnsubscribe[0].unsubscribeToken;
+// } else {
+//   token = randomBytes(32).toString('hex');
+//   await db.insert(unsubscribes).values({
+//     email: email,
+//     unsubscribeToken: token,
+//     unsubscribedAt: null,
+//   });
+// }
+
+// const unsubscribeLink = `https://d1notes.com/api/unsubscribe?email=${encodeURIComponent(email)}&token=${token}`;
+
+// const finalHtml = BASE_TEMPLATE
+//   .replace('{{content}}', html)
+//   .replace('{{unsubscribe_link}}', unsubscribeLink);
+
+//     const rawMessage = createRawMessage({ 
+//       to: email, 
+//       subject, 
+//       html: finalHtml, 
+//       attachments: attachmentData 
+//     });
+
+//     try {
+//       const command = new SendEmailCommand({
+//         FromEmailAddress: 'info@d1notes.com',
+//         Destination: { ToAddresses: [email] },
+//         Content: {
+//       Raw: {
+//         Data: rawMessage
+//       }
+//     }
+//       });
+      
+//       const info = await ses.send(command);
+//       results.push({ email, success: true, info });
+//     } catch (error) {
+//       results.push({ email, success: false, error });
+//     }
+//   }
+
+//   return results;
+// }
+
 export async function sendEmailWithAttachments({
   to,
   subject,
@@ -110,9 +205,14 @@ export async function sendEmailWithAttachments({
   attachments = []
 }: SendEmailWithAttachmentsParams) {
   const toList = Array.isArray(to) ? [...to] : [to];
-  const results = [];
+const results: { 
+  email: string; 
+  success: boolean; 
+  info?: SendEmailCommandOutput; 
+  error?: Error | string | unknown 
+}[] = [];
 
-  // Same unsubscribe check as your current function
+  // Unsubscribe check (existing code)
   const unsubscribedRows = await db
     .select({ email: unsubscribes.email })
     .from(unsubscribes)
@@ -130,73 +230,82 @@ export async function sendEmailWithAttachments({
     return true;
   });
 
-  // Download attachments
+  // Download attachments ONCE
   const attachmentData = await Promise.all(
     attachments.map(async (url) => {
-      const response = await axios.get(url, { responseType: 'arraybuffer' });
-      return {
-        filename: url.split('/').pop() || 'attachment',
-        content: Buffer.from(response.data).toString('base64'),
-        contentType: response.headers['content-type'] || 'application/octet-stream'
-      };
+      try {
+        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        return {
+          filename: url.split('/').pop() || 'attachment',
+          content: Buffer.from(response.data).toString('base64'),
+          contentType: response.headers['content-type'] || 'application/octet-stream'
+        };
+      } catch (error) {
+        throw new Error(`Failed to download attachment: ${error}`);
+      }
     })
   );
 
-  // Send individual emails with attachments
-  for (const email of validEmails) {
-    // Merge content into BASE_TEMPLATE
-    // const finalHtml = BASE_TEMPLATE.replace('{{content}}', html);
-    let token: string;
-const existingUnsubscribe = await db
-  .select({ unsubscribeToken: unsubscribes.unsubscribeToken })
-  .from(unsubscribes)
-  .where(eq(unsubscribes.email, email))
-  .limit(1);
+  // Process emails in batches of 10 with delay
+  const batchSize = 10;
+  for (let i = 0; i < validEmails.length; i += batchSize) {
+    const batch = validEmails.slice(i, i + batchSize);
+    
+    await Promise.all(batch.map(async (email) => {
+      // Generate unsubscribe token (existing code)
+      let token: string;
+      const existingUnsubscribe = await db
+        .select({ unsubscribeToken: unsubscribes.unsubscribeToken })
+        .from(unsubscribes)
+        .where(eq(unsubscribes.email, email))
+        .limit(1);
 
-if (existingUnsubscribe.length > 0) {
-  token = existingUnsubscribe[0].unsubscribeToken;
-} else {
-  token = randomBytes(32).toString('hex');
-  await db.insert(unsubscribes).values({
-    email: email,
-    unsubscribeToken: token,
-    unsubscribedAt: null,
-  });
-}
-
-const unsubscribeLink = `https://d1notes.com/api/unsubscribe?email=${encodeURIComponent(email)}&token=${token}`;
-
-const finalHtml = BASE_TEMPLATE
-  .replace('{{content}}', html)
-  .replace('{{unsubscribe_link}}', unsubscribeLink);
-
-    const rawMessage = createRawMessage({ 
-      to: email, 
-      subject, 
-      html: finalHtml, 
-      attachments: attachmentData 
-    });
-
-    try {
-      const command = new SendEmailCommand({
-        FromEmailAddress: 'info@d1notes.com',
-        Destination: { ToAddresses: [email] },
-        Content: {
-      Raw: {
-        Data: rawMessage
+      if (existingUnsubscribe.length > 0) {
+        token = existingUnsubscribe[0].unsubscribeToken;
+      } else {
+        token = randomBytes(32).toString('hex');
+        await db.insert(unsubscribes).values({
+          email: email,
+          unsubscribeToken: token,
+          unsubscribedAt: null,
+        });
       }
-    }
+
+      const unsubscribeLink = `https://d1notes.com/api/unsubscribe?email=${encodeURIComponent(email)}&token=${token}`;
+      const finalHtml = BASE_TEMPLATE
+        .replace('{{content}}', html)
+        .replace('{{unsubscribe_link}}', unsubscribeLink);
+
+      const rawMessage = createRawMessage({ 
+        to: email, 
+        subject, 
+        html: finalHtml, 
+        attachments: attachmentData 
       });
-      
-      const info = await ses.send(command);
-      results.push({ email, success: true, info });
-    } catch (error) {
-      results.push({ email, success: false, error });
+
+      try {
+        const command = new SendEmailCommand({
+          FromEmailAddress: 'info@d1notes.com',
+          Destination: { ToAddresses: [email] },
+          Content: { Raw: { Data: rawMessage } }
+        });
+        
+        const info = await ses.send(command);
+        results.push({ email, success: true, info });
+      } catch (error) {
+        results.push({ email, success: false, error });
+      }
+    }));
+
+    // Add delay between batches to respect rate limits
+    if (i + batchSize < validEmails.length) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
 
   return results;
 }
+
 
 function createRawMessage({ to, subject, html, attachments }: RawMessageParams): Buffer {
   const boundary = `----=_Part_${Date.now()}`;
@@ -263,3 +372,22 @@ export async function deleteEmailTemplate(templateName: string = "Dynamic_Email_
     return { success: false, error };
   }
 }
+
+// Run the following fetch requests in your google chrome console to delete or update template the API:
+// fetch('/api/email-template', {
+//   method: 'PUT',
+//   headers: { 'Content-Type': 'application/json' }
+// })
+// .then(res => res.json())
+// .then(data => console.log('Update result:', data))
+// .catch(err => console.error('Update error:', err));
+
+
+// fetch('/api/email-template', {
+//   method: 'DELETE',
+//   headers: { 'Content-Type': 'application/json' },
+//   body: JSON.stringify({ templateName: 'Dynamic_Email_Template' })
+// })
+// .then(res => res.json())
+// .then(data => console.log('Delete result:', data))
+// .catch(err => console.error('Delete error:', err));

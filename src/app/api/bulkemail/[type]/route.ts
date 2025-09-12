@@ -9,9 +9,10 @@ import {
   chats,
   admin,
 } from '@/lib/schema';
-import { and, isNotNull, ne, eq, sql} from 'drizzle-orm';
+import { and, isNotNull, ne, eq, sql, inArray } from 'drizzle-orm';
+
 // import { sendEmail } from '@/lib/helpers';
-import twilio from "twilio";
+// import twilio from "twilio";
 import { MessageInstance } from 'twilio/lib/rest/api/v2010/account/message';
 import { sendEmail, sendEmailWithAttachments } from '@/lib/bulkemail-service';
 
@@ -244,45 +245,200 @@ export async function GET(
 
 
 // -------------------- POST Handler --------------------
+// export async function POST(req: NextRequest) {
+//   try {
+//     const body = await req.json();
+//     const { type, message, targetIds, methods } = body;
+
+//     if (!type || !message || !Array.isArray(targetIds) || targetIds.length === 0) {
+//       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+//     }
+
+//     const twilioClient = twilio(
+//       process.env.TWILIO_TEST_ACCOUNT_SID,
+//       process.env.TWILIO_TEST_AUTH_TOKEN
+//     );
+//     const TWILIO_PHONE = process.env.TWILIO_TEST_PHONE_NUMBER;
+//     const now = new Date();
+//     const protocol = req.headers.get("x-forwarded-proto") || "http";
+//     const host = req.headers.get("host");
+//     const baseUrl = `${protocol}://${host}`;
+
+//     const smsResponses: MessageInstance[] = [];
+
+//     // ---------- Prepare selected methods as array ----------
+//     const selectedMethods: string[] = [];
+// if (methods.email) selectedMethods.push("email");
+// if (methods.sms) selectedMethods.push("sms");
+// if (methods.internal) selectedMethods.push("internal");
+
+// const messages = targetIds.map((receiverId: string) => ({
+//   sender_id: 1,
+//   receiver_id: Number(receiverId),
+//   message,
+//   methods: JSON.stringify(selectedMethods), // ✅ store array as JSON string
+//   status: 1,
+//   read: 0,
+//   created_at: now,
+//   updated_at: now,
+// }));
+
+// await db.insert(admin_message).values(messages);
+
+//     // ---------- Save Chat Records ----------
+//     const chatData = targetIds.map((receiverId: string) => {
+//       const id = Number(receiverId);
+//       return type === "coach"
+//         ? { coachId: id, playerId: 0, club_id: 0, createdAt: now, updatedAt: now }
+//         : { coachId: 0, playerId: id, club_id: 0, createdAt: now, updatedAt: now };
+//     });
+//     await db.insert(chats).values(chatData);
+
+//     // ---------- Send Notifications (Email/SMS) ----------
+//     for (const receiverId of targetIds) {
+//       const id = Number(receiverId);
+
+//       if (type === "coach") {
+//         const coach = await db.query.coaches.findFirst({ where: eq(coaches.id, id) });
+
+//         // Send Email
+//         if (methods.email && coach?.email) {
+//           await sendEmailWithAttachments({
+//             to: coach.email,
+//             subject: "Please Complete/Enhance Your Profile--Site goes live to Players in October",
+//             html: `<blockquote>${message}</blockquote>`,
+//             attachments: [
+//     'https://d2gpzaycuwue25.cloudfront.net/meta/sample_profile_1.png',
+//     'https://d2gpzaycuwue25.cloudfront.net/meta/sample_profile_2.png'
+//   ]
+//           });
+//         }
+
+//         // Send SMS
+//         if (methods.sms && coach?.phoneNumber) {
+//           const formattedNumber = coach.phoneNumber.startsWith("+")
+//             ? coach.phoneNumber
+//             : `+91${coach.phoneNumber.replace(/\D/g, "")}`;
+//           await twilioClient.messages.create({
+//             from: TWILIO_PHONE!,
+//             to: formattedNumber,
+//             body: `📢 Admin Message: ${message}`,
+//           });
+//         }
+//       }
+
+//       if (type === "player") {
+//         const player = await db.query.users.findFirst({ where: eq(users.id, id) });
+
+//         if (methods.email && player?.email) {
+//           await sendEmail({
+//             to: player.email,
+//             subject: "📢 New Admin Message",
+//             html: `Dear ${player.first_name},<br/><br/>
+//                    You’ve received a new message from Admin:<br/>
+//                    <blockquote>${message}</blockquote>
+//                    <a href="${baseUrl}/login">Login</a> to view the message.<br/><br/>
+//                    Regards,<br/>D1 Admin`,
+//             text: message,
+//           });
+//         }
+
+//         if (methods.sms && player?.number) {
+//           const formattedNumber = player.number.startsWith("+")
+//             ? player.number
+//             : `+91${player.number.replace(/\D/g, "")}`;
+//           const smsRes = await twilioClient.messages.create({
+//             from: TWILIO_PHONE!,
+//             to: formattedNumber,
+//             body: `📢 Admin Message: ${message}`,
+//           });
+//           smsResponses.push(smsRes);
+//         }
+//       }
+
+//       if (type === "organization") {
+//         const org = await db.query.enterprises.findFirst({ where: eq(enterprises.id, id) });
+
+//         if (methods.email && org?.email) {
+//           await sendEmail({
+//             to: org.email,
+//             subject: "📢 New Admin Message",
+//             html: `Dear ${org.organizationName},<br/><br/>
+//                    You’ve received a new message from Admin:<br/>
+//                    <blockquote>${message}</blockquote>
+//                    <a href="${baseUrl}/login">Login</a> to view the message.<br/><br/>
+//                    Regards,<br/>D1 Admin`,
+//             text: message,
+//           });
+//         }
+
+//         if (methods.sms && org?.mobileNumber) {
+//           const formattedNumber = org.mobileNumber.startsWith("+")
+//             ? org.mobileNumber
+//             : `+91${org.mobileNumber.replace(/\D/g, "")}`;
+//           await twilioClient.messages.create({
+//             from: TWILIO_PHONE!,
+//             to: formattedNumber,
+//             body: `📢 Admin Message: ${message}`,
+//           });
+//         }
+//       }
+//     }
+
+//     return NextResponse.json({
+//       success: true,
+//       message: "Notification sent successfully (email/internal/SMS).",
+//       sentMessage: message,
+//       smsResponses,
+//     });
+//   } catch (error) {
+//     console.error("❌ POST Error sending notification:", error);
+//     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+//   }
+// }
+
+
+// -------------------- POST Handler --------------------
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { type, message, targetIds, methods } = body;
+    const { type, subject, message, targetIds, methods } = body;
 
-    if (!type || !message || !Array.isArray(targetIds) || targetIds.length === 0) {
+    if (!type || !subject || !message || !Array.isArray(targetIds) || targetIds.length === 0) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const twilioClient = twilio(
-      process.env.TWILIO_TEST_ACCOUNT_SID,
-      process.env.TWILIO_TEST_AUTH_TOKEN
-    );
-    const TWILIO_PHONE = process.env.TWILIO_TEST_PHONE_NUMBER;
+    // const twilioClient = twilio(
+    //   process.env.TWILIO_TEST_ACCOUNT_SID,
+    //   process.env.TWILIO_TEST_AUTH_TOKEN
+    // );
+    // const TWILIO_PHONE = process.env.TWILIO_TEST_PHONE_NUMBER;
     const now = new Date();
-    const protocol = req.headers.get("x-forwarded-proto") || "http";
-    const host = req.headers.get("host");
-    const baseUrl = `${protocol}://${host}`;
+    // const protocol = req.headers.get("x-forwarded-proto") || "http";
+    // const host = req.headers.get("host");
+    // const baseUrl = `${protocol}://${host}`;
 
     const smsResponses: MessageInstance[] = [];
 
     // ---------- Prepare selected methods as array ----------
     const selectedMethods: string[] = [];
-if (methods.email) selectedMethods.push("email");
-if (methods.sms) selectedMethods.push("sms");
-if (methods.internal) selectedMethods.push("internal");
+    if (methods.email) selectedMethods.push("email");
+    if (methods.sms) selectedMethods.push("sms");
+    if (methods.internal) selectedMethods.push("internal");
 
-const messages = targetIds.map((receiverId: string) => ({
-  sender_id: 1,
-  receiver_id: Number(receiverId),
-  message,
-  methods: JSON.stringify(selectedMethods), // ✅ store array as JSON string
-  status: 1,
-  read: 0,
-  created_at: now,
-  updated_at: now,
-}));
+    const messages = targetIds.map((receiverId: string) => ({
+      sender_id: 1,
+      receiver_id: Number(receiverId),
+      subject,
+      message,
+      methods: JSON.stringify(selectedMethods),
+      status: 1,
+      read: 0,
+      created_at: now,
+      updated_at: now,
+    }));
 
-await db.insert(admin_message).values(messages);
+    await db.insert(admin_message).values(messages);
 
     // ---------- Save Chat Records ----------
     const chatData = targetIds.map((receiverId: string) => {
@@ -294,95 +450,106 @@ await db.insert(admin_message).values(messages);
     await db.insert(chats).values(chatData);
 
     // ---------- Send Notifications (Email/SMS) ----------
-    for (const receiverId of targetIds) {
-      const id = Number(receiverId);
+    if (type === "coach") {
+      const coachIds = targetIds.map(id => Number(id));
+      const allCoaches = await db.query.coaches.findMany({ 
+        where: inArray(coaches.id, coachIds) 
+      });
 
-      if (type === "coach") {
-        const coach = await db.query.coaches.findFirst({ where: eq(coaches.id, id) });
-
-        // Send Email
-        if (methods.email && coach?.email) {
+      if (methods.email) {
+        const coachEmails = allCoaches.map(c => c.email).filter((email): email is string => !!email);
+        if (coachEmails.length > 0) {
           await sendEmailWithAttachments({
-            to: coach.email,
-            subject: "D1 Notes — Complete/Enhance Your Profile",
-            html: `Hi Coach,<br/><br/>
-                   <blockquote>${message}</blockquote>`,
+            to: coachEmails,
+            subject: subject,
+            html: `<blockquote>${message}</blockquote>`,
             attachments: [
-    'https://d2gpzaycuwue25.cloudfront.net/meta/sample_coach_profile_1.png',
-    'https://d2gpzaycuwue25.cloudfront.net/meta/sample_coach_profile_2.png'
-  ]
-          });
-        }
-
-        // Send SMS
-        if (methods.sms && coach?.phoneNumber) {
-          const formattedNumber = coach.phoneNumber.startsWith("+")
-            ? coach.phoneNumber
-            : `+91${coach.phoneNumber.replace(/\D/g, "")}`;
-          await twilioClient.messages.create({
-            from: TWILIO_PHONE!,
-            to: formattedNumber,
-            body: `📢 Admin Message: ${message}`,
+              'https://d2gpzaycuwue25.cloudfront.net/meta/sample_profile_1.png',
+              'https://d2gpzaycuwue25.cloudfront.net/meta/sample_profile_2.png'
+            ]
           });
         }
       }
 
-      if (type === "player") {
-        const player = await db.query.users.findFirst({ where: eq(users.id, id) });
+    //   if (methods.sms) {
+    //     for (const coach of allCoaches.filter(c => c.phoneNumber)) {
+    //       const formattedNumber = coach.phoneNumber.startsWith("+")
+    //         ? coach.phoneNumber
+    //         : `+91${coach.phoneNumber.replace(/\D/g, "")}`;
+    //       await twilioClient.messages.create({
+    //         from: TWILIO_PHONE!,
+    //         to: formattedNumber,
+    //         body: `📢 Admin Message: ${message}`,
+    //       });
+    //     }
+    //   }
+    }
 
-        if (methods.email && player?.email) {
+    if (type === "player") {
+      const playerIds = targetIds.map(id => Number(id));
+      const allPlayers = await db.query.users.findMany({ 
+        where: inArray(users.id, playerIds) 
+      });
+
+      if (methods.email) {
+        const playerEmails = allPlayers.map(p => p.email).filter((email): email is string => !!email);
+
+        if (playerEmails.length > 0) {
           await sendEmail({
-            to: player.email,
-            subject: "📢 New Admin Message",
-            html: `Dear ${player.first_name},<br/><br/>
-                   You’ve received a new message from Admin:<br/>
-                   <blockquote>${message}</blockquote>
-                   <a href="${baseUrl}/login">Login</a> to view the message.<br/><br/>
-                   Regards,<br/>D1 Admin`,
+            to: playerEmails,
+            subject: subject,
+            html: `<blockquote>${message}</blockquote>`,
             text: message,
           });
         }
-
-        if (methods.sms && player?.number) {
-          const formattedNumber = player.number.startsWith("+")
-            ? player.number
-            : `+91${player.number.replace(/\D/g, "")}`;
-          const smsRes = await twilioClient.messages.create({
-            from: TWILIO_PHONE!,
-            to: formattedNumber,
-            body: `📢 Admin Message: ${message}`,
-          });
-          smsResponses.push(smsRes);
-        }
       }
 
-      if (type === "organization") {
-        const org = await db.query.enterprises.findFirst({ where: eq(enterprises.id, id) });
+    //   if (methods.sms) {
+    //     for (const player of allPlayers.filter(p => p.number)) {
+    //       const formattedNumber = player.number.startsWith("+")
+    //         ? player.number
+    //         : `+91${player.number.replace(/\D/g, "")}`;
+    //       const smsRes = await twilioClient.messages.create({
+    //         from: TWILIO_PHONE!,
+    //         to: formattedNumber,
+    //         body: `📢 Admin Message: ${message}`,
+    //       });
+    //       smsResponses.push(smsRes);
+    //     }
+    //   }
+    }
 
-        if (methods.email && org?.email) {
+    if (type === "organization") {
+      const orgIds = targetIds.map(id => Number(id));
+      const allOrgs = await db.query.enterprises.findMany({ 
+        where: inArray(enterprises.id, orgIds) 
+      });
+
+      if (methods.email) {
+        const orgEmails = allOrgs.map(o => o.email).filter((email): email is string => !!email);
+
+        if (orgEmails.length > 0) {
           await sendEmail({
-            to: org.email,
-            subject: "📢 New Admin Message",
-            html: `Dear ${org.organizationName},<br/><br/>
-                   You’ve received a new message from Admin:<br/>
-                   <blockquote>${message}</blockquote>
-                   <a href="${baseUrl}/login">Login</a> to view the message.<br/><br/>
-                   Regards,<br/>D1 Admin`,
+            to: orgEmails,
+            subject: subject,
+            html: `<blockquote>${message}</blockquote>`,
             text: message,
           });
         }
-
-        if (methods.sms && org?.mobileNumber) {
-          const formattedNumber = org.mobileNumber.startsWith("+")
-            ? org.mobileNumber
-            : `+91${org.mobileNumber.replace(/\D/g, "")}`;
-          await twilioClient.messages.create({
-            from: TWILIO_PHONE!,
-            to: formattedNumber,
-            body: `📢 Admin Message: ${message}`,
-          });
-        }
       }
+
+    //   if (methods.sms) {
+    //     for (const org of allOrgs.filter(o => o.mobileNumber)) {
+    //       const formattedNumber = org.mobileNumber.startsWith("+")
+    //         ? org.mobileNumber
+    //         : `+91${org.mobileNumber.replace(/\D/g, "")}`;
+    //       await twilioClient.messages.create({
+    //         from: TWILIO_PHONE!,
+    //         to: formattedNumber,
+    //         body: `📢 Admin Message: ${message}`,
+    //       });
+    //     }
+    //   }
     }
 
     return NextResponse.json({

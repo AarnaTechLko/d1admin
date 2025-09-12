@@ -49,6 +49,7 @@ export default function NotificationPage() {
   const [sendEmail, setSendEmail] = useState(false);
   const [sendSMS, setSendSMS] = useState(false);
   const [sendInternal, setSendInternal] = useState(false);
+  const [subject, setSubject] = useState('');
 
   const matchingEntities = Array.isArray(entities)
     ? entities.filter((item) => {
@@ -153,11 +154,11 @@ export default function NotificationPage() {
   };
 
   const handleSubmit = async () => {
-    if (!type || selectedIds.length === 0 || !message) {
+    if (!type || selectedIds.length === 0 || !subject || !message) {
       Swal.fire({
         icon: 'warning',
         title: 'Missing Fields',
-        text: 'Please select a type, message, and at least one recipient.',
+        text: 'Please select a type, subject, message, and at least one recipient.',
       });
       return;
     }
@@ -169,6 +170,7 @@ export default function NotificationPage() {
       city,
       gender: type === 'player' ? gender : undefined,
       position: type === 'player' ? position : undefined,
+      subject,
       message,
       targetIds: selectedIds,
       methods: {
@@ -187,6 +189,7 @@ export default function NotificationPage() {
         title: 'Notification Sent',
         text: 'Your message has been successfully delivered.',
       });
+      setSubject('');
       setMessage('');
       setSelectedIds([]);
     } catch (err) {
@@ -346,7 +349,16 @@ export default function NotificationPage() {
           <Label>Message</Label>
           <TextArea className="w-full mt-1 border rounded-lg text-black" rows={5} value={message} placeholder="Enter your notification message here..." onChange={(value: string) => setMessage(value)} />
         </div> */}
-
+<div>
+  <Label>Subject</Label>
+  <input
+    type="text"
+    className="w-full p-2 mt-1 border rounded-lg bg-white"
+    value={subject}
+    onChange={(e) => setSubject(e.target.value)}
+    placeholder="Enter notification subject..."
+  />
+</div>
         <div>
   <Label>Message</Label>
   <ReactQuill
