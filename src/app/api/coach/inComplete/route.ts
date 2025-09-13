@@ -24,9 +24,9 @@ export async function GET(req: NextRequest) {
   const page = parseInt(url.searchParams.get('page') || '1', 10);
   const limit = parseInt(url.searchParams.get('limit') || '10', 10);
   const offset = (page - 1) * limit;
-  const timeRange = url.searchParams.get('timeRange') || '';
+  // const timeRange = url.searchParams.get('timeRange') || '';
 
-  const now = new Date();
+  // const now = new Date();
 //   let timeFilterCondition;
 //   switch (timeRange) {
 //     case '24h':

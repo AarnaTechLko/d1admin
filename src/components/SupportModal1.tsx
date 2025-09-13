@@ -76,7 +76,7 @@ const SupportModal1: React.FC<SupportModalProps> = ({
 
     // Fetch initial users
     fetchUsers(userType);
-  }, [session, setSupportOpen]);
+  }, [session, setSupportOpen, userType]);
 
   // Update users when userType changes
   useEffect(() => {

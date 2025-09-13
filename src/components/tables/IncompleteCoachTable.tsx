@@ -1,23 +1,23 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 
-import Swal from "sweetalert2";
-import withReactContent from "sweetalert2-react-content";
+// import Swal from "sweetalert2";
+// import withReactContent from "sweetalert2-react-content";
 import { inCompleteCoach } from "@/app/types/types";
 // import router from "next/router";
-import { useRouter } from "next/navigation";
-import axios from "axios";
-type RecentMessage = {
-  sender_id: string;
-  from: string;
-  methods: string[]; 
-  id: number;
-  message: string;
-  created_at: string;
-  position: "left" | "right"; // for UI positioning
-  bgColor: "green" | "blue";  // for background color
-};
+// import { useRouter } from "next/navigation";
+// import axios from "axios";
+// type RecentMessage = {
+//   sender_id: string;
+//   from: string;
+//   methods: string[]; 
+//   id: number;
+//   message: string;
+//   created_at: string;
+//   position: "left" | "right"; // for UI positioning
+//   bgColor: "green" | "blue";  // for background color
+// };
 interface CoachTableProps {
   data: inCompleteCoach[];
   currentPage: number;
@@ -28,8 +28,8 @@ interface CoachTableProps {
 const IncompleteCoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPages, setCurrentPage }) => {
   // const [showConfirmation, setShowConfirmation] = useState(false);
   // const [confirmationCallback, setConfirmationCallback] = useState<() => void>(() => () => { });
-  const [ipOpen, setIpOpen] = useState<number | null>(null);
-  const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
+  // const [ipOpen, setIpOpen] = useState<number | null>(null);
+  // const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
   // const itemsPerPage = 10;
   // const numberOfPages = Math.ceil(totalPages / itemsPerPage);
 
@@ -40,59 +40,59 @@ const IncompleteCoachTable: React.FC<CoachTableProps> = ({ data = [], currentPag
 
   // console.log("Paginated: ", paginatedData);
 
-  const [isCoachPasswordModalOpen, setCoachPasswordModalOpen] = useState(false);
-  const [selectedCoachId, setSelectedCoachId] = useState<number | null>(null);
-  const [selectedCoachid, setSelectedCoachid] = useState<number | null>(null);
+  // const [isCoachPasswordModalOpen, setCoachPasswordModalOpen] = useState(false);
+  // const [selectedCoachId, setSelectedCoachId] = useState<number | null>(null);
+  // const [selectedCoachid, setSelectedCoachid] = useState<number | null>(null);
 
-  const [newCoachPassword, setNewCoachPassword] = useState("");
-  const [messageText, setMessageText] = useState("");
-  const [sendEmail, setSendEmail] = useState(false);
-  const [sendSMS, setSendSMS] = useState(false);
-  const [sendInternal, setSendInternal] = useState(false);
-  const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
+  // const [newCoachPassword, setNewCoachPassword] = useState("");
+  // const [messageText, setMessageText] = useState("");
+  // const [sendEmail, setSendEmail] = useState(false);
+  // const [sendSMS, setSendSMS] = useState(false);
+  // const [sendInternal, setSendInternal] = useState(false);
+  // const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
 
   // const userRole = sessionStorage.getItem("role");
-  const router = useRouter();
-  const handleOpenCoachModal = (coachId: number) => {
-    setSelectedCoachId(coachId);
-    setCoachPasswordModalOpen(true);
-  };
+  // const router = useRouter();
+  // const handleOpenCoachModal = (coachId: number) => {
+  //   setSelectedCoachId(coachId);
+  //   setCoachPasswordModalOpen(true);
+  // };
 
-  useEffect(() => {
-    if (selectedCoachid) {
-      (async () => {
-        try {
-          const res = await axios.get(`/api/messages?type=coach&id=${selectedCoachid}`);
-          setRecentMessages(res.data.messages || []);
-        } catch (err) {
-          console.error("Error fetching messages:", err);
-        }
-      })();
-    }
-  }, [selectedCoachid]);
+  // useEffect(() => {
+  //   if (selectedCoachid) {
+  //     (async () => {
+  //       try {
+  //         const res = await axios.get(`/api/messages?type=coach&id=${selectedCoachid}`);
+  //         setRecentMessages(res.data.messages || []);
+  //       } catch (err) {
+  //         console.error("Error fetching messages:", err);
+  //       }
+  //     })();
+  //   }
+  // }, [selectedCoachid]);
 
-  const handleCloseCoachModal = () => {
-    setSelectedCoachId(null);
-    setNewCoachPassword("");
-    setCoachPasswordModalOpen(false);
-  };
+  // const handleCloseCoachModal = () => {
+  //   setSelectedCoachId(null);
+  //   setNewCoachPassword("");
+  //   setCoachPasswordModalOpen(false);
+  // };
 
-  const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'enterprise') => {
-    try {
-      const res = await fetch(`/api/ip_logstab?userId=${userId}&type=${type}`);
-      if (!res.ok) {
-        throw new Error(`API error: ${res.status}`);
-      }
+  // const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'enterprise') => {
+  //   try {
+  //     const res = await fetch(`/api/ip_logstab?userId=${userId}&type=${type}`);
+  //     if (!res.ok) {
+  //       throw new Error(`API error: ${res.status}`);
+  //     }
 
-      const result = await res.json();
-      console.log("IP Log Response:", result);
+  //     const result = await res.json();
+  //     console.log("IP Log Response:", result);
 
-      setIpData(result.data || []); // Set the IP data for dialog
-      setIpOpen(userId);            // Open dialog for that user
-    } catch (error) {
-      console.error("Failed to fetch IP logs:", error);
-    }
-  };
+  //     setIpData(result.data || []); // Set the IP data for dialog
+  //     setIpOpen(userId);            // Open dialog for that user
+  //   } catch (error) {
+  //     console.error("Failed to fetch IP logs:", error);
+  //   }
+  // };
 
   return (
     <div>
