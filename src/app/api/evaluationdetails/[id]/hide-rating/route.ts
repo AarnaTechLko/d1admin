@@ -35,8 +35,7 @@ export async function PATCH(
       .update(playerEvaluation)
       .set({
         review_status: 0,
-        rating: null, // Optional: clear rating
-        remarks: null,
+       
       })
       .where(eq(playerEvaluation.id, evaluationId));
 

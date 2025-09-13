@@ -1,6 +1,6 @@
+'use client';
 import React from 'react';
-import { Attribute } from '@/app/types/types';
-import { Category } from '@/app/types/types';
+import { Attribute, Category } from '@/app/types/types';
 
 interface PitcherComponentProps {
   categories: Category[];
@@ -13,8 +13,6 @@ interface PitcherComponentProps {
   position?: string | number;
 }
 
-
-
 const PitcherComponent: React.FC<PitcherComponentProps> = ({
   categories,
   evaluationResponses,
@@ -22,13 +20,12 @@ const PitcherComponent: React.FC<PitcherComponentProps> = ({
   position,
 }) => {
   const innings = position == 21 ? 9 : 7;
-  // console.log('evaluationResponses:', evaluationResponses);
-  // console.log('position:', position);
+
   const handleInningScoreChange = (
     categoryId: string,
     attributeId: string,
     inning: number,
-    score: string,
+    score: string
   ) => {
     const currentScores = (
       (evaluationResponses[categoryId]?.[attributeId] as string) || ''
@@ -43,24 +40,22 @@ const PitcherComponent: React.FC<PitcherComponentProps> = ({
     onScoreChange(categoryId, attributeId, finalValue);
 
     // Calculate and update avgScore
-    const category = categories.find(c => c.id == categoryId);
-  const avgScoreAttr = category?.attributes?.find(
-  (attr: Attribute) => attr.name === 'avgScore'
-);
+    const category = categories.find(c => String(c.id) === categoryId);
+    const avgScoreAttr = category?.attributes?.find(
+      (attr: Attribute) => attr.name === 'avgScore'
+    );
 
     if (avgScoreAttr) {
-      // Get all comma-separated values for this category
       const allValues: number[] = [];
       const categoryData = evaluationResponses[categoryId] || {};
 
-      // Include the current updated attribute
       const updatedCategoryData = {
         ...categoryData,
         [attributeId]: finalValue,
       };
 
       Object.entries(updatedCategoryData)
-        .filter(([attrId]) => attrId !== avgScoreAttr.id.toString())
+        .filter(([attrId]) => attrId !== String(avgScoreAttr.id))
         .forEach(([, val]) => {
           if (typeof val === 'string' && val.includes(',')) {
             const scores = val
@@ -76,15 +71,14 @@ const PitcherComponent: React.FC<PitcherComponentProps> = ({
           ? (allValues.reduce((a, b) => a + b, 0) / allValues.length).toFixed(2)
           : '0.00';
 
-      // Update avgScore
-      onScoreChange(categoryId, avgScoreAttr.id.toString(), average);
+      onScoreChange(categoryId, String(avgScoreAttr.id), average);
     }
   };
 
   const getInningScore = (
     categoryId: string,
     attributeId: string,
-    inning: number,
+    inning: number
   ) => {
     const scores = (
       (evaluationResponses[categoryId]?.[attributeId] as string) || ''
@@ -95,22 +89,13 @@ const PitcherComponent: React.FC<PitcherComponentProps> = ({
   const calculateStats = (categoryId: string) => {
     const categoryData = evaluationResponses[categoryId] || {};
 
-    // Debug: log all attribute names
-    // const category = categories.find(c => c.id == categoryId);
-    // console.log(
-    //   'Available attributes:',
-    //   category?.attributes.map((a: any) => a.name),
-    // );
-
-    // Helper to get total from comma-separated values
     const getTotal = (attributeName: string) => {
- const attr = categories
-    ?.find(c => c.id === categoryId) // both strings now
-    ?.attributes?.find(a => a.name === attributeName);
+      const attr = categories
+        ?.find(c => String(c.id) === categoryId)
+        ?.attributes?.find(a => a.name === attributeName);
 
-      // console.log(`Looking for "${attributeName}", found:`, attr);
       if (!attr) return 0;
-      const values = ((categoryData[attr.id] as string) || '').split(',');
+      const values = ((categoryData[String(attr.id)] as string) || '').split(',');
       return values.reduce((sum, val) => sum + (parseInt(val) || 0), 0);
     };
 
@@ -124,18 +109,7 @@ const PitcherComponent: React.FC<PitcherComponentProps> = ({
     const homeRuns = getTotal('Home Runs');
     const earnedRuns = getTotal('Earned Runs');
 
-    const inningsPitched = innings; // Assuming 7 innings
-
-    // console.log('Stats:', {
-    //   totalBalls,
-    //   totalStrikes,
-    //   totalHits,
-    //   firstPitchStrikes,
-    //   battersFaced,
-    //   walks,
-    //   strikeouts,
-    //   homeRuns,
-    // });
+    const inningsPitched = innings;
 
     return {
       firstPitchStrikePercent:
@@ -153,9 +127,9 @@ const PitcherComponent: React.FC<PitcherComponentProps> = ({
       fip:
         inningsPitched > 0
           ? (
-            (13 * homeRuns + 3 * walks - 2 * strikeouts) / inningsPitched +
-            3.1
-          ).toFixed(2)
+              (13 * homeRuns + 3 * walks - 2 * strikeouts) / inningsPitched +
+              3.1
+            ).toFixed(2)
           : '0.00',
       era:
         inningsPitched > 0
@@ -175,12 +149,10 @@ const PitcherComponent: React.FC<PitcherComponentProps> = ({
             className="mb-4 grid gap-2"
             style={{ gridTemplateColumns: `1fr repeat(${innings}, 1fr)` }}
           >
-            <div></div> {/* Empty cell for attribute names column */}
+            <div></div>
             {Array.from({ length: innings }, (_, i) => (
               <div key={i} className="text-center">
-                <label className="block text-sm font-medium">
-                  Inning {i + 1}
-                </label>
+                <label className="block text-sm font-medium">Inning {i + 1}</label>
               </div>
             ))}
           </div>
@@ -189,7 +161,7 @@ const PitcherComponent: React.FC<PitcherComponentProps> = ({
           {category.attributes
             ?.filter(
               (attr: Attribute) =>
-                !attr.name.includes('Commentary') && attr.name !== 'avgScore',
+                !attr.name.includes('Commentary') && attr.name !== 'avgScore'
             )
             .map((attribute: Attribute) => (
               <div
@@ -204,10 +176,14 @@ const PitcherComponent: React.FC<PitcherComponentProps> = ({
                   <div key={i} className="text-center">
                     <input
                       type="number"
-                      min="0"
-                      max="100"
+                      min={0}
+                      max={100}
                       className="w-full rounded border border-gray-300 p-1 text-center text-sm"
-                      value={getInningScore(String(category.id), String(attribute.id), i)}
+                      value={getInningScore(
+                        String(category.id),
+                        String(attribute.id),
+                        i
+                      )}
                       onChange={e =>
                         handleInningScoreChange(
                           String(category.id),
@@ -224,56 +200,49 @@ const PitcherComponent: React.FC<PitcherComponentProps> = ({
             ))}
 
           {/* Statistics Section */}
-          {/* Statistics Section */}
           <div className="mt-6 grid grid-cols-7 gap-4 rounded-lg bg-gray-50 p-4">
             <div className="text-center">
               <div className="text-sm font-medium text-gray-600">
                 1st Pitch Strike %
               </div>
               <div className="text-lg font-bold">
-                {calculateStats(category.id).firstPitchStrikePercent}%
+                {calculateStats(String(category.id)).firstPitchStrikePercent}%
               </div>
             </div>
             <div className="text-center">
-              <div className="text-sm font-medium text-gray-600">
-                Hits vs. Inning
-              </div>
+              <div className="text-sm font-medium text-gray-600">Hits vs. Inning</div>
               <div className="text-lg font-bold">
-                {calculateStats(category.id).hitsVsInning}
+                {calculateStats(String(category.id)).hitsVsInning}
               </div>
             </div>
             <div className="text-center">
-              <div className="text-sm font-medium text-gray-600">
-                Total Pitch Count
-              </div>
+              <div className="text-sm font-medium text-gray-600">Total Pitch Count</div>
               <div className="text-lg font-bold">
-                {calculateStats(category.id).totalPitchCount}
+                {calculateStats(String(category.id)).totalPitchCount}
               </div>
             </div>
             <div className="text-center">
-              <div className="text-sm font-medium text-gray-600">
-                Ball/Strike Ratio
-              </div>
+              <div className="text-sm font-medium text-gray-600">Ball/Strike Ratio</div>
               <div className="text-lg font-bold">
-                {calculateStats(category.id).ballStrikeRatio}
+                {calculateStats(String(category.id)).ballStrikeRatio}
               </div>
             </div>
             <div className="text-center">
               <div className="text-sm font-medium text-gray-600">WHIP</div>
               <div className="text-lg font-bold">
-                {calculateStats(category.id).whip}
+                {calculateStats(String(category.id)).whip}
               </div>
             </div>
             <div className="text-center">
               <div className="text-sm font-medium text-gray-600">FIP</div>
               <div className="text-lg font-bold">
-                {calculateStats(category.id).fip}
+                {calculateStats(String(category.id)).fip}
               </div>
             </div>
             <div className="text-center">
               <div className="text-sm font-medium text-gray-600">ERA</div>
               <div className="text-lg font-bold">
-                {calculateStats(category.id).era}
+                {calculateStats(String(category.id)).era}
               </div>
             </div>
           </div>
@@ -282,4 +251,5 @@ const PitcherComponent: React.FC<PitcherComponentProps> = ({
     </div>
   );
 };
+
 export default PitcherComponent;
