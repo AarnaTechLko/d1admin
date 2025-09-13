@@ -3,32 +3,25 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 
 import React, { useEffect, useState } from 'react';
 import { Evaluation } from '@/app/types/types';
-// import {
-//   Radar,
-//   RadarChart,
-//   PolarGrid,
-//   PolarAngleAxis,
-//   PolarRadiusAxis,
-//   ResponsiveContainer,
-// } from 'recharts';
+
 import Loading from '@/components/Loading';
 import { format } from 'date-fns';
 import Image from 'next/image';
-import { getSession } from 'next-auth/react';
+// import { getSession } from 'next-auth/react';
 // import defaultImage from '../../public/default.jpg';
 import defaultImage from '@/public/default.jpg'
 import { FaFileAlt, FaSpinner } from 'react-icons/fa';
-// import { showError } from '@/components/Toastr';
+import { Category } from '@/app/types/types';
 
-// import EvaluationPolarCharts from '@/components/coach/EvaluationPolarCharts';
-// import {PolarChartValues} from '@/app/types/types'
-import {  useSearchParams } from 'next/navigation';
+import EvaluationPolarCharts from '@/components/coach/EvaluationPolarCharts';
+/* import { PolarChartValues } from '@/app/types/types' */
+import { useSearchParams } from 'next/navigation';
 import { Clock } from 'lucide-react';
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
-import Link from 'next/link';
-// import { Category } from '@mui/icons-material';
-// import PitcherComponent from '@/components/coach/pitcherComponent';
+///import { Category } from '@mui/icons-material';
+import PitcherComponent from '@/components/coach/pitcherComponent';
 import { useRoleGuard } from '@/hooks/useRoleGaurd';
+import Swal from 'sweetalert2';
 
 // type EvaluationPageProps = {
 //   searchParams: {
@@ -59,11 +52,11 @@ type AbilityData = {
 // type RadarSkill = {
 //   label: string;
 //   key:
-//     | 'technicalAverage'
-//     | 'tacticalAverage'
-//     | 'distributionAverage'
-//     | 'physicalAverage'
-//     | 'organizationAverage';
+//   | 'technicalAverage'
+//   | 'tacticalAverage'
+//   | 'distributionAverage'
+//   | 'physicalAverage'
+//   | 'organizationAverage';
 // };
 
 // 2. Pre-define each set for clarity:
@@ -90,11 +83,11 @@ interface Attribute {
   name: string;
 }
 
-interface Category {
+/* interface Category {
   id: number;
   name: string;
   attributes: Attribute[] | null;
-}
+} */
 
 interface EvaluationTemplateItem {
   sport: string;
@@ -102,66 +95,37 @@ interface EvaluationTemplateItem {
   categories: Category[] | null;
 }
 function EvaluationPage() {
-          useRoleGuard();
-  // let position = 'Field Player'; // or any dynamic value
+  useRoleGuard();
+  const [evaluationData, setEvaluationData] = useState<Evaluation | null>(null); // State to store evaluation data
 
-//   const [position, setPosition] = useState<string>();
-//   const [headerMetrics, setHeaderMetrics] = useState<string[]>([]);
-//   const [radarSkills, setRadarSkills] = useState<RadarSkill[]>([]);
+  // const [position, setPosition] = useState<string>();
+  // const [headerMetrics, setHeaderMetrics] = useState<string[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [newTitle, setNewTitle] = useState(evaluationData?.reviewTitleCustom || "");
+  const [newComment, setNewComment] = useState(evaluationData?.reviewComment || "");
 
-//   const router = useRouter();
+  const [newRating, setNewRating] = useState(evaluationData?.rating || 0);
+
   const searchParams = useSearchParams();
-    const evaluationId = searchParams.get('evaluationId');
-  // const [headerRatings, setHeaderRatings] = useState<number[]>(
-  //   Array(headerMetrics.length).fill(0),
-  // );
-  // const [skillRatings, setSkillRatings] = useState<number[]>(
-  //   Array(radarSkills.length).fill(0),
-  // );
-//   const [headerRatings, setHeaderRatings] = useState<number[]>([]);
-//   const [skillRatings, setSkillRatings] = useState<number[]>([]);
+  const evaluationId = searchParams.get('evaluationId');
 
-//   const { evaluationId } = searchParams; // Get evaluationId from searchParams
-    const [evaluationData, setEvaluationData] = useState<Evaluation | null>(null); // State to store evaluation data
+
+  //   const { evaluationId } = searchParams; // Get evaluationId from searchParams
   const [evaluationTemplateData, setEvaluationTemplateData] =
     useState<EvaluationTemplateItem | null>(null);
-//   const [error, setError] = useState<string | null>(null); // State to handle errors
-//   const [technicalScores, setTechnicalScores] = useState<{
-//     [key: string]: string;
-//   }>({});
-//   const [tacticalScores, setTacticalScores] = useState<{
-//     [key: string]: string;
-//   }>({});
-//   const [physicalScores, setPhysicalScores] = useState<{[key: string]: string;}>({});
-  // const [distributionScores, setDistributionScores] = useState<{
-  //   [key: string]: string;
-  // }>({});
-  // const [organizationScores, setOrganizationScores] = useState<{
-  //   [key: string]: string;
-  // }>({});
+
   const [loading, setLoading] = useState<boolean>(true);
 
   const [downloadingPDF, setDownloadingPDF] = useState<boolean>(false);
 
-  const [userType, setUserType] = useState<string | null>(null);
-//   const [playerId, setPlayerId] = useState<number>(0);
   const [data, setData] = useState<AbilityData | null>(null);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   //These statehooks are for retrieving the averages from each section of the evaluation form
   const [evaluationAverage, setEvaluationAverage] = useState<number>(0);
-//   const [technicalAverage, setTechnicalAverage] = useState<number>(0);
-//   const [tacticalAverage, setTacticalAverage] = useState<number>(0);
-//   const [physicalAverage, setPhysicalAverage] = useState<number>(0);
-  // const [distributionAverage, setDistributionAverage] = useState<number>(0);
-  // const [organizationAverage, setOrganizationAverage] = useState<number>(0);
-
-  // const [abilities, setAbilities] = useState<AbilityData[]>([]);
+  
   const MAX_FILE_SIZE = 9 * 1024 * 1024; // 9MB
 
-  const [rating, setRating] = useState<number>(0);
-  const [hover, setHover] = useState<number>(0);
-//   const [remarks, setRemarks] = useState<string>('');
-//   const [isRatingSubmitted, setIsRatingSubmitted] = useState(false);
   const [videoOneTimeStamps, setVideoOneTimeStamps] = useState<TimeInterval[]>([
     { start: '', end: '', description: '' },
   ]);
@@ -173,48 +137,22 @@ function EvaluationPage() {
     ? format(new Date(evaluationData.updated_at), 'MM/dd/yyyy')
     : '';
 
-//   const pdfRef = useRef<HTMLDivElement>(null);
 
-//   const [formData, setFormData] = useState({
-//     speed: '',
-//     comm_persistence: '',
-//     comm_aggression: '',
-//     comm_alertness: '',
-//     exe_scoring: '',
-//     exe_receiving: '',
-//     exe_passing: '',
-//     dec_mobility: '',
-//     dec_anticipation: '',
-//     dec_pressure: '',
-//     soc_speedEndurance: '',
-//     soc_strength: '',
-//     soc_explosiveMovements: '',
+  const [pitcherCategories, setPitcherCategories] = useState<Category[]>([]);
+  const [isPitcherPosition, setIsPitcherPosition] = useState(false);
 
-//     superStrengths: '',
-//     developmentAreas: '',
-//     idpGoals: '',
-//     keySkills: '',
-//     attacking: '',
-//     defending: '',
-//     transitionDefending: '',
-//     transitionAttacking: '',
-//   });
-
-//   const [pitcherCategories, setPitcherCategories] = useState<Category[]>([]);
-//   const [isPitcherPosition, setIsPitcherPosition] = useState(false);
-
-//   const getRatingBgClass = (value: string) => {
-//     switch (value.toLowerCase()) {
-//       case 'excellent':
-//         return ' text-yellow-400 rounded';
-//       case 'positive':
-//         return ' text-cyan-400  rounded';
-//       case 'neutral':
-//         return ' text-blue-300 rounded';
-//       default:
-//         return '';
-//     }
-//   };
+  // const getRatingBgClass = (value: string) => {
+  //   switch (value.toLowerCase()) {
+  //     case 'excellent':
+  //       return ' text-yellow-400 rounded';
+  //     case 'positive':
+  //       return ' text-cyan-400  rounded';
+  //     case 'neutral':
+  //       return ' text-blue-300 rounded';
+  //     default:
+  //       return '';
+  //   }
+  // };
 
   //Generates the PDF
   const downloadPDF = async () => {
@@ -230,11 +168,7 @@ function EvaluationPage() {
       evaluationTemplateData: evaluationTemplateData,
     });
 
-    // if (!response.ok) {
-    //   const errorData = await response.json(); // Assuming the API returns a JSON error message
-    //   console.error("API Error Response:", errorData);
-    //   throw new Error(`Failed to assign sub-admin: ${errorData?.error || "Unknown error"}`);
-    // }
+
 
     const response = await fetch(
       `/api/generatepdf?evaluationId=${evaluationId}`,
@@ -284,53 +218,53 @@ function EvaluationPage() {
         })
         .catch(error => {
           console.error('Error fetching data:', error);
-          alert('Error fetching data');
+          // alert('Error fetching data');
         });
     }
   }, [evaluationId]);
 
-//   useEffect(() => {
-//     if (evaluationTemplateData?.categories) {
-//       const pitcherCats = evaluationTemplateData.categories.filter(
-//         (cat: Category) => cat.id === 122 || cat.id === 125,
-//       );
-//     //   setPitcherCategories(pitcherCats);
-//     //   setIsPitcherPosition(pitcherCats.length > 0);
-//     }
-//   }, [evaluationTemplateData]);
+  useEffect(() => {
+    if (evaluationTemplateData?.categories) {
+      const pitcherCats = evaluationTemplateData.categories.filter(
+        cat => cat.id === 122 || cat.id === 125
+      );
+      setPitcherCategories(pitcherCats);
+      setIsPitcherPosition(pitcherCats.length > 0);
+    }
+  }, [evaluationTemplateData]);
 
-//   const handleSubmitRating = async () => {
-//     if (rating <= 0) {
-//       showError('Please select rating');
-//       return;
-//     }
-//     try {
-//       const response = await fetch('/api/submitRating', {
-//         method: 'PUT',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({ evaluationId, rating, remarks, playerId }),
-//       });
 
-//       if (!response.ok) {
-//         throw new Error('Failed to submit rating');
-//       }
 
-//       setIsRatingSubmitted(true);
-//     } catch (error) {
-//       console.error('Error submitting rating:', error);
-//       // Handle error, e.g., show an error message
-//     }
-//   };
+  // const handleSubmitRating = async () => {
+  //   if (rating <= 0) {
+  //     showError('Please select rating');
+  //     return;
+  //   }
+  //   try {
+  //     const response = await fetch('/api/submitRating', {
+  //       method: 'PUT',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({ evaluationId, rating, remarks, playerId }),
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error('Failed to submit rating');
+  //     }
+
+  //     setIsRatingSubmitted(true);
+  //   } catch (error) {
+  //     console.error('Error submitting rating:', error);
+  //     // Handle error, e.g., show an error message
+  //   }
+  // };
 
   const fetchEvaluationData = async () => {
-    const session = await getSession();
+    // const session = await getSession();
 
-    if (session) {
-      setUserType(session.user.type);
-    //   setPlayerId(Number(session.user.id)); // Assuming 'role' is stored in session
-    }
+
+
     try {
       const response = await fetch(
         `/api/evaluationdetails?evaluationId=${evaluationId}`,
@@ -347,6 +281,7 @@ function EvaluationPage() {
       }
 
       const data = await response.json();
+      console.log("data", data);
       const evalTemplateResponse = await fetch(
         `/api/evaluationDetailsTemplate?position=${data.result.position}&sport_id=${data.result.sport}`,
         {
@@ -357,11 +292,11 @@ function EvaluationPage() {
         },
       );
       const evalTemplate = await evalTemplateResponse.json();
-      // console.log(evalTemplate[0]);
+      console.log("evaluation", evalTemplate);
 
       setEvaluationTemplateData(evalTemplate[0]);
       setEvaluationData(data.result as Evaluation); // Type assertion here
-      setRating(data.result.rating);
+      // setRating(data.result.rating);
       // setPosition(data.position);
       // setPhysicalScores(JSON.parse(data.result.physicalScores));
       // setTacticalScores(JSON.parse(data.result.tacticalScores));
@@ -402,17 +337,17 @@ function EvaluationPage() {
       //     transitionDefending: data.result.transitionDefending || '',
       //     transitionAttacking: data.result.transitionAttacking || '',
       // });
-    //   setHeaderMetrics(
-    //     position === 'Goalkeeper'
-    //       ? [
-    //           'Technical Average',
-    //           'Tactical Average',
-    //           'Distribution Average',
-    //           'Physical Average',
-    //           'Organization Average',
-    //         ]
-    //       : ['Technical Average', 'Tactical Average', 'Physical Average'],
-    //   );
+      // setHeaderMetrics(
+      //   position === 'Goalkeeper'
+      //     ? [
+      //       'Technical Average',
+      //       'Tactical Average',
+      //       'Distribution Average',
+      //       'Physical Average',
+      //       'Organization Average',
+      //     ]
+      //     : ['Technical Average', 'Tactical Average', 'Physical Average'],
+      // );
 
       // setRadarSkills(
       //   position === 'Goalkeeper'
@@ -460,7 +395,6 @@ function EvaluationPage() {
       // Set the fetched evaluation data
     } catch (error) {
       console.error('Error fetching evaluation data:', error);
-    //   setError('Failed to fetch evaluation data'); // Set error message
     }
   };
   // const calculateAverage = (scores: Record<string, string | number>): sectionScoreResults => {
@@ -473,54 +407,198 @@ function EvaluationPage() {
   // };
   useEffect(() => {
     fetchEvaluationData();
-  }, []); 
+  }, []); // Dependency array includes evaluationId
   if (loading) {
     return <Loading />; // Loading indicator
   }
 
   //USED for smaller screens (not needed but will keep in case of future use )
-//   const sectionChartDataSmallScreen = (type: string) => {
-//     if (type === 'tech') {
-//       const chartData = Object.values(technicalScores).map((value, index) => ({
-//         subject: String(index),
-//         scores: Number(value) ? Number(value) : 0,
-//       }));
+  // const sectionChartDataSmallScreen = (type: string) => {
+  //   if (type === 'tech') {
+  //     const chartData = Object.values(technicalScores).map((value, index) => ({
+  //       subject: String(index),
+  //       scores: Number(value) ? Number(value) : 0,
+  //     }));
 
-//       return chartData;
-//     } else if (type === 'tact') {
-//       const chartData = Object.values(tacticalScores).map((value, index) => ({
-//         subject: String(index),
-//         scores: Number(value) ? Number(value) : 0,
-//       }));
+  //     return chartData;
+  //   } else if (type === 'tact') {
+  //     const chartData = Object.values(tacticalScores).map((value, index) => ({
+  //       subject: String(index),
+  //       scores: Number(value) ? Number(value) : 0,
+  //     }));
 
-//       return chartData;
-//     } else {
-//       const chartData = Object.values(physicalScores).map((value, index) => ({
-//         subject: String(index),
-//         scores: Number(value) ? Number(value) : 0,
-//       }));
+  //     return chartData;
+  //   } else {
+  //     const chartData = Object.values(physicalScores).map((value, index) => ({
+  //       subject: String(index),
+  //       scores: Number(value) ? Number(value) : 0,
+  //     }));
 
-//       return chartData;
-//     }
-//   };
+  //     return chartData;
+  //   }
+  // };
 
   //Formats the data from each section to be used for polar charts
-//   const sectionChartData = (category: Category) => {
-//     const labelsPolar = Object.keys(category);
+  const sectionChartData = (
+    category: Category,
+    values: Record<number, string | number | null>
+  ) => {
+    const filteredAttributes = category.attributes?.filter(
+      attr =>
+        !attr.name.toLowerCase().includes('avgscore') &&
+        !attr.name.toLowerCase().includes('commentary')
+    ) ?? [];
 
-//     const scoresPolar = Object.values(category).map(
-//       value => Number(value) || 0,
-//     );
+    const labelsPolar = filteredAttributes.map(attr => attr.name);
+    const scoresPolar = filteredAttributes.map(attr => Number(values[attr.id]) || 0);
 
-//     const chartData: PolarChartValues = {
-//       data: scoresPolar,
-//       labels: labelsPolar,
-//       enableHover: true,
-//     };
+    return {
+      data: scoresPolar,
+      labels: labelsPolar,
+      enableHover: true,
+    };
+  };
 
-//     return chartData;
-//   };
+  const handleEdit = () => {
+    setNewTitle(evaluationData?.reviewTitleCustom || "");
+    setNewRating(Number(evaluationData?.rating) || 0);
+    setNewComment(evaluationData?.reviewComment || "");
+    setShowModal(true);
+  };
 
+  const submitEdit = async () => {
+    if (!evaluationId) return;
+    if (!newRating) {
+      Swal.fire({
+        icon: "warning",
+        title: "Missing Rating",
+        text: "Please provide a star rating before saving.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch(`/api/evaluationdetails/${evaluationId}/rating`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rating: newRating,
+          reviewComment: newComment.trim(),
+          reviewTitleCustom: newTitle.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      console.log("PATCH response:", data);
+
+      if (res.ok) {
+        setShowModal(false);
+        await Swal.fire({
+          icon: "success",
+          title: "Rating Updated",
+          text: "The player rating has been updated successfully.",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        location.reload();
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Update Failed",
+          text: data.error || "Failed to update the rating. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error while updating rating:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Update Failed",
+        text: "Something went wrong. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+
+  const handleDelete = async () => {
+    if (!evaluationData) return;
+
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "This will hide the rating, not delete it.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, hide it!',
+    });
+
+    if (result.isConfirmed) {
+      const res = await fetch(`/api/evaluationdetails/${evaluationId}/hide-rating`, {
+        method: 'PATCH',
+      });
+
+      if (res.ok) {
+        setEvaluationData(prev => prev ? { ...prev, review_status: 0 } : prev);
+        Swal.fire({
+          icon: 'success',
+          title: 'Rating Hidden',
+          text: 'The rating has been hidden successfully.',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        location.reload();
+
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Failed to Hide',
+          text: 'Failed to hide the rating. Please try again.',
+        });
+      }
+    }
+  };
+
+  const handleRevert = async () => {
+    if (!evaluationData) return;
+
+    const result = await Swal.fire({
+      title: 'Revert Rating Visibility',
+      text: 'Are you sure you want to make the rating visible again?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, revert it',
+    });
+
+    if (!result.isConfirmed) return;
+
+    const res = await fetch(`/api/evaluationdetails/${evaluationId}/revert`, {
+      method: 'PATCH',
+    });
+
+    if (res.ok) {
+      setEvaluationData(prev => prev ? { ...prev, reviewStatus: 1 } : prev);
+      Swal.fire({
+        icon: 'success',
+        title: 'Rating Reverted',
+        text: 'The rating is now visible again.',
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      location.reload();
+
+    } else {
+      const { error } = await res.json();
+      Swal.fire({
+        icon: 'error',
+        title: 'Failed to Revert',
+        text: error || 'Could not revert rating visibility.',
+      });
+    }
+  };
   return (
     <>
       <div className="rounded-lg border border-gray-300 p-6 font-sans">
@@ -600,7 +678,7 @@ function EvaluationPage() {
                     <Image
                       src={
                         evaluationData?.image &&
-                        evaluationData?.image !== 'null'
+                          evaluationData?.image !== 'null'
                           ? evaluationData.player_status === 'Deactivated'
                             ? defaultImage
                             : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${evaluationData?.image}`
@@ -637,7 +715,7 @@ function EvaluationPage() {
                     <Image
                       src={
                         evaluationData?.coachimage &&
-                        evaluationData?.coachimage !== 'null'
+                          evaluationData?.coachimage !== 'null'
                           ? evaluationData.coach_status === 'Deactivated'
                             ? defaultImage
                             : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${evaluationData?.coachimage}`
@@ -1060,18 +1138,20 @@ function EvaluationPage() {
               </ul>
             </div>
           </div>
-          {/* {isPitcherPosition && pitcherCategories.length > 0 && (
-           <PitcherComponent
-            categories={pitcherCategories}
-            evaluationResponses={
-                evaluationData?.coachInput
-                ? (JSON.parse(evaluationData.coachInput) as Record<string, Record<string, string | number>>)
-                : {}
-            }
-            onScoreChange={() => {}}
-            />
-
-          )} */}
+          {isPitcherPosition && pitcherCategories.length > 0 && (
+  <PitcherComponent
+    categories={pitcherCategories}
+    evaluationResponses={
+      evaluationData?.coachInput
+        ? (JSON.parse(evaluationData.coachInput) as Record<
+            string,
+            Record<string, string | number>
+          >)
+        : {}
+    }
+    onScoreChange={() => {}}
+  />
+)}
         </div>
 
         {/* <h1 className="p-4 text-xl font-bold mt-6 text-start text-gray-800  border-b border-gray-300">
@@ -1087,105 +1167,87 @@ function EvaluationPage() {
           {/* <div
                         className={`grid grid-cols-1 ${evaluationData?.position.toString() === 'Goalkeeper' ? 'md:grid-cols-3 xl:grid-cols-5' : 'md:grid-cols-3'} mt-6 gap-4`}
                     > */}
-           {evaluationTemplateData?.categories
-    ?.filter((category: Category) => category.id !== 122 && category.id !== 125)
-    .map((category: Category) => {
-      const valuesForCategory = evaluationData?.coachInput?.[category.id];
+          {evaluationTemplateData?.categories
+            ?.filter((category: Category) => category.id !== 122 && category.id !== 125)
+            .map((category: Category) => {
+              // Properly typed values for the category
+              const valuesForCategory: Record<number, string | number | null> =
+                evaluationData?.coachInput?.[category.id] ?? {};
 
-      const attributes = category.attributes ?? [];
+              if (!category.attributes) return null;
 
-      // Prepare chart data
-    //   const chartDataObject = attributes
-    //     .filter(
-    //       (attr: Attribute) =>
-    //         !attr.name.toLowerCase().includes('avgscore') &&
-    //         !attr.name.toLowerCase().includes('commentary')
-    //     )
-    //     .reduce<Record<string, string | number | undefined>>((acc, attr) => {
-    //       acc[attr.name] = valuesForCategory?.[attr.id];
-    //       return acc;
-    //     }, {});
+              // Get average score
+              const avgScoreAttribute = category.attributes.find(
+                (attribute: Attribute) => attribute.name.toLowerCase() === 'avgscore'
+              );
+              const avgScoreValue = avgScoreAttribute
+                ? valuesForCategory[avgScoreAttribute.id]
+                : null;
 
-      // AvgScore
-      const avgScoreAttribute = attributes.find(
-        (attr: Attribute) => attr.name.toLowerCase() === 'avgscore'
-      );
-      const avgScoreValue = avgScoreAttribute
-        ? valuesForCategory?.[avgScoreAttribute.id]
-        : null;
+              // Get commentary
+              const commentaryAttribute = category.attributes.find((attribute: Attribute) =>
+                attribute.name.toLowerCase().includes('commentary')
+              );
+              const commentary = commentaryAttribute
+                ? valuesForCategory[commentaryAttribute.id]
+                : null;
 
-      // Commentary
-      const commentaryAttribute = attributes.find(attr =>
-        attr.name.toLowerCase().includes('commentary')
-      );
-      const commentary = commentaryAttribute
-        ? valuesForCategory?.[commentaryAttribute.id]
-        : null;
-              // console.log(commentary)
               return (
-                <div  key={category.id}className={`mt-6 grid grid-cols-1 gap-4`}>
+                <div key={category.id} className="mt-6 grid grid-cols-1 gap-4">
                   <div className="flex flex-col gap-16 overflow-hidden rounded-md border border-gray-300 p-4 text-black shadow-md lg:flex-row">
+                    {/* Left Column: Score List */}
                     <div className="flex-[3_1_0%] flex-col rounded-md border border-gray-300 p-4 text-black">
                       <div className="bg-blue-600 px-4 py-4 text-white">
-                        {/* Heading Row */}
                         <h1 className="text-sm">{category.name}</h1>
                       </div>
                       <div className="flex h-auto flex-col justify-between p-4">
-                        {/* Score List */}
                         <div className="flex-grow overflow-y-auto">
-                          {category.attributes ? (
+                          {category.attributes.length > 0 ? (
                             <ul className="list-inside list-disc space-y-1 text-sm">
-                              {category.attributes.map(
-                                (attribute: Attribute, index: number) => {
-                                  const value =
-                                    valuesForCategory?.[attribute.id];
+                              {category.attributes.map((attribute: Attribute, index: number) => {
+                                const value = valuesForCategory[attribute.id];
 
-                                  if (
-                                    !attribute.name
-                                      .toLowerCase()
-                                      .includes('avgscore') &&
-                                    !attribute.name
-                                      .toLowerCase()
-                                      .includes('commentary')
-                                  ) {
-                                    return (
-                                      <li key={attribute.id}>
-                                        <span className="font-medium">
-                                          <span className="md:hidden">
-                                            ({index + 1})
-                                          </span>{' '}
-                                          {attribute.name}
-                                        </span>
-                                        : {value ?? 'N/A'}
-                                      </li>
-                                    );
-                                  }
-                                },
-                              )}
+                                // Skip avgscore and commentary
+                                if (
+                                  attribute.name.toLowerCase().includes('avgscore') ||
+                                  attribute.name.toLowerCase().includes('commentary')
+                                ) {
+                                  return null;
+                                }
+
+                                return (
+                                  <li key={attribute.id ?? index}>
+                                    <span className="font-medium">
+                                      <span className="md:hidden">({index + 1}) </span>
+                                      {attribute.name}
+                                    </span>
+                                    : {value ?? 'N/A'}
+                                  </li>
+                                );
+                              })}
                             </ul>
                           ) : (
-                            <p className="text-sm italic">
-                              No scores available.
-                            </p>
+                            <p className="text-sm italic">No scores available.</p>
                           )}
                         </div>
                       </div>
                     </div>
-                    {/* Left: Radar Chart Column */}
+
+                    {/* Middle Column: Radar Chart */}
                     <div className="flex h-full min-h-64 min-w-0 flex-[5_1_0%] flex-row items-center overflow-visible md:min-h-96">
-                      {/* <div className="hidden h-full w-full min-w-0 lg:block">
+                      <div className="hidden h-full w-full min-w-0 lg:block">
                         <EvaluationPolarCharts
-                          chartData={sectionChartData(chartDataObject)}
+                          chartData={sectionChartData(category, valuesForCategory)}
                         />
                       </div>
-
                       <div className="h-full w-full min-w-0 lg:hidden">
                         <EvaluationPolarCharts
-                          chartData={sectionChartData(chartDataObject)}
+                          chartData={sectionChartData(category, valuesForCategory)}
                         />
-                      </div> */}
+                      </div>
                     </div>
-                    {/* Right: Metrics Table Column */}
+
+                    {/* Right Column: Average Score */}
                     <div className="m-auto flex h-[250px] flex-[2_1_0%] flex-col items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-gray-300 text-center shadow-md">
                       <div className="mb-2 text-xl font-semibold text-white lg:text-2xl">
                         {category.name} Average
@@ -1197,22 +1259,22 @@ function EvaluationPage() {
                       </div>
                     </div>
                   </div>
+
                   {/* Commentary Section */}
                   <div className="mt-auto w-full rounded-md border border-gray-300 bg-white p-3">
-                    <label
-                      htmlFor={`remarks-tech`}
-                      className="mb-2 block text-sm font-bold"
-                    >
+                    <label htmlFor={`remarks-${category.id}`} className="mb-2 block text-sm font-bold">
                       {category.name} Comments:
                     </label>
-
                     <div className="max-h-24 w-full overflow-y-auto break-words text-sm text-gray-700">
-                      {commentary || 'No remarks provided.'}
+                      {commentary ?? 'No remarks provided.'}
                     </div>
                   </div>
                 </div>
               );
             })}
+
+
+
 
           {/* Final Remarks Section */}
           <div className="mb-4 mt-12 grid grid-cols-2 gap-6">
@@ -1360,73 +1422,192 @@ function EvaluationPage() {
               </div>
             </div>
           )}
-          {userType === 'player' &&
-        //   && !isRatingSubmitted &&
-         (
-            <div className="mx-auto max-w-md rounded-md bg-white p-4 shadow-md">
-              <h3 className="mb-2 text-center text-lg font-semibold">
-                {evaluationData?.rating === null
-                  ? 'Please Provide a Rating'
-                  : 'Edit Your Rating'}
-                <span className="font-red">*</span>
-              </h3>
+          {/* Stars and Edit/Delete only shown if rating is not null */}
+          {evaluationData && (
+            <div className="p-4 bg-gray-100 rounded-md max-w-md mx-auto">
+              <h3 className="text-lg font-semibold mb-2">Player Feedback</h3>
 
-              {/* Star Rating */}
-              <div className="mb-4 flex items-center justify-center">
-                {Array.from({ length: 5 }, (_, index) => index + 1).map(
-                  star => (
+              {/* Star Rating: Always show 5 stars */}
+              <div className="flex items-center mb-3">
+                {Array.from({ length: 5 }, (_, index) => index + 1).map((star) => (
+                  <svg
+                    key={star}
+                    className={`w-6 h-6 ${Number(evaluationData.review_status) === 1 &&
+                      star <= (evaluationData.rating ?? 0)
+                      ? 'text-yellow-500'
+                      : 'text-gray-300'
+                      }`}
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
+                  </svg>
+                ))}
+              </div>
+
+              {/* Feedback Textarea: Always show, filled or empty */}
+              <div className="mb-4 p-4 bg-white border rounded-md shadow-sm">
+                {/* Review Title */}
+                {evaluationData.reviewTitleCustom && Number(evaluationData.review_status) === 1 && (
+                  <div className="mb-3">
+                    <label className="block text-sm font-semibold text-yellow-700 mb-1">
+                      Review Title:
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full p-2 text-sm text-gray-800 border rounded-md bg-gray-50"
+                      value={evaluationData.reviewTitleCustom}
+                      readOnly
+                    />
+                  </div>
+                )}
+
+                {/* Review Comment */}
+                <div>
+                  <label className="block text-sm font-semibold text-yellow-700 mb-1">
+                    Feedback / Comment:
+                  </label>
+                  <textarea
+                    className="w-full p-2 text-sm text-gray-800 border rounded-md bg-gray-50 resize-none"
+                    value={
+                      Number(evaluationData.review_status) === 1 && evaluationData.reviewComment
+                        ? evaluationData.reviewComment
+                        : ''
+                    }
+                    placeholder="No feedback submitted yet."
+                    readOnly
+                    rows={4}
+                  />
+                </div>
+              </div>
+
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                {Number(evaluationData.review_status) === 1 ? (
+                  <>
+                    <button
+                      onClick={handleEdit}
+                      className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                    >
+                      Hide
+                    </button>
+                  </>
+                ) : Number(evaluationData.review_status) === 0 ? (
+                  <button
+                    onClick={handleRevert}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                  >
+                    Revert
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          )}
+
+
+          {/* Edit Modal */}
+          {showModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] max-w-md">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
+                  Edit Feedback
+                </h3>
+
+                {/* Review Title */}
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Review Title:
+                  </label>
+                  <input
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="Enter review title..."
+                    className="w-full border border-gray-300 rounded-md p-2 text-sm"
+                  />
+                </div>
+
+                {/* Star Rating */}
+                <div className="flex justify-center gap-2 mb-4">
+                  {Array.from({ length: 5 }, (_, index) => index + 1).map((star) => (
                     <svg
                       key={star}
-                      className={`h-10 w-10 cursor-pointer ${star <= (hover || rating) ? 'text-yellow-500' : 'text-gray-300'}`}
+                      onClick={() => setNewRating(star)}
+                      className={`w-8 h-8 cursor-pointer transition-colors duration-200 ${star <= newRating ? "text-yellow-500" : "text-gray-300"
+                        }`}
                       xmlns="http://www.w3.org/2000/svg"
                       fill="currentColor"
                       viewBox="0 0 24 24"
-                      onMouseEnter={() => setHover(star)}
-                      onMouseLeave={() => setHover(0)}
-                      onClick={() => setRating(star)}
                     >
                       <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
                     </svg>
-                  ),
-                )}
+                  ))}
+                </div>
+
+                {/* Comment */}
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Feedback / Comment:
+                  </label>
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Write your feedback..."
+                    className="w-full border border-gray-300 rounded-md p-2 text-sm resize-none"
+                    rows={4}
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-800 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={submitEdit}
+                    disabled={isSubmitting}
+                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md flex items-center justify-center gap-2 disabled:opacity-60 transition"
+                  >
+                    {isSubmitting && (
+                      <svg
+                        className="w-4 h-4 animate-spin text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8z"
+                        />
+                      </svg>
+                    )}
+                    {isSubmitting ? "Saving..." : "Save"}
+                  </button>
+                </div>
               </div>
-              {/* Remarks Textarea */}
-              {/* <textarea
-                                    className="mb-4 w-full resize-none rounded-md border border-gray-300 p-2"
-                                    rows={4}
-                                    placeholder="Leave a Testimonial..."
-                                    value={remarks}
-                                    onChange={e => setRemarks(e.target.value)}
-                                    /> */}
-              {/* Submit Button */}
-              <button
-                // onClick={handleSubmitRating}
-                className="w-full rounded-md bg-blue-600 px-4 py-2 text-white transition duration-300 hover:bg-blue-700"
-              >
-                Submit Feedback
-              </button>
             </div>
           )}
-          {userType === 'player' &&
-            // isRatingSubmitted &&
-            evaluationData?.coachSlug && (
-              <div className="mx-auto max-w-md rounded-md bg-white p-4 shadow-md">
-                <h3 className="mb-2 text-lg font-semibold">
-                  Thanks for Your Feedback!
-                </h3>
-                <p>
-                  If you have not done so already, you may leave a testimonial
-                  for this coach{''}
-                  <Link
-                    href={`/coach/${evaluationData?.coachSlug}`}
-                    className="text-blue-700 underline"
-                  >
-                    here
-                  </Link>
-                  .
-                </p>
-              </div>
-            )}
+
         </div>
       </div>
     </>

@@ -146,7 +146,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { playerEvaluation, users, coaches, evaluationResults } from '@/lib/schema';
+import { playerEvaluation, users, coaches, evaluationResults,review } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
@@ -161,20 +161,11 @@ export async function GET(request: NextRequest) {
     const result = await db
       .select({
         finalRemarks: evaluationResults.finalRemarks,
-        // physicalRemarks: evaluationResults.physicalRemarks,
-        // tacticalRemarks: evaluationResults.tacticalRemarks,
-        // technicalRemarks: evaluationResults.technicalRemarks,
-        // physicalScores: evaluationResults.physicalScores,
-        // tacticalScores: evaluationResults.tacticalScores,
-        // technicalScores: evaluationResults.technicalScores,
         sport: evaluationResults.sport,
         position: evaluationResults.position,
-        // organizationScores: evaluationResults.organizationScores,
-        // distributionScores: evaluationResults.distributionScores,
-        // organizationalRemarks: evaluationResults.organizationalRemarks,
-        // distributionRemarks: evaluationResults.distributionRemarks,
         document: evaluationResults.document,
         thingsToWork: evaluationResults.thingsToWork,
+        coachInput: evaluationResults.coach_input,
 
         evaluationId: playerEvaluation.id,
         playerId: playerEvaluation.player_id,
@@ -218,11 +209,15 @@ export async function GET(request: NextRequest) {
         coachFirstName: coaches.firstName,
         coachLastName: coaches.lastName,
         coachSlug: coaches.slug,
+
+        reviewTitleCustom: review.title,
+        reviewComment: review.comment, 
       })
       .from(evaluationResults)
       .innerJoin(playerEvaluation, eq(playerEvaluation.id, evaluationResults.evaluationId))
       .innerJoin(users, eq(users.id, evaluationResults.playerId))
       .innerJoin(coaches, eq(coaches.id, evaluationResults.coachId))
+      .innerJoin(review, eq(review.coach_id, evaluationResults.coachId))
       .where(eq(evaluationResults.evaluationId, evaluationId))
       .limit(1)
       .execute();

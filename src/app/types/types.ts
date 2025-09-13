@@ -1,8 +1,10 @@
 
 export interface Evaluation {
-    coach_status: string;
-    player_status: string;
-coachInput:string;
+  reviewComment: string;
+  reviewTitleCustom: string;
+  coach_status: string;
+  player_status: string;
+  coachInput: string;
   id: number;
   reviewTitle: string;
   primary_video_link: string;
@@ -59,10 +61,11 @@ coachInput:string;
   jerseyNumberThree: string;
   positionThree: string;
   video_descriptionThree: string;
-document:string;
-thingsToWork:string;
-coachimage:string;
-review_status:number;
+  document: string;
+  thingsToWork: string;
+  coachimage: string;
+  review_status: number;
+  evalAverage: number;
 
 }
 
@@ -116,7 +119,7 @@ export interface inCompletePlayer {
   email: string;
 }
 export interface Coach {
-  
+
   // [x: string]: number;
   id: string;
   evaluationId: number;
@@ -137,7 +140,7 @@ export interface Coach {
   history?: string;
   earnings: number;
   is_deleted: number;
- evaluations?: Evaluation[];
+  evaluations?: Evaluation[];
 }
 
 export interface inCompleteCoach {
@@ -160,7 +163,7 @@ export interface Organization {
   city: string;
   logo: string;
   status: string;
-    totalUsers: number;
+  totalUsers: number;
 
   totalPlayers: number;
   totalCoaches: number;
@@ -172,12 +175,12 @@ export interface Organization {
   xlink: string;
   youtube: string;
   is_deleted: number;
-suspend: number;
+  suspend: number;
   suspend_days: number;
 }
 
-export interface Ticket{
-    id: number;
+export interface Ticket {
+  id: number;
   name: string;
   email: string;
   subject: string;
@@ -189,7 +192,7 @@ export interface Ticket{
   assignee_name: string;
   ticket_from: string;
   role: string;
-    escalate: boolean; // ✅ fix type to boolean
+  escalate: boolean; // ✅ fix type to boolean
 
 }
 export interface Team {
@@ -212,11 +215,18 @@ export interface PolarChartValues {
 export interface Attribute {
   id: number;
   name: string;
+  display_order: string;
 }
 
 
 export interface Category {
-  id: string;
+  id: number;
   name: string;
   attributes: Attribute[] | null;
 }
+
+export interface Props {
+  category: Category;
+  valuesForCategory?: Record<string, string | number | undefined>;
+}
+
