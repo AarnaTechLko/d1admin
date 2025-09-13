@@ -26,7 +26,7 @@ import {  useSearchParams } from 'next/navigation';
 import { Clock } from 'lucide-react';
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
 import Link from 'next/link';
-import { Category } from '@mui/icons-material';
+// import { Category } from '@mui/icons-material';
 // import PitcherComponent from '@/components/coach/pitcherComponent';
 import { useRoleGuard } from '@/hooks/useRoleGaurd';
 

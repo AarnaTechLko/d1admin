@@ -165,7 +165,6 @@ export async function GET(
           state: coaches.state,
           city: coaches.city,
           countryName: countries.name,
-          email: coaches.email,
         })
         .from(coaches)
         .leftJoin(countries, eq(coaches.country, sql`CAST(${countries.id} AS TEXT)`))
@@ -179,7 +178,6 @@ export async function GET(
         country: c.countryName,
         state: c.state,
         city: c.city,
-        email: c.email,
       }));
 
       console.log("DATA: ", data);

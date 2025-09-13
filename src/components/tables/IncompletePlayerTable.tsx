@@ -1,21 +1,21 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 
-import Swal from "sweetalert2";
-import withReactContent from "sweetalert2-react-content";
+// import Swal from "sweetalert2";
+// import withReactContent from "sweetalert2-react-content";
 import { inCompletePlayer } from "@/app/types/types";
-import axios from "axios";
-type RecentMessage = {
-  sender_id: string;
-  from: string;
-  methods: string[]; 
-  id: number;
-  message: string;
-  created_at: string;
-  position: "left" | "right"; // for UI positioning
-  bgColor: "green" | "blue";  // for background color
-};
+// import axios from "axios";
+// type RecentMessage = {
+//   sender_id: string;
+//   from: string;
+//   methods: string[]; 
+//   id: number;
+//   message: string;
+//   created_at: string;
+//   position: "left" | "right"; // for UI positioning
+//   bgColor: "green" | "blue";  // for background color
+// };
 interface PlayerTableProps {
   data: inCompletePlayer[];
   currentPage: number;
@@ -25,23 +25,23 @@ interface PlayerTableProps {
 
 const IncompletePlayerTable: React.FC<PlayerTableProps> = ({ data = [], currentPage, totalPages, setCurrentPage }) => {
 
-  const [selectedCoachid, setSelectedCoachid] = useState<number | null>(null);
+  // const [selectedCoachid, setSelectedCoachid] = useState<number | null>(null);
 
-  const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
+  // const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
 
 
-  useEffect(() => {
-    if (selectedCoachid) {
-      (async () => {
-        try {
-          const res = await axios.get(`/api/messages?type=player&id=${selectedCoachid}`);
-          setRecentMessages(res.data.messages || []);
-        } catch (err) {
-          console.error("Error fetching messages:", err);
-        }
-      })();
-    }
-  }, [selectedCoachid]);
+  // useEffect(() => {
+  //   if (selectedCoachid) {
+  //     (async () => {
+  //       try {
+  //         const res = await axios.get(`/api/messages?type=player&id=${selectedCoachid}`);
+  //         setRecentMessages(res.data.messages || []);
+  //       } catch (err) {
+  //         console.error("Error fetching messages:", err);
+  //       }
+  //     })();
+  //   }
+  // }, [selectedCoachid]);
 
 
 

@@ -11,6 +11,7 @@ import PaymentTable from "../tables/PaymentTable";
 import { Payment } from "../types/types";
 import { Loader2 } from "lucide-react";
   import Swal from "sweetalert2";
+import Image from "next/image";
 
 const tabs = [
   "Player",
@@ -265,7 +266,7 @@ const handleRevertPayment = async (evaluationId: number) => {
                   {(data as Team[]).map((team) => (
                     <tr key={team.id}>
                       <td className="p-2 border text-center">
-                        <img
+                        <Image
                           src={team.logo}
                           alt={team.team_name}
                           className="w-10 h-10 rounded-full mx-auto"
