@@ -305,7 +305,7 @@ function EvaluationPage() {
       // setDistributionScores(JSON.parse(data.result.distributionScores));
       // setDistributionScores(JSON.parse(data.result.distributionScores));
 
-      setEvaluationAverage(data.result.evalAverage);
+      setEvaluationAverage(data.result.eval_average);
       // setTechnicalAverage(data.result.techAverage);
       // setTacticalAverage(data.result.tactAverage);
       // setDistributionAverage(data.result.distAverage);

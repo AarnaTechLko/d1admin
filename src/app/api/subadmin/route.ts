@@ -1,6 +1,7 @@
+// src/app/api/admin/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { admin, role } from "@/lib/schema";
+import { admin, role  } from "@/lib/schema";
 import { eq, or, desc, count, ilike, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
@@ -10,18 +11,29 @@ type AdminFromDB = {
   email: string;
   role: string;
   role_name?: string;
+  country_code: string;
+  phone_number: string;
+  birthdate: string;
+  image?: string | null;
+  created_at: Date;
   change_password: number;
   refund: number;
   monitor_activity: number;
   view_finance: number;
   access_ticket: number;
 };
+
 type PermissionKey = typeof allPermissions[number];
 type AdminUpdate = Partial<{
   username: string;
   email: string;
   role: "Manager" | "Customer Support" | "Executive Level" | "Tech";
+  country_code: string;
+  phone_number: string;
+  birthdate: string;
+  image?: string | null;
 }>;
+
 // Allowed roles
 const allowedRoles = ["Manager", "Customer Support", "Executive Level", "Tech"];
 
@@ -37,22 +49,28 @@ const allPermissions = [
 // --------------------- POST: Add Admin ---------------------
 export async function POST(req: Request) {
   try {
-    const { username, email, password, role: roleName } = await req.json();
+    const {
+      username,
+      email,
+      password,
+      role: roleName,
+      country_code,
+      phone_number,
+      birthdate,
+      image,
+    } = await req.json();
 
-    // ✅ Required field validation
-    if (!username || !email || !password || !roleName) {
+    if (!username || !email || !password || !roleName || !country_code || !phone_number || !birthdate) {
       return NextResponse.json(
-        { error: "All fields (username, email, password, role) are required" },
+        { error: "All required fields (username, email, password, role, country_code, phone_number, birthdate) must be provided" },
         { status: 400 }
       );
     }
 
-    // ✅ Role validation
     if (!allowedRoles.includes(roleName)) {
       return NextResponse.json({ error: "Invalid role selected" }, { status: 400 });
     }
 
-    // ✅ Check for existing email
     const existingAdmin = await db
       .select()
       .from(admin)
@@ -64,20 +82,27 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const insertedAdmin = await db.insert(admin).values({
-      username,
-      email,
-      password_hash: hashedPassword,
-      role: roleName,
-      is_deleted: 1,
-    }).returning();
+    const [insertedAdmin] = await db
+      .insert(admin)
+      .values({
+        username,
+        email,
+        password_hash: hashedPassword,
+        role: roleName,
+        country_code,
+        phone_number,
+        birthdate: birthdate, // must be "YYYY-MM-DD" string
+        image: image || null,
+        is_deleted: 1,
+      })
+      .returning();
 
     return NextResponse.json(
-      { success: "Admin added successfully", user_id: insertedAdmin[0].id },
+      { success: "Admin added successfully", user_id: insertedAdmin.id },
       { status: 201 }
     );
   } catch (error) {
-    console.error("POST /api/subadmin error:", error);
+    console.error("POST /api/admin error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -105,14 +130,17 @@ export async function GET(req: Request) {
           username: admin.username,
           email: admin.email,
           role: admin.role,
+          country_code: admin.country_code,
+          phone_number: admin.phone_number,
+          birthdate: admin.birthdate,
+          image: admin.image,
+          created_at: admin.created_at,
+          is_deleted: admin.is_deleted,
           change_password: role.change_password,
           refund: role.refund,
           monitor_activity: role.monitor_activity,
           view_finance: role.view_finance,
           access_ticket: role.access_ticket,
-          
-          created_at: admin.created_at,
-          is_deleted: admin.is_deleted,
         })
         .from(admin)
         .leftJoin(role, eq(admin.id, role.user_id))
@@ -126,34 +154,31 @@ export async function GET(req: Request) {
         .from(admin)
         .where(whereClause)
         .then((res) => res[0]?.count || 0),
+        
     ]);
 
-    // Map permissions into a single object
-  const adminWithPermissions = (adminData as AdminFromDB[]).map((admin) => {
-  const permissions: Partial<Record<PermissionKey, number>> = {};
-  
-allPermissions.forEach((perm) => {
-    // ✅ Cast perm as keyof AdminFromDB
-    if (admin[perm as keyof AdminFromDB] === 1) {
-      permissions[perm as PermissionKey] = 1;
-    }
-  });
-      const { ...rest } = admin;
-      return {
-        ...rest,
-        permission: permissions,
-      };
+   
+    const adminWithPermissions = (adminData as AdminFromDB[]).map((a) => {
+      const permissions: Partial<Record<PermissionKey, number>> = {};
+      allPermissions.forEach((perm) => {
+        if (a[perm as keyof AdminFromDB] === 1) {
+          permissions[perm as PermissionKey] = 1;
+        }
+      });
+      const { ...rest } = a;
+      return { ...rest, permission: permissions };
     });
 
     return NextResponse.json({
       admin: adminWithPermissions,
       currentPage: page,
+      ///countries: countryList, 
       totalPages: Math.ceil(totalResult / limit),
       hasNextPage: page * limit < totalResult,
       hasPrevPage: page > 1,
     });
   } catch (error) {
-    console.error("GET /api/subadmin error:", error);
+    console.error("GET /api/admin error:", error);
     return NextResponse.json(
       { message: "Failed to fetch admin", error: error instanceof Error ? error.message : String(error) },
       { status: 500 }
@@ -181,7 +206,7 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({ message: "Admin deleted successfully" }, { status: 200 });
   } catch (error) {
-    console.error("DELETE /api/subadmin error:", error);
+    console.error("DELETE /api/admin error:", error);
     return NextResponse.json({ message: "Failed to delete admin", error: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
@@ -190,48 +215,58 @@ export async function DELETE(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const id = Number(searchParams.get("id"));
+    const body = await req.json();
 
+    // ✅ Get ID from URL or request body
+    const id = Number(searchParams.get("id")) || Number(body.id);
     if (!id) {
       return NextResponse.json({ error: "Admin ID is required" }, { status: 400 });
     }
+    console.log("Updating Admin ID:", id);
 
-    const body = await req.json();
-
-    // ✅ Update allowed fields in admin
-const allowedFields: (keyof AdminUpdate)[] = ["username", "email", "role"];
-const updateData: AdminUpdate = {};
-
-for (const key of allowedFields) {
-  if (body[key] !== undefined) {
-    updateData[key] = body[key];
-  }
-}
-
-if (Object.keys(updateData).length > 0) {
-  await db.update(admin).set(updateData).where(eq(admin.id, id));
-}
-
-    // ✅ Prepare permissions dynamically
-    const allPermissions = [
-      "change_password",
-      "refund",
-      "monitor_activity",
-      "view_finance",
-      "access_ticket",
-     
+    // ✅ Allowed fields to update
+    const allowedFields: (keyof AdminUpdate)[] = [
+      "username",
+      "email",
+      "role",
+      "country_code",
+      "phone_number",
+      "birthdate",
+      "image",
     ];
 
+    const updateData: AdminUpdate = {};
+    for (const key of allowedFields) {
+      if (body[key] !== undefined) {
+        updateData[key] = body[key];
+      }
+    }
+
+    // ✅ Normalize birthdate
+    if (body.birthdate) {
+      const bd = body.birthdate;
+      updateData.birthdate =
+        bd instanceof Date ? bd.toISOString().split("T")[0] : String(bd);
+    }
+
+    // ✅ Update admin table if any fields provided
+    if (Object.keys(updateData).length > 0) {
+      await db.update(admin).set(updateData).where(eq(admin.id, id));
+    }
+
+    // ✅ Handle permissions
     const permissionData: Record<string, number> = {};
     allPermissions.forEach((perm) => {
       const value = body[perm];
-      permissionData[perm] = value === true || value === 1 || value === "1" || value === "on" ? 1 : 0;
+      permissionData[perm] =
+        value === true || value === 1 || value === "1" || value === "on" ? 1 : 0;
     });
 
-    // ✅ Update or insert role row including role_name
+    // ✅ Update or insert role row
     const existingRole = await db.select().from(role).where(eq(role.user_id, id));
     if (existingRole.length > 0) {
-      await db.update(role)
+      await db
+        .update(role)
         .set({
           ...permissionData,
           role_name: body.role_name || updateData.role || existingRole[0].role_name,
@@ -252,6 +287,10 @@ if (Object.keys(updateData).length > 0) {
         username: admin.username,
         email: admin.email,
         role: admin.role,
+        country_code: admin.country_code,
+        phone_number: admin.phone_number,
+        birthdate: admin.birthdate,
+        image: admin.image,
         role_name: role.role_name,
         change_password: role.change_password,
         refund: role.refund,
@@ -263,14 +302,15 @@ if (Object.keys(updateData).length > 0) {
       .leftJoin(role, eq(admin.id, role.user_id))
       .where(eq(admin.id, id));
 
-    console.log("all updated data:", updatedAdminArray);
-
     return NextResponse.json({
       message: "Admin updated successfully",
       updatedAdmin: updatedAdminArray[0] || null,
     });
   } catch (error) {
-    console.error("PATCH /api/subadmin error:", error);
-    return NextResponse.json({ error: "Failed to update admin" }, { status: 500 });
+    console.error("PATCH /api/admin error:", error);
+    return NextResponse.json(
+      { error: "Failed to update admin", details: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
   }
 }
