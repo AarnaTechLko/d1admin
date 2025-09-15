@@ -9,39 +9,30 @@ import { Eye, EyeOff, User, Mail, Lock, Loader2 } from "lucide-react";
 import Loading from "@/components/Loading";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import Swal from "sweetalert2";
-
-// ✅ All possible permissions
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { Image as ImageIcon } from "lucide-react"; // ✅ add this at the top
+import { FaCalendarAlt } from "react-icons/fa";
+// Permissions
 const permissionOptions = [
-  { label: "Change Password", value: "changePassword" },
+  { label: "Change Password", value: "change_password" },
   { label: "Refund", value: "refund" },
-  { label: "Monitor Activity", value: "monitorActivity" },
-  { label: "View Finance", value: "viewFinance" },
-  { label: "Access Ticket", value: "accessTicket" },
-  { label: "Moderate Review", value: "moderateReview" },
-  { label: "Add Review Text", value: "addReviewText" },
-  { label: "Manage Users", value: "manageUsers" },
+  { label: "Monitor Activity", value: "monitor_activity" },
+  { label: "View Finance", value: "view_finance" },
+  { label: "Access Ticket", value: "access_ticket" },
 ];
 
-// ✅ Default permissions per role
+// Default permissions per role
 const rolePermissionsMap: Record<string, string[]> = {
-  "Customer Support": ["accessTicket", "changePassword"],
-  "Manager": [
-    "refund",
-    "accessTicket",
-    "viewFinance",
-    "moderateReview",
-    "addReviewText",
-  ],
-  "Tech": ["monitorActivity", "viewFinance", "accessTicket"],
+  "Customer Support": ["access_ticket", "change_password"],
+  "Manager": ["refund", "access_ticket", "view_finance"],
+  "Tech": ["monitor_activity", "view_finance", "access_ticket"],
   "Executive Level": [
-    "accessTicket",
-    "changePassword",
+    "access_ticket",
+    "change_password",
     "refund",
-    "monitorActivity",
-    "viewFinance",
-    "moderateReview",
-    "addReviewText",
-    "manageUsers",
+    "monitor_activity",
+    "view_finance",
   ],
 };
 
@@ -50,23 +41,72 @@ export default function CreateSubAdminWithRole() {
   const router = useRouter();
 
   const [showPassword, setShowPassword] = useState(false);
+  const [countries, setCountries] = useState<{ shortname: string; phonecode: string }[]>([]);
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
     role: "Customer Support",
+    country_code: "+91",   // ✅ default India
+    phone_number: "",
+    birthdate: "",
+    image: "",
   });
-
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const handleAdminChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, image: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDateChange = (date: Date | null) => {
+    setSelectedDate(date);
+    setFormData({ ...formData, birthdate: date ? date.toISOString().split("T")[0] : "" });
+  };
+
+  const fetchCountries = async () => {
+    try {
+      const res = await fetch("/api/countryphonecode");
+      if (!res.ok) throw new Error("Failed to fetch countries");
+      const data = await res.json();
+
+      if (Array.isArray(data)) {
+        setCountries(data);
+      } else if (Array.isArray(data.countries)) {
+        setCountries(data.countries);
+      } else {
+        setCountries([]);
+      }
+    } catch (err) {
+      console.error(err);
+      setCountries([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchCountries();
+  }, []);
+
+  useEffect(() => {
+    const defaults = rolePermissionsMap[formData.role] || [];
+    setSelectedPermissions(defaults);
+  }, [formData.role]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,10 +130,25 @@ export default function CreateSubAdminWithRole() {
       return;
     }
 
+    const requiredFields = [
+      "username",
+      "email",
+      "password",
+      "role",
+      "country_code",
+      "phone_number",
+      "birthdate",
+    ];
+    for (const field of requiredFields) {
+      if (!formData[field as keyof typeof formData]) {
+        Swal.fire("Missing Field", `Please fill in ${field.replace("_", " ")}`, "warning");
+        return;
+      }
+    }
+
     try {
       setLoading(true);
 
-      // Step 1: Create subadmin
       const res = await fetch("/api/subadmin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -102,72 +157,62 @@ export default function CreateSubAdminWithRole() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Failed to create subadmin");
+        setError(data.error || "Failed to create admin");
         return;
       }
 
-      const createdUserId = data.user_id || data.id || data.data?.id;
+      const createdUserId = data.user_id;
       if (!createdUserId) {
         setError("User ID not returned from server");
         return;
       }
 
-      localStorage.setItem("user_id", createdUserId);
-
-      // Step 2: Assign Role + Permissions
-      const roleRes = await fetch(`/api/role/update-permission`, {
-        method: "POST",
+      const roleRes = await fetch("/api/subadmin", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_id: createdUserId,
+          id: createdUserId,
           role_name: formData.role,
-          permissions: selectedPermissions,
+          ...selectedPermissions.reduce((acc, key) => ({ ...acc, [key]: 1 }), {}),
         }),
       });
 
       const roleResult = await roleRes.json();
-      if (!roleRes.ok || !roleResult.success) {
-        setError(roleResult.message || "Role assignment failed");
+      if (!roleRes.ok) {
+        setError(roleResult.error || "Failed to assign permissions");
         return;
       }
 
-      setSuccess("Subadmin and role assigned successfully!");
+      setSuccess("Subadmin created and permissions assigned successfully!");
       setTimeout(() => router.push("/view"), 1500);
     } catch (err) {
-      console.error("Error:", err);
+      console.error(err);
       setError("Network error occurred");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Auto-assign role permissions when role changes
-  useEffect(() => {
-    const defaults = rolePermissionsMap[formData.role] || [];
-    setSelectedPermissions(defaults);
-  }, [formData.role]);
-
   if (loading) return <Loading />;
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-300 shadow-lg dark:border-gray-700 my-8"
+      className="space-y-6 bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-300 shadow-lg
+       dark:border-gray-700 my-8"
     >
       <h1 className="text-xl font-semibold text-gray-800 dark:text-white/90">
         Add Sub Admin
       </h1>
 
-      {/* Username & Email */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="relative ">
-          <Label>
-          Name <span className="text-error-500">*</span>
-          </Label>
-          <User className="absolute left-3 top-1/2 transform translate-y-1 text-gray-400" />
+      {/* Username, Email, Password */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="relative">
+          <Label>Name <span className="text-error-500">*</span></Label>
+          <User className="absolute left-3 top-1/2 transform  text-gray-400" />
           <Input
             className="pl-10"
-            placeholder="John"
+            placeholder="John Doe"
             type="text"
             name="username"
             value={formData.username}
@@ -177,10 +222,8 @@ export default function CreateSubAdminWithRole() {
         </div>
 
         <div className="relative">
-          <Label>
-            Email <span className="text-error-500">*</span>
-          </Label>
-          <Mail className="absolute left-3 top-1/2 transform translate-y-1 text-gray-400" />
+          <Label>Email <span className="text-error-500">*</span></Label>
+          <Mail className="absolute left-3 top-1/2 transform  text-gray-400" />
           <Input
             className="pl-10"
             placeholder="info@gmail.com"
@@ -191,36 +234,32 @@ export default function CreateSubAdminWithRole() {
             required
           />
         </div>
-      </div>
 
-      {/* Password & Role */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="relative">
-          <Label>
-            Password <span className="text-error-500">*</span>
-          </Label>
-          <Lock className="absolute left-3 top-1/2 transform translate-y-1 text-gray-400" />
+          <Label>Password <span className="text-error-500">*</span></Label>
+          <Lock className="absolute left-3 top-1/2 transform  text-gray-400" />
           <Input
             className="pl-10"
             type={showPassword ? "text" : "password"}
             name="password"
-            placeholder="Enter your password"
+            placeholder="Enter password"
             value={formData.password}
             onChange={handleAdminChange}
             required
           />
           <span
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-4 top-1/2 transform translate-y-1 cursor-pointer"
+            className="absolute right-4 top-1/2 transform  cursor-pointer"
           >
             {showPassword ? <Eye /> : <EyeOff />}
           </span>
         </div>
+      </div>
 
+      {/* Role, Phone & Birthdate */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
-          <Label>
-            Role <span className="text-error-500">*</span>
-          </Label>
+          <Label>Role <span className="text-error-500">*</span></Label>
           <select
             name="role"
             value={formData.role}
@@ -228,11 +267,91 @@ export default function CreateSubAdminWithRole() {
             className="w-full p-2 border border-gray-300 rounded-md"
             required
           >
-            <option value="Customer Support">Customer Support</option>
-            <option value="Manager">Manager</option>
-            <option value="Tech">Tech</option>
-            <option value="Executive Level">Executive Level</option>
+            {Object.keys(rolePermissionsMap).map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
           </select>
+        </div>
+
+        <div>
+          <Label>Phone <span className="text-error-500">*</span></Label>
+          <div className="flex w-full">
+            {/* Country Code */}
+            <select
+              name="country_code"
+              value={formData.country_code}
+              onChange={handleAdminChange}
+              className="w-28 text-center rounded-l-md border border-gray-300"
+              required
+            >
+              {countries?.map((c, index) => (
+                <option key={`${c.shortname}-${c.phonecode}-${index}`} value={`+${c.phonecode}`}>
+                  {c.shortname} (+{c.phonecode})
+                </option>
+              ))}
+            </select>
+
+
+            {/* Phone Number */}
+            <Input
+              type="tel"
+              name="phone_number"
+              value={formData.phone_number}
+              onChange={handleAdminChange}
+              placeholder="9876543210"
+              pattern="\d{10,}" // ✅ ensures only digits with at least 10 numbers
+              minLength={10}    // ✅ extra safeguard
+              maxLength={10}    // ✅ optional: international numbers can go up to 15 digits
+              className="flex-1 rounded-l-none border border-gray-300"
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label>Birthdate <span className="text-error-500">*</span></Label>
+          <div className="relative w-full max-w-md mx-auto">
+            {/* Calendar icon */}
+            <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 dark:text-blue-400" />
+
+            {/* DatePicker input */}
+            <DatePicker
+              selected={selectedDate}
+              onChange={handleDateChange}
+              dateFormat="dd-MM-yyyy"
+              placeholderText="Date of Birth"
+              showMonthDropdown
+              showYearDropdown
+              dropdownMode="select"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm cursor-pointer
+                   focus:outline-none focus:ring-1 focus:ring-blue-300 focus:border-blue-600
+                   text-gray-700 placeholder-gray-400 
+                   dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:placeholder-gray-500
+                   transition-all duration-200"
+              calendarClassName="rounded-md shadow-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-800"
+              required
+            />
+          </div>
+
+
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="relative">
+          <Label>Profile Image</Label>
+          <div className="flex items-center gap-3 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 shadow-sm bg-white dark:bg-gray-700 cursor-pointer hover:border-blue-500 transition">
+            <ImageIcon className="text-gray-500 dark:text-gray-300 w-5 h-5" />
+            <input
+              type="file"
+              accept="image/*"
+              name="image"
+              onChange={handleImageChange}
+              className="w-full text-sm text-gray-700 dark:text-gray-200 bg-transparent border-0 focus:ring-0 file:hidden cursor-pointer"
+            />
+          </div>
         </div>
       </div>
 
@@ -240,14 +359,16 @@ export default function CreateSubAdminWithRole() {
       <div>
         <Label>Permissions for {formData.role}</Label>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-y-3 gap-x-4 mt-2">
-          {permissionOptions
-            .filter((perm) => selectedPermissions.includes(perm.value))
-            .map((perm) => (
-              <label key={perm.value} className="flex items-center gap-2">
-                <input type="checkbox" checked readOnly />
-                {perm.label}
-              </label>
-            ))}
+          {permissionOptions.map((perm) => (
+            <label key={perm.value} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={selectedPermissions.includes(perm.value)}
+                readOnly
+              />
+              {perm.label}
+            </label>
+          ))}
         </div>
       </div>
 
@@ -256,20 +377,22 @@ export default function CreateSubAdminWithRole() {
       {success && <p className="text-green-600">{success}</p>}
 
       {/* Submit */}
-
-<div className="flex justify-center">
-  <Button type="submit" className="w-1/2 py-2 flex items-center justify-center gap-2" disabled={loading}>
-    {loading ? (
-      <>
-        <Loader2 className="animate-spin" size={16} />
-        <span>Processing...</span>
-      </>
-    ) : (
-      "Create Subadmin & Assign Role"
-    )}
-  </Button>
-</div>
-
+      <div className="flex justify-center">
+        <Button
+          type="submit"
+          className="w-1/2 py-2 flex items-center justify-center gap-2"
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="animate-spin" size={16} />
+              <span>Processing...</span>
+            </>
+          ) : (
+            "Create Subadmin & Assign Role"
+          )}
+        </Button>
+      </div>
     </form>
   );
 }

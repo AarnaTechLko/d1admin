@@ -24,7 +24,7 @@ interface Entity {
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
 export default function NotificationPage() {
-      useRoleGuard();
+  useRoleGuard();
 
   const [type, setType] = useState('');
   const [status, setStatus] = useState('');
@@ -53,18 +53,18 @@ export default function NotificationPage() {
 
   const matchingEntities = Array.isArray(entities)
     ? entities.filter((item) => {
-        const matchesLocation =
-          (!country || item.country === country) &&
-          (!state || item.state === state) &&
-          (!city || item.city === city);
+      const matchesLocation =
+        (!country || item.country === country) &&
+        (!state || item.state === state) &&
+        (!city || item.city === city);
 
-        const matchesPlayerCriteria =
-          type !== 'player' ||
-          ((!gender || item.gender?.toLowerCase() === gender.toLowerCase()) &&
-            (!position || item.position?.toLowerCase() === position.toLowerCase()));
+      const matchesPlayerCriteria =
+        type !== 'player' ||
+        ((!gender || item.gender?.toLowerCase() === gender.toLowerCase()) &&
+          (!position || item.position?.toLowerCase() === position.toLowerCase()));
 
-        return matchesLocation && matchesPlayerCriteria;
-      })
+      return matchesLocation && matchesPlayerCriteria;
+    })
     : [];
 
   useEffect(() => {
@@ -73,21 +73,21 @@ export default function NotificationPage() {
     // console.log("Type: ", type);
 
 
-      const queryParams = new URLSearchParams({
-        status,
-      });
+    const queryParams = new URLSearchParams({
+      status,
+    });
 
-      //   if (status){
-      //     console.log("Stat: ", status);
-      //       queryParams.append("status", status)
-      //   }
+    //   if (status){
+    //     console.log("Stat: ", status);
+    //       queryParams.append("status", status)
+    //   }
 
-      // console.log("queryParams: ", queryParams.toString())
+    // console.log("queryParams: ", queryParams.toString())
 
-      //   const res = await axios.get(`/api/geolocation/${queryParams.toString()}`);
+    //   const res = await axios.get(`/api/geolocation/${queryParams.toString()}`);
 
     console.log("Status: ", status);
-    
+
     const fetchData = async () => {
       try {
         const res = await axios.get(`/api/bulkemail/${type}?${queryParams.toString()}`);
@@ -211,22 +211,22 @@ export default function NotificationPage() {
         <p className="text-sm text-gray-500">Select a target group and location to send a broadcast message.</p>
 
         <div className="flex items-center gap-6">
-       {([
-  ['Email', sendEmail, setSendEmail],
-  ['SMS', sendSMS, setSendSMS],
-  ['Internal Message', sendInternal, setSendInternal]
-] as [string, boolean, React.Dispatch<React.SetStateAction<boolean>>][]).map(
-  ([label, state, setter]) => (
-    <label key={label} className="flex items-center gap-2">
-      <input
-        type="checkbox"
-        checked={state}
-        onChange={() => setter(!state)}
-      />
-      <span>{label}</span>
-    </label>
-  )
-)}
+          {([
+            ['Email', sendEmail, setSendEmail],
+            ['SMS', sendSMS, setSendSMS],
+            ['Internal Message', sendInternal, setSendInternal]
+          ] as [string, boolean, React.Dispatch<React.SetStateAction<boolean>>][]).map(
+            ([label, state, setter]) => (
+              <label key={label} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={state}
+                  onChange={() => setter(!state)}
+                />
+                <span>{label}</span>
+              </label>
+            )
+          )}
 
         </div>
 
@@ -243,14 +243,14 @@ export default function NotificationPage() {
 
           <div>
             <Label>Status</Label>
-            <select className="w-full p-2 mt-1 border rounded-lg bg-white" value={status} onChange={(e) => setStatus(e.target.value)}  disabled={!type}>
+            <select className="w-full p-2 mt-1 border rounded-lg bg-white" value={status} onChange={(e) => setStatus(e.target.value)} disabled={!type}>
               <option value="">Select Status</option>
               <option value="no-profile">Profile Not Completed</option>
               <option value="profile">Profile Completed</option>
               <option value="unsuspend">Unsuspended</option>
               <option value="suspend">Suspended</option>
-              <option className={type !=="coach" ? 'hidden' : ''} value="unapproved">Unapproved</option>
-              <option className={type !=="coach" ? 'hidden' : ''} value="approved">Approved</option>
+              <option className={type !== "coach" ? 'hidden' : ''} value="unapproved">Unapproved</option>
+              <option className={type !== "coach" ? 'hidden' : ''} value="approved">Approved</option>
               <option value="inactive">Inactive</option>
               <option value="active">Active</option>
             </select>
@@ -319,7 +319,7 @@ export default function NotificationPage() {
             </>
           )}
         </div>
-  
+
         {matchingEntities.length > 0 && (
           <div className="bg-gray-50 p-4 rounded-md border text-sm text-gray-700">
             <p className="font-semibold mb-2">
@@ -335,9 +335,9 @@ export default function NotificationPage() {
                 <label key={entity.id} className="flex items-center gap-2">
                   <input type="checkbox" checked={selectedIds.includes(entity.id)} onChange={() => handleCheckboxChange(entity.id)} />
 
-                  <span className={status !=="no-profile" ? 'text-xs' : 'hidden'}>{entity.name || `ID: ${entity.id}`}</span>
+                  <span className={status !== "no-profile" ? 'text-xs' : 'hidden'}>{entity.name || `ID: ${entity.id}`}</span>
 
-                  <span className={status ==="no-profile" ? 'text-xs' : 'hidden'}>{entity.email}</span>        
+                  <span className={status === "no-profile" ? 'text-xs' : 'hidden'}>{entity.email}</span>
 
                 </label>
               ))}
@@ -349,35 +349,35 @@ export default function NotificationPage() {
           <Label>Message</Label>
           <TextArea className="w-full mt-1 border rounded-lg text-black" rows={5} value={message} placeholder="Enter your notification message here..." onChange={(value: string) => setMessage(value)} />
         </div> */}
-<div>
-  <Label>Subject</Label>
-  <input
-    type="text"
-    className="w-full p-2 mt-1 border rounded-lg bg-white"
-    value={subject}
-    onChange={(e) => setSubject(e.target.value)}
-    placeholder="Enter notification subject..."
-  />
-</div>
         <div>
-  <Label>Message</Label>
-  <ReactQuill
-    theme="snow"
-    value={message}
-    onChange={setMessage}
-    placeholder="Write your message here..."
-    modules={{
-      toolbar: [
-        [{ 'header': [1, 2, false] }],
-        ['bold', 'italic', 'underline'],
-        ['link'],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-        ['clean']
-      ],
-    }}
-    style={{ height: '200px', marginBottom: '50px' }}
-  />
-</div>
+          <Label>Subject</Label>
+          <input
+            type="text"
+            className="w-full p-2 mt-1 border rounded-lg bg-white"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            placeholder="Enter notification subject..."
+          />
+        </div>
+        <div>
+          <Label>Message</Label>
+          <ReactQuill
+            theme="snow"
+            value={message}
+            onChange={setMessage}
+            placeholder="Write your message here..."
+            modules={{
+              toolbar: [
+                [{ 'header': [1, 2, false] }],
+                ['bold', 'italic', 'underline'],
+                ['link'],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                ['clean']
+              ],
+            }}
+            style={{ height: '200px', marginBottom: '50px' }}
+          />
+        </div>
 
         <div className="pt-4 text-right">
           <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-xl transition">

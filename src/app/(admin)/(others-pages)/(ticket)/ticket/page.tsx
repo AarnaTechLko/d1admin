@@ -288,20 +288,57 @@ const TicketsPage = () => {
       setIsSubmitting(false);
     }
   };
-  const handleModalSubmit = () => {
-    if (!selectedTicket) {
-      setError("No ticket selected");
-      return;
-    }
-    setIsSubmitting(true);
-    // Find the selected sub-admin object based on the last clicked admin (selectedTicket.assign_to)
-    const assignedSubAdmin = subAdmins.find((admin) => admin.id === selectedTicket.assign_to);
+const handleModalSubmit = async () => {
+  if (!selectedTicket) {
+    setError("No ticket selected");
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No ticket selected.",
+    });
+    return;
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    // Find the selected sub-admin object
+    const assignedSubAdmin = subAdmins.find(
+      (admin) => admin.id === selectedTicket.assign_to
+    );
+
     if (assignedSubAdmin) {
-      handleAssignSubAdmin(assignedSubAdmin); // Call API function to assign
+      await handleAssignSubAdmin(assignedSubAdmin); // ✅ Call API function
+
+      Swal.fire({
+        icon: "success",
+        title: "Assigned!",
+        text: `${assignedSubAdmin.username} has been assigned successfully.`,
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      setIsModalOpen(false); // close modal on success
     } else {
       setError("Please select a sub-admin before submitting.");
+      Swal.fire({
+        icon: "warning",
+        title: "No Sub-Admin Selected",
+        text: "Please select a sub-admin before submitting.",
+      });
     }
-  };
+  }catch (error) {
+  console.error("Assignment failed:", error);
+  Swal.fire({
+    icon: "error",
+    title: "Assignment Failed",
+    text: "Something went wrong while assigning sub-admin.",
+  });
+} finally {
+  setIsSubmitting(false);
+}
+
+};
 
   const handleDeleteReply = async (replyId: number) => {
     setIsReplyModalOpen(false);
@@ -589,7 +626,7 @@ const TicketsPage = () => {
 
       {/* Modal for Assigning Subadmin */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="p-6">
+  <DialogContent className="p-6 max-h-[80vh] overflow-y-auto">
           <DialogTitle>Assign Subadmin</DialogTitle>
           <p className="text-gray-500">Select a sub-admin to assign:</p>
 
