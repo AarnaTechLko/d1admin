@@ -49,20 +49,14 @@ const allPermissions = [
 // --------------------- POST: Add Admin ---------------------
 export async function POST(req: Request) {
   try {
-    const {
-      username,
-      email,
-      password,
-      role: roleName,
-      country_code,
-      phone_number,
-      birthdate,
-      image,
-    } = await req.json();
+    const { username, email, password, role: roleName, country_code, phone_number, birthday } = await req.json();
 
-    if (!username || !email || !password || !roleName || !country_code || !phone_number || !birthdate) {
+    console.log("Fields: ", username, " ", email, " ", country_code, " ", phone_number, " ", birthday)
+
+    // ✅ Required field validation
+    if (!username || !email || !password || !roleName || !country_code || !phone_number || !birthday) {
       return NextResponse.json(
-        { error: "All required fields (username, email, password, role, country_code, phone_number, birthdate) must be provided" },
+        { error: "All fields (username, email, password, role, country code, phone number, and birthday) are required" },
         { status: 400 }
       );
     }
@@ -82,23 +76,20 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const [insertedAdmin] = await db
-      .insert(admin)
-      .values({
-        username,
-        email,
-        password_hash: hashedPassword,
-        role: roleName,
-        country_code,
-        phone_number,
-        birthdate: birthdate, // must be "YYYY-MM-DD" string
-        image: image || null,
-        is_deleted: 1,
-      })
-      .returning();
+
+    const insertedAdmin = await db.insert(admin).values({
+      username,
+      email,
+      password_hash: hashedPassword,
+      role: roleName,
+      country_code,
+      phone_number,
+      birthdate: birthday,
+      is_deleted: 1,
+    }).returning();
 
     return NextResponse.json(
-      { success: "Admin added successfully", user_id: insertedAdmin.id },
+      { success: "Admin added successfully", user_id: insertedAdmin[0].id },
       { status: 201 }
     );
   } catch (error) {

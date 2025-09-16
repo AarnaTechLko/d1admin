@@ -36,6 +36,6 @@ export const config = {
     "/subadmin",
     "/view",
     "/createticket",
-    "/ticket"
+    "/ticket",
   ]
 };

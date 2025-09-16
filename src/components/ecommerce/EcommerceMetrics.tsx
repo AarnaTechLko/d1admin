@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-
+import Link from "next/link";
 import { GroupIcon } from "lucide-react";
 // interface Coach {
 //   id: string; 
@@ -8,16 +8,17 @@ import { GroupIcon } from "lucide-react";
 // interface player {
 //   id: string;
 // }
-interface Organization {
-  id: string;
-}
+// interface Organization {
+//   id: string;
+// }
 export const EcommerceMetrics = () => {
     // const [teams, setTeams] = useState<Team[]>([]);
     // const [totalPages, setTotalPages] = useState<number>(1);
-    const [organizations, setOrganizations] = useState<Organization[]>([]);
+    // const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [totalCount, setTotalCount] = useState<number>(0);
      const [players, setPlayers] = useState<number>(0);
     const [coaches, setCoaches] = useState<number>(0);
+    const [organizationCount, setOrganizationCount] = useState<number>(0);
     // const [error, setError] = useState<string | null>(null);
     // const [loading, setLoading] = useState<boolean>(true);
     // const router = useRouter();
@@ -111,7 +112,7 @@ export const EcommerceMetrics = () => {
           const data = await response.json();
     
           console.log("Organization Count:", data.organizationCount[0].count); // ✅ Debugging line
-          setOrganizations(data.organizationCount[0].count);
+          setOrganizationCount(data.organizationCount[0].count);
 
         } catch (err) {
           console.error("error", err);
@@ -129,25 +130,30 @@ export const EcommerceMetrics = () => {
     <div className="flex justify-between grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-[1000px]">
 
       {/* <!-- Metric Item Start --> */}
-      <div className=" flex rounded-2xl border border-gray-200 bg-sky-100 p-4 dark:border-gray-800 dark:bg-sky-900 md:p-6" >
+      <div className=" rounded-2xl border border-gray-200 bg-sky-100 p-4 dark:border-gray-800 dark:bg-sky-900 md:p-6" >
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
           <GroupIcon className="text-gray-800 size-6 dark:text-white/90" />
         </div>
 
-        <div className="flex items-end justify-between mt-5">
-          <div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              Coaches
-            </span>
-            <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
-            {coaches}
-            </h4>
+        <Link href="/coach">
+          <div className="flex items-end justify-between mt-5">
+
+            <div>
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                Coaches
+              </span>
+              <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
+              {coaches}
+              </h4>
+            </div>
+
+            {/* <Badge color="success">
+              <ArrowUpIcon className="text-error-500" />
+              11.01%
+            </Badge> */}
           </div>
-          {/* <Badge color="success">
-            <ArrowUpIcon className="text-error-500" />
-            11.01%
-          </Badge> */}
-        </div>
+        </Link>
+
       </div>
       {/* <!-- Metric Item End --> */}
 
@@ -156,18 +162,20 @@ export const EcommerceMetrics = () => {
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
         <GroupIcon className="text-gray-800 size-6 dark:text-white/90" />
         </div>
-        <div className="flex items-end justify-between mt-5">
-          <div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              Players
-            </span>
-            <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
-            {players}
-            </h4>
-          </div>
 
-          
-        </div>
+        <Link href="/player">
+          <div className="flex items-end justify-between mt-5">
+
+              <div>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  Players
+                </span>
+                <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
+                {players}
+                </h4>
+              </div>          
+          </div>
+        </Link>
       </div>
       {/* extra add column player/coches */}
       <div className="rounded-2xl border border-gray-200 bg-red-100 p-4 dark:border-gray-800 dark:bg-sky-900 md:p-6 " >
@@ -175,17 +183,21 @@ export const EcommerceMetrics = () => {
           <GroupIcon className="text-gray-800 size-6 dark:text-white/90" />
         </div>
 
-        <div className="flex items-end justify-between mt-5">
-          <div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              Organizations
-            </span>
-            <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
-            {organizations.length}
-            </h4>
+
+        <Link href="/organization">
+          <div className="flex items-end justify-between mt-5">
+            <div>
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                Organizations
+              </span>
+              <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
+              {organizationCount}
+              </h4>
+            </div>
+          
           </div>
-         
-        </div>
+        </Link>
+
       </div>
       {/* <!-- Metric Item End --> */}
 
@@ -196,17 +208,20 @@ export const EcommerceMetrics = () => {
           <GroupIcon className="text-gray-800 size-6 dark:text-white/90" />
         </div>
 
-        <div className="flex items-end justify-between mt-5">
-          <div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              Teams
-            </span>
-            <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
-             {totalCount}
-            </h4>
+        <a href="/team">
+          <div className="flex items-end justify-between mt-5">
+            <div>
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                Teams
+              </span>
+              <h4 className="mt-2 font-bold text-gray-700 text-xl dark:text-white/90">
+              {totalCount}
+              </h4>
+            </div>
+            
           </div>
-          
-        </div>
+        </a>
+
       </div>
       
       {/* <!-- Metric Item End --> */}

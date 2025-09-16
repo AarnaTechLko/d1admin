@@ -49,6 +49,9 @@ const TicketsPage = () => {
   useRoleGuard();
 
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [statusQuery, setStatusQuery] = useState<string>("");
+
+
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -173,7 +176,7 @@ const TicketsPage = () => {
     }
   }, [router]);
 
-  // ✅ Fetch tickets when userId, searchQuery or currentPage changes
+  // ✅ Fetch tickets when userId, searchQuery, statusQuery, or currentPage changes
   useEffect(() => {
     if (!userId) return;
 
@@ -182,7 +185,7 @@ const TicketsPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/tickets?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}`
+          `/api/tickets?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}&status=${statusQuery}`
         );
 
         if (!response.ok) throw new Error("Failed to fetch tickets");
@@ -199,7 +202,7 @@ const TicketsPage = () => {
     };
 
     fetchTickets();
-  }, [userId, searchQuery, currentPage]);
+  }, [userId, searchQuery, currentPage, statusQuery]);
 
 
   useEffect(() => {
@@ -383,7 +386,7 @@ const handleModalSubmit = async () => {
         )}
       </div> */}
 
-      <PageBreadcrumb pageTitle="Ticket" onSearch={setSearchQuery} />
+      <PageBreadcrumb pageTitle="Ticket" onStatus={setStatusQuery} onSearch={setSearchQuery} />
       <div className="flex justify-end items-center gap-2 p-4 dark:border-white/[0.05]">
         {[...Array(totalPages)].map((_, index) => {
           const pageNumber = index + 1;
@@ -593,6 +596,7 @@ const handleModalSubmit = async () => {
                 <option value="Open">Open</option>
                 <option value="Fixed">Fixed</option>
                 <option value="Closed">Closed</option>
+                <option value="Escalate">Escalate</option>
               </select>
 
               {/* Buttons */}

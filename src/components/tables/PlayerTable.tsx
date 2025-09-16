@@ -510,8 +510,8 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                               }
                             >
                               {(player.suspend === 1 || player.suspend_days === null)
-                                ? "Unsuspend"
-                                : "Suspend"}
+                                ? "Suspend"
+                                : "Unsuspend"}
                             </Badge>
                           </button>
                         </TableCell>
@@ -535,7 +535,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                 }}
                                 className=" text-white px-1 py-1 rounded"
                               >
-                                ♻️
+                                👻
                               </button>
                             )}
                             {/* 👁️ View IP Info button */}
@@ -887,7 +887,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
             <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">
               <DialogHeader>
                 <DialogTitle>
-                  {suspendPlayer?.suspend === 1 ? "Unsuspend Player" : "Suspend Player"}
+                  {suspendPlayer?.suspend === 1 ? "Suspend Player" : "Unsuspend Player"}
                 </DialogTitle>
               </DialogHeader>
 

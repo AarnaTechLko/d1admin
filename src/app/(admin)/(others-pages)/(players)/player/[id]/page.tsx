@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter } from "lucide-react";
 
+
 // import { FaTwitter, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -516,7 +517,7 @@ export default function PlayerDetailPage() {
                             <thead className="bg-gray-50 border-b text-gray-700 uppercase text-xs">
                                 <tr>
                                     <th className="px-4 py-3">Player</th>
-                                    <th className="px-4 py-3">Title</th>
+                                    <th className="px-4 py-3">Evaluation</th>
                                     <th className="px-4 py-3">Video</th>
                                     <th className="px-4 py-3">Jersey</th>
                                     <th className="px-4 py-3">Status</th>
@@ -694,7 +695,7 @@ export default function PlayerDetailPage() {
                                                     ) : (
                                                         <button
                                                             onClick={() => handleHidePayment(p.evaluation_id)}
-                                                            title="Hide Payment"
+                                                            title="Refund Payment"
                                                             style={{
                                                                 fontSize: '1.2rem',
                                                             }}

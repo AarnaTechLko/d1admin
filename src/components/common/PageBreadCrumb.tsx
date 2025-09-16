@@ -5,11 +5,13 @@ import React, { useRef, useState, useEffect } from "react";
 interface BreadcrumbProps {
   pageTitle: string;
   onSearch: (query: string) => void; // Function to handle search
+  onStatus?: (query: string) => void;
 }
 
-const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch }) => {
+const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch, onStatus }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [ticketStatus, setTicketStatus] = useState("");
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -31,6 +33,17 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch }) => {
     onSearch(query); // Trigger search in parent component
   };
 
+
+  const handleStatusChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const query = event.target.value;
+    setTicketStatus(query);
+
+    if (onStatus){
+      onStatus(query);
+
+    }
+  }
+
   return (
     <div className="flex flex-wrap items-center  gap-3 ">
       <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
@@ -47,6 +60,26 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch }) => {
           placeholder="Search..."
           className="h-10 w-64 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+
+        {pageTitle === "Ticket" &&(
+
+          <>
+
+            <span className="md:ml-5"> Status </span>
+
+            <select className="mt-6 w-64 md:w-40 p-2 md:mt-0 border rounded-lg bg-white" value={ticketStatus} onChange={handleStatusChange}>
+              <option value="">Select</option>
+              <option value="Pending"> Pending </option>
+              <option value="Open"> Open </option>
+              <option value="Fixed"> Fixed </option>
+              <option value="Closed"> Closed </option>
+              <option value="Escalate">Escalate</option>
+            </select>
+
+          </>
+
+        )}
+
       </div>
     </div>
   );
