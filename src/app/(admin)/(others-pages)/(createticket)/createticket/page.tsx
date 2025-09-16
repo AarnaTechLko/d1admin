@@ -247,34 +247,34 @@ const handleSubmit = async (e: React.FormEvent) => {
             {/* Dropdown list */}
             {isOpen && (
              <ul className="absolute left-0 right-0 mt-1 z-10 bg-white border rounded-md max-h-60 overflow-y-auto shadow-lg">
-  {loadingRecipients ? (
-    <li className="p-4 text-center text-gray-500">
-      <span className="animate-spin h-5 w-5 mr-2 inline-block border-2 border-blue-500 border-t-transparent rounded-full"></span>
-      Loading...
-    </li>
-  ) : filteredRecipients.length > 0 ? (
-    filteredRecipients.map((r) => (
-      <li
-        key={r.id}
-        className="p-2 cursor-pointer hover:bg-blue-100"
-        onClick={() => {
-          setFormData((prev) => ({
-            ...prev,
-            assign_to: r.id,
-            name: r.name, // ✅ save recipient name
-            email: r.email, // ✅ save recipient email
-          }));
-          setSearchTerm(r.name || r.email);
-          setIsOpen(false);
-        }}
-      >
-        {r.name} ({r.email})
-      </li>
-    ))
-  ) : (
-    <li className="p-2 text-gray-500">No results found</li>
-  )}
-</ul>
+              {loadingRecipients ? (
+                <li className="p-4 text-center text-gray-500">
+                  <span className="animate-spin h-5 w-5 mr-2 inline-block border-2 border-blue-500 border-t-transparent rounded-full"></span>
+                  Loading...
+                </li>
+              ) : filteredRecipients.length > 0 ? (
+                filteredRecipients.map((r) => (
+                  <li
+                    key={r.id}
+                    className="p-2 cursor-pointer hover:bg-blue-100"
+                    onClick={() => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        assign_to: r.id,
+                        name: r.name, // ✅ save recipient name
+                        email: r.email, // ✅ save recipient email
+                      }));
+                      setSearchTerm(r.name || r.email);
+                      setIsOpen(false);
+                    }}
+                  >
+                    {r.name} ({r.email})
+                  </li>
+                ))
+              ) : (
+                <li className="p-2 text-gray-500">No results found</li>
+              )}
+            </ul>
 
             )}
           </div>
@@ -316,6 +316,9 @@ const handleSubmit = async (e: React.FormEvent) => {
           />
         </div>
 
+      {/* Action Buttons */}
+      <div className="mt-6 flex justify-between items-center">
+        {/* Escalate button */}
         <button
           type="submit"
           className="w-full py-3 bg-blue-500 text-white font-semibold rounded-md flex items-center justify-center"
@@ -329,6 +332,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             "Submit Ticket"
           )}
         </button>
+      </div>
       </form>
     </div>
   );

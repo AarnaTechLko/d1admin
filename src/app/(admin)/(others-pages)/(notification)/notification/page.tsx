@@ -20,7 +20,17 @@ interface Entity {
   gender?: string;
   position?: string;
   email?: string;
+  sport?: number;
+  ageGroup?: string;
+  graduation?: string;
 }
+
+interface Sport {
+
+  id: number;
+  name: string;
+}
+
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
 export default function NotificationPage() {
@@ -37,10 +47,15 @@ export default function NotificationPage() {
   const [city, setCity] = useState('');
   const [gender, setGender] = useState('');
   const [position, setPosition] = useState('');
+  const [ageGroup, setAgeGroup] = useState('');
+  const [graduation, setGraduation] = useState('');
+  const [sport, setSport] = useState(0);
 
   const [filteredCountries, setFilteredCountries] = useState<string[]>([]);
   const [filteredStates, setFilteredStates] = useState<string[]>([]);
   const [filteredCities, setFilteredCities] = useState<string[]>([]);
+  const [filteredSports, setFilteredSports] = useState<Sport[]>([]);
+
 
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,6 +64,35 @@ export default function NotificationPage() {
   const [sendEmail, setSendEmail] = useState(false);
   const [sendSMS, setSendSMS] = useState(false);
   const [sendInternal, setSendInternal] = useState(false);
+
+  const ageGroups = [
+    'U6',
+    'U7',
+    'U8',
+    'U9',
+    'U10',
+    'U11',
+    'U12',
+    'U13',
+    'U14',
+    'U15',
+    'U16',
+    'U17',
+    'U18',
+    'U19',
+    'High School',
+    'College',
+    'Semi Pro',
+    'Pro',
+  ];
+
+const currentYear = new Date().getFullYear();
+const graduationYears = Array.from(
+  { length: 31 },
+  (_, i) => currentYear - 20 + i,
+)
+  .map(year => year.toString())
+  .sort((a, b) => parseInt(b) - parseInt(a));
   const [subject, setSubject] = useState('');
 
   const matchingEntities = Array.isArray(entities)
@@ -58,13 +102,20 @@ export default function NotificationPage() {
         (!state || item.state === state) &&
         (!city || item.city === city);
 
-      const matchesPlayerCriteria =
-        type !== 'player' ||
-        ((!gender || item.gender?.toLowerCase() === gender.toLowerCase()) &&
-          (!position || item.position?.toLowerCase() === position.toLowerCase()));
+        const matchesPlayerCriteria =
+          type !== 'player' ||
+          ((!gender || item.gender?.toLowerCase() === gender.toLowerCase()) &&
+            (!position || item.position?.toLowerCase() === position.toLowerCase()) && 
+            (!ageGroup || item.ageGroup === ageGroup) &&
+            (!graduation || item.graduation === graduation)
+          );
 
-      return matchesLocation && matchesPlayerCriteria;
-    })
+        // console.log("Sport: ", sport)
+
+        const matchesSport = (!sport || item.sport === sport)
+            
+        return matchesLocation && matchesPlayerCriteria && matchesSport;
+      })
     : [];
 
   useEffect(() => {
@@ -105,6 +156,8 @@ export default function NotificationPage() {
         setSelectedIds([]);
         setGender('');
         setPosition('');
+        setSport(0);
+        setAgeGroup('');       
       } catch (err) {
         console.error('Failed to fetch entities:', err);
       }
@@ -112,6 +165,35 @@ export default function NotificationPage() {
 
     fetchData();
   }, [type, status]);
+
+
+  useEffect( () => {
+
+
+    const fetchData = async () => {
+
+      try{
+        const response = await fetch(
+          `/api/sports`
+        );
+
+        if (!response.ok) throw new Error("Failed to fetch data");
+
+        const data = await response.json();
+
+        console.log("DATA: ", data.sport)
+
+
+        setFilteredSports(data.sport)
+      }
+      catch (error){
+        console.error('Failed to fetch sports: ', error)
+      }
+    };
+
+    fetchData();
+
+  },[])
 
   useEffect(() => {
     if (!country) {
@@ -257,6 +339,19 @@ export default function NotificationPage() {
           </div>
 
           <div>
+            <Label>Sport</Label>
+            <select className="w-full p-2 mt-1 border rounded-lg bg-white" value={sport} onChange={(e) => setSport(Number(e.target.value))} disabled={!type}>
+              <option value="">Select Sport</option>
+                {filteredSports.map((sp) => (
+                  <option key={sp.name} value={sp.id}>
+                    {sp.name}
+                  </option>
+                ))}
+            </select>
+          </div>
+
+
+          <div>
             <Label>Country</Label>
             <select className="w-full p-2 mt-1 border rounded-lg bg-white" value={country} onChange={(e) => setCountry(e.target.value)}>
               <option value="">Select Country</option>
@@ -316,6 +411,31 @@ export default function NotificationPage() {
                   <option value="Striker">Winger</option>
                 </select>
               </div>
+
+              <div>
+                <Label>Age Group</Label>
+                  <select className="w-full p-2 mt-1 border rounded-lg bg-white" value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)} disabled={type !== 'player'}>
+                    <option value="">Select Age Group</option>
+                    {ageGroups.map(group => (
+                      <option key={group} value={group}>
+                        {group}
+                      </option>
+                    ))}
+                  </select>
+              </div>
+
+              <div>
+                <Label>Graduation Year</Label>
+                  <select className="w-full p-2 mt-1 border rounded-lg bg-white" value={graduation} onChange={(e) => setGraduation(e.target.value)} disabled={type !== 'player'}>
+                    <option value="">Select Graduation Year</option>
+                    {graduationYears.map(year => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+              </div>
+
             </>
           )}
         </div>

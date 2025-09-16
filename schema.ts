@@ -661,6 +661,10 @@ export const admin = pgTable("admin", {
   password_hash: text("password_hash").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
   is_deleted: integer("is_deleted").default(1).notNull(),
+  country_code: text("country_code").notNull().default("(+1)"),
+  phone_number: text("phone_number").notNull(),
+  birthdate: date("birthdate").notNull(),
+  image: text("image"),
 });
 
 export const admin_message = pgTable("admin_message", {

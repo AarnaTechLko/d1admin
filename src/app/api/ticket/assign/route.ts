@@ -3,6 +3,54 @@ import { db } from "@/lib/db";
 import { ticket, admin } from '@/lib/schema'; // Import admin schema
 import { eq } from 'drizzle-orm'; // Ensure eq is imported correctly
 
+
+export async function GET() {
+
+  try {
+
+  // id: number;
+  // name: string;
+  // email: string;
+  // subject: string;
+  // message: string;
+  // assign_to: number;
+  // assign_to_username: string;
+  // createdAt: string;
+  // status: string;
+
+    const getTickets = await db
+      .select({
+        id: ticket.id,
+        name: ticket.name,
+        email: ticket.email,
+        subject: ticket.subject,
+        createdAt: ticket.createdAt,
+        status: ticket.status,
+        message: ticket.message,
+
+      })
+      .from(ticket)
+      .where(eq(ticket.assign_to, 0))
+
+
+    console.log("Tickets: ", getTickets)
+
+    return NextResponse.json({
+        tickets: getTickets
+      }, {status: 200});
+  }
+  
+  catch(error){
+
+    return NextResponse.json({
+      error: error instanceof Error ? error.message : "Unknown error retrieving unassigned tickets"
+    }, { status: 500 });
+
+  }
+
+}
+
+
 export async function POST(req: Request) {
   try {
     const { ticketId, assignTo } = await req.json();

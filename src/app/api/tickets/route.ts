@@ -35,6 +35,9 @@ export async function GET(req: NextRequest) {
     const page = parseInt(url.searchParams.get("page") ?? "1", 10);
     const limit = parseInt(url.searchParams.get("limit") ?? "10", 10);
     const offset = (page - 1) * limit;
+    const status = url.searchParams.get("status")?.trim() || "";
+
+
 
     const conditions = [];
 
@@ -48,6 +51,15 @@ export async function GET(req: NextRequest) {
           ilike(ticket.message, `%${search}%`)
         )
       );
+    }
+
+    if (status) {
+
+      console.log("HERE");
+
+      conditions.push(
+        ilike(ticket.status, `%${status}%`)
+      )
     }
 
     // 🕒 Time Range Filter
