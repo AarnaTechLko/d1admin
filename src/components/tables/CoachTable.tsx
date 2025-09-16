@@ -294,8 +294,8 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                         }
                       >
                         {(coach.suspend === 1 || coach.suspend_days === null)
-                          ? "Unsuspend"
-                          : "Suspend"}
+                          ? "Suspend"
+                          : "Unsuspend"}
                       </Badge>
                     </button>
                   </TableCell>
@@ -305,7 +305,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                       {coach.is_deleted === 0 ? (
                         <button onClick={() => handleRevertCoach(coach.id)} className="text-red-600 text-sm">🛑</button>
                       ) : (
-                        <button onClick={() => handleHideCoach(coach.id)} className="text-green-600 text-sm">♻️</button>
+                        <button onClick={() => handleHideCoach(coach.id)} className="text-green-600 text-sm">👻</button>
                       )}
                       {/* 👁️ View IP Info button */}
                       <Dialog open={ipOpen === Number(coach.id)} onOpenChange={() => setIpOpen(null)}>
@@ -670,7 +670,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
           <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">
             <DialogHeader>
               <DialogTitle>
-                {suspendCoach?.suspend === 1 ? "Unsuspend Coach" : "Suspend Coach"}
+                {suspendCoach?.suspend === 1 ? "Suspend Coach" : "Unsuspend Coach"}
               </DialogTitle>
             </DialogHeader>
 

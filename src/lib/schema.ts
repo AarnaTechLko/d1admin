@@ -664,10 +664,12 @@ export const admin = pgTable("admin", {
       "Tech",
     ],
   }).notNull(),
-    country_code: text("country_code").notNull(),    // default shown in your DB
-  phone_number: text("phone_number").notNull(),  // column requires a value
-  birthdate: date("birthdate").notNull(),                     // storing as date
-  image: text("image"),   
+
+  country_code: text("country_code").notNull(),
+  phone_number: text("phone_number").notNull(),
+  birthdate: date("birthdate").notNull(),
+  image: text("image"),
+
   password_hash: text("password_hash").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
   is_deleted: integer("is_deleted").default(1).notNull(),

@@ -63,12 +63,24 @@ export default function SignInForm() {
       sessionStorage.setItem("view_finance", data.view_finance);
       sessionStorage.setItem("access_ticket", data.access_ticket);
 
+      console.log("Username: ", data.username);
+      console.log("Image: ", data.image);
+
+      if (!data.image){
+        router.push("/profileimage");
+        return;
+      }
+
+      sessionStorage.setItem("image", data.image);
+
 
       const redirectPath = data.role === "Customer Support" ? "/ticket" : "/dashboard";
 
-      setTimeout(() => {
-        router.push(redirectPath);
-      }, 2000);
+      // sessionStorage.setItem("profile_image", data.profile_image)
+
+      // setTimeout(() => {
+      router.push(redirectPath);
+      // }, 2000);
 
     } catch (err: unknown) {
       if (err instanceof Error) {
