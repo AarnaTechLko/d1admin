@@ -4,7 +4,7 @@ import { coaches } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import nodemailer from "nodemailer";
 
-export async function PATCH(
+export async function PATCH(   
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }// ✅ remove Promise
 ) {
