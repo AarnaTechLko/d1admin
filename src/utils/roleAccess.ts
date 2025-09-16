@@ -16,7 +16,7 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
     "/organization*",
     "/suspendorg",
     "/disableorg",
-    "/evaluationdetails"
+    "/evaluationdetails",
   ],
 
   Manager: [
@@ -26,23 +26,28 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
     "/player*",
     "/organization*",
     "/team*",
-    "/evaluationdetails"
+    "/evaluationdetails",
+    "/ticket",
+    "/createticket",
+    "/assignticket",
   ],
 
-  "Executive Level": [
-    "/dashboard*",
-    "/ticket*",
-    "/coach*",
-    "/suspend",
-    "/disablecoach",
-    "/player*",
-    "/suspendplayer",
-    "/disableplayer",
-    "/organization*",
-    "/suspendorg",
-    "/disableorg",
-    "/evaluationdetails"
-  ],
+  // "Executive Level": [
+  //   "/dashboard*",
+  //   "/ticket*",
+  //   "/coach*",
+  //   "/suspend",
+  //   "/disablecoach",
+  //   "/player*",
+  //   "/suspendplayer",
+  //   "/disableplayer",
+  //   "/organization*",
+  //   "/suspendorg",
+  //   "/disableorg",
+  //   "/evaluationdetails"
+  // ],
+  "Executive Level": "*",
+
 
   "Tech": [
     "/dashboard*",
@@ -56,6 +61,6 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
     "/organization*",
     "/suspendorg",
     "/disableorg",
-    "/evaluationdetails"
+    "/evaluationdetails",
   ]
 };

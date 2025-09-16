@@ -21,12 +21,26 @@ interface Ticket {
   subject: string;
   message: string;
   assign_to: number;
-  assign_to_username: string;
   createdAt: string;
   status: string;
-  assignee_name: string;
-
+  // assignee_name: string;
 }
+
+// interface UnAssignedTicket {
+
+//   id: number;
+//   name: string;
+//   email: string;
+//   subject: string;
+//   message: string;
+//   assign_to: number;
+//   createdAt: string;
+//   status: string;
+//   assignee_name: string;
+
+
+// }
+
 interface Admin {
   id: number;
   username: string;
@@ -49,9 +63,6 @@ const TicketsPage = () => {
   useRoleGuard();
 
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [statusQuery, setStatusQuery] = useState<string>("");
-
-
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -176,7 +187,7 @@ const TicketsPage = () => {
     }
   }, [router]);
 
-  // ✅ Fetch tickets when userId, searchQuery, statusQuery, or currentPage changes
+  // ✅ Fetch tickets when userId, searchQuery or currentPage changes
   useEffect(() => {
     if (!userId) return;
 
@@ -185,14 +196,14 @@ const TicketsPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/tickets?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}&status=${statusQuery}`
+          `/api/ticket/assign`
         );
 
         if (!response.ok) throw new Error("Failed to fetch tickets");
 
         const data = await response.json();
         console.log("daata", data);
-        setTickets(data.ticket ?? []);
+        setTickets(data.tickets ?? []);
         setTotalPages(data.totalPages);
       } catch (err) {
         setError((err as Error).message);
@@ -202,7 +213,7 @@ const TicketsPage = () => {
     };
 
     fetchTickets();
-  }, [userId, searchQuery, currentPage, statusQuery]);
+  }, [userId, searchQuery, currentPage]);
 
 
   useEffect(() => {
@@ -277,11 +288,15 @@ const TicketsPage = () => {
       }
 
       // const data = await response.json();
-      setTickets((prevTickets) =>
-        prevTickets.map((t) => (t.id === selectedTicket.id ? { ...t, assign_to: subAdmin.id, assign_to_username: subAdmin.username } : t))
-      );
+      // setTickets((prevTickets) =>
+      //   prevTickets.map((t) => (t.id === selectedTicket.id ? { ...t, assign_to: subAdmin.id, assign_to_username: subAdmin.username } : t))
+      // );
 
+      console.log("Tickets: ", tickets);
 
+      console.log("id: ", selectedTicket.id);
+
+      setTickets((prev) => prev.filter((t) => t.id !== selectedTicket.id))
 
       setIsModalOpen(false); // Close modal after assigning sub-admin
     } catch (err) {
@@ -291,57 +306,20 @@ const TicketsPage = () => {
       setIsSubmitting(false);
     }
   };
-const handleModalSubmit = async () => {
-  if (!selectedTicket) {
-    setError("No ticket selected");
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No ticket selected.",
-    });
-    return;
-  }
-
-  setIsSubmitting(true);
-
-  try {
-    // Find the selected sub-admin object
-    const assignedSubAdmin = subAdmins.find(
-      (admin) => admin.id === selectedTicket.assign_to
-    );
-
+  const handleModalSubmit = () => {
+    if (!selectedTicket) {
+      setError("No ticket selected");
+      return;
+    }
+    setIsSubmitting(true);
+    // Find the selected sub-admin object based on the last clicked admin (selectedTicket.assign_to)
+    const assignedSubAdmin = subAdmins.find((admin) => admin.id === selectedTicket.assign_to);
     if (assignedSubAdmin) {
-      await handleAssignSubAdmin(assignedSubAdmin); // ✅ Call API function
-
-      Swal.fire({
-        icon: "success",
-        title: "Assigned!",
-        text: `${assignedSubAdmin.username} has been assigned successfully.`,
-        timer: 2000,
-        showConfirmButton: false,
-      });
-
-      setIsModalOpen(false); // close modal on success
+      handleAssignSubAdmin(assignedSubAdmin); // Call API function to assign
     } else {
       setError("Please select a sub-admin before submitting.");
-      Swal.fire({
-        icon: "warning",
-        title: "No Sub-Admin Selected",
-        text: "Please select a sub-admin before submitting.",
-      });
     }
-  }catch (error) {
-  console.error("Assignment failed:", error);
-  Swal.fire({
-    icon: "error",
-    title: "Assignment Failed",
-    text: "Something went wrong while assigning sub-admin.",
-  });
-} finally {
-  setIsSubmitting(false);
-}
-
-};
+  };
 
   const handleDeleteReply = async (replyId: number) => {
     setIsReplyModalOpen(false);
@@ -386,7 +364,7 @@ const handleModalSubmit = async () => {
         )}
       </div> */}
 
-      <PageBreadcrumb pageTitle="Ticket" onStatus={setStatusQuery} onSearch={setSearchQuery} />
+      <PageBreadcrumb pageTitle="Ticket" onSearch={setSearchQuery} />
       <div className="flex justify-end items-center gap-2 p-4 dark:border-white/[0.05]">
         {[...Array(totalPages)].map((_, index) => {
           const pageNumber = index + 1;
@@ -437,7 +415,7 @@ const handleModalSubmit = async () => {
                         onClick={() => handleAssignToClick(ticket)}
                       >
 
-                        {ticket.assign_to_username || 'Assign To'}
+                      Assign To
                       </button>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-yellow-500">
@@ -630,7 +608,7 @@ const handleModalSubmit = async () => {
 
       {/* Modal for Assigning Subadmin */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-  <DialogContent className="p-6 max-h-[80vh] overflow-y-auto">
+        <DialogContent className="p-6">
           <DialogTitle>Assign Subadmin</DialogTitle>
           <p className="text-gray-500">Select a sub-admin to assign:</p>
 

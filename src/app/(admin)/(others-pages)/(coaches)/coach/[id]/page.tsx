@@ -606,8 +606,8 @@ setCoach((prev) => {
             <table className="w-full text-sm text-left border-collapse">
               <thead className="bg-gray-50 border-b text-gray-700 uppercase text-xs">
                 <tr>
-                  <th className="px-4 py-3">coach</th>
-                  <th className="px-4 py-3">Title</th>
+                  <th className="px-4 py-3">Coach</th>
+                  <th className="px-4 py-3">Evaluation</th>
                   <th className="px-4 py-3">Video</th>
                   <th className="px-4 py-3">Jersey</th>
                   <th className="px-4 py-3">Status</th>
@@ -787,7 +787,7 @@ setCoach((prev) => {
                           ) : (
                             <button
                               onClick={() => handleHidePayment(p.evaluation_id)}
-                              title="Hide Payment"
+                              title="Refund Payment"
                               style={{
                                 fontSize: '1.2rem',
                               }}
