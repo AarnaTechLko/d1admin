@@ -18,18 +18,24 @@ export async function PATCH(
     const { rating, reviewComment, reviewTitleCustom } =
       (await req.json()) as FeedbackBody;
 
-      console.log("Rating: ", evaluationId)
+      // console.log("Id: ", evaluationId);
+      // console.log("Rating: ", Number(rating));
+      // console.log("Review Comment: ", reviewComment);
+      // console.log("Review Title: ", reviewTitleCustom);
+
+    const reviewRating = Number(rating);
+
     if (
       isNaN(evaluationId) ||
-      (rating !== undefined &&
-        (typeof rating !== "number" || rating < 1 || rating > 5))
+      (reviewRating !== undefined &&
+        (typeof reviewRating !== "number" || reviewRating < 1 || reviewRating > 5))
     ) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     // Only update actual columns in playerEvaluation
     const updateData: Partial<typeof playerEvaluation.$inferInsert> = {};
-   if (rating !== undefined) updateData.rating = rating;
+   if (reviewRating !== undefined) updateData.rating = reviewRating;
 
     if (Object.keys(updateData).length > 0) {
       const [updatedEval] = await db
@@ -66,7 +72,7 @@ export async function PATCH(
         await db
           .update(review)
           .set({
-            rating: rating?.toString(),
+            rating: reviewRating?.toString(),
             title: reviewTitleCustom,
             comment: reviewComment,
           })
@@ -75,7 +81,7 @@ export async function PATCH(
         await db.insert(review).values({
           player_id: playerId,
           coach_id: coachId,
-          rating: rating?.toString(),
+          rating: reviewRating?.toString(),
           title: reviewTitleCustom,
           comment: reviewComment,
         });
