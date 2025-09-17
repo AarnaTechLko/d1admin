@@ -21,8 +21,8 @@ const CoachesPage = () => {
       setError(null);
       try {
       const response = await fetch(
-  `/api/coach/newcoach?search=${encodeURIComponent(searchQuery)}&page=${currentPage}&limit=10`
-);
+        `/api/coach/newcoach?search=${encodeURIComponent(searchQuery)}&page=${currentPage}&limit=10`
+      );
 
 
         if (!response.ok) throw new Error("Failed to fetch coaches");

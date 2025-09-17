@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
+import { countryCodesList } from '@/lib/constants';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+
 import { Eye, EyeOff, User, Mail, Lock, Loader2 } from "lucide-react";
 import Loading from "@/components/Loading";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import Swal from "sweetalert2";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { Image as ImageIcon } from "lucide-react"; // ✅ add this at the top
 import { FaCalendarAlt } from "react-icons/fa";
 // Permissions
 const permissionOptions = [
@@ -40,17 +41,21 @@ export default function CreateSubAdminWithRole() {
   useRoleGuard();
   const router = useRouter();
 
+  // const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
+
+  // const [photoUploading, setPhotoUploading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [countries, setCountries] = useState<{ shortname: string; phonecode: string }[]>([]);
+  // const [countries, setCountries] = useState<{ shortname: string; phonecode: string }[]>([]);
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
-    role: "Customer Support",
-    country_code: "+91",   // ✅ default India
+    street: "",
     phone_number: "",
-    birthdate: "",
+    country_code: "",
+    role: "Customer Support",
     image: "",
+    birthday: "",
   });
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -64,54 +69,57 @@ export default function CreateSubAdminWithRole() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, image: reader.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleDateChange = (date: Date | null) => {
-    setSelectedDate(date);
-    setFormData({ ...formData, birthdate: date ? date.toISOString().split("T")[0] : "" });
-  };
-
-  const fetchCountries = async () => {
-    try {
-      const res = await fetch("/api/countryphonecode");
-      if (!res.ok) throw new Error("Failed to fetch countries");
-      const data = await res.json();
-
-      if (Array.isArray(data)) {
-        setCountries(data);
-      } else if (Array.isArray(data.countries)) {
-        setCountries(data.countries);
-      } else {
-        setCountries([]);
-      }
-    } catch (err) {
-      console.error(err);
-      setCountries([]);
+    if (!date) {
+      return;
     }
+
+    const formattedDate = date.toISOString().split('T')[0];
+
+    const updatedFormValues = {
+      ...formData,
+      birthday: formattedDate,
+    };
+
+    try {
+      const birthDate = new Date(formattedDate);
+      const today = new Date();
+
+      let age = today.getFullYear() - birthDate.getFullYear();
+
+      const hasBirthdayOccurredThisYear =
+        today.getMonth() > birthDate.getMonth() ||
+        (today.getMonth() === birthDate.getMonth() &&
+          today.getDate() >= birthDate.getDate());
+
+      if (!hasBirthdayOccurredThisYear) {
+        age--;
+      }
+
+      const isUnder16Value = age < 16;
+
+      if(isUnder16Value){
+        Swal.fire("Invalid Birthday", "Please enter in a birthday that is 16 years old or older.", "error");
+        return;
+      }
+    } catch (error) {
+      console.error('Error calculating age in handleDateChange:', error);
+    }
+
+    setSelectedDate(date);
+    setFormData(updatedFormValues);
   };
-
-  useEffect(() => {
-    fetchCountries();
-  }, []);
-
-  useEffect(() => {
-    const defaults = rolePermissionsMap[formData.role] || [];
-    setSelectedPermissions(defaults);
-  }, [formData.role]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+
+    if(!formData.birthday){
+      Swal.fire("Birthday Required", "Please enter in a birthday that is 16 years old or older", "error");
+      return;
+    }
+
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
@@ -137,7 +145,7 @@ export default function CreateSubAdminWithRole() {
       "role",
       "country_code",
       "phone_number",
-      "birthdate",
+      "birthday",
     ];
     for (const field of requiredFields) {
       if (!formData[field as keyof typeof formData]) {
@@ -149,6 +157,14 @@ export default function CreateSubAdminWithRole() {
     try {
       setLoading(true);
 
+      // let newProfileImage = { key: '', signedUrl: '' };
+      // if (profilePicFile) {
+      //   //upload new image
+      //   newProfileImage = await uploadImage(profilePicFile as File);
+      // }
+
+
+      // Step 1: Create subadmin
       const res = await fetch("/api/subadmin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -193,9 +209,85 @@ export default function CreateSubAdminWithRole() {
     }
   };
 
+  // const handleImageClick = () => {
+  //   if (fileInputRef.current) {
+  //     fileInputRef.current.click();
+  //   }
+  // };
+
+  // const handleImageChange = async () => {
+  //   setPhotoUploading(true);
+  //   const file = fileInputRef.current?.files?.[0];
+  //   if (!file) {
+  //     console.warn('No image file selected.');
+  //     return;
+  //   }
+
+  //   //compress image if needed
+  //   let currentFile = file;
+  //   let currentQuality = 0.9;
+  //   let compressed = new File([''], '');
+  //   let maxFinalSizeMB = 1;
+  //   while (true) {
+  //     const options = {
+  //       maxSizeMB: 0.5,
+  //       maxWidthOrHeight: 1500,
+  //       useWebWorker: true,
+  //     };
+  //     compressed = await imageCompression(currentFile, options);
+
+  //     if (
+  //       compressed.size / 1024 / 1024 <= maxFinalSizeMB ||
+  //       currentQuality <= 0.2
+  //     ) {
+  //       break;
+  //     }
+
+  //     currentFile = compressed;
+  //     currentQuality -= 0.1; // decrease quality and try again
+  //   }
+
+  //   setPhotoUploading(false);
+  //   setImageUrlToCrop(URL.createObjectURL(compressed));
+  //   setOpenCrop(true);
+  // };
+
+  // const fetchCountries = async () => {
+  //   try {
+  //     const res = await fetch("/api/countryphonecode");
+  //     if (!res.ok) throw new Error("Failed to fetch countries");
+  //     const data = await res.json();
+
+  //     if (Array.isArray(data)) {
+  //       setCountries(data);        setCountries(data);
+  //     } else if (Array.isArray(data.countries)) {
+  //       setCountries(data.countries);        setCountries(data.countries);
+  //     } else {
+  //       setCountries([]);        setCountries([]);
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //     setCountries([]);      setCountries([]);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   fetchCountries();
+  // }, []);
+
+
+  // ✅ Auto-assign role permissions when role changes
+  useEffect(() => {
+    const defaults = rolePermissionsMap[formData.role] || [];
+    setSelectedPermissions(defaults);
+  }, [formData.role]);
+
   if (loading) return <Loading />;
 
   return (
+
+    <div>
+
     <form
       onSubmit={handleSubmit}
       className="space-y-6 bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-300 shadow-lg
@@ -205,11 +297,52 @@ export default function CreateSubAdminWithRole() {
         Add Sub Admin
       </h1>
 
-      {/* Username, Email, Password */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="relative">
-          <Label>Name <span className="text-error-500">*</span></Label>
-          <User className="absolute left-3 top-1/2 transform  text-gray-400" />
+
+      {/* <div className="mb-6 flex flex-col items-center">
+        <div
+          className="mb-4 flex h-32 w-32 cursor-pointer items-center justify-center overflow-hidden rounded-full border-4 border-gray-200 bg-gray-100"
+          onClick={handleImageClick}
+        >
+          {formData.image ? (
+            <img
+              src={formData.image}
+              alt="Profile"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="text-center text-gray-400">
+              <div className="mb-2 text-4xl">📷</div>
+              <div className="text-sm">Add Photo</div>
+            </div>
+          )}
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={handleImageClick}
+          className="rounded-full border border-blue-200 bg-blue-50 px-6 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100"
+        >
+          {photoUploading ? 'Uploading...' : 'Add Profile Image'}
+        </button>
+        {formData.image && (
+          <p className="mt-2 text-sm text-red-500">{formData.image}</p>
+        )}
+      </div> */}
+
+
+      {/* Username & Email */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="relative ">
+          <Label>
+          Name <span className="text-error-500">*</span>
+          </Label>
+          <User className="absolute left-3 top-1/2 transform translate-y-1 text-gray-400" />
           <Input
             className="pl-10"
             placeholder="John Doe"
@@ -254,10 +387,7 @@ export default function CreateSubAdminWithRole() {
             {showPassword ? <Eye /> : <EyeOff />}
           </span>
         </div>
-      </div>
 
-      {/* Role, Phone & Birthdate */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <Label>Role <span className="text-error-500">*</span></Label>
           <select
@@ -275,6 +405,11 @@ export default function CreateSubAdminWithRole() {
           </select>
         </div>
 
+      </div>
+
+      {/* Phone & Birthdate */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
         <div>
           <Label>Phone <span className="text-error-500">*</span></Label>
           <div className="flex w-full">
@@ -286,14 +421,12 @@ export default function CreateSubAdminWithRole() {
               className="w-28 text-center rounded-l-md border border-gray-300"
               required
             >
-              {countries?.map((c, index) => (
-                <option key={`${c.shortname}-${c.phonecode}-${index}`} value={`+${c.phonecode}`}>
-                  {c.shortname} (+{c.phonecode})
+              {countryCodesList.map(item => (
+                <option key={item.id} value={item.code}>
+                  {item.code} ({item.country})
                 </option>
               ))}
             </select>
-
-
             {/* Phone Number */}
             <Input
               type="tel"
@@ -339,7 +472,7 @@ export default function CreateSubAdminWithRole() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="relative">
           <Label>Profile Image</Label>
           <div className="flex items-center gap-3 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 shadow-sm bg-white dark:bg-gray-700 cursor-pointer hover:border-blue-500 transition">
@@ -353,7 +486,7 @@ export default function CreateSubAdminWithRole() {
             />
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Permissions */}
       <div>
@@ -377,12 +510,9 @@ export default function CreateSubAdminWithRole() {
       {success && <p className="text-green-600">{success}</p>}
 
       {/* Submit */}
+
       <div className="flex justify-center">
-        <Button
-          type="submit"
-          className="w-1/2 py-2 flex items-center justify-center gap-2"
-          disabled={loading}
-        >
+        <Button type="submit" className="w-1/2 py-2 flex items-center justify-center gap-2" disabled={loading}>
           {loading ? (
             <>
               <Loader2 className="animate-spin" size={16} />
@@ -394,5 +524,24 @@ export default function CreateSubAdminWithRole() {
         </Button>
       </div>
     </form>
+    
+        {/* Crop Modal
+        {openCrop && imageUrlToCrop && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="mx-4 w-full max-w-md rounded-3xl bg-white p-6">
+              <h3 className="mb-4 text-lg font-semibold">Crop Your Image</h3>
+              <CropEasy
+                photoUrl={imageUrlToCrop}
+                //Use email for now
+                session={}
+                setOpenCrop={setOpenCrop}
+                handleCropImage={handleCropImage}
+              />
+            </div>
+          </div>
+        )} */}
+
+    </div>
+
   );
 }
