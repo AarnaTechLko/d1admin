@@ -481,29 +481,31 @@ setCoach((prev) => {
 
           {/* Download Buttons */}
           <div className="flex flex-col items-center sm:items-end lg:items-end space-y-2">
-   <div className="flex space-x-2">
-      {coach.approved_or_denied === 1 ? (
-        // ✅ Already approved → show Decline only
-        <button
-          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition flex items-center space-x-2"
-          onClick={() => handleCoachApproval(Number(coach.id), "decline")}
-          disabled={loadingId === Number(coach.id)} // disable button while loading
-        >
-          {loadingId === Number(coach.id) && <FaSpinner className="animate-spin" />}
-          <span>Decline</span>
-        </button>
-      ) : coach.approved_or_denied === 2 || coach.approved_or_denied === 0 ? (
-        // ✅ Declined or Pending → show Approve only
-        <button
-          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition flex items-center space-x-2"
-          onClick={() => handleCoachApproval(Number(coach.id), "approve")}
-          disabled={loadingId === Number(coach.id)} // disable button while loading
-        >
-          {loadingId === Number(coach.id) && <FaSpinner className="animate-spin" />}
-          <span>Approve</span>
-        </button>
-      ) : null}
-    </div>
+
+            <div className="flex space-x-2">
+              {coach.approved_or_denied === 0 && (
+                <>
+                  {/* // ✅ Already approved → show Decline only */}
+                  <button
+                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition flex items-center space-x-2"
+                    onClick={() => handleCoachApproval(Number(coach.id), "decline")}
+                    disabled={loadingId === Number(coach.id)} // disable button while loading
+                  >
+                    {loadingId === Number(coach.id) && <FaSpinner className="animate-spin" />}
+                    <span>Decline</span>
+                  </button>
+                  {/* // ✅ Declined or Pending → show Approve only */}
+                  <button
+                    className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition flex items-center space-x-2"
+                    onClick={() => handleCoachApproval(Number(coach.id), "approve")}
+                    disabled={loadingId === Number(coach.id)} // disable button while loading
+                  >
+                    {loadingId === Number(coach.id) && <FaSpinner className="animate-spin" />}
+                    <span>Approve</span>
+                  </button>
+                </>
+              )}
+            </div>
 
 
 
@@ -606,8 +608,8 @@ setCoach((prev) => {
             <table className="w-full text-sm text-left border-collapse">
               <thead className="bg-gray-50 border-b text-gray-700 uppercase text-xs">
                 <tr>
-                  <th className="px-4 py-3">coach</th>
-                  <th className="px-4 py-3">Title</th>
+                  <th className="px-4 py-3">Coach</th>
+                  <th className="px-4 py-3">Evaluation</th>
                   <th className="px-4 py-3">Video</th>
                   <th className="px-4 py-3">Jersey</th>
                   <th className="px-4 py-3">Status</th>
@@ -787,7 +789,7 @@ setCoach((prev) => {
                           ) : (
                             <button
                               onClick={() => handleHidePayment(p.evaluation_id)}
-                              title="Hide Payment"
+                              title="Refund Payment"
                               style={{
                                 fontSize: '1.2rem',
                               }}

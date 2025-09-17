@@ -547,8 +547,8 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                               }
                             >
                               {(organization.suspend === 1 || organization.suspend_days === null)
-                                ? "Unsuspend"
-                                : "Suspend"}
+                                ? "Suspend"
+                                : "Unsuspend"}
                             </Badge>
                           </button>
                         </TableCell>
@@ -865,7 +865,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
             <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">
               <DialogHeader>
                 <DialogTitle>
-                  {suspendOrganization?.suspend === 1 ? "Unsuspend Organization" : "Suspend Organization"}
+                  {suspendOrganization?.suspend === 1 ? "Suspend Organization" : "Unsuspend Organization"}
                 </DialogTitle>
               </DialogHeader>
 

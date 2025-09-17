@@ -79,13 +79,14 @@ export async function GET(req: NextRequest) {
     const condition = search?.trim()
       ? and(
           eq(coaches.approved_or_denied, 0),
+          eq(coaches.isCompletedProfile, true),
           or(
             ilike(coaches.firstName, `%${search}%`),
             ilike(coaches.lastName, `%${search}%`),
             ilike(coaches.email, `%${search}%`)
           )
         )
-      : eq(coaches.approved_or_denied, 0);
+      : and(eq(coaches.approved_or_denied, 0), eq(coaches.isCompletedProfile, true));
 
     // Fetch total count for pagination
     const totalCoaches = await db

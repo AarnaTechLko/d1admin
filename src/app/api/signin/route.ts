@@ -92,8 +92,8 @@ const result = await db
     password_hash: admin.password_hash,
     role: admin.role,
     is_deleted: admin.is_deleted,
-
-     changePassword: isAdminCase(1, sql`${role.change_password}`).as("changePassword"),
+    image: admin.image,
+    changePassword: isAdminCase(1, sql`${role.change_password}`).as("changePassword"),
 
     monitor_activity: isAdminCase(1, sql`${role.monitor_activity}`).as("monitor_activity"),
     view_finance: isAdminCase(1, sql`${role.view_finance}`).as("view_finance"),
@@ -193,6 +193,8 @@ const result = await db
     );
     headers.append("Content-Type", "application/json");
 
+    console.log("User: ", currentUser);
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -206,6 +208,7 @@ const result = await db
         monitor_activity: currentUser.monitor_activity || 0,
         view_finance: currentUser.view_finance || 0,
         access_ticket: currentUser.access_ticket || 0,
+        image: currentUser.image,
       }),
       {
         status: 200,

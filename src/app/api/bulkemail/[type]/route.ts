@@ -25,6 +25,9 @@ type LocationItem = {
   city: string | null;
   gender?: string | null;
   position?: string | null;
+  sport?: number | null;
+  ageGroup?: string | null;
+  graduation?: string | null;
 };
 
 // type PostRequestBody = {
@@ -102,6 +105,9 @@ export async function GET(
           gender: users.gender,
           position: users.position,
           countryName: countries.name,
+          sport: users.sport,
+          ageGroup: users.age_group,
+          graduation: users.graduation,
         })
         .from(users)
         .leftJoin(countries, eq(users.country, sql`CAST(${countries.id} AS TEXT)`))
@@ -115,6 +121,9 @@ export async function GET(
         position: p.position ?? undefined,
         state: p.state,
         city: p.city,
+        sport: p.sport,
+        ageGroup: p.ageGroup,
+        graduation: p.graduation,
       }));
     } else if (type === 'coach') {
 
@@ -162,6 +171,7 @@ export async function GET(
           city: coaches.city,
           countryName: countries.name,
           email: coaches.email,
+          sport: coaches.sport,
         })
         .from(coaches)
         .leftJoin(countries, eq(coaches.country, sql`CAST(${countries.id} AS TEXT)`))
@@ -175,6 +185,7 @@ export async function GET(
         state: c.state,
         city: c.city,
         email: c.email,
+        sport: c.sport,
       }));
 
       console.log("DATA: ", data);
