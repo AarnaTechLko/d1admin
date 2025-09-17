@@ -364,46 +364,56 @@ export default function PlayerDetailPage() {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800">{player.first_name} {player.last_name}</h1>
                     <div className="flex gap-3 mt-2 text-xl text-gray-500">
-                        <a
-                            href={player.facebook || "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={!player.facebook ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-700"}
-                        >
-                            <FacebookIcon className="w-6 h-6" />
-                        </a>
-                        <a
-                            href={player.instagram || "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={!player.instagram ? "text-gray-400 cursor-default" : "text-pink-600 hover:text-red-600"}
-                        >
-                            <Instagram className="w-6 h-6" />
-                        </a>
-                        <a
-                            href={player.youtube || "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={!player.youtube ? "text-gray-400 cursor-default" : "text-red-600 hover:text-red-800"}
-                        >
-                            <Youtube className="w-6 h-6" />
-                        </a>
-                        <a
-                            href={player.linkedin || "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={!player.linkedin ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
-                        >
-                            <Linkedin className="w-6 h-6" />
-                        </a>
-                        <a
-                            href={player.xlink || "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={!player.xlink ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
-                        >
-                            <Twitter className="w-6 h-6" />
-                        </a>
+                        {player.facebook && (
+                            <a
+                                href={`https://www.facebook.com/${player.facebook}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-700"
+                            >
+                                <FacebookIcon className="w-6 h-6" />
+                            </a>
+                        )}
+                        {player.instagram && (
+                            <a
+                                href={`https://www.instagram.com/${player.instagram}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-pink-600 hover:text-red-600"
+                            >
+                                <Instagram className="w-6 h-6" />
+                            </a>
+                        )}
+                        {player.youtube && (
+                            <a
+                                href={`https://www.youtube.com/${player.youtube}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-red-600 hover:text-red-800"
+                            >
+                                <Youtube className="w-6 h-6" />
+                            </a>
+                        )}
+                        {player.linkedin && (
+                            <a
+                                href={`https://www.linkedin.com/in/${player.linkedin}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800"
+                            >
+                                <Linkedin className="w-6 h-6" />
+                            </a>
+                        )}
+                        {player.xlink && (
+                            <a
+                                href={`https://x.com/${player.xlink}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800"
+                            >
+                                <Twitter className="w-6 h-6" />
+                            </a>
+                        )}
                     </div>
                 </div>
             </div>
