@@ -4,10 +4,10 @@ import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
 import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
 import ActivityLog from "@/components/ecommerce/ActivityLog";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
-
+import DemographicCard from "@/components/ecommerce/DemographicCard";
 export default function Ecommerce() {
-      useRoleGuard();
-  
+  useRoleGuard();
+
   const [role, setRole] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false); // flag to prevent server rendering issues
 
@@ -38,6 +38,8 @@ export default function Ecommerce() {
         <EcommerceMetrics />
         <MonthlySalesChart />
         <ActivityLog />
+        <DemographicCard />
+
       </div>
     </div>
   );
