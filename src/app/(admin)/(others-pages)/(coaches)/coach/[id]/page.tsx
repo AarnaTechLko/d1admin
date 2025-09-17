@@ -63,6 +63,22 @@ interface Payment {
   coach: Coach[];
 
 }
+
+interface Review {
+
+  id: number,
+  player_name: string,
+  coach_name: string,
+  rating: number,
+  title: string,
+  comment: string,
+  created_at: string,
+  evaluationId: number,
+  review_status: number,
+  player_id: number
+}
+
+
 interface Coach {
   approved_or_denied: number;
   latestLoginIp: string;
@@ -98,6 +114,7 @@ interface Coach {
   license: string;
   countryName: string;
   countrycode: string;
+  reviews: Review[];
 }
 
 export default function CoachDetailsPage() {
@@ -112,8 +129,20 @@ export default function CoachDetailsPage() {
   // const ITEMSPERPAGE = 10;
   const [evaluationPage, setEvaluationPage] = useState(1);
   const [paymentPage, setPaymentPage] = useState(1);
+  const [reviewPage, setReviewPage] = useState(1);
+
+  const [evalId, setEvalId] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newComment, setNewComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [newRating, setNewRating] = useState(0);
+
   const evaluationsPerPage = 10;
   const paymentsPerPage = 10;
+  const reviewsPerPage = 10;
+
   // const router = useRouter();
 
   const filteredEvaluations = coach?.evaluations || [];
@@ -122,6 +151,13 @@ export default function CoachDetailsPage() {
     (evaluationPage - 1) * evaluationsPerPage,
     evaluationPage * evaluationsPerPage
   );
+
+  const filteredReviews = coach?.reviews || []
+
+  const paginatedReviews = filteredReviews.slice(
+    (reviewPage - 1) * reviewsPerPage,
+    reviewPage * reviewsPerPage
+  )
 
   const paginatedPayments: Payment[] = (coach?.payments ?? []).slice(
     (paymentPage - 1) * paymentsPerPage,
@@ -132,6 +168,9 @@ export default function CoachDetailsPage() {
     : 0;
 
   const totalEvaluationPages = Math.ceil(filteredEvaluations.length / evaluationsPerPage);
+
+  const totalReviewPages = Math.ceil(filteredReviews.length / reviewsPerPage)
+
   // const totalPaymentPages = Math.ceil((coach?.payments?.length??0) / paymentsPerPage);
   // const [evaluations, setEvaluations] = useState([]);
   // const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
@@ -199,6 +238,124 @@ export default function CoachDetailsPage() {
       } else {
         MySwal.fire('Error!', 'Failed to update evaluation.', 'error');
       }
+    }
+  };
+
+  const handleEdit = (r: Review) => {
+
+    const evalId = coach?.evaluations[r.player_id].evaluationId
+
+    if(evalId){
+      setEvalId(evalId);
+    }
+    setNewTitle(r.title || "");
+    setNewRating(r?.rating || 0);
+    setNewComment(r?.comment || "");
+    setShowModal(true);
+  };
+
+  const handleDelete = async (r: Review) => {
+    if (!r) return;
+
+    // console.log("Status: ", r.review_status);
+
+    const stats = r.review_status === 0 ? 'Visible' : 'Hidden';
+
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: r.review_status === 0 ? "This will reveal the rating" : "This will hide the rating, not delete it.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: r.review_status === 0 ? 'Yes, reveal it!' : 'Yes, hide it!',
+    });
+
+    if (result.isConfirmed) {
+      const res = await fetch("/api/review/hide-rating", {
+        method: 'PATCH',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: r.id,
+          status: stats,
+        }),
+
+
+      });
+
+      if (res.ok) {
+        Swal.fire({
+          icon: 'success',
+          title: r.review_status === 0 ? 'Rating Revealed' : 'Rating Hidden',
+          text: r.review_status === 0 ? 'The rating has been revealed successfully.' : 'The rating has been hidden successfully.',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        location.reload();
+
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Failed to Hide',
+          text: 'Failed to hide the rating. Please try again.',
+        });
+      }
+    }
+  };
+
+  const submitEdit = async () => {
+    if (!evalId) return;
+    if (!newRating) {
+      Swal.fire({
+        icon: "warning",
+        title: "Missing Rating",
+        text: "Please provide a star rating before saving.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch(`/api/evaluationdetails/${evalId}/rating`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rating: newRating,
+          reviewComment: newComment.trim(),
+          reviewTitleCustom: newTitle.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      console.log("PATCH response:", data);
+
+      if (res.ok) {
+        setShowModal(false);
+        await Swal.fire({
+          icon: "success",
+          title: "Rating Updated",
+          text: "The player rating has been updated successfully.",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        location.reload();
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Update Failed",
+          text: data.error || "Failed to update the rating. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error while updating rating:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Update Failed",
+        text: "Something went wrong. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -315,7 +472,6 @@ export default function CoachDetailsPage() {
       try {
         const res = await fetch(`/api/coach/${id}`);
         const data = await res.json();
-        console.log("is_deleted", data)
         setCoach(data);
         setPayments(data.payments || []);
 
@@ -514,7 +670,7 @@ setCoach((prev) => {
               onClick={() => handleDownload(coach.cv)}
             >
               <FaFileAlt className="text-blue-500" />
-              <span>Download CV</span>
+              <span>Download Resume</span>
             </button>
             <button
               className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-700 hover:text-blue-600 transition"
@@ -721,9 +877,220 @@ setCoach((prev) => {
         </div>
       </section >
 
+  {/* id: number,
+  player_id: number,
+  coach_id: number,
+  rating: number,
+  title: string,
+  comment: string, */}
+
+      < section className="p-6 max-w-7xl mx-auto space-y-8 ">
+      
+          <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
+          <div className='flex justify-between'>
+
+          <div className="overflow-x-auto bg-white shadow-md rounded-2xl w-full border border-gray-200">
+            {coach.reviews.length === 0 ? (
+              <p className="p-6 text-gray-600">No reviews found.</p>
+            ) : (
+              <>
+                <table className="w-full text-sm text-left border-collapse">
+                  <thead className="bg-gray-50 border-b text-gray-700 uppercase text-xs">
+                    <tr>
+                      <th className="px-4 py-3">Title</th>
+                      <th className="px-4 py-3">Comment</th>
+                      <th className="px-4 py-3">Player Name</th>
+                      <th className="px-4 py-3">Coach Name</th>
+                      <th className="px-4 py-3">Rating</th>
+                      <th className="px-4 py-3">Created At</th>
+                      <th className="px-4 py-3">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedReviews.map((r: Review) => (
+                      // <tr key={p.id} className="hover:bg-gray-50 border-b">
+                      <tr
+                        key={r.id}
+                        // className={`transition-colors duration-300 ${p.is_deleted === 0 ? 'bg-red-100' : 'bg-white'
+                        //   }`}
+                      >
+                        <td className="px-4 py-3">{r.title}</td>
+                        <td className="px-4 py-3">{r.comment}</td>
+                        <td className="px-4 py-3">{r.player_name}</td>
+                        <td className="px-4 py-3">{r.coach_name}</td>
+
+                        <div className="flex items-center mb-3 px-4 py-6">
+                          {Array.from({ length: 5 }, (_, index) => index + 1).map((star) => (
+                            <svg
+                              key={star}
+                              className={`w-6 h-6 ${star <= (r.rating ?? 0)
+                                ? 'text-yellow-500'
+                                : 'text-gray-300'
+                                }`}
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
+                            </svg>
+                          ))}
+                        </div>
+
+                        <td className="px-4 py-3">{new Date(r.created_at).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleEdit(r)}
+                            title="Edit Review"
+
+                            style={{
+                              fontSize: '1.2rem',
+                              marginRight: '8px',
+                            }}
+                          >
+                            📝
+                          </button>
+                          <button
+                            onClick={() => handleDelete(r)}
+                            title={r.review_status === 0 ? "Hide Review" : "Reveal Review"}
+                            style={{
+                              fontSize: '1.2rem',
+                            }}
+                          >
+                            {r.review_status == 0 ? "👁️" : "🗑️"}
+                          </button>
+                        </td>
+
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* Pagination Controls */}
+                <div className="flex justify-between items-center p-4 border-t">
+                  <button
+                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
+                    onClick={() => setReviewPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={reviewPage === 1}
+                  >
+                    Previous
+                  </button>
+                  <div className="text-sm text-gray-700">
+                    Page {reviewPage}
+                  </div>
+                  <button
+                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
+                    onClick={() => setReviewPage((prev) => Math.min(prev + 1, totalReviewPages))}
+                    disabled={reviewPage === totalReviewPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            )}
+
+          {/* Edit Modal */}
+          {showModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] max-w-md">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
+                  Edit Feedback
+                </h3>
+
+                {/* Review Title */}
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Review Title:
+                  </label>
+                  <input
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="Enter review title..."
+                    className="w-full border border-gray-300 rounded-md p-2 text-sm"
+                  />
+                </div>
+
+                {/* Star Rating */}
+                <div className="flex justify-center gap-2 mb-4">
+                  {Array.from({ length: 5 }, (_, index) => index + 1).map((star) => (
+                    <svg
+                      key={star}
+                      onClick={() => setNewRating(star)}
+                      className={`w-8 h-8 cursor-pointer transition-colors duration-200 ${star <= newRating ? "text-yellow-500" : "text-gray-300"
+                        }`}
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
+                    </svg>
+                  ))}
+                </div>
+
+                {/* Comment */}
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Feedback / Comment:
+                  </label>
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Write your feedback..."
+                    className="w-full border border-gray-300 rounded-md p-2 text-sm resize-none"
+                    rows={4}
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-800 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={submitEdit}
+                    disabled={isSubmitting}
+                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md flex items-center justify-center gap-2 disabled:opacity-60 transition"
+                  >
+                    {isSubmitting && (
+                      <svg
+                        className="w-4 h-4 animate-spin text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8z"
+                        />
+                      </svg>
+                    )}
+                    {isSubmitting ? "Saving..." : "Save"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+
+          </div>
+        </div>
+
+      
+      </section>
+
       {/* Payments */}
-
-
       {view_finance === 1 && payments.length > 0 && (
 
         < section className="p-6 max-w-7xl mx-auto space-y-8" >

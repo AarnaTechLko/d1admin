@@ -12,6 +12,7 @@ import {
   users,
   countries,
   ip_logs,
+  review,
 } from '@/lib/schema';
 import { eq, and, sql } from 'drizzle-orm';
 
@@ -127,7 +128,26 @@ console.log("coach data:",coachData);
           //eq(playerEvaluation.is_deleted, 1) // show only non-hidden evaluations
         )
       )
-    console.log('coaches data:', evaluations);
+    // console.log('coaches data:', evaluations);
+
+    const evaluationReviews = await db
+      .select({
+        id: review.id,
+        player_id: review.player_id,
+        player_name: users.first_name,
+        coach_name: coaches.firstName,
+        rating: review.rating,
+        title: review.title,
+        comment: review.comment,
+        created_at: review.createdAt,
+        review_status: review.review_status,
+      })
+      .from(review)
+      .leftJoin(users, eq(users.id, review.player_id))
+      .leftJoin(coaches, eq(coaches.id, coachId))
+      .where(eq(review.coach_id, coachId))
+
+
     // Fetch related data in parallel
     const [evaluationResultsList, earningsList, paymentsList] = await Promise.all([
       db.select().from(evaluationResults).where(eq(evaluationResults.coachId, coachId)),
@@ -159,9 +179,9 @@ console.log("coach data:",coachData);
 
     ]);
 
-    console.log("Results: ", evaluationResultsList);
+    // console.log("Results: ", evaluationResultsList);
 
-    console.log("Earnings: ", earningsList);
+    // console.log("Earnings: ", earningsList);
 
     const latestIpResult = await db
       .select({
@@ -184,8 +204,8 @@ console.log("coach data:",coachData);
       evaluationResults: evaluationResultsList,
       earningsDetails: earningsList,
       payments: paymentsList,
-      latestLoginIp: latestIp // ✅ Added
-
+      latestLoginIp: latestIp, // ✅ Added
+      reviews: evaluationReviews,
     });
   } catch (error) {
     console.log("Error: ", String(error))
