@@ -15,6 +15,7 @@ export default function UserDropdown() {
   const router = useRouter(); // ✅ Define useRouter inside the component body
   const [email, setEmail] = useState(""); // ✅ State to hold email
   const [user, setUser] = useState(""); // ✅ State to hold email
+  const [role, setRole] = useState("");
   const [image, setImage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,9 +28,11 @@ export default function UserDropdown() {
        const storedEmail = sessionStorage.getItem("email");
        const storedUser = sessionStorage.getItem("username");
        const storedImage = sessionStorage.getItem("image");
+       const storedRole = sessionStorage.getItem("role");
     if (storedEmail) setEmail(storedEmail);
     if (storedUser) setUser(storedUser);
     if (storedImage) setImage(storedImage);
+    if (storedRole) setRole(storedRole);
 
     console.log("email",storedEmail);
 
@@ -71,7 +74,7 @@ export default function UserDropdown() {
 
           <Image width={32} height={44} src={!image || image.endsWith('/null') ? d1 : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${image}`} alt="User" />
         </span>
-        <span className="block mr-1 font-medium text-theme-sm">D1 Notes</span>
+        <span className="block mr-1 font-medium text-theme-sm">{user}</span>
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
@@ -100,6 +103,11 @@ export default function UserDropdown() {
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
           {user|| "D1 Notes"}
           </span>
+
+          <span className="my-0.5 block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
+          {role|| "Admin"}
+          </span>
+
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
         {email || "randomuser@pimjo.com"}
           </span>

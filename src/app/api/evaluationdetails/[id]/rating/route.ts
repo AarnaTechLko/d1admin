@@ -18,6 +18,7 @@ export async function PATCH(
     const { rating, reviewComment, reviewTitleCustom } =
       (await req.json()) as FeedbackBody;
 
+      console.log("Rating: ", evaluationId)
     if (
       isNaN(evaluationId) ||
       (rating !== undefined &&
