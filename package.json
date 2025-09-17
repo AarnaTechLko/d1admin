@@ -9,9 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.883.0",
+    "@aws-sdk/client-s3": "^3.890.0",
     "@aws-sdk/client-sesv2": "^3.888.0",
-    "@aws-sdk/s3-request-presigner": "^3.888.0",
+    "@aws-sdk/s3-request-presigner": "^3.890.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fortawesome/fontawesome-free": "^7.0.1",
@@ -65,7 +65,7 @@
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.3.5",
-    "react-easy-crop": "^5.5.0",
+    "react-easy-crop": "^5.5.1",
     "react-flatpickr": "^3.10.13",
     "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",

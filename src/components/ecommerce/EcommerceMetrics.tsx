@@ -203,7 +203,6 @@ export const EcommerceMetrics = () => {
       </Link>
 
 
-      {/* <!-- Metric Item End --> */}
 
       {/* <!-- Metric Item Start --> */}
       <Link href="/team">
@@ -212,7 +211,7 @@ export const EcommerceMetrics = () => {
             <GroupIcon className="text-gray-800 size-6 dark:text-white/90" />
           </div>
 
-          <a href="/team">
+      
             <div className="flex items-end justify-between mt-5">
               <div>
                 <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -224,7 +223,7 @@ export const EcommerceMetrics = () => {
               </div>
               
             </div>
-          </a>
+          
 
         </div>
       </Link>
