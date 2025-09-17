@@ -316,8 +316,10 @@ export default function CoachDetailsPage() {
 
     setIsSubmitting(true);
 
+    const evaluationId = String(evalId);
+
     try {
-      const res = await fetch(`/api/evaluationdetails/${evalId}/rating`, {
+      const res = await fetch(`/api/evaluationdetails/${evaluationId}/rating`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
