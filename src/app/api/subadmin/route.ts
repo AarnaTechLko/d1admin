@@ -103,9 +103,9 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const search = url.searchParams.get("search")?.trim() || "";
-    const page = parseInt(url.searchParams.get("page") || "1", 10);
-    const limit = parseInt(url.searchParams.get("limit") || "10", 10);
-    const offset = (page - 1) * limit;
+    // const page = parseInt(url.searchParams.get("page") || "1", 10);
+    // const limit = parseInt(url.searchParams.get("limit") || "10", 10);
+    // const offset = (page - 1) * limit;
 
     const baseCondition = eq(admin.is_deleted, 1);
     const searchCondition = search
@@ -114,7 +114,7 @@ export async function GET(req: Request) {
 
     const whereClause = searchCondition ? and(baseCondition, searchCondition) : baseCondition;
 
-    const [adminData, totalResult] = await Promise.all([
+    const [adminData] = await Promise.all([
       db
         .select({
           id: admin.id,
@@ -136,9 +136,9 @@ export async function GET(req: Request) {
         .from(admin)
         .leftJoin(role, eq(admin.id, role.user_id))
         .where(whereClause)
-        .orderBy(desc(admin.created_at))
-        .offset(offset)
-        .limit(limit),
+        .orderBy(desc(admin.created_at)),
+        // .offset(offset)
+        // .limit(limit),
 
       db
         .select({ count: count() })
@@ -162,11 +162,11 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       admin: adminWithPermissions,
-      currentPage: page,
-      ///countries: countryList, 
-      totalPages: Math.ceil(totalResult / limit),
-      hasNextPage: page * limit < totalResult,
-      hasPrevPage: page > 1,
+      // currentPage: page,
+      // ///countries: countryList, 
+      // totalPages: Math.ceil(totalResult / limit),
+      // hasNextPage: page * limit < totalResult,
+      // hasPrevPage: page > 1,
     });
   } catch (error) {
     console.error("GET /api/admin error:", error);

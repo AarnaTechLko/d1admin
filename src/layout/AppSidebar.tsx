@@ -42,7 +42,8 @@ const AppSidebar: React.FC = () => {
         {
           name: "Ticket",
           icon: <UserCircleIcon />,
-          subItems: [ {name: "Assign Ticket", path: "/assignticket", pro: false},
+          subItems: [ {name: "My Ticket", path: "/myticket", pro: false},
+          {name: "Assign Ticket", path: "/assignticket", pro: false},
           { name: "View Ticket", path: "/ticket", pro: false },
           { name: "Create Ticket", path: "/createticket", pro: false },
 
@@ -82,11 +83,6 @@ const AppSidebar: React.FC = () => {
             icon: <GridIcon />,
             name: "Dashboard",
             path: "/dashboard",
-          },
-          {
-            icon: <GridIcon />,
-            name: "Block List",
-            path: "/blocks",
           },
           {
             name: "Coaches",
@@ -147,12 +143,19 @@ const AppSidebar: React.FC = () => {
           {
             name: "Ticket",
             icon: <UserCircleIcon />,
-            subItems: [ {name: "Assign Ticket", path: "/assignticket", pro: false},
+            subItems: [{name: "My Ticket", path: "/myticket", pro: false}, 
+            {name: "Assign Ticket", path: "/assignticket", pro: false},
             { name: "View Ticket", path: "/ticket", pro: false },
             { name: "Create Ticket", path: "/createticket", pro: false },
 
             ],
           },
+          {
+            icon: <GridIcon />,
+            name: "Block List",
+            path: "/blocks",
+          },
+
         ]
         : role === "Manager"
           ? [
@@ -195,7 +198,8 @@ const AppSidebar: React.FC = () => {
           {
             name: "Ticket",
             icon: <UserCircleIcon />,
-            subItems: [ {name: "Assign Ticket", path: "/assignticket", pro: false},
+            subItems: [ {name: "My Ticket", path: "/myticket", pro: false},
+            {name: "Assign Ticket", path: "/assignticket", pro: false},
             { name: "View Ticket", path: "/ticket", pro: false },
             { name: "Create Ticket", path: "/createticket", pro: false },
 
@@ -210,11 +214,6 @@ const AppSidebar: React.FC = () => {
             icon: <GridIcon />,
             name: "Dashboard",
             path: "/dashboard",
-          },
-           {
-            icon: <GridIcon />,
-            name: "Block List",
-            path: "/blocks",
           },
           {
             name: "Coaches",
@@ -274,19 +273,25 @@ const AppSidebar: React.FC = () => {
           {
             name: "Ticket",
             icon: <UserCircleIcon />,
-            subItems: [ { name: "Assign Ticket", path: "/assignticket", pro: false},
+            subItems: [ {name: "My Ticket", path: "/myticket", pro: false},
+              { name: "Assign Ticket", path: "/assignticket", pro: false},
               { name: "View Ticket", path: "/ticket", pro: false },
               { name: "Create Ticket", path: "/createticket", pro: false },
             ],
           },
-
+          {
+            icon: <GridIcon />,
+            name: "Block List",
+            path: "/blocks",
+          },
       ]
       :role === "Tech"
       ? [
         {
           name: "Ticket",
           icon: <UserCircleIcon />,
-          subItems: [{ name: "Assign Ticket", path: "/assignticket", pro: false},
+          subItems: [ {name: "My Ticket", path: "/myticket", pro: false},
+            { name: "Assign Ticket", path: "/assignticket", pro: false},
             { name: "View Ticket", path: "/ticket", pro: false },
 
                   ],
