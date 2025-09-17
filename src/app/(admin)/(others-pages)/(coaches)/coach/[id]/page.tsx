@@ -426,48 +426,53 @@ export default function CoachDetailsPage() {
     }
   };
 
-  const handleDownload = async (url: string) => {
-    if (!url || typeof url !== 'string') {
-      return;
-    }
+  // const handleDownload = async (url: string) => {
+  //   if (!url || typeof url !== 'string') {
+  //     Swal.fire({
+  //       icon: 'warning',
+  //       title: 'No File Available',
+  //       text: 'No file has been uploaded for download.',
+  //     });
+  //     return;
+  //   }
 
+  //   try {
+  //     const response = await fetch(url);
 
-    try {
-      const response = await fetch(url);
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to fetch file: ${response.statusText}`);
+  //     }
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch file: ${response.statusText}`);
-      }
+  //     const blob = await response.blob();
+  //     console.log("value:", blob)
+  //     const blobUrl = window.URL.createObjectURL(blob);
+  //     // Extract file extension from URL (strip query params if present)
+  //     const urlWithoutQuery = url.split('?')[0];
+  //     const extensionMatch = urlWithoutQuery.split('.').pop();
+  //     const extension = extensionMatch && extensionMatch.length < 10 ? extensionMatch : 'file';
+  //     const filename = `download.${extension}`;
 
-      const blob = await response.blob();
-      console.log("value:", blob)
-      const blobUrl = window.URL.createObjectURL(blob);
-      // Extract file extension from URL (strip query params if present)
-      const urlWithoutQuery = url.split('?')[0];
-      const extensionMatch = urlWithoutQuery.split('.').pop();
-      const extension = extensionMatch && extensionMatch.length < 10 ? extensionMatch : 'file';
-      const filename = `download.${extension}`;
+  //     // Create and trigger download link
+  //     const link = document.createElement("a");
+  //     link.href = blobUrl;
+  //     link.download = filename;
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
 
-      // Create and trigger download link
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Cleanup blob URL
-      setTimeout(() => {
-        window.URL.revokeObjectURL(blobUrl);
-      }, 100);
-    } catch (error) {
-      console.error("Download failed:", error);
-      // Optional: display error toast
-      // showError("Download failed. Please try again.");
-    }
-
-
-  };
+  //     // Cleanup blob URL
+  //     setTimeout(() => {
+  //       window.URL.revokeObjectURL(blobUrl);
+  //     }, 100);
+  //   } catch (error) {
+  //     console.error("Download failed:", error);
+  //     Swal.fire({
+  //       icon: 'error',
+  //       title: 'Download Failed',
+  //       text: 'Failed to download the file. Please try again.',
+  //     });
+  //   }
+  // };
 
   useEffect(() => {
     async function fetchCoachData() {
@@ -594,46 +599,56 @@ setCoach((prev) => {
             </p>
 
             <div className="flex gap-3 mt-2 text-lg sm:text-xl text-gray-500">
-              <a
-                href={coach.facebook || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={!coach.facebook ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-700"}
-              >
-                <FacebookIcon className="w-6 h-6" />
-              </a>
-              <a
-                href={coach.instagram || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={!coach.instagram ? "text-gray-400 cursor-default" : "text-pink-600 hover:text-red-600"}
-              >
-                <Instagram className="w-6 h-6" />
-              </a>
-              <a
-                href={coach.youtube || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={!coach.youtube ? "text-gray-400 cursor-default" : "text-red-600 hover:text-red-800"}
-              >
-                <Youtube className="w-6 h-6" />
-              </a>
-              <a
-                href={coach.linkedin || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={!coach.linkedin ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
-              >
-                <Linkedin className="w-6 h-6" />
-              </a>
-              <a
-                href={coach.xlink || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={!coach.xlink ? "text-gray-400 cursor-default" : "text-blue-600 hover:text-blue-800"}
-              >
-                <Twitter className="w-6 h-6" />
-              </a>
+              {coach.facebook && (
+                <a
+                  href={`https://www.facebook.com/${coach.facebook}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  <FacebookIcon className="w-6 h-6" />
+                </a>
+              )}
+              {coach.instagram && (
+                <a
+                  href={'https://www.instagram.com/' + coach.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-pink-600 hover:text-red-600"
+                >
+                  <Instagram className="w-6 h-6" />
+                </a>
+              )}
+              {coach.youtube && (
+                <a
+                  href={`https://www.youtube.com/${coach.youtube}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <Youtube className="w-6 h-6" />
+                </a>
+              )}
+              {coach.linkedin && (
+                <a
+                  href={`https://www.linkedin.com/in/${coach.linkedin}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  <Linkedin className="w-6 h-6" />
+                </a>
+              )}
+              {coach.xlink && (
+                <a
+                  href={`https://x.com/${coach.xlink}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  <Twitter className="w-6 h-6" />
+                </a>
+              )}
             </div>
           </div>
 
@@ -667,20 +682,38 @@ setCoach((prev) => {
 
 
 
-            <button
-              className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-700 hover:text-blue-600 transition"
-              onClick={() => handleDownload(coach.cv)}
-            >
-              <FaFileAlt className="text-blue-500" />
-              <span>Download Resume</span>
-            </button>
-            <button
-              className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-700 hover:text-blue-600 transition"
-              onClick={() => handleDownload(coach.license)}
-            >
-              <FaFileAlt className="text-blue-500" />
-              <span>Download Coaching License</span>
-            </button>
+            {coach.cv ? (
+              <a
+                href={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${coach.cv}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-700 hover:text-blue-600 transition"
+              >
+                <FaFileAlt className="text-blue-500" />
+                <span>View Resume</span>
+              </a>
+            ) : (
+              <span className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-400">
+                <FaFileAlt className="text-gray-400" />
+                <span>No CV uploaded</span>
+              </span>
+            )}
+            {coach.license ? (
+              <a
+                href={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${coach.license}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-700 hover:text-blue-600 transition"
+              >
+                <FaFileAlt className="text-blue-500" />
+                <span>View Coaching License</span>
+              </a>
+            ) : (
+              <span className="flex items-center space-x-2 text-sm md:text-base lg:text-sm text-gray-400">
+                <FaFileAlt className="text-gray-400" />
+                <span>No license uploaded</span>
+              </span>
+            )}
           </div>
 
 
