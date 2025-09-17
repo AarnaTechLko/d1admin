@@ -21,7 +21,7 @@ const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key";
 async function getGeoLocation(): Promise<GeoLocation | null> {
   try {
     const token = "750b64ff1566ad";
-    const res = await fetch(`https://ipinfo.io/json?token=${token}`);
+    const res = await fetch(`http://ipinfo.io/json?token=${token}`);
     if (!res.ok) throw new Error("Failed to fetch IP info");
     return await res.json();
   } catch (error) {
