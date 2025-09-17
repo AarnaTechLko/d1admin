@@ -172,6 +172,7 @@ export const review = pgTable(
     title: varchar('title', { length: 100 }),
     comment: varchar('comment', { length: 5000 }),
     createdAt: timestamp('createdAt').defaultNow().notNull(),
+    review_status: integer("review_status").default(1),
   },
   table => ({
     fk_player_id: foreignKey({

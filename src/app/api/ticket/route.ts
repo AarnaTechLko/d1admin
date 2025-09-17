@@ -38,12 +38,13 @@ export async function POST(req: Request) {
       subject,
       message = "",
       ticket_from,
+      assign_to,
       status,
       recipientType, // ✅ comes from frontend
       user_id,       // ✅ logged-in user ID from frontend
     } = body;
 
-    if (!name || !email || !subject || !message || !recipientType || !user_id) {
+    if (!name || !email || !subject || !message || !recipientType || !user_id || !assign_to) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -56,6 +57,7 @@ export async function POST(req: Request) {
         name,
         email,
         subject,
+        assign_to: Number(assign_to) || 0,
         message,
         ticket_from: Number(ticket_from) || 0,
         status: status || "Pending",

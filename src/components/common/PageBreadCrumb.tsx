@@ -6,13 +6,15 @@ interface BreadcrumbProps {
   pageTitle: string;
   onSearch: (query: string) => void; // Function to handle search
   onStatus?: (query: string) => void;
+  onDays?: (query: string) => void;
 }
 
-const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch, onStatus }) => {
+const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch, onStatus, onDays }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [ticketStatus, setTicketStatus] = useState("");
-
+  const [ticketDays, setTicketDays] = useState("");
+  
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "k") {
@@ -40,8 +42,21 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch, onStat
 
     if (onStatus){
       onStatus(query);
-
     }
+  }
+
+  const handleDaysChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+
+    const query = event.target.value;
+
+    console.log("Query: ", query);
+
+    setTicketDays(query);
+
+    if(onDays){
+      onDays(query);
+    }
+
   }
 
   return (
@@ -61,7 +76,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch, onStat
           className="h-10 w-64 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
-        {pageTitle === "Ticket" &&(
+        {["Ticket", "Received Ticket", "Sent Ticket"].includes(pageTitle) &&(
 
           <>
 
@@ -74,6 +89,16 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch, onStat
               <option value="Fixed"> Fixed </option>
               <option value="Closed"> Closed </option>
               <option value="Escalate">Escalate</option>
+            </select>
+
+
+            <span className="md:ml-5"> Days </span>
+
+            <select className="mt-6 w-64 md:w-40 p-2 md:mt-0 border rounded-lg bg-white" value={ticketDays} onChange={handleDaysChange}>
+              <option value="15">Select</option>
+              <option value="30"> 30 </option>
+              <option value="60"> 60 </option>
+              <option value="90"> 90 </option>
             </select>
 
           </>
