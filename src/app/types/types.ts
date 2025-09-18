@@ -230,3 +230,14 @@ export interface Props {
   valuesForCategory?: Record<string, string | number | undefined>;
 }
 
+// src/types/jvectormap.d.ts
+declare module "@react-jvectormap/core" {
+  export interface IFocus {
+    x?: number;
+    y?: number;
+    scale: number; // required
+    lat?: number;
+    lng?: number;
+  }
+}
+

@@ -14,7 +14,8 @@ import {
   foreignKey,
   json,
   bigint,
-  numeric
+  numeric,
+  doublePrecision
 } from "drizzle-orm/pg-core";
 // import { number } from "zod";
 // import { sql } from "drizzle-orm"; 
@@ -637,10 +638,11 @@ export const freerequests = pgTable("freerequests", {
 
 export const countries = pgTable("countries", {
   id: serial("id").primaryKey(),
-  shortname: text("shortname"),
-  name: text("name"),
+  shortname: text("shortname"),  // nullable by default
+  name: text("name"),            // nullable by default
   phonecode: text("phonecode"),
-
+  lat: doublePrecision("lat"),   // nullable by default
+  lng: doublePrecision("lng"),   // nullable by default
 });
 
 

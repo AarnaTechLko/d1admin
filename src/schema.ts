@@ -11,11 +11,12 @@ import {
   decimal,
   boolean,
   // pgEnum,
-  integer 
+  integer,
+  doublePrecision
 } from "drizzle-orm/pg-core";
 // 
 // import { number } from "zod";
- 
+
 
 // Users table
 export const users = pgTable(
@@ -30,17 +31,17 @@ export const users = pgTable(
     gender: varchar("gender"),
     sport: varchar("sport"),
     team: varchar("team"),
-    jersey:varchar("jersey"),
+    jersey: varchar("jersey"),
     position: varchar("position"),
     number: varchar("number"),
     email: varchar("email").notNull().unique(),
     image: text("image"),
-    bio:text("bio"),
-    country:varchar("country").default("0"),
-    state:varchar("state"),
-    city:varchar("city"),
-    league:text("league"),
-    countrycode:text("countrycode"),
+    bio: text("bio"),
+    country: varchar("country").default("0"),
+    state: varchar("state"),
+    city: varchar("city"),
+    league: text("league"),
+    countrycode: text("countrycode"),
     password: text("password").notNull(),
     enterprise_id: text("enterprise_id").default("0"),
     coach_id: text("coach_id").default("0"),
@@ -49,18 +50,18 @@ export const users = pgTable(
     playingcountries: text("playingcountries"),
     height: text("height"),
     weight: text("weight"),
-    parent_id:integer("parent_id"),
-    gpa:text("gpa"),
+    parent_id: integer("parent_id"),
+    gpa: text("gpa"),
     graduation: text("graduation"),
     school_name: text("school_name"),
-    facebook:text("facebook"),
-    instagram:text("instagram"),
+    facebook: text("facebook"),
+    instagram: text("instagram"),
     linkedin: text("linkedin"),
     website: text("website"),
-    xlink:text("xlink"),
-    youtube:text("youtube"),
-    age_group:text("age_group").default("0"),
-    birth_year:text("birth_year").default("0"),
+    xlink: text("xlink"),
+    youtube: text("youtube"),
+    age_group: text("age_group").default("0"),
+    birth_year: text("birth_year").default("0"),
     status: varchar("status").default("Pending"),
     visibility: varchar("visibility").default("off"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -98,23 +99,23 @@ export const coaches = pgTable(
     slug: text("slug"),
     enterprise_id: text("enterprise_id"),
     team_id: text("team_id"),
-    country:varchar("country"),
-    state:varchar("state"),
-    city:varchar("city"),
-    currency: varchar("currency").default("$"), 
+    country: varchar("country"),
+    state: varchar("state"),
+    city: varchar("city"),
+    currency: varchar("currency").default("$"),
     rating: decimal("rating", { precision: 10, scale: 1 }).default('0'),
     password: text("password").notNull(),
-    certificate:text("certificate"),
-    countrycode:text("countrycode"),
-    facebook:text("facebook"),
-    instagram:text("instagram"),
-    linkedin:text("linkedin"),
-    xlink:text("xlink"),
+    certificate: text("certificate"),
+    countrycode: text("countrycode"),
+    facebook: text("facebook"),
+    instagram: text("instagram"),
+    linkedin: text("linkedin"),
+    xlink: text("xlink"),
     youtube: text("youtube"),
     website: text("website"),
-    cv:text("cv"),
-    license_type:text("license_type"),
-    license:text("license"),
+    cv: text("cv"),
+    license_type: text("license_type"),
+    license: text("license"),
     status: varchar("status").default("Pending"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     isCompletedProfile: boolean("isCompletedProfile").default(false)
@@ -136,7 +137,7 @@ export const playerEvaluation = pgTable(
     id: serial("id").primaryKey(),
     player_id: integer("player_id").notNull(),
     coach_id: integer("coach_id").notNull(),
-    club_id:integer("club_id"),
+    club_id: integer("club_id"),
     parent_id: integer("parent_id"),
     review_title: varchar("review_title").notNull(),
     primary_video_link: text("primary_video_link").notNull(),
@@ -146,17 +147,17 @@ export const playerEvaluation = pgTable(
     video_descriptionTwo: text("video_descriptionTwo"),
     video_descriptionThree: text("video_descriptionThree"),
 
-    jerseyNumber:text("jerseyNumber"),
-    jerseyNumberTwo:text("jerseyNumberTwo"),
-    jerseyNumberThree:text("jerseyNumberThree"),
+    jerseyNumber: text("jerseyNumber"),
+    jerseyNumberTwo: text("jerseyNumberTwo"),
+    jerseyNumberThree: text("jerseyNumberThree"),
 
-    jerseyColorOne:text("jerseyColorOne"),
-    jerseyColorTwo:text("jerseyColorTwo"),
-    jerseyColorThree:text("jerseyColorThree"),
+    jerseyColorOne: text("jerseyColorOne"),
+    jerseyColorTwo: text("jerseyColorTwo"),
+    jerseyColorThree: text("jerseyColorThree"),
 
-    positionOne:text("positionOne"),
-    positionTwo:text("positionTwo"),
-    positionThree:text("positionThree"),
+    positionOne: text("positionOne"),
+    positionTwo: text("positionTwo"),
+    positionThree: text("positionThree"),
 
 
     status: integer("status").notNull(), // Use enum type here
@@ -166,12 +167,12 @@ export const playerEvaluation = pgTable(
     accepted_at: timestamp("accepted_at"),
     rating: integer("rating"), // New field for rating, nullable by default
     remarks: text("remarks"),
-    videoOneTiming:text('videoOneTiming'),
-    videoTwoTiming:text('videoTwoTiming'),
-    videoThreeTiming:text('videoThreeTiming'),
-    position:text('position'),
-    lighttype:text('lighttype'),
-    percentage:text('percentage'),
+    videoOneTiming: text('videoOneTiming'),
+    videoTwoTiming: text('videoTwoTiming'),
+    videoThreeTiming: text('videoThreeTiming'),
+    position: text('position'),
+    lighttype: text('lighttype'),
+    percentage: text('percentage'),
     rejectremarks: text("rejectremarks"),
     updated_at: timestamp("updated_at").defaultNow().notNull(),
   }
@@ -189,21 +190,21 @@ export const coachearnings = pgTable(
     company_amount: decimal("company_amount"),
     commision_rate: decimal("commision_rate"),
     commision_amount: decimal("commision_amount"),
-    transaction_id:varchar("transaction_id"),
-    status:varchar("status"),
-    coupon:varchar("coupon"),
-    coupon_discount_percentage:decimal("coupon_discount_percentage"),
-    discount_amount:decimal("discount_amount"),
+    transaction_id: varchar("transaction_id"),
+    status: varchar("status"),
+    coupon: varchar("coupon"),
+    coupon_discount_percentage: decimal("coupon_discount_percentage"),
+    discount_amount: decimal("discount_amount"),
     created_at: timestamp("created_at").defaultNow().notNull(),
     updated_at: timestamp("updated_at").defaultNow().notNull(),
   }
 );
 
-export const coachaccount=pgTable("coachaccount",
+export const coachaccount = pgTable("coachaccount",
   {
-    id:serial("id").primaryKey(),
-    coach_id:integer("coach_id").notNull(),
-    amount:decimal("amount").notNull(),
+    id: serial("id").primaryKey(),
+    coach_id: integer("coach_id").notNull(),
+    amount: decimal("amount").notNull(),
     created_at: timestamp("created_at").defaultNow().notNull(),
     updated_at: timestamp("updated_at").defaultNow().notNull(),
   }
@@ -242,24 +243,24 @@ export const evaluationResults = pgTable('evaluation_results', {
   id: serial('id').primaryKey(),
   playerId: integer('playerId').notNull(),
   coachId: integer('coachId').notNull(),
-  club_id:integer("club_id"),
+  club_id: integer("club_id"),
   evaluationId: integer('evaluation_id').notNull(),
   finalRemarks: text('finalRemarks'),           // Long text for final remarks
   physicalRemarks: text('physicalRemarks'),     // Long text for physical remarks
   tacticalRemarks: text('tacticalRemarks'),     // Long text for tactical remarks
-  technicalRemarks: text('technicalRemarks'), 
-  organizationalRemarks: text('organizationalRemarks'), 
-  distributionRemarks: text('distributionRemarks'), 
-      // Long text for tactical remarks
+  technicalRemarks: text('technicalRemarks'),
+  organizationalRemarks: text('organizationalRemarks'),
+  distributionRemarks: text('distributionRemarks'),
+  // Long text for tactical remarks
   physicalScores: text('physicalScores').notNull(), // JSON field for physical scores
   tacticalScores: text('tacticalScores').notNull(), // JSON field for tactical scores
-  technicalScores: text('technicalScores').notNull(), 
-  distributionScores: text('distributionScores'), 
-  organizationScores: text('organizationScores'), 
-  document:text('document'),
-  position:text('position'),
-  sport:text('sport'),
-  thingsToWork:text('thingsToWork'),
+  technicalScores: text('technicalScores').notNull(),
+  distributionScores: text('distributionScores'),
+  organizationScores: text('organizationScores'),
+  document: text('document'),
+  position: text('position'),
+  sport: text('sport'),
+  thingsToWork: text('thingsToWork'),
 });
 
 export const otps = pgTable('otps', {
@@ -268,7 +269,7 @@ export const otps = pgTable('otps', {
   otp: text('otp').notNull()
 });
 
-export const enterprises=pgTable('enterprises', {
+export const enterprises = pgTable('enterprises', {
   id: serial('id').primaryKey(),
   organizationName: text('organizationName').notNull(),
   contactPerson: text('contactPerson'),
@@ -300,19 +301,19 @@ export const enterprises=pgTable('enterprises', {
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
-export const packages=pgTable('packages', {
+export const packages = pgTable('packages', {
   id: serial('id').primaryKey(),
   packageName: text('packageName').notNull(),
   amount: text('amount').notNull(),
   noOfLicnese: integer('noOfLicnese'),
   details: text('details').notNull(),
-  status:text('status').notNull(),
+  status: text('status').notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
- 
- 
-export const orderHistory=pgTable('orderHistory', {
+
+
+export const orderHistory = pgTable('orderHistory', {
   id: serial('id').primaryKey(),
   enterprise_id: integer('enterprise_id'),
   package_id: integer('package_id'),
@@ -320,36 +321,36 @@ export const orderHistory=pgTable('orderHistory', {
   licenses: integer('licenses'),
   rate: integer('rate'),
   description: text('description'),
-  status:text('status'),
+  status: text('status'),
 
-  payment_info:text('payment_info'),
+  payment_info: text('payment_info'),
   createdAt: timestamp('createdAt').defaultNow(),
 });
 
-export const licenses=pgTable('licenses', {
+export const licenses = pgTable('licenses', {
   id: serial('id').primaryKey(),
   enterprise_id: integer('enterprise_id').notNull(),
   buyer_type: text('buyer_type').notNull(),
   package_id: integer('package_id').notNull(),
-  payment_info:text('payment_info'),
+  payment_info: text('payment_info'),
   licenseKey: text('licenseKey').notNull(),
-  used_for:text('used_for'),
-  used_by:text('used_by'),
-  assigned_to:integer('assigned_to'),
-  status:text('status').notNull(),
+  used_for: text('used_for'),
+  used_by: text('used_by'),
+  assigned_to: integer('assigned_to'),
+  status: text('status').notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
-export const forgetPassword=pgTable('forgetPassword', {
+export const forgetPassword = pgTable('forgetPassword', {
   id: serial('id').primaryKey(),
   email: text('email').notNull(),
   token: text('token').notNull(),
   role: text('role').notNull(),
- 
+
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
-export const teams=pgTable('teams', {
+export const teams = pgTable('teams', {
   id: serial('id').primaryKey(),
   team_name: text('team_name').notNull(),
   manager_name: text('manager_name'),
@@ -411,8 +412,8 @@ export const invitations = pgTable("invitations", {
   email: text("email"),
   invitation_for: text("invitation_for"),
   mobile: text("mobile"),
-  invitation_link:text("invitation_link"),
- 
+  invitation_link: text("invitation_link"),
+
   status: text("status"),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
@@ -421,42 +422,42 @@ export const playerbanner = pgTable("playerbanner", {
   id: serial("id").primaryKey(),
   user_id: integer("user_id"),
   usertype: text("usertype"),
- 
+
   filepath: text("filepath").notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
-export const joinRequest=pgTable("joinRequest",{
+export const joinRequest = pgTable("joinRequest", {
   id: serial("id").primaryKey(),
-  player_id:integer("player_id"),
-  coach_id:integer("coach_id"),
-  club_id:integer("club_id"),
-  type:text("type"),
-  requestToID:integer("requestToID"),
-  message:text("message"),
-  status:text("status"),
+  player_id: integer("player_id"),
+  coach_id: integer("coach_id"),
+  club_id: integer("club_id"),
+  type: text("type"),
+  requestToID: integer("requestToID"),
+  message: text("message"),
+  status: text("status"),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
-export const teamjoinRequest=pgTable("teamjoinRequest",{
+export const teamjoinRequest = pgTable("teamjoinRequest", {
   id: serial("id").primaryKey(),
-  team_id:integer("team_id"),
-  player_id:integer("player_id"),
-   
-  message:text("message"),
-  status:text("status"),
+  team_id: integer("team_id"),
+  player_id: integer("player_id"),
+
+  message: text("message"),
+  status: text("status"),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
 
-export const chatfriend=pgTable("chatfriend",{
+export const chatfriend = pgTable("chatfriend", {
   id: serial("id").primaryKey(),
-  chatfrom:integer("chatfrom"),
-  chatto:integer("chatto"),
-  chattoname:text("chattoname"),
-  chattotype:text("chattotype"),
-  club_id:integer("club_id"),
-  
+  chatfrom: integer("chatfrom"),
+  chatto: integer("chatto"),
+  chattoname: text("chattoname"),
+  chattotype: text("chattotype"),
+  club_id: integer("club_id"),
+
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 })
 
@@ -478,7 +479,7 @@ export const chats = pgTable('chats', {
   club_id: integer('club_id'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
-  
+
 });
 
 export const messages = pgTable('messages', {
@@ -488,61 +489,66 @@ export const messages = pgTable('messages', {
   club_id: integer('club_id'),
   message: text('message').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
-  });
+});
 
-export const modules=pgTable("modules",{
+export const modules = pgTable("modules", {
   id: serial("id").primaryKey(),
-  name:text("name"),
-  module_fields:text("module_fields"),
+  name: text("name"),
+  module_fields: text("module_fields"),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
-export const roles=pgTable("roles",{
+export const roles = pgTable("roles", {
   id: serial("id").primaryKey(),
-  club_id:integer("club_id"),
-  role_name:text("role_name"),
-  module_id:text("module_id"),
-  permissions:text("permissions"),
-  createdAt: timestamp('createdAt').defaultNow().notNull(),
-});
-
-
-export const evaluation_charges=pgTable("evaluation_charges",{
-  id: serial("id").primaryKey(),
-  coach_id:integer("coach_id"),
-  currency:text("currency"),
-  turnaroundtime:text("turnaroundtime"),
-  amount:text("amount"),
+  club_id: integer("club_id"),
+  role_name: text("role_name"),
+  module_id: text("module_id"),
+  permissions: text("permissions"),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
 
-
-export const freerequests=pgTable("freerequests",{
+export const evaluation_charges = pgTable("evaluation_charges", {
   id: serial("id").primaryKey(),
-  clubId:integer("clubId"),
-  requests:integer("requests"),
+  coach_id: integer("coach_id"),
+  currency: text("currency"),
+  turnaroundtime: text("turnaroundtime"),
+  amount: text("amount"),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
 
 
-export const countries=pgTable("countries",{
+export const freerequests = pgTable("freerequests", {
   id: serial("id").primaryKey(),
-  shortname:text("shortname"),
-  name:text("name"),
-  phonecode:text("phonecode"),
- 
+  clubId: integer("clubId"),
+  requests: integer("requests"),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
 
 
-export const states=pgTable("states",{
+// export const countries=pgTable("countries",{
+//   id: serial("id").primaryKey(),
+//   shortname:text("shortname"),
+//   name:text("name"),
+//   phonecode:text("phonecode"),
+
+// });
+export const countries = pgTable("countries", {
   id: serial("id").primaryKey(),
- 
-  name:text("name"),
-  country_id:integer("country_id"),
- 
+  shortname: text("shortname"),  // nullable by default
+  name: text("name"),            // nullable by default
+  phonecode: text("phonecode"),
+  lat: doublePrecision("lat"),   // nullable by default
+  lng: doublePrecision("lng"),   // nullable by default
+});
+export const states = pgTable("states", {
+  id: serial("id").primaryKey(),
+
+  name: text("name"),
+  country_id: integer("country_id"),
+
 });
 
 export const admin = pgTable("admin", {
@@ -576,9 +582,9 @@ export const ticket_messages = pgTable("ticket_messages", {
 });
 
 
-export const userOrgStatus = pgTable("userOrgStatus",{
-	org_user_id:integer("org_user_id"),
-	enterprise_id:integer("enterprise_id").references(() => enterprises.id),
-	status:text("status").default("Pending").notNull(),
-	role:text("text")
+export const userOrgStatus = pgTable("userOrgStatus", {
+  org_user_id: integer("org_user_id"),
+  enterprise_id: integer("enterprise_id").references(() => enterprises.id),
+  status: text("status").default("Pending").notNull(),
+  role: text("text")
 })
