@@ -6,7 +6,6 @@ import {
 } from '../../../lib/schema';
 import { eq } from 'drizzle-orm';
 
-// import { sendEmail } from '@/lib/email-service';
 
 // import { SECRET_KEY } from '@/lib/constants';
 // import jwt from 'jsonwebtoken';

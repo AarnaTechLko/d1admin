@@ -10,12 +10,16 @@ import { useRoleGuard } from "@/hooks/useRoleGaurd";
 const CoachesPage = () => {
       useRoleGuard();
   
+
   const [searchQuery, setSearchQuery] = useState("");
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [sport, setSport] = useState("");
+  // const [filteredCountries, setFilteredCountries] = useState<string[]>([]);
+
 
   useEffect(() => {
     const fetchCoaches = async () => {
@@ -23,7 +27,7 @@ const CoachesPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/coach?search=${searchQuery}&page=${currentPage}&limit=10`
+          `/api/coach?search=${searchQuery}&page=${currentPage}&limit=10&sport=${sport}`
         );
 
         if (!response.ok) throw new Error("Failed to fetch data");
@@ -32,6 +36,10 @@ const CoachesPage = () => {
         console.log("coach", data)
         setCoaches(data.coaches);
         setTotalPages(data.totalPages);
+
+        // const uniqueCountries = [...new Set(data.map((item) => item.country).filter(Boolean))] as string[];
+        // setFilteredCountries(uniqueCountries);
+
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -40,20 +48,20 @@ const CoachesPage = () => {
     };
 
     fetchCoaches();
-  }, [searchQuery, currentPage]);
+  }, [searchQuery, currentPage, sport]);
 //  if (loading) {
 //         return <Loading />;
 //     }
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Coaches" onSearch={setSearchQuery} />
-    {loading && (
-  <div className="flex items-center justify-center gap-4 ">
-    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-    Loading...
-  </div>
-)}
+      <PageBreadcrumb pageTitle="Coaches" onSearch={setSearchQuery} onSport={setSport}/>
+      {loading && (
+        <div className="flex items-center justify-center gap-4 ">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          Loading...
+        </div>
+      )}
 
 
       {error && <p className="text-center py-5 text-red-500">{error}</p>}
