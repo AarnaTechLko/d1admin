@@ -4,17 +4,29 @@ import React, { useRef, useState, useEffect } from "react";
 
 interface BreadcrumbProps {
   pageTitle: string;
+  // countryList?: string[];
   onSearch: (query: string) => void; // Function to handle search
   onStatus?: (query: string) => void;
   onDays?: (query: string) => void;
+  onSport?: (query: string) => void;
 }
 
-const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch, onStatus, onDays }) => {
+interface Sport {
+  id: number;
+  name: string;
+}
+
+
+
+const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch, onStatus, onDays, onSport}) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [ticketStatus, setTicketStatus] = useState("");
   const [ticketDays, setTicketDays] = useState("");
-  
+  const [sport, setSport] = useState("");
+  const [filteredSports, setFilteredSports] = useState<Sport[]>([]);
+  // const [filteredCountries, setFilteredCountries] = useState<string[]>([]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "k") {
@@ -22,6 +34,27 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch, onStat
         inputRef.current?.focus();
       }
     };
+
+
+    const sportList = async () => {
+      const response = await fetch(
+        `/api/sports`
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch sports");
+
+      const data = await response.json();
+
+      console.log("DATA: ", data.sport)
+      setFilteredSports(data.sport)
+    }
+
+    sportList();
+
+    // if (countryList){
+    //   setFilteredCountries(countryList);
+    // }
+
 
     document.addEventListener("keydown", handleKeyDown);
     return () => {
@@ -55,6 +88,14 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch, onStat
 
     if(onDays){
       onDays(query);
+    }
+  }
+
+  const handleSportsChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const query = event.target.value;
+    setSport(query);
+    if(onSport){
+      onSport(query)
     }
 
   }
@@ -102,6 +143,35 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSearch, onStat
             </select>
 
           </>
+        )}
+
+        {pageTitle === "Coaches" && (
+
+          <>
+            <span className="md: ml-5"> Sports </span>
+          
+            <select className="mt-6 w-64 md:w-40 p-2 md:mt-0 border rounded-lg bg-white" value={sport} onChange={handleSportsChange}>
+              <option value="">Select Sport</option>
+                {filteredSports.map((sp) => (
+                  <option key={sp.name} value={sp.id}>
+                    {sp.name}
+                  </option>
+                ))}
+            </select>  
+          
+
+            {/* <select className="mt-6 w-64 md:w-40 p-2 md:mt-0 border rounded-lg bg-white" value={sport} onChange={handleSportsChange}>
+              <option value="">Select Sport</option>
+              <option value="">Select Country</option>
+              {filteredCountries.map((c) => (
+                <option key={c} value={c}>
+                  {c.country_name}
+                </option>
+              ))}
+            </select> */}
+
+          </>
+
 
         )}
 

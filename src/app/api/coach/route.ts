@@ -27,6 +27,8 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(url.searchParams.get("limit") || "10", 10);
   const offset = (page - 1) * limit;
   const timeRange = url.searchParams.get("timeRange") || "";
+  const sport = parseInt(url.searchParams.get("sport") || "0", 0)
+
 
   // 🕒 time filter
   const now = new Date();
@@ -70,6 +72,8 @@ export async function GET(req: NextRequest) {
       eq(coaches.approved_or_denied, 1) // ✅ NEW condition
     );
 
+    const sportCondition = sport !== 0 ? eq(coaches.sport, sport) : undefined;
+
     // 🔍 search filters
     const searchCondition = search
       ? or(
@@ -88,7 +92,8 @@ export async function GET(req: NextRequest) {
     const whereClause = and(
       baseCondition,
       ...(searchCondition ? [searchCondition] : []),
-      ...(timeFilterCondition ? [timeFilterCondition] : [])
+      ...(timeFilterCondition ? [timeFilterCondition] : []),
+      sportCondition,
     );
 
     // 📊 main query with aggregations
