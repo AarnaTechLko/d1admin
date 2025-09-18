@@ -14,15 +14,23 @@ export default function DemographicCard() {
   const [countriesData, setCountriesData] = useState<CountryData[]>([]);
 
   useEffect(() => {
-    const fetchDemographics = async () => {
-      try {
-        const res = await fetch("/api/countries");
-        const data: CountryData[] = await res.json();
-        setCountriesData(data);
-      } catch (err) {
-        console.error("Error fetching demographics:", err);
-      }
-    };
+   const fetchDemographics = async () => {
+  try {
+    const res = await fetch("/api/countries");
+    const data = await res.json();
+
+    if (Array.isArray(data)) {
+      setCountriesData(data);
+    } else {
+      console.warn("API did not return an array, defaulting to empty array.");
+      setCountriesData([]);
+    }
+  } catch (err) {
+    console.error("Error fetching demographics:", err);
+    setCountriesData([]);
+  }
+};
+
 
     fetchDemographics();
   }, []);
@@ -47,6 +55,7 @@ export default function DemographicCard() {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
+        marginTop:"2px",
         }}
       >
         <CountryMap  />

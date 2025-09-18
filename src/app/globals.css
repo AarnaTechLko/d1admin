@@ -776,3 +776,17 @@ layer(base);
     @apply bg-background text-foreground;
   }
 }
+
+
+.jvectormap-tip {
+  position: absolute !important;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  z-index: 9999; /* ✅ always above map */
+  pointer-events: none;
+  white-space: nowrap;
+  transform: translate(10px, -20px); /* ✅ offset near cursor */
+}
