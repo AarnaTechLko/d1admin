@@ -55,14 +55,14 @@ export default function DemographicCard() {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-        marginTop:"2px",
+         
         }}
       >
         <CountryMap  />
       </div>
 
       {/* Scrollable list */}
-      <div className="space-y-5 max-h-[400px] overflow-y-auto pr-2 mt-6">
+      <div className="space-y-5 max-h-[400px] overflow-y-auto pr-2 mt-10">
         {countriesData.map((country) => {
           const { coaches, players } = country;
         

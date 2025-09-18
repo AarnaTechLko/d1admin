@@ -35,12 +35,7 @@ type CountryData = {
 const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [countryInfo, setCountryInfo] = useState<Record<string, CountryData>>({});
-  const [focus, setFocus] = useState<{
-    latLng: [number, number];
-    scale: number;
-    x: number;
-    y: number;
-  } | null>(null);
+  /* const [focus, setFocus] = useState<IFocus | undefined>(undefined); */
 
   useEffect(() => {
     const fetchCountryData = async () => {
@@ -71,21 +66,17 @@ const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
 
         // ✅ Auto-center logic
         if (markerList.length > 0) {
-          const lats = markerList.map((m) => m.latLng[0]);
-          const lngs = markerList.map((m) => m.latLng[1]);
+          // const lats = markerList.map((m) => m.latLng[0]);
+          // const lngs = markerList.map((m) => m.latLng[1]);
 
-          const minLat = Math.min(...lats);
-          const maxLat = Math.max(...lats);
-          const minLng = Math.min(...lngs);
-          const maxLng = Math.max(...lngs);
-
-          setFocus({
+       
+          /* setFocus({
             scale: 2,
             latLng: [(minLat + maxLat) / 2, (minLng + maxLng) / 2],
             x: 0, // default to 0
             y: 0, // default to 0
           });
-
+ */
 
         }
       } catch (err) {
@@ -99,7 +90,7 @@ const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
   }, []);
 
   return (
-    <div className="w-[600px] h-[350px]  mt-10">
+    <div className="w-full h-[350px] mx-auto m-20">
       <VectorMap
         key={markers.length} // reinit on markers change
         map={worldMill}
@@ -136,7 +127,7 @@ const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
             },
           ],
         }}
-        focusOn={focus || undefined}
+     /*   focusOn={focus||undefined} */
         onRegionTipShow={(_e, el, shortname) => {
           const country = countryInfo[shortname.toUpperCase()];
           if (country) {
