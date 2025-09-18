@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.890.0",
+    "@aws-sdk/client-ses": "^3.891.0",
     "@aws-sdk/client-sesv2": "^3.888.0",
     "@aws-sdk/s3-request-presigner": "^3.890.0",
     "@emotion/react": "^11.14.0",

@@ -119,6 +119,9 @@ interface Coach {
 
 export default function CoachDetailsPage() {
   useRoleGuard();
+
+  const [loadingDeclineId, setLoadingDeclineId] = useState<number | null>(null);
+
   const [loadingId, setLoadingId] = useState<number | null>(null);
 
   const { id } = useParams();
@@ -136,6 +139,9 @@ export default function CoachDetailsPage() {
   const [newTitle, setNewTitle] = useState("");
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeclineModalOpen, setIsDeclineModalOpen] = useState<boolean>(false);
+  const [declineMessage, setDeclineMessage] = useState("");
+  const [submittingDecline, setSubmittingDecline] = useState(false);
 
   const [newRating, setNewRating] = useState(0);
 
@@ -509,21 +515,22 @@ export default function CoachDetailsPage() {
   const view_finance = Number(sessionStorage.getItem("view_finance") || 0);
 
 
-
-
-
-const handleCoachApproval = async (
+const handleCoachDecline = async (
   coachId: number,
-  action: "approve" | "decline"
+  action: "decline"
 ) => {
+
   try {
-      setLoadingId(coachId); // ✅ start spinner
+
+    setSubmittingDecline(true);
+
+    setLoadingDeclineId(coachId); // ✅ start spinner
     const res = await fetch(`/api/coach/${coachId}/approval`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ action, message: declineMessage }),
     });
 
     const data = await res.json();
@@ -531,10 +538,75 @@ const handleCoachApproval = async (
 
     // ✅ SweetAlert
     await Swal.fire({
-      icon: action === "approve" ? "success" : "success",
-      title: action === "approve" ? "Coach Approved" : "Coach Declined",
+      icon: "success",
+      title: "Coach Declined",
       text: data.message,
-      confirmButtonColor: action === "approve" ? "#28a745" : "#28a745",
+      confirmButtonColor:"#28a745",
+    });
+    window.location.reload();
+
+        // ✅ Update state without refresh
+    setCoach((prev) => {
+      if (!prev) return prev;
+      if (prev.id !== Number(coachId)) return prev;
+
+      return {
+        ...prev,
+        approved_or_denied: 2,
+      };
+    });
+    
+  }
+  catch(err){
+
+    const message =
+      err instanceof Error
+        ? err.message
+        : typeof err === "string"
+        ? err
+        : "Something went wrong. Please try again.";
+
+    console.error("Error caught:", err);
+
+    await Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: message,
+    });
+
+  } finally {
+  setLoadingDeclineId(null); // ✅ stop spinner
+  setSubmittingDecline(false);
+}
+
+}
+
+
+
+const handleCoachApproval = async (
+  coachId: number,
+  action: "approve"
+) => {
+  try {
+    
+      setLoadingId(coachId); // ✅ start spinner
+    const res = await fetch(`/api/coach/${coachId}/approval`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action, message: "You have been approved to utilize all the features that D1 Notes has to offer." }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Something went wrong");
+
+    // ✅ SweetAlert
+    await Swal.fire({
+      icon: "success",
+      title: "Coach Approved",
+      text: data.message,
+      confirmButtonColor: "#28a745" ,
     });
     window.location.reload();
 
@@ -545,7 +617,7 @@ setCoach((prev) => {
 
   return {
     ...prev,
-    approved_or_denied: action === "approve" ? 1 : 2,
+    approved_or_denied: 1,
   };
 });
   } catch (err) {
@@ -661,17 +733,17 @@ setCoach((prev) => {
                   {/* // ✅ Already approved → show Decline only */}
                   <button
                     className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition flex items-center space-x-2"
-                    onClick={() => handleCoachApproval(Number(coach.id), "decline")}
-                    disabled={loadingId === Number(coach.id)} // disable button while loading
+                    onClick={() => setIsDeclineModalOpen(true)}
+                    disabled={loadingDeclineId === Number(coach.id) || loadingId === Number(coach.id)} // disable button while loading
                   >
-                    {loadingId === Number(coach.id) && <FaSpinner className="animate-spin" />}
-                    <span>Decline</span>
+                    {loadingDeclineId === Number(coach.id) && <FaSpinner className="animate-spin" />}
+                    <span>Deny</span>
                   </button>
                   {/* // ✅ Declined or Pending → show Approve only */}
                   <button
                     className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition flex items-center space-x-2"
                     onClick={() => handleCoachApproval(Number(coach.id), "approve")}
-                    disabled={loadingId === Number(coach.id)} // disable button while loading
+                    disabled={loadingId === Number(coach.id) || loadingDeclineId === Number(coach.id)} // disable button while loading
                   >
                     {loadingId === Number(coach.id) && <FaSpinner className="animate-spin" />}
                     <span>Approve</span>
@@ -912,12 +984,7 @@ setCoach((prev) => {
         </div>
       </section >
 
-  {/* id: number,
-  player_id: number,
-  coach_id: number,
-  rating: number,
-  title: string,
-  comment: string, */}
+
 
       < section className="p-6 max-w-7xl mx-auto space-y-8 ">
       
@@ -1230,6 +1297,73 @@ setCoach((prev) => {
           </div>
         </section >
       )}
+
+
+          {/* Edit Modal */}
+          {isDeclineModalOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] max-w-md">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
+                  Reason for being Denied
+                </h3>
+
+
+                {/* Comment */}
+                <div className="mb-4">
+                  {/* <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Feedback / Comment:
+                  </label> */}
+                  <textarea
+                    value={declineMessage}
+                    onChange={(e) => setDeclineMessage(e.target.value)}
+                    placeholder="Write your feedback..."
+                    className="w-full border border-gray-300 rounded-md p-2 text-sm resize-none"
+                    rows={4}
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setIsDeclineModalOpen(false)}
+                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-800 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleCoachDecline(Number(coach.id), "decline")}
+                    disabled={submittingDecline}
+                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md flex items-center justify-center gap-2 disabled:opacity-60 transition"
+                  >
+                    {submittingDecline && (
+                      <svg
+                        className="w-4 h-4 animate-spin text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8z"
+                        />
+                      </svg>
+                    )}
+                    {submittingDecline ? "Submitting..." : "Submit"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
     </div >
 
   );

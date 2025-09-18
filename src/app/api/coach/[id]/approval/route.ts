@@ -2,19 +2,27 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { coaches } from "@/lib/schema";
 import { eq } from "drizzle-orm";
-import nodemailer from "nodemailer";
+
+import {sendEmail} from '@/lib/email-service'
+
+// import nodemailer from "nodemailer";
 
 export async function PATCH(   
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }// ✅ remove Promise
 ) {
   try {
+
+    const protocol = req.headers.get("x-forwarded-proto") || "http";
+    const host = req.headers.get("host");
+    const baseUrl = `${protocol}://${host}`;
+
     const coachId =  parseInt((await params).id, 10); // ✅ no await
     if (isNaN(coachId)) {
       return NextResponse.json({ message: "Invalid coach ID" }, { status: 400 });
     }
 
-    const { action } = await req.json(); // "approve" | "decline"
+    const { action, message } = await req.json(); // "approve" | "decline"
     if (!["approve", "decline"].includes(action)) {
       return NextResponse.json({ message: "Invalid action" }, { status: 400 });
     }
@@ -34,35 +42,35 @@ export async function PATCH(
       .from(coaches)
       .where(eq(coaches.id, coachId));
 
-    // Send email if SMTP configured
-    if (coach?.email && process.env.SMTP_USER && process.env.SMTP_PASS) {
-      const transporter = nodemailer.createTransport({
-        service: process.env.SMTP_HOST === "gmail" ? "gmail" : undefined,
-        host: process.env.SMTP_HOST !== "gmail" ? process.env.SMTP_HOST : undefined,
-        port: process.env.SMTP_HOST !== "gmail" ? Number(process.env.SMTP_PORT || 587) : undefined,
-        secure: process.env.SMTP_HOST !== "gmail" ? process.env.SMTP_SECURE === "true" : undefined,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
 
-      const mailOptions = {
-        from: `"Admin" <${process.env.SMTP_USER}>`,
-        to: coach.email,
-        subject: `Your Coach Application has been ${action === "approve" ? "Approved" : "Declined"}`,
-        html:
-          action === "approve"
-            ? `<p>Hi ${coach.firstName},</p><p>Congratulations! Your application has been approved.</p><p>Best regards,<br/>Admin Team</p>`
-            : `<p>Hi ${coach.firstName},</p><p>We regret to inform you that your application has been declined.</p><p>Best regards,<br/>Admin Team</p>`,
-      };
-
-      try {
-        await transporter.sendMail(mailOptions);
-      } catch (emailError) {
-        console.error("Failed to send email:", emailError);
+      if (coach?.email && action === "approve") {
+        await sendEmail({
+          to: coach.email,
+          subject: "D1 Notes-Approval",
+          html: `Dear ${coach.firstName},<br/><br/>
+                  You’ve received a new message from Admin:<br/>
+                  <blockquote>${message}</blockquote>
+                  <a href="${baseUrl}/login">Login</a> to get started.<br/><br/>
+                  Regards,<br/>D1 Admin`,
+          text: message,
+        });
       }
-    }
+      else if (coach?.email && action === "decline") {
+
+        await sendEmail({
+          to: coach.email,
+          subject: "D1 Notes-Denied",
+          html: `Dear ${coach.firstName},<br/><br/>
+                  You’ve received a new message from Admin:<br/>
+                  <blockquote>${message}</blockquote>
+                  <a href="${baseUrl}/login">Login</a> to get started.<br/><br/>
+                  Regards,<br/>D1 Admin`,
+          text: message,
+        });
+
+
+      }
+
 
     return NextResponse.json({
       message: `Coach ${action === "approve" ? "approved" : "declined"} successfully`,
