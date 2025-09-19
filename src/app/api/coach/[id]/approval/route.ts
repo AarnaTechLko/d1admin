@@ -13,9 +13,9 @@ export async function PATCH(
 ) {
   try {
 
-    const protocol = req.headers.get("x-forwarded-proto") || "http";
-    const host = req.headers.get("host");
-    const baseUrl = `${protocol}://${host}`;
+    // const protocol = req.headers.get("x-forwarded-proto") || "http";
+    // const host = req.headers.get("host");
+    // const baseUrl = `${protocol}://${host}`;
 
     const coachId =  parseInt((await params).id, 10); // ✅ no await
     if (isNaN(coachId)) {
@@ -50,8 +50,7 @@ export async function PATCH(
           html: `Dear ${coach.firstName},<br/><br/>
                   You’ve received a new message from Admin:<br/>
                   <blockquote>${message}</blockquote>
-                  <a href="${baseUrl}/login">Login</a> to get started.<br/><br/>
-                  Regards,<br/>D1 Admin`,
+                  <a href="https://d1notes.com/login">Login</a><br/><br/>`,
           text: message,
         });
       }
@@ -63,8 +62,7 @@ export async function PATCH(
           html: `Dear ${coach.firstName},<br/><br/>
                   You’ve received a new message from Admin:<br/>
                   <blockquote>${message}</blockquote>
-                  <a href="${baseUrl}/login">Login</a> to get started.<br/><br/>
-                  Regards,<br/>D1 Admin`,
+                  <a href="https://d1notes.com/login">Login</a><br/><br/>`,
           text: message,
         });
 

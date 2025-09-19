@@ -485,7 +485,7 @@ const graduationYears = Array.from(
             theme="snow"
             value={message}
             onChange={setMessage}
-            placeholder="Write your message here..."
+            placeholder="Please begin your message with a greeting (e.g., Hi Coach, Hello Player) and then add your content here. Do not include closing lines like \'Regards\'."
             modules={{
               toolbar: [
                 [{ 'header': [1, 2, false] }],

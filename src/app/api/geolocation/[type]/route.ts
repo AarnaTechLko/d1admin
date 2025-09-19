@@ -266,9 +266,9 @@ export async function POST(req: NextRequest) {
     );
     const TWILIO_PHONE = process.env.TWILIO_TEST_PHONE_NUMBER;
     const now = new Date();
-    const protocol = req.headers.get("x-forwarded-proto") || "http";
-    const host = req.headers.get("host");
-    const baseUrl = `${protocol}://${host}`;
+    // const protocol = req.headers.get("x-forwarded-proto") || "http";
+    // const host = req.headers.get("host");
+    // const baseUrl = `${protocol}://${host}`;
 
     const smsResponses: MessageInstance[] = [];
 
@@ -316,8 +316,7 @@ await db.insert(admin_message).values(messages);
             html: `Dear ${coach.firstName},<br/><br/>
                    You’ve received a new message from Admin:<br/>
                    <blockquote>${message}</blockquote>
-                   <a href="${baseUrl}/login">Login</a> to view the message.<br/><br/>
-                   Regards,<br/>D1 Admin`,
+                   <a href="https://d1notes.com/login">Login</a><br/><br/>`,
             text: message,
           });
         }
@@ -330,7 +329,7 @@ await db.insert(admin_message).values(messages);
           await twilioClient.messages.create({
             from: TWILIO_PHONE!,
             to: formattedNumber,
-            body: `📢 Admin Message: ${message}`,
+            body: `Admin Message: ${message}`,
           });
         }
       }
@@ -345,8 +344,7 @@ await db.insert(admin_message).values(messages);
             html: `Dear ${player.first_name},<br/><br/>
                    You’ve received a new message from Admin:<br/>
                    <blockquote>${message}</blockquote>
-                   <a href="${baseUrl}/login">Login</a> to view the message.<br/><br/>
-                   Regards,<br/>D1 Admin`,
+                   <a href="https://d1notes.com/login">Login</a><br/><br/>`,
             text: message,
           });
         }
@@ -358,7 +356,7 @@ await db.insert(admin_message).values(messages);
           const smsRes = await twilioClient.messages.create({
             from: TWILIO_PHONE!,
             to: formattedNumber,
-            body: `📢 Admin Message: ${message}`,
+            body: `Admin Message: ${message}`,
           });
           smsResponses.push(smsRes);
         }
@@ -374,8 +372,7 @@ await db.insert(admin_message).values(messages);
             html: `Dear ${org.organizationName},<br/><br/>
                    You’ve received a new message from Admin:<br/>
                    <blockquote>${message}</blockquote>
-                   <a href="${baseUrl}/login">Login</a> to view the message.<br/><br/>
-                   Regards,<br/>D1 Admin`,
+                   <a href="https://d1notes.com/login">Login</a><br/><br/>`,
             text: message,
           });
         }
@@ -387,7 +384,7 @@ await db.insert(admin_message).values(messages);
           await twilioClient.messages.create({
             from: TWILIO_PHONE!,
             to: formattedNumber,
-            body: `📢 Admin Message: ${message}`,
+            body: `Admin Message: ${message}`,
           });
         }
       }
