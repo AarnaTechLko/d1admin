@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { unsubscribes } from './schema';
 import { and, eq, inArray, isNotNull } from 'drizzle-orm';
 import { BASE_TEMPLATE } from './templates/email-templates';
-// import axios from 'axios';
+import axios from 'axios';
 import { randomBytes } from 'crypto';
 
 interface SendEmailParams {
@@ -21,17 +21,17 @@ interface SendEmailWithAttachmentsParams {
 }
 
 // Add missing interfaces
-// interface AttachmentData {
-//   filename: string;
-//   content: string;
-//   contentType: string;
-// }
+interface AttachmentData {
+  filename: string;
+  content: string;
+  contentType: string;
+}
 
 interface RawMessageParams {
   to: string;
   subject: string;
   html: string;
-  // attachments: AttachmentData[];
+  attachments: AttachmentData[];
 }
 
 const ses = new SESv2Client({ region: process.env.AWS_REGION || 'us-east-2' });
@@ -204,7 +204,7 @@ export async function sendEmailWithAttachments({
   to,
   subject,
   html,
-  // attachments = []
+  attachments = []
 }: SendEmailWithAttachmentsParams) {
   const toList = Array.isArray(to) ? [...to] : [to];
 const results: { 
@@ -233,20 +233,20 @@ const results: {
   });
 
   // Download attachments ONCE
-  // const attachmentData = await Promise.all(
-  //   attachments.map(async (url) => {
-  //     try {
-  //       const response = await axios.get(url, { responseType: 'arraybuffer' });
-  //       return {
-  //         filename: url.split('/').pop() || 'attachment',
-  //         content: Buffer.from(response.data).toString('base64'),
-  //         contentType: response.headers['content-type'] || 'application/octet-stream'
-  //       };
-  //     } catch (error) {
-  //       throw new Error(`Failed to download attachment: ${error}`);
-  //     }
-  //   })
-  // );
+  const attachmentData = await Promise.all(
+    attachments.map(async (url) => {
+      try {
+        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        return {
+          filename: url.split('/').pop() || 'attachment',
+          content: Buffer.from(response.data).toString('base64'),
+          contentType: response.headers['content-type'] || 'application/octet-stream'
+        };
+      } catch (error) {
+        throw new Error(`Failed to download attachment: ${error}`);
+      }
+    })
+  );
 
   // Process emails in batches of 10 with delay
   const batchSize = 10;
@@ -282,7 +282,7 @@ const results: {
         to: email, 
         subject, 
         html: finalHtml, 
-        // attachments: attachmentData 
+        attachments: attachmentData 
       });
 
       try {
@@ -310,7 +310,7 @@ const results: {
 
 // function createRawMessage({ to, subject, html, attachments }: RawMessageParams): Buffer {
 
-function createRawMessage({ to, subject, html }: RawMessageParams): Buffer {
+function createRawMessage({ to, subject, html, attachments }: RawMessageParams): Buffer {
   const boundary = `----=_Part_${Date.now()}`;
   
   const message = [
@@ -326,17 +326,17 @@ function createRawMessage({ to, subject, html }: RawMessageParams): Buffer {
     ''
   ];
 
-  // attachments.forEach(att => {
-  //   message.push(
-  //     `--${boundary}`,
-  //     `Content-Type: ${att.contentType}`,
-  //     `Content-Disposition: attachment; filename="${att.filename}"`,
-  //     `Content-Transfer-Encoding: base64`,
-  //     '',
-  //     att.content,
-  //     ''
-  //   );
-  // });
+  attachments.forEach(att => {
+    message.push(
+      `--${boundary}`,
+      `Content-Type: ${att.contentType}`,
+      `Content-Disposition: attachment; filename="${att.filename}"`,
+      `Content-Transfer-Encoding: base64`,
+      '',
+      att.content,
+      ''
+    );
+  });
 
   message.push(`--${boundary}--`);
   return Buffer.from(message.join('\r\n'));
