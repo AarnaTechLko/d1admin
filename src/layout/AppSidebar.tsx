@@ -11,12 +11,21 @@ import logo from "@/public/images/logo1/logo.webp"
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
+  Bell,
+  Building2,
+  Calculator,
   ChevronDownIcon,
+  ClipboardList,
   GridIcon,
+  LayoutDashboard,
   // HorizontaLDots,
   ListIcon,
   TableIcon,
+  Ticket,
+  User,
+  UserCheck,
   UserCircleIcon,
+  Users,
 } from "lucide-react";
 // import SidebarWidget from "./SidebarWidget";
 
@@ -41,9 +50,9 @@ const AppSidebar: React.FC = () => {
       ? [
         {
           name: "Ticket",
-          icon: <UserCircleIcon />,
-          subItems: [ {name: "My Ticket", path: "/myticket", pro: false},
-          {name: "Assign Ticket", path: "/assignticket", pro: false},
+            icon: <Ticket />,
+          subItems: [{ name: "My Ticket", path: "/myticket", pro: false },
+          { name: "Assign Ticket", path: "/assignticket", pro: false },
           { name: "View Ticket", path: "/ticket", pro: false },
           { name: "Create Ticket", path: "/createticket", pro: false },
 
@@ -51,7 +60,7 @@ const AppSidebar: React.FC = () => {
         },
         {
           name: "Coaches",
-          icon: <ListIcon />,
+          icon: <UserCheck />,
           subItems: [{ name: "Active Coach", path: "/coach", pro: false },
           { name: "Suspended Coach", path: "/suspend", pro: false },
           { name: "Disable Coach", path: "/disablecoach", pro: false },
@@ -59,7 +68,7 @@ const AppSidebar: React.FC = () => {
         },
         {
           name: "Players",
-          icon: <UserCircleIcon />,
+          icon: <User/>,
           subItems: [{ name: "Active Player", path: "/player", pro: false },
           { name: "Suspended Player", path: "/suspendplayer", pro: false },
           { name: "Disable Player", path: "/disableplayer", pro: false },
@@ -68,7 +77,7 @@ const AppSidebar: React.FC = () => {
         },
         {
           name: "Organizations",
-          icon: <TableIcon />,
+                     icon: <Building2 />,
           subItems: [
             { name: "Active Organizations", path: "/organization", pro: false },
             { name: "Suspended Organization", path: "/suspendorg", pro: false },
@@ -80,13 +89,13 @@ const AppSidebar: React.FC = () => {
       : role === "Admin"
         ? [
           {
-            icon: <GridIcon />,
+            icon: <LayoutDashboard />,
             name: "Dashboard",
             path: "/dashboard",
           },
           {
             name: "Coaches",
-            icon: <ListIcon />,
+            icon: <UserCheck />,
             subItems: [{ name: "Unapproved Coach", path: "/newcoach", pro: false },
             { name: "Incomplete Coaches", path: "/incompletecoach", pro: false },
             { name: "Active Coach", path: "/coach", pro: false },
@@ -97,7 +106,7 @@ const AppSidebar: React.FC = () => {
           },
           {
             name: "Players",
-            icon: <UserCircleIcon />,
+            icon: <User />,
             subItems: [
               { name: "Incomplete Players", path: "/incompleteplayer", pro: false },
               { name: "Active Player", path: "/player", pro: false },
@@ -108,7 +117,7 @@ const AppSidebar: React.FC = () => {
           },
           {
             name: "Organizations",
-            icon: <TableIcon />,
+            icon: <Building2 />,
             subItems: [
               { name: "Active Organizations", path: "/organization", pro: false },
               { name: "Suspended Organization", path: "/suspendorg", pro: false },
@@ -118,7 +127,7 @@ const AppSidebar: React.FC = () => {
           },
           {
             name: "Teams",
-            icon: <ListIcon />,
+            icon: <Users />,
             subItems: [{ name: "Active Team", path: "/team", pro: false },
             { name: "Suspended Team", path: "/suspendteam", pro: false },
             { name: "Disable Team", path: "/disableteam", pro: false },
@@ -127,14 +136,14 @@ const AppSidebar: React.FC = () => {
           },
           {
             name: "Notifications",
-            icon: <ListIcon />,
+            icon: <Bell />,
             subItems: [
               { name: "View Notification", path: "/notification", pro: false },
             ],
           },
           {
             name: "Staff",
-            icon: <UserCircleIcon />,
+            icon: <ClipboardList />,
             subItems: [
               { name: "Add", path: "/subadmin", pro: false },
               { name: "View", path: "/view", pro: false },
@@ -142,14 +151,22 @@ const AppSidebar: React.FC = () => {
           },
           {
             name: "Ticket",
-            icon: <UserCircleIcon />,
-            subItems: [{name: "My Ticket", path: "/myticket", pro: false}, 
-            {name: "Assign Ticket", path: "/assignticket", pro: false},
+            icon: <Ticket />,
+            subItems: [{ name: "My Ticket", path: "/myticket", pro: false },
+            { name: "Assign Ticket", path: "/assignticket", pro: false },
             { name: "View Ticket", path: "/ticket", pro: false },
             { name: "Create Ticket", path: "/createticket", pro: false },
 
             ],
           },
+          // {
+          //   name: "Accounting",
+          //   icon: <Calculator />,
+          //   subItems: [
+          //     { name: "Add Category", path: "/category", pro: false },
+          //     { name: "Add Expense", path: "/expense", pro: false },
+          //   ],
+          // },
           {
             icon: <GridIcon />,
             name: "Block List",
@@ -160,13 +177,13 @@ const AppSidebar: React.FC = () => {
         : role === "Manager"
           ? [
             {
-              icon: <GridIcon />,
+              icon: <LayoutDashboard />,
               name: "Dashboard",
               path: "/dashboard",
             },
             {
               name: "Ticket",
-              icon: <UserCircleIcon />,
+            icon: <Ticket />,
               subItems: [{ name: "View Ticket", path: "/ticket", pro: false },
               { name: "Create Ticket", path: "/createticket", pro: false },
 
@@ -175,130 +192,130 @@ const AppSidebar: React.FC = () => {
             },
             {
               name: "Coaches",
-              icon: <ListIcon />,
+                          icon: <UserCheck />,
               subItems: [{ name: "View Coach", path: "/coach", pro: false }],
             },
             {
               name: "Players",
-              icon: <UserCircleIcon />,
+              icon: <User/>,
               subItems: [{ name: "View Player", path: "/player", pro: false }],
             },
             {
               name: "Organizations",
-              icon: <TableIcon />,
+            icon: <Building2 />,
               subItems: [
                 { name: "View Organizations", path: "/organization", pro: false },
               ],
             },
             {
               name: "Teams",
-              icon: <ListIcon />,
+                         icon: <Users />,
               subItems: [{ name: "View Team", path: "/team", pro: false }],
             },
-          {
-            name: "Ticket",
-            icon: <UserCircleIcon />,
-            subItems: [ {name: "My Ticket", path: "/myticket", pro: false},
-            {name: "Assign Ticket", path: "/assignticket", pro: false},
-            { name: "View Ticket", path: "/ticket", pro: false },
-            { name: "Create Ticket", path: "/createticket", pro: false },
-
-            ],
-          },
-
-          ]
-          :role === "Executive Level"
-      ? [
-
-          {
-            icon: <GridIcon />,
-            name: "Dashboard",
-            path: "/dashboard",
-          },
-          {
-            name: "Coaches",
-            icon: <ListIcon />,
-            subItems: [ {name: "Unapproved Coach", path: "/newcoach", pro: false},
-            {name: "Incomplete Coaches", path:"/incompletecoach", pro:false},
-            { name: "Active Coach", path: "/coach", pro: false },
-            { name: "Decline Coach", path: "/declinecoach", pro: false},
-            { name: "Suspended Coach", path: "/suspend", pro: false },
-            { name: "Disable Coach", path: "/disablecoach", pro: false },
-            ],
-          },
-          {
-            name: "Players",
-            icon: <UserCircleIcon />,
-            subItems: [{name: "Incomplete Players", path:"/incompleteplayer", pro:false},
-            { name: "Active Player", path: "/player", pro: false },
-            { name: "Suspended Player", path: "/suspendplayer", pro: false },
-            { name: "Disable Player", path: "/disableplayer", pro: false },
-
-            ],
-          },
-          {
-            name: "Organizations",
-            icon: <TableIcon />,
-            subItems: [
-              { name: "Active Organizations", path: "/organization", pro: false },
-              { name: "Suspended Organization", path: "/suspendorg", pro: false },
-              { name: "Disable Organization", path: "/disableorg", pro: false },
-
-            ],
-          },
-          {
-            name: "Teams",
-            icon: <ListIcon />,
-            subItems: [{ name: "Active Team", path: "/team", pro: false },
-            { name: "Suspended Team", path: "/suspendteam", pro: false },
-            { name: "Disable Team", path: "/disableteam", pro: false },
-
-            ],
-          },
-          {
-            name: "Notifications",
-            icon: <ListIcon />,
-            subItems: [
-              { name: "View Notification", path: "/notification", pro: false },
-            ],
-          },
-          {
-            name: "Staff",
-            icon: <UserCircleIcon />,
-            subItems: [
-              { name: "Add", path: "/subadmin", pro: false },
-              { name: "View", path: "/view", pro: false },
-            ],
-          },
-          {
-            name: "Ticket",
-            icon: <UserCircleIcon />,
-            subItems: [ {name: "My Ticket", path: "/myticket", pro: false},
-              { name: "Assign Ticket", path: "/assignticket", pro: false},
+            {
+              name: "Ticket",
+            icon: <Ticket />,
+              subItems: [{ name: "My Ticket", path: "/myticket", pro: false },
+              { name: "Assign Ticket", path: "/assignticket", pro: false },
               { name: "View Ticket", path: "/ticket", pro: false },
               { name: "Create Ticket", path: "/createticket", pro: false },
-            ],
-          },
-          {
-            icon: <GridIcon />,
-            name: "Block List",
-            path: "/blocks",
-          },
-      ]
-      :role === "Tech"
-      ? [
-        {
-          name: "Ticket",
-          icon: <UserCircleIcon />,
-          subItems: [ {name: "My Ticket", path: "/myticket", pro: false},
-            { name: "Assign Ticket", path: "/assignticket", pro: false},
-            { name: "View Ticket", path: "/ticket", pro: false },
+
+              ],
+            },
+
+          ]
+          : role === "Executive Level"
+            ? [
+
+              {
+                icon: <LayoutDashboard />,
+                name: "Dashboard",
+                path: "/dashboard",
+              },
+              {
+                name: "Coaches",
+            icon: <UserCheck />,
+                subItems: [{ name: "Unapproved Coach", path: "/newcoach", pro: false },
+                { name: "Incomplete Coaches", path: "/incompletecoach", pro: false },
+                { name: "Active Coach", path: "/coach", pro: false },
+                { name: "Decline Coach", path: "/declinecoach", pro: false },
+                { name: "Suspended Coach", path: "/suspend", pro: false },
+                { name: "Disable Coach", path: "/disablecoach", pro: false },
+                ],
+              },
+              {
+                name: "Players",
+                icon: <User />,
+                subItems: [{ name: "Incomplete Players", path: "/incompleteplayer", pro: false },
+                { name: "Active Player", path: "/player", pro: false },
+                { name: "Suspended Player", path: "/suspendplayer", pro: false },
+                { name: "Disable Player", path: "/disableplayer", pro: false },
+
+                ],
+              },
+              {
+                name: "Organizations",
+            icon: <Building2 />,
+                subItems: [
+                  { name: "Active Organizations", path: "/organization", pro: false },
+                  { name: "Suspended Organization", path: "/suspendorg", pro: false },
+                  { name: "Disable Organization", path: "/disableorg", pro: false },
+
+                ],
+              },
+              {
+                name: "Teams",
+            icon: <Users />,
+                subItems: [{ name: "Active Team", path: "/team", pro: false },
+                { name: "Suspended Team", path: "/suspendteam", pro: false },
+                { name: "Disable Team", path: "/disableteam", pro: false },
+
+                ],
+              },
+              {
+                name: "Notifications",
+            icon: <Bell />,
+                subItems: [
+                  { name: "View Notification", path: "/notification", pro: false },
+                ],
+              },
+              {
+                name: "Staff",
+            icon: <ClipboardList />,
+                subItems: [
+                  { name: "Add", path: "/subadmin", pro: false },
+                  { name: "View", path: "/view", pro: false },
+                ],
+              },
+              {
+                name: "Ticket",
+            icon: <Ticket />,
+                subItems: [{ name: "My Ticket", path: "/myticket", pro: false },
+                { name: "Assign Ticket", path: "/assignticket", pro: false },
+                { name: "View Ticket", path: "/ticket", pro: false },
+                { name: "Create Ticket", path: "/createticket", pro: false },
+                ],
+              },
+              {
+                icon: <GridIcon />,
+                name: "Block List",
+                path: "/blocks",
+              },
+            ]
+            : role === "Tech"
+              ? [
+                {
+                  name: "Ticket",
+            icon: <Ticket />,
+                  subItems: [{ name: "My Ticket", path: "/myticket", pro: false },
+                  { name: "Assign Ticket", path: "/assignticket", pro: false },
+                  { name: "View Ticket", path: "/ticket", pro: false },
 
                   ],
                 },
                 {
                   name: "Coaches",
-                  icon: <ListIcon />,
+            icon: <UserCheck />,
                   subItems: [{ name: "Incomplete Coaches", path: "/incompletecoach", pro: false },
                   { name: "Active Coach", path: "/coach", pro: false },
                   { name: "Suspended Coach", path: "/suspend", pro: false },
@@ -307,7 +324,7 @@ const AppSidebar: React.FC = () => {
                 },
                 {
                   name: "Players",
-                  icon: <UserCircleIcon />,
+                  icon: <User />,
                   subItems: [{ name: "Incomplete Players", path: "/incompleteplayer", pro: false },
                   { name: "Active Player", path: "/player", pro: false },
                   { name: "Suspended Player", path: "/suspendplayer", pro: false },
@@ -317,7 +334,8 @@ const AppSidebar: React.FC = () => {
                 },
                 {
                   name: "Organizations",
-                  icon: <TableIcon />,
+                           icon: <Building2 />,
+
                   subItems: [
                     { name: "Active Organizations", path: "/organization", pro: false },
                     { name: "Suspended Organization", path: "/suspendorg", pro: false },

@@ -1,10 +1,8 @@
 "use client";
-
 import { worldMill } from "@react-jvectormap/world";
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 // import { IFocus } from "@react-jvectormap/core";
-
 type JVectorElement = {
   html: (content: string) => void;
 };
@@ -12,16 +10,13 @@ const VectorMap = dynamic(
   () => import("@react-jvectormap/core").then((mod) => mod.VectorMap),
   { ssr: false }
 );
-
 interface CountryMapProps {
   mapColor?: string;
 }
-
 type Marker = {
   latLng: [number, number];
   name: string;
 };
-
 type CountryData = {
   country: string;
   shortname: string;
@@ -31,20 +26,16 @@ type CountryData = {
   players: number;
   customers: number;
 };
-
 const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [countryInfo, setCountryInfo] = useState<Record<string, CountryData>>({});
   /* const [focus, setFocus] = useState<IFocus | undefined>(undefined); */
-
   useEffect(() => {
     const fetchCountryData = async () => {
       try {
         const res = await fetch("/api/countries");
         const data: CountryData[] = await res.json();
-
         if (!Array.isArray(data)) return;
-
         const infoMap: Record<string, CountryData> = {};
         const markerList: Marker[] = [];
         console.log("data", data);
@@ -52,7 +43,6 @@ const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
           if (!c.shortname) return;
           const shortname = c.shortname.toUpperCase();
           infoMap[shortname] = c;
-
           if (typeof c.lat === "number" && typeof c.lng === "number" && (c.coaches > 0 || c.players > 0)) {
             markerList.push({
               latLng: [Number(c.lat), Number(c.lng)],
@@ -60,10 +50,8 @@ const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
             });
           }
         });
-
         setCountryInfo(infoMap);
         setMarkers(markerList);
-
         // ✅ Auto-center logic
         if (markerList.length > 0) {
           // const lats = markerList.map((m) => m.latLng[0]);
@@ -77,7 +65,6 @@ const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
             y: 0, // default to 0
           });
  */
-
         }
       } catch (err) {
         console.error(err);
@@ -142,7 +129,6 @@ const CountryMap: React.FC<CountryMapProps> = ({ mapColor }) => {
           const markerIndex = parseInt(index, 10);
           const marker = markers[markerIndex];
           if (!marker) return;
-
           const country = Object.values(countryInfo).find((c) => c.country === marker.name);
           if (country) {
             (el as unknown as JVectorElement).html(
