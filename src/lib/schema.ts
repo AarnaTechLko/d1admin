@@ -885,17 +885,19 @@ export const categories_attributes = pgTable('categories_attributes', {
   is_removed: boolean('is_removed').default(false),
 });
 
-// export const master_categories = pgTable("master_categories", {
-//   id: serial("id").primaryKey(),
-//   name: text("name").notNull().unique(),
-//   createdAt: timestamp("created_at").defaultNow().notNull(),
-// });
+export const master_categories = pgTable("master_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
-// export const expense_categories = pgTable("expense_categories", {
-//   id: serial("id").primaryKey(),
-//   user_id: integer("user_id").default(0),
-//    categoryid: integer("categoryid"),
-//   amount: numeric("amount", { precision: 12, scale: 2 }).default("0"), // <-- string instead of number
-//   description: text("description"),
-//   createdAt: timestamp("created_at").defaultNow().notNull(),
-// });
+export const expense_categories = pgTable("expense_categories", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").default(0),
+   categoryid: integer("categoryid"),
+  amount: numeric("amount", { precision: 12, scale: 2 }).default("0"), // <-- string instead of number
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  date: date("date").defaultNow().notNull(), // <-- new column
+
+});
