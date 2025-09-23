@@ -690,7 +690,7 @@ export const ticket = pgTable("ticket", {
   status: varchar("status").default("Pending"),
   role: varchar("role"),
   message: text("message").notNull(),
-    escalate: boolean("escalate").default(false), // ✅ new column
+  escalate: boolean("escalate").default(false), // ✅ new column
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
@@ -889,15 +889,18 @@ export const master_categories = pgTable("master_categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  is_deleted: integer("is_deleted").default(1).notNull(),
+
 });
 
 export const expense_categories = pgTable("expense_categories", {
   id: serial("id").primaryKey(),
   user_id: integer("user_id").default(0),
-   categoryid: integer("categoryid"),
+  categoryid: integer("categoryid"),
   amount: numeric("amount", { precision: 12, scale: 2 }).default("0"), // <-- string instead of number
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   date: date("date").defaultNow().notNull(), // <-- new column
+  is_deleted: integer("is_deleted").default(1).notNull(),
 
 });

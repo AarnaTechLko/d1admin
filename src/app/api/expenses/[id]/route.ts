@@ -26,20 +26,20 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   }
 }
 
-// DELETE /api/expense_categories/:id
-export async function DELETE(req: Request, { params }: { params:Promise<{ id: string }> }) {
-  try {
-const { id } = await params;
-    if (!id) {
-      return NextResponse.json({ error: "Category ID is required" }, { status: 400 });
-    }
-    await db .delete(expense_categories)
-  .where(eq(expense_categories.id, Number(id))); // ✅ same here
+// // DELETE /api/expense_categories/:id
+// export async function DELETE(req: Request, { params }: { params:Promise<{ id: string }> }) {
+//   try {
+// const { id } = await params;
+//     if (!id) {
+//       return NextResponse.json({ error: "Category ID is required" }, { status: 400 });
+//     }
+//     await db .delete(expense_categories)
+//   .where(eq(expense_categories.id, Number(id))); // ✅ same here
 
 
-    return NextResponse.json({ message: "Category deleted successfully" });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Failed to delete category" }, { status: 500 });
-  }
-}
+//     return NextResponse.json({ message: "Category deleted successfully" });
+//   } catch (error) {
+//     console.error(error);
+//     return NextResponse.json({ error: "Failed to delete category" }, { status: 500 });
+//   }
+// }

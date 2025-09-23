@@ -251,7 +251,7 @@ export default function CoachDetailsPage() {
 
     const evalId = coach?.evaluations[r.player_id].evaluationId
 
-    if(evalId){
+    if (evalId) {
       setEvalId(evalId);
     }
     setNewTitle(r.title || "");
@@ -515,131 +515,131 @@ export default function CoachDetailsPage() {
   const view_finance = Number(sessionStorage.getItem("view_finance") || 0);
 
 
-const handleCoachDecline = async (
-  coachId: number,
-  action: "decline"
-) => {
+  const handleCoachDecline = async (
+    coachId: number,
+    action: "decline"
+  ) => {
 
-  try {
+    try {
 
-    setSubmittingDecline(true);
+      setSubmittingDecline(true);
 
-    setLoadingDeclineId(coachId); // ✅ start spinner
-    const res = await fetch(`/api/coach/${coachId}/approval`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ action, message: declineMessage }),
-    });
+      setLoadingDeclineId(coachId); // ✅ start spinner
+      const res = await fetch(`/api/coach/${coachId}/approval`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action, message: declineMessage }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Something went wrong");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Something went wrong");
 
-    // ✅ SweetAlert
-    await Swal.fire({
-      icon: "success",
-      title: "Coach Declined",
-      text: data.message,
-      confirmButtonColor:"#28a745",
-    });
-    window.location.reload();
+      // ✅ SweetAlert
+      await Swal.fire({
+        icon: "success",
+        title: "Coach Declined",
+        text: data.message,
+        confirmButtonColor: "#28a745",
+      });
+      window.location.reload();
 
-        // ✅ Update state without refresh
-    setCoach((prev) => {
-      if (!prev) return prev;
-      if (prev.id !== Number(coachId)) return prev;
+      // ✅ Update state without refresh
+      setCoach((prev) => {
+        if (!prev) return prev;
+        if (prev.id !== Number(coachId)) return prev;
 
-      return {
-        ...prev,
-        approved_or_denied: 2,
-      };
-    });
-    
+        return {
+          ...prev,
+          approved_or_denied: 2,
+        };
+      });
+
+    }
+    catch (err) {
+
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "string"
+            ? err
+            : "Something went wrong. Please try again.";
+
+      console.error("Error caught:", err);
+
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: message,
+      });
+
+    } finally {
+      setLoadingDeclineId(null); // ✅ stop spinner
+      setSubmittingDecline(false);
+    }
+
   }
-  catch(err){
-
-    const message =
-      err instanceof Error
-        ? err.message
-        : typeof err === "string"
-        ? err
-        : "Something went wrong. Please try again.";
-
-    console.error("Error caught:", err);
-
-    await Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: message,
-    });
-
-  } finally {
-  setLoadingDeclineId(null); // ✅ stop spinner
-  setSubmittingDecline(false);
-}
-
-}
 
 
 
-const handleCoachApproval = async (
-  coachId: number,
-  action: "approve"
-) => {
-  try {
-    
+  const handleCoachApproval = async (
+    coachId: number,
+    action: "approve"
+  ) => {
+    try {
+
       setLoadingId(coachId); // ✅ start spinner
-    const res = await fetch(`/api/coach/${coachId}/approval`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ action, message: "You have been approved to utilize all the features that D1 Notes has to offer." }),
-    });
+      const res = await fetch(`/api/coach/${coachId}/approval`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action, message: "You have been approved to utilize all the features that D1 Notes has to offer." }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Something went wrong");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Something went wrong");
 
-    // ✅ SweetAlert
-    await Swal.fire({
-      icon: "success",
-      title: "Coach Approved",
-      text: data.message,
-      confirmButtonColor: "#28a745" ,
-    });
-    window.location.reload();
+      // ✅ SweetAlert
+      await Swal.fire({
+        icon: "success",
+        title: "Coach Approved",
+        text: data.message,
+        confirmButtonColor: "#28a745",
+      });
+      window.location.reload();
 
-    // ✅ Update state without refresh
-setCoach((prev) => {
-  if (!prev) return prev;
-  if (prev.id !== Number(coachId)) return prev;
+      // ✅ Update state without refresh
+      setCoach((prev) => {
+        if (!prev) return prev;
+        if (prev.id !== Number(coachId)) return prev;
 
-  return {
-    ...prev,
-    approved_or_denied: 1,
+        return {
+          ...prev,
+          approved_or_denied: 1,
+        };
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "string"
+            ? err
+            : "Something went wrong. Please try again.";
+
+      console.error("Error caught:", err);
+
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: message,
+      });
+    } finally {
+      setLoadingId(null); // ✅ stop spinner
+    }
+
   };
-});
-  } catch (err) {
-  const message =
-    err instanceof Error
-      ? err.message
-      : typeof err === "string"
-      ? err
-      : "Something went wrong. Please try again.";
-
-  console.error("Error caught:", err);
-
-  await Swal.fire({
-    icon: "error",
-    title: "Error",
-    text: message,
-  });
-} finally {
-  setLoadingId(null); // ✅ stop spinner
-}
-
-};
 
 
 
@@ -987,9 +987,9 @@ setCoach((prev) => {
 
 
       < section className="p-6 max-w-7xl mx-auto space-y-8 ">
-      
-          <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
-          <div className='flex justify-between'>
+
+        <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
+        <div className='flex justify-between'>
 
           <div className="overflow-x-auto bg-white shadow-md rounded-2xl w-full border border-gray-200">
             {coach.reviews.length === 0 ? (
@@ -1013,8 +1013,8 @@ setCoach((prev) => {
                       // <tr key={p.id} className="hover:bg-gray-50 border-b">
                       <tr
                         key={r.id}
-                        // className={`transition-colors duration-300 ${p.is_deleted === 0 ? 'bg-red-100' : 'bg-white'
-                        //   }`}
+                      // className={`transition-colors duration-300 ${p.is_deleted === 0 ? 'bg-red-100' : 'bg-white'
+                      //   }`}
                       >
                         <td className="px-4 py-3">{r.title}</td>
                         <td className="px-4 py-3">{r.comment}</td>
@@ -1090,106 +1090,106 @@ setCoach((prev) => {
               </>
             )}
 
-          {/* Edit Modal */}
-          {showModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] max-w-md">
-                <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
-                  Edit Feedback
-                </h3>
+            {/* Edit Modal */}
+            {showModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] max-w-md">
+                  <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
+                    Edit Feedback
+                  </h3>
 
-                {/* Review Title */}
-                <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Review Title:
-                  </label>
-                  <input
-                    type="text"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="Enter review title..."
-                    className="w-full border border-gray-300 rounded-md p-2 text-sm"
-                  />
-                </div>
+                  {/* Review Title */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Review Title:
+                    </label>
+                    <input
+                      type="text"
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      placeholder="Enter review title..."
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm"
+                    />
+                  </div>
 
-                {/* Star Rating */}
-                <div className="flex justify-center gap-2 mb-4">
-                  {Array.from({ length: 5 }, (_, index) => index + 1).map((star) => (
-                    <svg
-                      key={star}
-                      onClick={() => setNewRating(star)}
-                      className={`w-8 h-8 cursor-pointer transition-colors duration-200 ${star <= newRating ? "text-yellow-500" : "text-gray-300"
-                        }`}
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
-                    </svg>
-                  ))}
-                </div>
-
-                {/* Comment */}
-                <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Feedback / Comment:
-                  </label>
-                  <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Write your feedback..."
-                    className="w-full border border-gray-300 rounded-md p-2 text-sm resize-none"
-                    rows={4}
-                  />
-                </div>
-
-                {/* Buttons */}
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => setShowModal(false)}
-                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-800 transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={submitEdit}
-                    disabled={isSubmitting}
-                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md flex items-center justify-center gap-2 disabled:opacity-60 transition"
-                  >
-                    {isSubmitting && (
+                  {/* Star Rating */}
+                  <div className="flex justify-center gap-2 mb-4">
+                    {Array.from({ length: 5 }, (_, index) => index + 1).map((star) => (
                       <svg
-                        className="w-4 h-4 animate-spin text-white"
+                        key={star}
+                        onClick={() => setNewRating(star)}
+                        className={`w-8 h-8 cursor-pointer transition-colors duration-200 ${star <= newRating ? "text-yellow-500" : "text-gray-300"
+                          }`}
                         xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
+                        fill="currentColor"
                         viewBox="0 0 24 24"
                       >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8z"
-                        />
+                        <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
                       </svg>
-                    )}
-                    {isSubmitting ? "Saving..." : "Save"}
-                  </button>
+                    ))}
+                  </div>
+
+                  {/* Comment */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Feedback / Comment:
+                    </label>
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Write your feedback..."
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm resize-none"
+                      rows={4}
+                    />
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => setShowModal(false)}
+                      className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-800 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={submitEdit}
+                      disabled={isSubmitting}
+                      className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md flex items-center justify-center gap-2 disabled:opacity-60 transition"
+                    >
+                      {isSubmitting && (
+                        <svg
+                          className="w-4 h-4 animate-spin text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8z"
+                          />
+                        </svg>
+                      )}
+                      {isSubmitting ? "Saving..." : "Save"}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
 
           </div>
         </div>
 
-      
+
       </section>
 
       {/* Payments */}
@@ -1299,70 +1299,70 @@ setCoach((prev) => {
       )}
 
 
-          {/* Edit Modal */}
-          {isDeclineModalOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] max-w-md">
-                <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
-                  Reason for being Denied
-                </h3>
+      {/* Edit Modal */}
+      {isDeclineModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] max-w-md">
+            <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
+              Reason for being Denied
+            </h3>
 
 
-                {/* Comment */}
-                <div className="mb-4">
-                  {/* <label className="block text-sm font-semibold text-gray-700 mb-1">
+            {/* Comment */}
+            <div className="mb-4">
+              {/* <label className="block text-sm font-semibold text-gray-700 mb-1">
                     Feedback / Comment:
                   </label> */}
-                  <textarea
-                    value={declineMessage}
-                    onChange={(e) => setDeclineMessage(e.target.value)}
-                    placeholder="Write your feedback..."
-                    className="w-full border border-gray-300 rounded-md p-2 text-sm resize-none"
-                    rows={4}
-                  />
-                </div>
-
-                {/* Buttons */}
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => setIsDeclineModalOpen(false)}
-                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-800 transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleCoachDecline(Number(coach.id), "decline")}
-                    disabled={submittingDecline}
-                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md flex items-center justify-center gap-2 disabled:opacity-60 transition"
-                  >
-                    {submittingDecline && (
-                      <svg
-                        className="w-4 h-4 animate-spin text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8z"
-                        />
-                      </svg>
-                    )}
-                    {submittingDecline ? "Submitting..." : "Submit"}
-                  </button>
-                </div>
-              </div>
+              <textarea
+                value={declineMessage}
+                onChange={(e) => setDeclineMessage(e.target.value)}
+                placeholder="Write your feedback..."
+                className="w-full border border-gray-300 rounded-md p-2 text-sm resize-none"
+                rows={4}
+              />
             </div>
-          )}
+
+            {/* Buttons */}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setIsDeclineModalOpen(false)}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-800 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleCoachDecline(Number(coach.id), "decline")}
+                disabled={submittingDecline}
+                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md flex items-center justify-center gap-2 disabled:opacity-60 transition"
+              >
+                {submittingDecline && (
+                  <svg
+                    className="w-4 h-4 animate-spin text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    />
+                  </svg>
+                )}
+                {submittingDecline ? "Submitting..." : "Submit"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div >
 
