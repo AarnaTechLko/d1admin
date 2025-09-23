@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -17,6 +17,7 @@ interface Category {
     totalAmount: number;
     categoryName: string;
     id: number;
+    is_deleted: number;
     name: string;
     createdAt: string;
 }
@@ -139,42 +140,10 @@ export default function CategoryPage() {
                 Swal.fire("Error", "Failed to update category", "error");
             }
         } catch (error) {
-    console.error("Something went wrong:", error);
-    Swal.fire("Error", "Something went wrong", "error");
-}
-
-    };
-
-    // Delete category
-    const handleDelete = async (category: Category) => {
-        const result = await Swal.fire({
-            title: "Are you sure?",
-            text: `Delete ${category.categoryName}?`,
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Yes, delete it!",
-        });
-
-        if (result.isConfirmed) {
-            try {
-                const res = await fetch(`/api/expense_categories/${category.id}`, {
-                    method: "DELETE",
-                });
-
-                if (res.ok) {
-                    fetchCategories();
-                    Swal.fire("Deleted!", "Category deleted successfully", "success");
-                } else {
-                    Swal.fire("Error", "Failed to delete category", "error");
-                }
-            }catch (error) {
-    console.error("Something went wrong:", error);
-    Swal.fire("Error", "Something went wrong", "error");
-}
-
+            console.error("Something went wrong:", error);
+            Swal.fire("Error", "Something went wrong", "error");
         }
     };
-
     // Filter categories
     const filteredCategories = categories.filter((cat) => {
         const searchLower = search.toLowerCase();
@@ -241,6 +210,73 @@ export default function CategoryPage() {
         link.click();
         document.body.removeChild(link);
     };
+    const handleHideCategory = async (id: number) => {
+        const result = await Swal.fire({
+            title: "Are you sure?",
+            text: "This category will be marked as hidden.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, hide it!",
+            cancelButtonText: "Cancel",
+        });
+
+        if (result.isConfirmed) {
+            setLoading(true); // ✅ start loading
+            try {
+                const res = await fetch(`/api/expense_categories/hide/${id}`, { method: "PATCH" });
+                if (res.ok) {
+                    Swal.fire("Updated!", "Category hidden successfully.", "success");
+                    setCategories((prev) =>
+                        prev.map((cat) =>
+                            cat.id === id ? { ...cat, is_deleted: 0 } : cat
+                        )
+                    );
+                } else {
+                    Swal.fire("Error!", "Failed to hide category.", "error");
+                }
+            } catch (err) {
+                Swal.fire("Error!", "Something went wrong.", "error");
+                console.error("Hide category error:", err);
+            } finally {
+                setLoading(false); // ✅ stop loading
+            }
+        }
+    };
+
+    const handleRevertCategory = async (id: number) => {
+        const result = await Swal.fire({
+            title: "Are you sure?",
+            text: "This will revert the category status.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, revert it!",
+            cancelButtonText: "Cancel",
+        });
+
+        if (result.isConfirmed) {
+            setLoading(true); // ✅ start loading
+            try {
+                const res = await fetch(`/api/expense_categories/revert/${id}`, { method: "PUT" });
+                if (res.ok) {
+                    Swal.fire("Updated!", "Category reverted successfully.", "success");
+                    setCategories((prev) =>
+                        prev.map((cat) =>
+                            cat.id === id ? { ...cat, is_deleted: 1 } : cat
+                        )
+                    );
+                } else {
+                    Swal.fire("Error!", "Failed to revert category.", "error");
+                }
+            } catch (err) {
+                Swal.fire("Error!", "Something went wrong.", "error");
+                console.error("Revert category error:", err);
+            } finally {
+                setLoading(false); // ✅ stop loading
+            }
+        }
+    };
+
+
     return (
         <div className="container mx-auto py-4">
             {/* Header with Search + Add Button */}
@@ -268,53 +304,53 @@ export default function CategoryPage() {
                         className=" border p-2 rounded-lg text-xs"
                     />
                 </div>
-            <div className="flex gap-2 flex-wrap">
-                <button
-                    onClick={exportToCSV}
-                    className="bg-green-600  text-xs text-white px-4 py-2 rounded-lg hover:bg-green-700 flex-end"
-                >
-                    Export CSV
-                </button>
-                <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-                    <DialogTrigger asChild>
-                        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs">
-                            + Add Category
-                        </button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Add New Category</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-4">
-                            <input
-                                type="text"
-                                placeholder="Enter category name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="border p-2 rounded-lg"
-                                required
-                            />
-                            <DialogFooter className="flex justify-end gap-3">
-                                <button
-                                    type="button"
-                                    className="px-4 py-2 rounded-lg border"
-                                    onClick={() => setIsAddModalOpen(false)}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="bg-blue-600 text-white px-4 py-2 rounded-lg"
-                                >
-                                    {loading ? "Saving..." : "Submit"}
-                                </button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-             </div>   
-              </div>
+                <div className="flex gap-2 flex-wrap">
+                    <button
+                        onClick={exportToCSV}
+                        className="bg-green-600  text-xs text-white px-4 py-2 rounded-lg hover:bg-green-700 flex-end"
+                    >
+                        Export CSV
+                    </button>
+                    <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+                        <DialogTrigger asChild>
+                            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs">
+                                + Add Category
+                            </button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Add New Category</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-4">
+                                <input
+                                    type="text"
+                                    placeholder="Enter category name"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="border p-2 rounded-lg"
+                                    required
+                                />
+                                <DialogFooter className="flex justify-end gap-3">
+                                    <button
+                                        type="button"
+                                        className="px-4 py-2 rounded-lg border"
+                                        onClick={() => setIsAddModalOpen(false)}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+                                    >
+                                        {loading ? "Saving..." : "Submit"}
+                                    </button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+            </div>
 
             {/* Loading Indicator */}
 
@@ -346,8 +382,9 @@ export default function CategoryPage() {
                         </tr>
                     ) : (
                         currentCategories.map((cat) => (
-                            <tr key={cat.id} className="hover:bg-gray-50">
-                                <td className="p-2 text-xs border">{cat.categoryName}</td>
+                            <tr
+                                key={cat.id}
+                                className={`hover:bg-gray-50 transition-colors duration-300 ${cat.is_deleted === 0 ? "bg-red-100" : "bg-white"}`} >                                <td className="p-2 text-xs border">{cat.categoryName}</td>
                                 <td className="p-2 text-xs border">${cat.totalAmount || 0}</td>
                                 <td className="p-2 text-xs border">
                                     {new Date(cat.createdAt).toLocaleDateString()}
@@ -359,12 +396,29 @@ export default function CategoryPage() {
                                     >
                                         <Pencil size={18} />
                                     </button>
-                                    <button
-                                        className="text-red-600 hover:text-red-800"
-                                        onClick={() => handleDelete(cat)}
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+                                    {cat.is_deleted === 0 ? (
+                                        <button
+                                            onClick={() => handleRevertCategory(cat.id)}
+                                            title="Revert Categories"
+
+                                            style={{
+                                                fontSize: '1rem',
+                                                marginRight: '8px',
+                                            }}
+                                        >
+                                            🛑
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleHideCategory(cat.id)}
+                                            title="Hide Categories"
+                                            style={{
+                                                fontSize: '1rem',
+                                            }}
+                                        >
+                                            ♻️
+                                        </button>
+                                    )}
                                 </td>
                             </tr>
                         ))

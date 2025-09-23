@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
-import { Calendar, Pencil, Trash2 } from "lucide-react";
+import { Calendar, Pencil } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -28,6 +28,7 @@ interface Expense {
     amount: number;
     description: string;
     date: string;
+    is_deleted: number;
 }
 
 export default function ExpensePage() {
@@ -130,28 +131,7 @@ export default function ExpensePage() {
         }
     };
 
-    const handleDelete = async (exp: Expense) => {
-        const result = await Swal.fire({
-            title: "Are you sure?",
-            text: `Delete "${exp.categoryName}"?`,
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Yes, delete it!",
-        });
 
-        if (result.isConfirmed) {
-            try {
-                const res = await fetch(`/api/expenses/${exp.id}`, { method: "DELETE" });
-                if (!res.ok) throw new Error("Failed to delete");
-                Swal.fire("Deleted!", "Expense deleted successfully.", "success");
-                fetchExpenses();
-            } catch (error) {
-                console.error("Something went wrong:", error);
-                Swal.fire("Error", "Something went wrong", "error");
-            }
-
-        }
-    };
 
     const handleEdit = (exp: Expense) => {
         setEditingExpense(exp);
@@ -254,6 +234,72 @@ export default function ExpensePage() {
         link.click();
         document.body.removeChild(link);
     };
+  const handleHide = async (id: number) => {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "This expense will be marked as hidden.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, hide it!",
+    cancelButtonText: "Cancel",
+  });
+
+  if (result.isConfirmed) {
+    setLoading(true); // ✅ start loading
+    try {
+      const res = await fetch(`/api/expenses/hide/${id}`, { method: "PATCH" });
+      if (res.ok) {
+        Swal.fire("Updated!", "Expense hidden successfully.", "success");
+        setExpenses((prev) =>
+          prev.map((exp) =>
+            exp.id === id ? { ...exp, is_deleted: 0 } : exp
+          )
+        );
+      } else {
+        Swal.fire("Error!", "Failed to hide expense.", "error");
+      }
+    } catch (err) {
+      Swal.fire("Error!", "Something went wrong.", "error");
+      console.error("Hide error:", err);
+    } finally {
+      setLoading(false); // ✅ stop loading no matter what
+    }
+  }
+};
+
+const handleRevert = async (id: number) => {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "This will revert the expense status.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, revert it!",
+    cancelButtonText: "Cancel",
+  });
+
+  if (result.isConfirmed) {
+    setLoading(true); // ✅ start loading
+    try {
+      const res = await fetch(`/api/expenses/revert/${id}`, { method: "PUT" });
+      if (res.ok) {
+        Swal.fire("Updated!", "Expense reverted successfully.", "success");
+        setExpenses((prev) =>
+          prev.map((exp) =>
+            exp.id === id ? { ...exp, is_deleted: 1 } : exp
+          )
+        );
+      } else {
+        Swal.fire("Error!", "Failed to revert expense.", "error");
+      }
+    } catch (err) {
+      Swal.fire("Error!", "Something went wrong.", "error");
+      console.error("Revert error:", err);
+    } finally {
+      setLoading(false); // ✅ stop loading no matter what
+    }
+  }
+};
+
 
     return (
         <div className="container mx-auto ">
@@ -391,7 +437,10 @@ export default function ExpensePage() {
                         </tr>
                     ) : (
                         currentExpenses.map((exp) => (
-                            <tr key={exp.id} className="hover:bg-gray-50">
+                            <tr
+                                key={exp.id}
+                                className={`hover:bg-gray-50 transition-colors duration-300 ${exp.is_deleted === 0 ? "bg-red-100" : "bg-white"
+                                    }`} >
                                 <td className="p-2 text-xs border">{new Date(exp.createdAt).toLocaleDateString()}</td>
                                 <td className="p-2 text-xs border">{exp.categoryName}</td>
                                 <td className="p-2 text-xs border">{exp.amount}</td>
@@ -403,12 +452,29 @@ export default function ExpensePage() {
                                     >
                                         <Pencil size={18} />
                                     </button>
-                                    <button
-                                        className="text-red-600 hover:text-red-800"
-                                        onClick={() => handleDelete(exp)}
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+                                    {exp.is_deleted === 0 ? (
+                                        <button
+                                            onClick={() => handleRevert(exp.id)}
+                                            title="Revert Expenses"
+
+                                            style={{
+                                                fontSize: '1rem',
+                                                marginRight: '8px',
+                                            }}
+                                        >
+                                            🛑
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleHide(exp.id)}
+                                            title="Hide Expenses"
+                                            style={{
+                                                fontSize: '1rem',
+                                            }}
+                                        >
+                                            ♻️
+                                        </button>
+                                    )}
                                 </td>
                             </tr>
                         ))
