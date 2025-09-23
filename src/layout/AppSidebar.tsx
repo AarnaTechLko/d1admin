@@ -19,12 +19,10 @@ import {
   GridIcon,
   LayoutDashboard,
   // HorizontaLDots,
-  ListIcon,
-  TableIcon,
+ 
   Ticket,
   User,
   UserCheck,
-  UserCircleIcon,
   Users,
 } from "lucide-react";
 // import SidebarWidget from "./SidebarWidget";
@@ -159,14 +157,14 @@ const AppSidebar: React.FC = () => {
 
             ],
           },
-          // {
-          //   name: "Accounting",
-          //   icon: <Calculator />,
-          //   subItems: [
-          //     { name: "Add Category", path: "/category", pro: false },
-          //     { name: "Add Expense", path: "/expense", pro: false },
-          //   ],
-          // },
+          {
+            name: "Accounting",
+            icon: <Calculator />,
+            subItems: [
+              { name: "Add Category", path: "/category", pro: false },
+              { name: "Add Expense", path: "/expense", pro: false },
+            ],
+          },
           {
             icon: <GridIcon />,
             name: "Block List",
