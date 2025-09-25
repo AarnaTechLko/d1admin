@@ -36,11 +36,7 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(url.searchParams.get("limit") ?? "10", 10);
     const offset = (page - 1) * limit;
     const status = url.searchParams.get("status")?.trim() || "";
-
-
-
     const conditions = [];
-
     // 🔍 Search Filter
     if (search) {
       conditions.push(

@@ -415,7 +415,7 @@ const TicketsPage = () => {
                         onClick={() => handleAssignToClick(ticket)}
                       >
 
-                      Assign To
+                        Assign To
                       </button>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-yellow-500">
@@ -456,6 +456,7 @@ const TicketsPage = () => {
 
           <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
             <DialogContent className="p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
+
               <DialogTitle>Reply to Ticket</DialogTitle>
 
               <input type="hidden" value={userId ?? ""} name="userId" />
@@ -608,7 +609,8 @@ const TicketsPage = () => {
 
       {/* Modal for Assigning Subadmin */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="p-6">
+        <DialogContent className="p-6 max-h-[80vh] overflow-y-auto">
+
           <DialogTitle>Assign Subadmin</DialogTitle>
           <p className="text-gray-500">Select a sub-admin to assign:</p>
 

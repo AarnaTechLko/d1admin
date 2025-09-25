@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       user_id,       // ✅ logged-in user ID from frontend
     } = body;
 
-    if (!name || !email || !subject || !message || !recipientType || !user_id || !assign_to) {
+    if (!name || !email || !subject || !message || !recipientType || !user_id ) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }

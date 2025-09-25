@@ -904,3 +904,37 @@ export const expense_categories = pgTable("expense_categories", {
   is_deleted: integer("is_deleted").default(1).notNull(),
 
 });
+
+export const ticket_notes = pgTable("ticket_notes", {
+  id: serial("id").primaryKey(),
+
+  // Reference to the ticket
+  ticketId: integer("ticket_id")
+    .notNull()
+    .references(() => ticket.id, { onDelete: "cascade" }),
+  // Notes content
+  notes: text("notes").notNull(),
+
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const ticket_assign = pgTable("ticket_assign", {
+  id: serial("id").primaryKey(),
+
+  // Ticket reference (you can keep or remove reference as needed)
+  ticketId: integer("ticket_id").notNull(),
+
+  // From whom (assigner)
+  fromId: integer("from_id").notNull(),
+
+  // To whom (assignee)
+  toId: integer("to_id").notNull(),
+
+  // Escalate flag
+  escalate: boolean("escalate").default(false).notNull(),
+
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

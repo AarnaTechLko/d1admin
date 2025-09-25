@@ -88,7 +88,6 @@ useEffect(() => {
       recipientType: e.target.value,
       role: e.target.value, // ✅ store role = type
       ticket_from: "", // reset when changing type
-      assign_to: "",
     }));
     setSearchTerm("");
   };
@@ -260,7 +259,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                     onClick={() => {
                       setFormData((prev) => ({
                         ...prev,
-                        assign_to: r.id,
                         name: r.name, // ✅ save recipient name
                         email: r.email, // ✅ save recipient email
                         ticket_from: sessionStorage.getItem("user_id"),
