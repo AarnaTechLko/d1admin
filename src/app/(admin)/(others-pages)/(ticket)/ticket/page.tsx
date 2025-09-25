@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogTitle, DialogContent } from "@/components/ui/dialog";
-import { Download, MessageSquare, Trash } from "lucide-react";
+import { Dialog, DialogTitle, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { Download, MessageSquare, StickyNote, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
 import { Loader2 } from "lucide-react";
@@ -13,6 +13,13 @@ import Swal from "sweetalert2";
 import { UploadCloud } from "lucide-react";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 
+
+type TicketNote = {
+  id: number;
+  ticketId: number;
+  notes: string;
+  createdAt: string;
+};
 
 interface Ticket {
   id: number;
@@ -65,10 +72,15 @@ const TicketsPage = () => {
   const [replyMessage, setReplyMessage] = useState<string>("");
   const [replyStatus, setReplyStatus] = useState<string>("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
-
   const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
   const [ticketReplies, setTicketReplies] = useState<TicketReply[]>([]);
+  const [isEscalate, setIsEscalate] = useState(false);
+  const [adminNotes, setAdminNotes] = useState("");
+  const [selectedSubAdmin, setSelectedSubAdmin] = useState("");
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [notes, setNotes] = useState<TicketNote[]>([]);
+  // Fetch all sub-admins when modal opens
 
   const handleReplyClick = async (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -125,6 +137,7 @@ const TicketsPage = () => {
     setLoading(true);
 
     try {
+      // 1️⃣ Prepare FormData for reply API
       const formData = new FormData();
       formData.append("ticketId", String(selectedTicket.id));
       formData.append("repliedBy", userId ?? "");
@@ -135,6 +148,7 @@ const TicketsPage = () => {
         formData.append("attachment", attachmentFile);
       }
 
+      // 2️⃣ Call reply API
       const response = await fetch("/api/ticket/reply", {
         method: "POST",
         body: formData,
@@ -142,31 +156,101 @@ const TicketsPage = () => {
 
       const data = await response.json();
 
-      if (response.ok) {
-        Swal.fire("Success", "Reply sent successfully!", "success");
-
-        setTickets((prevTickets) =>
-          prevTickets.map((t) =>
-            t.id === selectedTicket.id
-              ? { ...t, status: replyStatus, message: replyMessage.trim() }
-              : t
-          )
-        );
-
-        setReplyMessage("");
-        setAttachmentFile(null);
-        setIsReplyModalOpen(false);
-      } else {
+      if (!response.ok) {
         Swal.fire("Error", data.error || "Failed to send reply.", "error");
+        return;
       }
+
+      // 3️⃣ Update ticket in frontend state
+      setTickets((prevTickets) =>
+        prevTickets.map((t) =>
+          t.id === selectedTicket.id
+            ? { ...t, status: replyStatus, message: replyMessage.trim() }
+            : t
+        )
+      );
+
+      // 4️⃣ Save note in ticket_notes table
+      if (adminNotes?.trim()) {
+        try {
+          const noteResponse = await fetch("/api/ticket-notes", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              ticketId: selectedTicket.id,
+              notes: adminNotes.trim(),
+            }),
+          });
+
+          const noteData = await noteResponse.json();
+          if (!noteResponse.ok) {
+            console.error("Error saving ticket note:", noteData.error);
+          } else {
+            setAdminNotes(""); // clear note box
+          }
+        } catch (noteError) {
+          console.error("Failed to save ticket note:", noteError);
+        }
+      }
+
+      // 5️⃣ Save escalation/assignment if escalate checkbox is checked
+      if (isEscalate && selectedSubAdmin) {
+        try {
+          const assignResponse = await fetch("/api/ticket-assign", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ticketId: selectedTicket.id,
+              fromId: userId,            // current logged-in user
+              toId: selectedSubAdmin,    // selected sub-admin
+              escalate: true,
+            }),
+          });
+
+          const assignData = await assignResponse.json();
+          if (!assignResponse.ok) {
+            console.error("Error saving ticket assignment:", assignData.error);
+            Swal.fire(
+              "Error",
+              assignData.error || "Failed to assign ticket.",
+              "error"
+            );
+          } else {
+            console.log("Ticket assignment saved:", assignData.data);
+          }
+        } catch (assignError) {
+          console.error("Failed to save ticket assignment:", assignError);
+          Swal.fire("Error", "Failed to assign ticket.", "error");
+        }
+      }
+
+
+
+      // 6️⃣ Success feedback and reset modal
+      Swal.fire("Success", "Reply, note, and assignment saved successfully!", "success");
+      setReplyMessage("");
+      setAttachmentFile(null);
+      setIsEscalate(false);
+      setAdminNotes("");
+      setSelectedSubAdmin("");
+      setIsReplyModalOpen(false);
+
     } catch (error) {
       console.error("Error submitting ticket reply:", error);
-      Swal.fire("Error", "An unexpected error occurred while sending reply.", "error");
+      Swal.fire(
+        "Error",
+        "An unexpected error occurred while sending reply.",
+        "error"
+      );
       setTicketReplies([]);
     } finally {
       setLoading(false);
     }
   };
+
+
   useEffect(() => {
     const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
     if (!storedUserId) {
@@ -185,7 +269,7 @@ const TicketsPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/tickets?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}&status=${statusQuery}`
+          `/api/ticket?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}&status=${statusQuery}`
         );
 
         if (!response.ok) throw new Error("Failed to fetch tickets");
@@ -241,10 +325,6 @@ const TicketsPage = () => {
     setIsModalOpen(true);
   };
 
-
-
-
-
   const handleAssignSubAdmin = async (subAdmin: Admin) => {
     if (!selectedTicket) return;
     setIsSubmitting(true);
@@ -291,57 +371,73 @@ const TicketsPage = () => {
       setIsSubmitting(false);
     }
   };
-const handleModalSubmit = async () => {
-  if (!selectedTicket) {
-    setError("No ticket selected");
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No ticket selected.",
-    });
-    return;
-  }
-
-  setIsSubmitting(true);
+ const handleViewNotesClick = async (ticket: Ticket) => {
+  setIsNotesOpen(true);
+  setLoading(true);
 
   try {
-    // Find the selected sub-admin object
-    const assignedSubAdmin = subAdmins.find(
-      (admin) => admin.id === selectedTicket.assign_to
-    );
-
-    if (assignedSubAdmin) {
-      await handleAssignSubAdmin(assignedSubAdmin); // ✅ Call API function
-
-      Swal.fire({
-        icon: "success",
-        title: "Assigned!",
-        text: `${assignedSubAdmin.username} has been assigned successfully.`,
-        timer: 2000,
-        showConfirmButton: false,
-      });
-
-      setIsModalOpen(false); // close modal on success
-    } else {
-      setError("Please select a sub-admin before submitting.");
-      Swal.fire({
-        icon: "warning",
-        title: "No Sub-Admin Selected",
-        text: "Please select a sub-admin before submitting.",
-      });
-    }
-  }catch (error) {
-  console.error("Assignment failed:", error);
-  Swal.fire({
-    icon: "error",
-    title: "Assignment Failed",
-    text: "Something went wrong while assigning sub-admin.",
-  });
-} finally {
-  setIsSubmitting(false);
-}
-
+    const res = await fetch(`/api/ticket-notes/${ticket.id}`);
+    const data = await res.json();
+    setNotes(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error("Failed to fetch notes:", err);
+    setNotes([]);
+  } finally {
+    setLoading(false);
+  }
 };
+
+  const handleModalSubmit = async () => {
+    if (!selectedTicket) {
+      setError("No ticket selected");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No ticket selected.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Find the selected sub-admin object
+      const assignedSubAdmin = subAdmins.find(
+        (admin) => admin.id === selectedTicket.assign_to
+      );
+
+      if (assignedSubAdmin) {
+        await handleAssignSubAdmin(assignedSubAdmin); // ✅ Call API function
+
+        Swal.fire({
+          icon: "success",
+          title: "Assigned!",
+          text: `${assignedSubAdmin.username} has been assigned successfully.`,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        setIsModalOpen(false); // close modal on success
+      } else {
+        setError("Please select a sub-admin before submitting.");
+        Swal.fire({
+          icon: "warning",
+          title: "No Sub-Admin Selected",
+          text: "Please select a sub-admin before submitting.",
+        });
+      }
+    } catch (error) {
+      console.error("Assignment failed:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Assignment Failed",
+        text: "Something went wrong while assigning sub-admin.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+
+  };
 
   const handleDeleteReply = async (replyId: number) => {
     setIsReplyModalOpen(false);
@@ -459,7 +555,15 @@ const handleModalSubmit = async () => {
                         <button className="text-green-500" onClick={() => handleReplyClick(ticket)}>
                           <MessageSquare size={18} />
                         </button>
+                        <button
+                          className="text-blue-500 hover:text-blue-600"
+                          onClick={() => handleViewNotesClick(ticket)}
+                          title="View Notes"
+                        >
+                          <StickyNote size={18} />
+                        </button>
                       </div>
+
                     </TableCell>
                   </TableRow>
                 ))
@@ -474,7 +578,34 @@ const handleModalSubmit = async () => {
           </Table>
 
 
+          <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Ticket Notes</DialogTitle>
+              </DialogHeader>
 
+              {loading ? (
+                <p className="text-gray-500">Loading notes...</p>
+              ) : !Array.isArray(notes) || notes.length === 0 ? (
+                <p className="text-gray-500">No notes found for this ticket.</p>
+              ) : (
+                <ul className="space-y-3 max-h-64 overflow-y-auto">
+                  {notes.map((note) => (
+                    <li
+                      key={note.id}
+                      className="p-3 rounded-lg border bg-gray-50 dark:bg-gray-800 dark:text-gray-200"
+                    >
+                      <p>{note.notes}</p>
+                      <span className="text-xs text-gray-400">
+                        {new Date(note.createdAt).toLocaleString()}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+            </DialogContent>
+          </Dialog>
 
           <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
             <DialogContent className="p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
@@ -584,7 +715,56 @@ const handleModalSubmit = async () => {
                   )}
                 </div>
               </div>
+              <div className="mt-4 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="escalate"
+                  checked={isEscalate}
+                  onChange={(e) => setIsEscalate(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                />
+                <label htmlFor="escalate" className="text-sm font-medium text-gray-700">
+                  Escalate
+                </label>
+              </div>
 
+              {/* Show Notes + SubAdmin dropdown only if Escalate checked */}
+              {isEscalate && (
+                <div className="mt-4 space-y-4">
+                  {/* Admin Notes */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Admin Notes
+                    </label>
+                    <textarea
+                      className="w-full p-2 border rounded-md resize-none"
+                      rows={2}
+                      placeholder="Enter notes for escalation..."
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                    />
+                  </div>
+
+                  {/* SubAdmin Dropdown */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Escalate To
+                    </label>
+                    <select
+                      className="w-full p-2 border rounded"
+                      value={selectedSubAdmin}
+                      onChange={(e) => setSelectedSubAdmin(e.target.value)}
+                    >
+                      <option value="">-- Select SubAdmin --</option>
+                      {subAdmins.map((sub) => (
+                        <option key={sub.id} value={sub.id}>
+                          {sub.username}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
               {/* Status Dropdown */}
               <label className="block text-sm font-medium text-gray-700 mt-4">Status</label>
               <select
@@ -630,7 +810,7 @@ const handleModalSubmit = async () => {
 
       {/* Modal for Assigning Subadmin */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-  <DialogContent className="p-6 max-h-[80vh] overflow-y-auto">
+        <DialogContent className="p-6 max-h-[80vh] overflow-y-auto">
           <DialogTitle>Assign Subadmin</DialogTitle>
           <p className="text-gray-500">Select a sub-admin to assign:</p>
 

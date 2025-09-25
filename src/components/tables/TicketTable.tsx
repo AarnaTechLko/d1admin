@@ -55,7 +55,7 @@ interface Props {
 }
 
 const TicketTable: React.FC<Props> = ({
-  data,
+  
   searchQuery = "",
   page = 1,
   currentPage,
@@ -103,30 +103,30 @@ const TicketTable: React.FC<Props> = ({
     }
   };
 
-  useEffect(() => {
+  // useEffect(() => {
     
-  const fetchTickets = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/tickets?search=${searchQuery}&page=${page}&limit=10`);
-      if (!response.ok) throw new Error("Failed to fetch tickets");
-      const data = await response.json();
-      setTickets(data.ticket ?? []);
-    } catch (err) {
-      setError((err as Error).message);
-      setTickets([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const fetchTickets = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const response = await fetch(`/api/tickets?search=${searchQuery}&page=${page}&limit=10`);
+  //     if (!response.ok) throw new Error("Failed to fetch tickets");
+  //     const data = await response.json();
+  //     setTickets(data.ticket ?? []);
+  //   } catch (err) {
+  //     setError((err as Error).message);
+  //     setTickets([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-    if (data === undefined) {
-      fetchTickets();
-    } else {
-      setTickets(data);
-      setLoading(false);
-    }
-  }, [searchQuery, page, data, currentPage,]);
+  //   if (data === undefined) {
+  //     fetchTickets();
+  //   } else {
+  //     setTickets(data);
+  //     setLoading(false);
+  //   }
+  // }, [searchQuery, page, data, currentPage,]);
 
   const handleReplyClick = async (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -165,7 +165,6 @@ const TicketTable: React.FC<Props> = ({
       setLoading(false);
     }
   };
-
   const handleAssignToClick = (ticket: Ticket) => {
     if (ticket.assign_to) {
       Swal.fire("Already Assigned", "This ticket is already assigned.", "info");
