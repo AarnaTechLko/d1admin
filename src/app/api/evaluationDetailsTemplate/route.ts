@@ -5,7 +5,6 @@ import { eq, and, sql } from 'drizzle-orm';
 // import serverSessionOrBust from '@lib/serverSession';
 
 export async function GET(req: NextRequest) {
-
     try {
 
         const url = req.nextUrl;

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 // import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import d1 from "@/public/images/img/d1.png"; 
+import d1 from "@/public/images/img/d1.png";
 
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
 
@@ -25,16 +25,16 @@ export default function UserDropdown() {
         window.history.pushState(null, "", window.location.href);
       };
     }
-       const storedEmail = sessionStorage.getItem("email");
-       const storedUser = sessionStorage.getItem("username");
-       const storedImage = sessionStorage.getItem("image");
-       const storedRole = sessionStorage.getItem("role");
+    const storedEmail = sessionStorage.getItem("email");
+    const storedUser = sessionStorage.getItem("username");
+    const storedImage = sessionStorage.getItem("image");
+    const storedRole = sessionStorage.getItem("role");
     if (storedEmail) setEmail(storedEmail);
     if (storedUser) setUser(storedUser);
     if (storedImage) setImage(storedImage);
     if (storedRole) setRole(storedRole);
 
-    console.log("email",storedEmail);
+    console.log("email", storedEmail);
 
   }, []);
   const handleLogout = async () => {
@@ -66,7 +66,7 @@ export default function UserDropdown() {
       >
         <span className="mr-3 overflow-hidden rounded-full ">
 
-{/* 
+          {/* 
         !session.user.image ||
         session.user.image.endsWith('/null')
           ? defaultImg.src
@@ -76,9 +76,8 @@ export default function UserDropdown() {
         </span>
         <span className="block mr-1 font-medium text-theme-sm">{user}</span>
         <svg
-          className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+            }`}
           width="18"
           height="20"
           viewBox="0 0 18 20"
@@ -101,20 +100,20 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-          {user|| "D1 Notes"}
+            {user || "D1 Notes"}
           </span>
 
           <span className="my-0.5 block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-          {role|| "Admin"}
+            {role || "Admin"}
           </span>
 
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-        {email || "randomuser@pimjo.com"}
+            {email || "randomuser@pimjo.com"}
           </span>
         </div>
 
         <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
-{/* 
+          {/* 
           <li>
             <a
               href="/editprofile"
@@ -132,7 +131,7 @@ export default function UserDropdown() {
             >
               Change Password
             </a>
-          </li>                
+          </li>
         </ul>
 
         <button

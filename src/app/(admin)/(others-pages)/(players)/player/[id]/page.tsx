@@ -5,15 +5,14 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter } from "lucide-react";
-
-
-// import { FaTwitter, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import Loading from '@/components/Loading';
 import { useRoleGuard } from '@/hooks/useRoleGaurd';
+import TopEvaluationBadges from '@/components/TopEvaluationBadges';
 // import { useRouter } from 'next/navigation';
 interface Player {
+    overallAverage: number;
     latestLoginIp: string;
     id: number;
     first_name: string;
@@ -145,6 +144,37 @@ export default function PlayerDetailPage() {
     // const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
     const MySwal = withReactContent(Swal);
     //   const [payments, setPayments] = useState<Payment[]>([]);
+    const [overallAverage, setOverallAverage] = useState<number | null>(null);
+
+    useEffect(() => {
+        const playerId = data?.player?.id;
+        console.log("playerId:", playerId);
+
+        // Agar playerId undefined/null hai to return
+        if (!playerId) {
+            setOverallAverage(null); // reset previous value
+            return;
+        }
+
+        const fetchAverage = async () => {
+            try {
+                const res = await fetch(`/api/evaluations/overallaverage/${playerId}`);
+                const json = await res.json();
+
+                if (json.overallAverage !== undefined && json.overallAverage !== null) {
+                    setOverallAverage(Number(json.overallAverage));
+                } else {
+                    setOverallAverage(null);
+                }
+            } catch (err) {
+                console.error("Error fetching overall average:", err);
+                setOverallAverage(null);
+            }
+        };
+
+        fetchAverage();
+    }, [data?.player]);
+
 
     const filteredEvaluations = data?.evaluations || [];
     const paginatedEvaluations = filteredEvaluations.slice(
@@ -347,7 +377,7 @@ export default function PlayerDetailPage() {
 
     const { player } = data;
 
-         const view_finance = Number(sessionStorage.getItem("view_finance") || 0);
+    const view_finance = Number(sessionStorage.getItem("view_finance") || 0);
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-8">
@@ -416,21 +446,26 @@ export default function PlayerDetailPage() {
                         )}
                     </div>
                 </div>
+                <div className="w-full flex justify-end mt-6">
+                    <div className="flex flex-col items-center bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl shadow-lg p-6 min-w-[150px]">
+                        <p className="text-sm font-medium tracking-wide text-center">Overall Average</p>
+                        <p className="text-2xl font-extrabold text-center">
+                            {overallAverage != null ? overallAverage : "N/A"}
+                        </p>
+                    </div>
+                </div>
             </div>
 
 
             {/* Player Info Card */}
             <div className="p-6 max-w-7xl mx-auto space-y-8">
-
-
                 <div className="bg-white shadow-md rounded-2xl p-6 border border-gray-200
                         grid 
                         grid-cols-1       
                         sm:grid-cols-2      
                         md:grid-cols-3     
                         gap-4
-                        text-sm
-">                    {/* <div>
+                        text-sm">                    {/* <div>
           <strong className="text-gray-500">Name:</strong> {player.first_name} {player.last_name}
         </div> */}
                     <div>
@@ -640,10 +675,14 @@ export default function PlayerDetailPage() {
                         </button>
                     </div>
                 </div>
+                  <div className="p-6">
+      <h2 className="text-xl font-semibold mb-4">🏅 Top 10 Evaluation Badges</h2>
+      <TopEvaluationBadges />
+    </div>
             </section>
             {/* Payments */}
 
-{view_finance === 1 && (
+            {view_finance === 1 && (
 
                 <section className="p-6 max-w-7xl mx-auto space-y-8">
                     <h2 className="text-2xl font-semibold mb-4">Payments</h2>

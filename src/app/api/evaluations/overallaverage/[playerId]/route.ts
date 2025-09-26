@@ -1,19 +1,22 @@
-// src/app/api/evaluations/overallaverage/[playerId]/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { evaluationResults } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ playerId: string }> }) {
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ playerId: string }> }
+) {
   try {
     const playerIdStr = (await params).playerId;
+
     if (!playerIdStr) {
-      return NextResponse.json({ error: "Missing playerId" }, { status: 400 });
+      return NextResponse.json({ overallAverage: null }, { status: 200 });
     }
 
     const playerId = Number(playerIdStr);
     if (isNaN(playerId)) {
-      return NextResponse.json({ error: "Invalid playerId" }, { status: 400 });
+      return NextResponse.json({ overallAverage: null }, { status: 200 });
     }
 
     // Fetch eval_average values for this player
@@ -31,6 +34,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ pla
     return NextResponse.json({ overallAverage });
   } catch (error) {
     console.error("Error fetching evaluation averages:", error);
-    return NextResponse.json({ error: "Failed to fetch overall average" }, { status: 500 });
+    return NextResponse.json({ overallAverage: null }, { status: 500 });
   }
 }
