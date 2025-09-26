@@ -153,6 +153,7 @@ export const coaches = pgTable(
     suspend_days: integer("suspend_days"),
     suspend_start_date: date("suspend_start_date"),
     suspend_end_date: date("suspend_end_date"),
+    verified: integer("verified").default(0), 
 
   },
   (coaches) => {

@@ -1,5 +1,5 @@
 'use client';
-import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter } from "lucide-react";
+import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter, Crown } from "lucide-react";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
 
 import { FaFileAlt } from 'react-icons/fa';
@@ -81,6 +81,7 @@ interface Review {
 
 interface Coach {
   approved_or_denied: number;
+  verified: number;
   latestLoginIp: string;
   id: number;
   first_name: string;
@@ -177,12 +178,68 @@ export default function CoachDetailsPage() {
 
   const totalReviewPages = Math.ceil(filteredReviews.length / reviewsPerPage)
 
-  // const totalPaymentPages = Math.ceil((coach?.payments?.length??0) / paymentsPerPage);
-  // const [evaluations, setEvaluations] = useState([]);
-  // const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
-  // const pageSize = 10;
+
   const MySwal = withReactContent(Swal);
-  // const [hiddenEvaluations, setHiddenEvaluations] = useState<Set<number>>(new Set());
+ const isVerified = coach?.verified === 1;
+
+  // Handle verify button click
+
+const handleVerify = async () => {
+  if (!coach) return;
+
+  // Confirmation popup
+  const confirmed = await Swal.fire({
+    title: "Verify Coach?",
+    text: "Are you sure you want to verify this coach?",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonColor: "#2563eb", // blue-600
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes, verify",
+  });
+
+  if (!confirmed.isConfirmed) return;
+
+  setLoading(true);
+
+  try {
+    const res = await fetch(`/api/coach/verify/${coach.id}`, {
+      method: "PATCH",
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      setCoach((prev) => (prev ? { ...prev, verified: 1 } : prev));
+
+      // Success popup
+      Swal.fire({
+        icon: "success",
+        title: "Verified!",
+        text: "Coach has been verified successfully.",
+        confirmButtonColor: "#2563eb",
+      });
+    } else {
+      console.error(data.error);
+      Swal.fire({
+        icon: "error",
+        title: "Failed!",
+        text: "Failed to verify coach.",
+        confirmButtonColor: "#2563eb",
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    Swal.fire({
+      icon: "error",
+      title: "Error!",
+      text: "Something went wrong while verifying coach.",
+      confirmButtonColor: "#2563eb",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
 
   const handleHide = async (id: number) => {
@@ -431,55 +488,6 @@ export default function CoachDetailsPage() {
       }
     }
   };
-
-  // const handleDownload = async (url: string) => {
-  //   if (!url || typeof url !== 'string') {
-  //     Swal.fire({
-  //       icon: 'warning',
-  //       title: 'No File Available',
-  //       text: 'No file has been uploaded for download.',
-  //     });
-  //     return;
-  //   }
-
-  //   try {
-  //     const response = await fetch(url);
-
-  //     if (!response.ok) {
-  //       throw new Error(`Failed to fetch file: ${response.statusText}`);
-  //     }
-
-  //     const blob = await response.blob();
-  //     console.log("value:", blob)
-  //     const blobUrl = window.URL.createObjectURL(blob);
-  //     // Extract file extension from URL (strip query params if present)
-  //     const urlWithoutQuery = url.split('?')[0];
-  //     const extensionMatch = urlWithoutQuery.split('.').pop();
-  //     const extension = extensionMatch && extensionMatch.length < 10 ? extensionMatch : 'file';
-  //     const filename = `download.${extension}`;
-
-  //     // Create and trigger download link
-  //     const link = document.createElement("a");
-  //     link.href = blobUrl;
-  //     link.download = filename;
-  //     document.body.appendChild(link);
-  //     link.click();
-  //     document.body.removeChild(link);
-
-  //     // Cleanup blob URL
-  //     setTimeout(() => {
-  //       window.URL.revokeObjectURL(blobUrl);
-  //     }, 100);
-  //   } catch (error) {
-  //     console.error("Download failed:", error);
-  //     Swal.fire({
-  //       icon: 'error',
-  //       title: 'Download Failed',
-  //       text: 'Failed to download the file. Please try again.',
-  //     });
-  //   }
-  // };
-
   useEffect(() => {
     async function fetchCoachData() {
       try {
@@ -649,17 +657,28 @@ export default function CoachDetailsPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 p-4 bg-white rounded-2xl shadow">
 
           {/* Image */}
-          <div className="flex-shrink-0">
-            {coach.image && (
-              <Image
-                src={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${coach.image}`}
-                alt={`${coach.firstName} ${coach.lastName}`}
-                width={96}
-                height={96}
-                className="w-30 h-30 object-cover rounded-full border-4 border-gray-200 shadow mx-auto md:mx-0"
-              />
-            )}
-          </div>
+         <div className="flex-shrink-0 relative w-24 h-24 mx-auto md:mx-0">
+  {coach.image && (
+    <Image
+      src={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${coach.image}`}
+      alt={`${coach.firstName} ${coach.lastName}`}
+      width={96}
+      height={96}
+      className="w-24 h-24 object-cover rounded-full border-4 border-gray-200 shadow"
+    />
+  )}
+
+  {/* Crown icon */}
+{isVerified && (
+  <Crown
+    className="absolute -top-12 -right-12 text-yellow-400 w-50 h-12 md:w-50 md:h-12"
+  />
+)}
+
+
+</div>
+
+
 
           {/* Name + Socials */}
           <div className="flex flex-col items-center md:items-start gap-2 md:flex-1">
@@ -752,7 +771,15 @@ export default function CoachDetailsPage() {
               )}
             </div>
 
-
+  {!isVerified && (
+        <button
+          onClick={handleVerify}
+          disabled={loading}
+          className="mt-2 w-full py-1 px-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded disabled:opacity-50"
+        >
+          {loading ? "Verifying..." : "Verify"}
+        </button>
+      )}
 
             {coach.cv ? (
               <a

@@ -52,6 +52,7 @@ export async function GET(
         xlink: coaches.xlink,
         youtube: coaches.youtube,
         license: coaches.license,
+        verified: coaches.verified,
         cv: coaches.cv,
         license_type: coaches.license_type,
         countryName: countries.name,
@@ -88,6 +89,7 @@ export async function GET(
         coaches.xlink,
         coaches.youtube,
         coaches.license,
+        coaches.verified,
         coaches.cv,
         coaches.license_type,
         countries.name
