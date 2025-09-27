@@ -5,10 +5,14 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter } from "lucide-react";
+
+
+// import { FaTwitter, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import Loading from '@/components/Loading';
 import { useRoleGuard } from '@/hooks/useRoleGaurd';
+import { evaluationResults } from 'schema';
 import TopEvaluationBadges from '@/components/TopEvaluationBadges';
 // import { useRouter } from 'next/navigation';
 interface Player {
@@ -677,7 +681,7 @@ export default function PlayerDetailPage() {
                 </div>
                   <div className="p-6">
       <h2 className="text-xl font-semibold mb-4">🏅 Top 10 Evaluation Badges</h2>
-      <TopEvaluationBadges />
+{data?.player?.id && <TopEvaluationBadges playerId={data.player.id} />}
     </div>
             </section>
             {/* Payments */}
