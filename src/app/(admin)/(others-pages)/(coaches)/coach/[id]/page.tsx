@@ -811,6 +811,11 @@ const handleUnverify = async () => {
                     {loadingDeclineId === Number(coach.id) && <FaSpinner className="animate-spin" />}
                     <span>Deny</span>
                   </button>
+                </>
+              )}
+              {(coach.approved_or_denied === 0 || coach.approved_or_denied === 2) && (
+
+                <>
                   {/* // ✅ Declined or Pending → show Approve only */}
                   <button
                     className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition flex items-center space-x-2"

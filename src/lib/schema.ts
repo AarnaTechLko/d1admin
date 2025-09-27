@@ -702,7 +702,7 @@ export const ticket_messages = pgTable("ticket_messages", {
   message: text("message").notNull(),
   status: varchar("status").default("Pending"),
   createdAt: timestamp("created_at").defaultNow(),
-  filename: text('filename'),
+  filename: text('file_name'),
 
 });
 
