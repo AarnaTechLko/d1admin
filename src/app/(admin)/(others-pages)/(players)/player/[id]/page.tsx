@@ -6,16 +6,17 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter } from "lucide-react";
 
+import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
 
 // import { FaTwitter, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import Loading from '@/components/Loading';
 import { useRoleGuard } from '@/hooks/useRoleGaurd';
-import { evaluationResults } from 'schema';
 import TopEvaluationBadges from '@/components/TopEvaluationBadges';
 // import { useRouter } from 'next/navigation';
 interface Player {
+    sportName: string;
     overallAverage: number;
     latestLoginIp: string;
     id: number;
@@ -385,10 +386,10 @@ export default function PlayerDetailPage() {
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-8">
-            <div className="flex flex-col sm:flex-row items-start gap-6 p-6 bg-white rounded-2xl shadow mb-6">
-                {player.image && typeof player.image === 'string' && player.image.startsWith('http') && (
+            <div className="flex flex-col sm:flex-row items-start gap-6 p-4 bg-white rounded-2xl shadow mb-6">
+                {player.image && (
                     <Image
-                        src={player.image}
+                        src={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${player.image}`}
                         alt={`${player.first_name} ${player.last_name}`}
                         width={96}
                         height={96}
@@ -396,7 +397,9 @@ export default function PlayerDetailPage() {
                     />
                 )}
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800">{player.first_name} {player.last_name}</h1>
+                     <h1 className="text-3xl font-bold text-gray-800 whitespace-nowrap">
+    {player.first_name} {player.last_name}
+  </h1>
                     <div className="flex gap-3 mt-2 text-xl text-gray-500">
                         {player.facebook && (
                             <a
@@ -450,9 +453,10 @@ export default function PlayerDetailPage() {
                         )}
                     </div>
                 </div>
-                <div className="w-full flex justify-end mt-6">
-                    <div className="flex flex-col items-center bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl shadow-lg p-6 min-w-[150px]">
-                        <p className="text-sm font-medium tracking-wide text-center">Overall Average</p>
+                <div className="w-full flex justify-end ">
+                    <div className="flex flex-col items-center bg-gradient-to-r from-blue-500 to-indigo-600 
+                    text-white rounded-xl shadow-lg p-4">
+                        <p className="text-sm font-medium tracking-wide text-center">Overall Avg</p>
                         <p className="text-2xl font-extrabold text-center">
                             {overallAverage != null ? overallAverage : "N/A"}
                         </p>
@@ -482,7 +486,7 @@ export default function PlayerDetailPage() {
                         <strong className="text-gray-700">Grade Level:</strong> {player.grade_level || 'N/A'}
                     </div>
                     <div>
-                        <strong className="text-gray-700">Sport(s):</strong> {player.sport || 'N/A'}
+                        <strong className="text-gray-700">Sport(s):</strong> {player.sportName || 'N/A'}
                     </div>
                     <div>
                         <strong className="text-gray-700">Height:</strong> {player.height || 'N/A'}
@@ -679,10 +683,10 @@ export default function PlayerDetailPage() {
                         </button>
                     </div>
                 </div>
-                  <div className="p-6">
-      <h2 className="text-xl font-semibold mb-4">🏅 Top 10 Evaluation Badges</h2>
-{data?.player?.id && <TopEvaluationBadges playerId={data.player.id} />}
-    </div>
+                <div className="p-4">
+                    <h2 className="text-xl font-semibold mb-4">🏅 Top 10 Evaluation Badges</h2>
+                    {data?.player?.id && <TopEvaluationBadges playerId={data.player.id} />}
+                </div>
             </section>
             {/* Payments */}
 

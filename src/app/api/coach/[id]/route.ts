@@ -13,6 +13,7 @@ import {
   countries,
   ip_logs,
   review,
+  sports,
 } from '@/lib/schema';
 import { eq, and, sql } from 'drizzle-orm';
 
@@ -25,7 +26,7 @@ export async function GET(
   if (isNaN(coachId)) {
     return NextResponse.json({ message: 'Invalid coach ID' }, { status: 400 });
   }
-  console.log("coach data:",coachId);
+  
   try {
     // Fetch coach basic info with aggregates
     const coachData = await db
@@ -39,6 +40,7 @@ export async function GET(
         phoneNumber: coaches.phoneNumber,
         slug: coaches.slug,
         sport: coaches.sport,
+        sportName: sports.name,
         approved_or_denied: coaches.approved_or_denied,
         qualifications: coaches.qualifications,
         status: coaches.status,
@@ -65,6 +67,7 @@ export async function GET(
     .leftJoin(countries, eq(countries.id, sql<number>`CAST(${coaches.country} AS INTEGER)`))
       .leftJoin(licenses, eq(licenses.assigned_to, coaches.id))
       .leftJoin(coachaccount, eq(coachaccount.coach_id, coaches.id))
+      .leftJoin(sports, eq(sports.id, coaches.sport))
       .where(eq(coaches.id, coachId))
       .groupBy(
         coaches.id,
@@ -76,6 +79,7 @@ export async function GET(
         coaches.phoneNumber,
         coaches.slug,
         coaches.sport,
+        sports.name,
         coaches.qualifications,
         coaches.status,
         coaches.country,
