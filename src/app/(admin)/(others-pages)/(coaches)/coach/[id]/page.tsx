@@ -1,5 +1,5 @@
 'use client';
-import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter, Crown } from "lucide-react";
+import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter } from "lucide-react";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
 
 import { FaFileAlt } from 'react-icons/fa';
@@ -80,6 +80,7 @@ interface Review {
 
 
 interface Coach {
+  sportName: string;
   approved_or_denied: number;
   verified: number;
   latestLoginIp: string;
@@ -143,6 +144,7 @@ export default function CoachDetailsPage() {
   const [isDeclineModalOpen, setIsDeclineModalOpen] = useState<boolean>(false);
   const [declineMessage, setDeclineMessage] = useState("");
   const [submittingDecline, setSubmittingDecline] = useState(false);
+// const [isVerified, setIsVerified] = useState(coach?.verified === 1);
 
   const [newRating, setNewRating] = useState(0);
 
@@ -180,20 +182,19 @@ export default function CoachDetailsPage() {
 
 
   const MySwal = withReactContent(Swal);
- const isVerified = coach?.verified === 1;
+  const isVerified = coach?.verified === 1;
 
   // Handle verify button click
 
-const handleVerify = async () => {
-  if (!coach) return;
+  const handleVerify = async () => {
+  if (!coach?.id) return;
 
-  // Confirmation popup
   const confirmed = await Swal.fire({
     title: "Verify Coach?",
     text: "Are you sure you want to verify this coach?",
     icon: "question",
     showCancelButton: true,
-    confirmButtonColor: "#2563eb", // blue-600
+    confirmButtonColor: "#2563eb",
     cancelButtonColor: "#d33",
     confirmButtonText: "Yes, verify",
   });
@@ -205,17 +206,66 @@ const handleVerify = async () => {
   try {
     const res = await fetch(`/api/coach/verify/${coach.id}`, {
       method: "PATCH",
+      credentials: "include", // ✅ send cookies
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || "Failed to verify");
+
+    setCoach(prev => prev ? { ...prev, verified: 1 } : prev);
+
+    Swal.fire({
+      icon: "success",
+      title: "Verified!",
+      text: "Coach has been verified successfully.",
+      confirmButtonColor: "#2563eb",
+    });
+  } catch (err) {
+    Swal.fire({
+      icon: "error",
+      title: "Error!",
+      text: (err as Error).message,
+      confirmButtonColor: "#2563eb",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+const handleUnverify = async () => {
+  if (!coach?.id) return;
+
+  // Confirmation popup
+  const confirmed = await Swal.fire({
+    title: "Unverify Coach?",
+    text: "Are you sure you want to mark this coach as unverified?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33", // red
+    cancelButtonColor: "#2563eb", // blue
+    confirmButtonText: "Yes, unverify",
+  });
+
+  if (!confirmed.isConfirmed) return;
+
+  setLoading(true);
+
+  try {
+    const res = await fetch(`/api/coach/unverify/${coach.id}`, {
+      method: "PATCH",
     });
     const data = await res.json();
 
     if (res.ok) {
-      setCoach((prev) => (prev ? { ...prev, verified: 1 } : prev));
+      // Update local state
+      setCoach((prev) => (prev ? { ...prev, verified: 0 } : prev));
 
       // Success popup
       Swal.fire({
         icon: "success",
-        title: "Verified!",
-        text: "Coach has been verified successfully.",
+        title: "Unverified!",
+        text: "Coach has been marked as unverified.",
         confirmButtonColor: "#2563eb",
       });
     } else {
@@ -223,7 +273,7 @@ const handleVerify = async () => {
       Swal.fire({
         icon: "error",
         title: "Failed!",
-        text: "Failed to verify coach.",
+        text: "Failed to unverify coach.",
         confirmButtonColor: "#2563eb",
       });
     }
@@ -232,13 +282,14 @@ const handleVerify = async () => {
     Swal.fire({
       icon: "error",
       title: "Error!",
-      text: "Something went wrong while verifying coach.",
+      text: "Something went wrong while unverifying coach.",
       confirmButtonColor: "#2563eb",
     });
   } finally {
     setLoading(false);
   }
 };
+
 
 
 
@@ -657,26 +708,28 @@ const handleVerify = async () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 p-4 bg-white rounded-2xl shadow">
 
           {/* Image */}
-         <div className="flex-shrink-0 relative w-24 h-24 mx-auto md:mx-0">
-  {coach.image && (
-    <Image
-      src={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${coach.image}`}
-      alt={`${coach.firstName} ${coach.lastName}`}
-      width={96}
-      height={96}
-      className="w-24 h-24 object-cover rounded-full border-4 border-gray-200 shadow"
-    />
-  )}
-
-  {/* Crown icon */}
-{isVerified && (
-  <Crown
-    className="absolute -top-12 -right-12 text-yellow-400 w-50 h-12 md:w-50 md:h-12"
-  />
-)}
-
-
-</div>
+          <div className="flex-shrink-0 relative w-24 h-24 mx-auto md:mx-0">
+            {coach.image && (
+              <Image
+                src={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${coach.image}`}
+                alt={`${coach.firstName} ${coach.lastName}`}
+                width={96}
+                height={96}
+                className="w-24 h-24 object-cover rounded-full border-4 border-gray-200 shadow"
+              />
+            )}
+            {isVerified && (
+              <div className="absolute -top-17 left-1/2 -translate-x-1/2 w-16 h-16 md:w-20 md:h-20">
+                <Image
+                  src="/uploads/king_icon.png" // path relative to public folder
+                  alt="Verified Crown"
+                  width={90} //  adjust size
+                  height={90} // adjust size
+                  className="object-contain"
+                />
+              </div>
+            )}
+          </div>
 
 
 
@@ -771,15 +824,25 @@ const handleVerify = async () => {
               )}
             </div>
 
-  {!isVerified && (
-        <button
-          onClick={handleVerify}
-          disabled={loading}
-          className="mt-2 w-full py-1 px-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded disabled:opacity-50"
-        >
-          {loading ? "Verifying..." : "Verify"}
-        </button>
-      )}
+            {/* {!isVerified && (
+              <button
+                onClick={handleVerify}
+                disabled={loading}
+                className="mt-2 w-full py-1 px-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded disabled:opacity-50"
+              >
+                {loading ? "Verifying..." : "Verify"}
+              </button>
+            )}  */}
+    <button
+  onClick={isVerified ? handleUnverify : handleVerify}
+  disabled={loading}
+  className="mt-2  py-1 px-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded
+   disabled:opacity-50"
+>
+  {loading ? (isVerified ? "Unverifying..." : "Verifying...") : isVerified ? "Unverify" : "Verify"}
+</button>
+
+
 
             {coach.cv ? (
               <a
@@ -828,7 +891,7 @@ const handleVerify = async () => {
         <div><strong className="text-gray-700">Email:</strong> {coach.email}</div>
         <div><strong className="text-gray-700">Phone:</strong> {coach.countrycode}{coach.phoneNumber}</div>
         <div><strong className="text-gray-700">Gender:</strong> {coach.gender}</div>
-        <div><strong className="text-gray-700">Sport:</strong> {coach.sport}</div>
+        <div><strong className="text-gray-700">Sport:</strong> {coach.sportName}</div>
         <div><strong className="text-gray-700">City:</strong> {coach.city}</div>
         <div><strong className="text-gray-700">State:</strong> {coach.state}</div>
         <div><strong className="text-gray-700">Country:</strong> {coach.countryName}</div>

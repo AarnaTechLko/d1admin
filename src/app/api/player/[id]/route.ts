@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users, countries, playerEvaluation, coachearnings, payments, evaluationResults, ip_logs, role } from '@/lib/schema';
+import { users, countries, playerEvaluation, coachearnings, payments, evaluationResults, ip_logs, role, sports } from '@/lib/schema';
 import { eq, sql } from 'drizzle-orm';
 
 export async function GET(
@@ -26,6 +26,7 @@ export async function GET(
         image: users.image,
         position: users.position,
         sport: users.sport,
+        sportName: sports.name,
         state: users.state,
         city: users.city,
         gender: users.gender,
@@ -58,6 +59,7 @@ export async function GET(
       })
       .from(users)
       .leftJoin(countries, eq(countries.id, sql<number>`CAST(${users.country} AS INTEGER)`))
+      .leftJoin(sports, eq(sports.id, users.sport))
 
       .leftJoin(sql`enterprises AS ent`, sql`NULLIF(${users.enterprise_id}, '')::integer = ent.id`)
       .leftJoin(sql`coaches AS coa`, sql`NULLIF(${users.coach_id}, '')::integer = coa.id`)

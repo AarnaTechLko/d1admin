@@ -939,3 +939,20 @@ export const ticket_assign = pgTable("ticket_assign", {
   // Timestamps
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+export const verified = pgTable("verified", {
+  id: serial("id").primaryKey(),                 // auto-increment ID
+  userId: integer("user_id").notNull(),          // the player/coach/user being verified
+  verifiedBy: integer("verified_by").notNull(),  // admin who verified
+  isVerified: boolean("is_verified").notNull().default(false), // status
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),                                  // verification date
+});
+export const ranking = pgTable("ranking", {
+  id: serial("id").primaryKey(), // auto-increment id
+  playerId: integer("player_id").notNull(), // foreign key to players table
+  addedBy: integer("added_by").notNull(),   // foreign key to users/admins
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(), // default current timestamp
+});
