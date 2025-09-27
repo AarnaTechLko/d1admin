@@ -5,7 +5,7 @@ import { desc, sql } from "drizzle-orm";
 
 export async function GET() {
   try {
-    // Get top-10 players by avg
+    // Get top-10 users by avg
     const rows = await db
       .select({
         playerId: evaluationResults.playerId,
@@ -16,7 +16,7 @@ export async function GET() {
       .orderBy(desc(sql`AVG(${evaluationResults.eval_average})`))
       .limit(10);
 
-    // console.log("🔹 Top 10 players by average:", rows);
+    // console.log("🔹 Top 10 users by average:", rows);
 
     // For each player, also fetch their individual eval_average scores
     const results = await Promise.all(
@@ -53,3 +53,5 @@ export async function GET() {
     );
   }
 }
+
+
