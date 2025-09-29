@@ -165,6 +165,14 @@ const AppSidebar: React.FC = () => {
               { name: "Add Expense", path: "/expense", pro: false },
             ],
           },
+           {
+            name: "Ranking",
+            icon: <Calculator />,
+            subItems: [
+              { name: " Add Ranking", path: "/ranking", pro: false },
+              { name: " View Ranking", path: "/viewranking", pro: false },
+            ],
+          },
           {
             icon: <GridIcon />,
             name: "Block List",

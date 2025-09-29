@@ -70,7 +70,7 @@ export async function GET(
       .execute();
 
     const player = playerResult[0];
-    console.log("playerghsfhsd",player);
+    // console.log("playerghsfhsd",player);
 
     if (!player) {
       return NextResponse.json({ message: 'Player not found' }, { status: 404 });

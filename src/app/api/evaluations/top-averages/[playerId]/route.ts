@@ -112,7 +112,7 @@ const responseData = {
 
 
     // ✅ Log the final response data for debugging
-    console.log("Player Evaluation Data:", JSON.stringify(responseData, null, 2));
+    // console.log("Player Evaluation Data:", JSON.stringify(responseData, null, 2));
 
     return NextResponse.json(responseData);
   } catch (error) {
