@@ -397,9 +397,9 @@ export default function PlayerDetailPage() {
                     />
                 )}
                 <div>
-                     <h1 className="text-3xl font-bold text-gray-800 whitespace-nowrap">
-    {player.first_name} {player.last_name}
-  </h1>
+                    <h1 className="text-3xl font-bold text-gray-800 whitespace-nowrap">
+                        {player.first_name} {player.last_name}
+                    </h1>
                     <div className="flex gap-3 mt-2 text-xl text-gray-500">
                         {player.facebook && (
                             <a
@@ -554,7 +554,7 @@ export default function PlayerDetailPage() {
                 </div>
             </div>
             {/* Evaluations */}
-            <section className="p-6 max-w-7xl mx-auto space-y-8">
+            <section className="p-4 max-w-7xl mx-auto space-y-4">
                 <h2 className="text-2xl font-semibold mb-4">Evaluation</h2>
                 <div className="text-gray-700">
 
@@ -683,7 +683,7 @@ export default function PlayerDetailPage() {
                         </button>
                     </div>
                 </div>
-                <div className="p-4">
+                <div className="p-2">
                     <h2 className="text-xl font-semibold mb-4">🏅 Top 10 Evaluation Badges</h2>
                     {data?.player?.id && <TopEvaluationBadges playerId={data.player.id} />}
                 </div>
@@ -692,7 +692,7 @@ export default function PlayerDetailPage() {
 
             {view_finance === 1 && (
 
-                <section className="p-6 max-w-7xl mx-auto space-y-8">
+                <section className="p-6 max-w-7xl mx-auto">
                     <h2 className="text-2xl font-semibold mb-4">Payments</h2>
                     <div className='flex justify-between'>
 

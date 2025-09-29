@@ -112,6 +112,8 @@ export interface Player {
   is_deleted: number;
   suspend: number;
   suspend_days: number;
+  team: number;
+  age: number;
 }
 
 export interface inCompletePlayer {

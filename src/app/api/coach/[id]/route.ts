@@ -99,7 +99,7 @@ export async function GET(
         countries.name
       )
       .limit(1);
-console.log("coach data:",coachData);
+// console.log("coach data:",coachData);
     if (!coachData.length) {
       return NextResponse.json({ message: 'Coach not found' }, { status: 404 });
     }
@@ -202,7 +202,7 @@ console.log("coach data:",coachData);
 
     const latestIp = latestIpResult[0]?.ip || null;
 
-    console.log("IP: ", latestIpResult)
+    // console.log("IP: ", latestIpResult)
 
     return NextResponse.json({
       ...coachData[0],

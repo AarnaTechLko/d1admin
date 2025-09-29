@@ -144,7 +144,8 @@ export default function CoachDetailsPage() {
   const [isDeclineModalOpen, setIsDeclineModalOpen] = useState<boolean>(false);
   const [declineMessage, setDeclineMessage] = useState("");
   const [submittingDecline, setSubmittingDecline] = useState(false);
-// const [isVerified, setIsVerified] = useState(coach?.verified === 1);
+  // const [isVerified, setIsVerified] = useState(coach?.verified === 1);
+  const [overallAverage, setOverallAverage] = useState<number | null>(null);
 
   const [newRating, setNewRating] = useState(0);
 
@@ -186,29 +187,29 @@ export default function CoachDetailsPage() {
 
   // Handle verify button click
 
-  const handleVerify = async () => {
+ const handleVerify = async () => {
   if (!coach?.id) return;
-
-  const confirmed = await Swal.fire({
-    title: "Verify Coach?",
-    text: "Are you sure you want to verify this coach?",
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonColor: "#2563eb",
-    cancelButtonColor: "#d33",
-    confirmButtonText: "Yes, verify",
-  });
-
-  if (!confirmed.isConfirmed) return;
 
   setLoading(true);
 
   try {
     const res = await fetch(`/api/coach/verify/${coach.id}`, {
       method: "PATCH",
-      credentials: "include", // ✅ send cookies
+      credentials: "include",
     });
+
     const data = await res.json();
+    console.log("verify response:", data);
+
+    if (res.status === 403) {
+      Swal.fire({
+        icon: "warning",
+        title: "Action Denied",
+        text: data.error || "Only Executive level sub-admin can verify coaches",
+        confirmButtonColor: "#2563eb",
+      });
+      return;
+    }
 
     if (!res.ok) throw new Error(data.error || "Failed to verify");
 
@@ -220,6 +221,7 @@ export default function CoachDetailsPage() {
       text: "Coach has been verified successfully.",
       confirmButtonColor: "#2563eb",
     });
+
   } catch (err) {
     Swal.fire({
       icon: "error",
@@ -231,6 +233,7 @@ export default function CoachDetailsPage() {
     setLoading(false);
   }
 };
+
 
 
 const handleUnverify = async () => {
@@ -254,35 +257,38 @@ const handleUnverify = async () => {
   try {
     const res = await fetch(`/api/coach/unverify/${coach.id}`, {
       method: "PATCH",
+      credentials: "include", // ✅ send JWT cookie
     });
+
     const data = await res.json();
+    console.log("unverify response:", data);
 
-    if (res.ok) {
-      // Update local state
-      setCoach((prev) => (prev ? { ...prev, verified: 0 } : prev));
-
-      // Success popup
+    if (res.status === 403) {
       Swal.fire({
-        icon: "success",
-        title: "Unverified!",
-        text: "Coach has been marked as unverified.",
+        icon: "warning",
+        title: "Action Denied",
+        text: data.error || "Only Executive level sub-admin can unverify coaches",
         confirmButtonColor: "#2563eb",
       });
-    } else {
-      console.error(data.error);
-      Swal.fire({
-        icon: "error",
-        title: "Failed!",
-        text: "Failed to unverify coach.",
-        confirmButtonColor: "#2563eb",
-      });
+      return;
     }
+
+    if (!res.ok) throw new Error(data.error || "Failed to unverify");
+
+    // ✅ Update local state
+    setCoach((prev) => (prev ? { ...prev, verified: 0 } : prev));
+
+    Swal.fire({
+      icon: "success",
+      title: "Unverified!",
+      text: "Coach has been marked as unverified successfully.",
+      confirmButtonColor: "#2563eb",
+    });
   } catch (err) {
-    console.error(err);
     Swal.fire({
       icon: "error",
       title: "Error!",
-      text: "Something went wrong while unverifying coach.",
+      text: (err as Error).message,
       confirmButtonColor: "#2563eb",
     });
   } finally {
@@ -559,6 +565,36 @@ const handleUnverify = async () => {
 
 
   }, [id]);
+
+  useEffect(() => {
+    const coachId = coach?.id;
+    if (!coachId) {
+      setOverallAverage(null); // reset if no coach
+      return;
+    }
+
+    const fetchAverage = async () => {
+      try {
+        console.log("Fetching average for coachId:", coachId);
+        const res = await fetch(`/api/evaluations/${coachId}`);
+        const json = await res.json();
+        console.log("API response:", json);
+
+        setOverallAverage(
+          json.overallAverage !== undefined && json.overallAverage !== null
+            ? Number(json.overallAverage)
+            : null
+        );
+      } catch (err) {
+        console.error("Error fetching overall average:", err);
+        setOverallAverage(null);
+      }
+    };
+
+    fetchAverage();
+  }, [coach?.id]); // run only when coach.id changes
+
+
   if (loading) {
     return <Loading />;
   }
@@ -701,9 +737,8 @@ const handleUnverify = async () => {
   };
 
 
-
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 ">
       {/* Header */} <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow p-6 mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 p-4 bg-white rounded-2xl shadow">
 
@@ -838,14 +873,25 @@ const handleUnverify = async () => {
                 {loading ? "Verifying..." : "Verify"}
               </button>
             )}  */}
-    <button
-  onClick={isVerified ? handleUnverify : handleVerify}
-  disabled={loading}
-  className="mt-2  py-1 px-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded
+
+            <div className="flex justify-end">
+              <div className="flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600 
+                  text-white rounded-full shadow-md px-3 py-2 min-w-[50px]">
+                <p className="text-[10px] font-semibold tracking-wide text-center">Avg</p>
+                <p className="text-sm font-bold text-center">
+                  {overallAverage != null ? overallAverage : "N/A"}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={isVerified ? handleUnverify : handleVerify}
+              disabled={loading}
+              className="mt-2  py-1 px-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded
    disabled:opacity-50"
->
-  {loading ? (isVerified ? "Unverifying..." : "Verifying...") : isVerified ? "Unverify" : "Verify"}
-</button>
+            >
+              {loading ? (isVerified ? "Unverifying..." : "Verifying...") : isVerified ? "Unverify" : "Verify"}
+            </button>
 
 
 
