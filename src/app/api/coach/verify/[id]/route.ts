@@ -120,11 +120,17 @@ export async function PATCH(
     console.log("Admin role from DB:", adminRole);
 
     // 3️⃣ Only allow Executive level sub-admins
-if (adminRole.toLowerCase() !== "executive level") {
-  return NextResponse.json({
-    error: "Only Executive level sub-admins can verify coaches",
-    role: adminRole,
-  }, { status: 403 });
+if (
+  adminRole.toLowerCase() !== "executive level" &&
+  adminRole.toLowerCase() !== "admin"
+) {
+  return NextResponse.json(
+    {
+      error: "Only Executive level sub-admins or Admins can verify coaches",
+      role: adminRole,
+    },
+    { status: 403 }
+  );
 }
 
 

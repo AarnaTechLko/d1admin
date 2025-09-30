@@ -143,6 +143,8 @@ export interface Coach {
   earnings: number;
   is_deleted: number;
   evaluations?: Evaluation[];
+    verified: number;
+
 }
 
 export interface inCompleteCoach {

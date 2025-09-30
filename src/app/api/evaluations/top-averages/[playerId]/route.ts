@@ -60,13 +60,10 @@ import { db } from "@/lib/db";
 import { evaluationResults, users } from "@/lib/schema";
 import { sql, eq } from "drizzle-orm";
 
-
-
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ playerId: string }> }
 ) {
-
   try {
     const playerId = Number((await params).playerId);
     if (isNaN(playerId)) {
@@ -79,12 +76,13 @@ export async function GET(
         playerId: evaluationResults.playerId,
         firstName: users.first_name,
         lastName: users.last_name,
+        image: users.image, // fetch image
         avg: sql`AVG(${evaluationResults.eval_average})`.as("avg"),
       })
       .from(evaluationResults)
       .innerJoin(users, eq(users.id, evaluationResults.playerId))
       .where(eq(evaluationResults.playerId, playerId))
-      .groupBy(evaluationResults.playerId, users.first_name, users.last_name);
+      .groupBy(evaluationResults.playerId, users.first_name, users.last_name, users.image);
 
     if (!player) {
       return NextResponse.json({ error: "Player not found" }, { status: 404 });
@@ -99,20 +97,17 @@ export async function GET(
       .from(evaluationResults)
       .where(eq(evaluationResults.playerId, playerId));
 
-const responseData = {
-  playerId: player.playerId,
-  firstName: player.firstName ? player.firstName[0] : "",
-  lastName: player.lastName ? player.lastName[0] : "",
-  avg: player.avg === null ? null : Number(player.avg),
-  evaluations: evals.map((e) => ({
-    id: e.id,
-    eval_average: Number(e.eval_average),
-  })),
-};
-
-
-    // ✅ Log the final response data for debugging
-    // console.log("Player Evaluation Data:", JSON.stringify(responseData, null, 2));
+    const responseData = {
+      playerId: player.playerId,
+      firstName: player.firstName ? player.firstName[0] : "",
+   lastName: player.lastName ? player.lastName[0] : "",
+      image: player.image ?? "", // include image in response
+      avg: player.avg === null ? null : Number(player.avg),
+      evaluations: evals.map((e) => ({
+        id: e.id,
+        eval_average: Number(e.eval_average),
+      })),
+    };
 
     return NextResponse.json(responseData);
   } catch (error) {

@@ -187,8 +187,22 @@ export default function CoachDetailsPage() {
 
   // Handle verify button click
 
- const handleVerify = async () => {
+const handleVerify = async () => {
   if (!coach?.id) return;
+
+  // Ask confirmation before proceeding
+  const confirmResult = await Swal.fire({
+    title: "Are you sure?",
+    text: "Do you want to verify this coach?",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonColor: "#2563eb",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes, verify",
+    cancelButtonText: "Cancel",
+  });
+
+  if (!confirmResult.isConfirmed) return;
 
   setLoading(true);
 
@@ -213,7 +227,7 @@ export default function CoachDetailsPage() {
 
     if (!res.ok) throw new Error(data.error || "Failed to verify");
 
-    setCoach(prev => prev ? { ...prev, verified: 1 } : prev);
+    setCoach((prev) => (prev ? { ...prev, verified: 1 } : prev));
 
     Swal.fire({
       icon: "success",
@@ -239,25 +253,44 @@ export default function CoachDetailsPage() {
 const handleUnverify = async () => {
   if (!coach?.id) return;
 
-  // Confirmation popup
-  const confirmed = await Swal.fire({
+  // First confirmation popup
+  const firstConfirm = await Swal.fire({
     title: "Unverify Coach?",
     text: "Are you sure you want to mark this coach as unverified?",
     icon: "warning",
     showCancelButton: true,
     confirmButtonColor: "#d33", // red
     cancelButtonColor: "#2563eb", // blue
-    confirmButtonText: "Yes, unverify",
+    confirmButtonText: "Yes, continue",
   });
 
-  if (!confirmed.isConfirmed) return;
+  if (!firstConfirm.isConfirmed) return;
+
+  // Second confirmation with input
+  const secondConfirm = await Swal.fire({
+    title: "Type UNVERIFY to confirm",
+    input: "text",
+    inputPlaceholder: "Type UNVERIFY here",
+    inputValidator: (value) => {
+      if (value !== "UNVERIFY") {
+        return "You must type UNVERIFY to proceed!";
+      }
+      return null;
+    },
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#2563eb",
+    confirmButtonText: "Confirm Unverify",
+  });
+
+  if (!secondConfirm.isConfirmed || secondConfirm.value !== "UNVERIFY") return;
 
   setLoading(true);
 
   try {
     const res = await fetch(`/api/coach/unverify/${coach.id}`, {
       method: "PATCH",
-      credentials: "include", // ✅ send JWT cookie
+      credentials: "include",
     });
 
     const data = await res.json();
@@ -753,24 +786,25 @@ const handleUnverify = async () => {
                 className="w-24 h-24 object-cover rounded-full border-4 border-gray-200 shadow"
               />
             )}
-            {isVerified && (
-              <div className="absolute -top-17 left-1/2 -translate-x-1/2 w-16 h-16 md:w-20 md:h-20">
-                <Image
-                  src="/uploads/king_icon.png" // path relative to public folder
-                  alt="Verified Crown"
-                  width={90} //  adjust size
-                  height={90} // adjust size
-                  className="object-contain"
-                />
-              </div>
-            )}
+        
           </div>
 
 
 
           {/* Name + Socials */}
           <div className="flex flex-col items-center md:items-start gap-2 md:flex-1">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 text-center md:text-left">
+            <h1 className="text-xl flex gap-2 sm:text-2xl md:text-3xl font-bold text-gray-800 text-center md:text-left">
+                 {isVerified && (
+           
+                <Image
+                  src="/uploads/king_icon.png" // path relative to public folder
+                  alt="Verified Crown"
+                  width={32} //  adjust size
+                  height={32} // adjust size
+                  className="object-contain"
+                />
+           
+            )}
               {coach.firstName} {coach.lastName}
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 text-center md:text-left">

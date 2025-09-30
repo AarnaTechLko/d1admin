@@ -6,6 +6,7 @@ import {
   coachaccount,
   countries,
   playerEvaluation,
+  
 } from "@/lib/schema";
 import {
   eq,
@@ -103,6 +104,7 @@ export async function GET(req: NextRequest) {
         firstName: coaches.firstName,
         lastName: coaches.lastName,
         email: coaches.email,
+        verified: coaches.verified,
         phoneNumber: coaches.phoneNumber,
         slug: coaches.slug,
         gender: coaches.gender,
@@ -141,6 +143,7 @@ export async function GET(req: NextRequest) {
         coaches.gender,
         coaches.image,
         coaches.sport,
+        coaches.verified,
         coaches.qualifications,
         coaches.status,
         coaches.suspend,

@@ -46,6 +46,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
   const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
   const [loadingCoachId, setLoadingCoachId] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  // const isVerified = coach?.verified === 1;
 
   // const itemsPerPage = 10;
   // const numberOfPages = Math.ceil(totalPages / itemsPerPage);
@@ -202,26 +203,70 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
           <Table className="text-xs  min-w-[800px] sm:min-w-full">
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
-                {["Coach", "Gender", "Sport", "Earnings", "Address", "Status", "History", "Suspend", "Actions"].map((header) => (
-                  <TableCell key={header} className="px-4 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
-                    {header}
-                  </TableCell>
-                ))}
-
+                <TableCell className="px-10 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400 w-48">
+                  Coach
+                </TableCell>
+                <TableCell className="px-4 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400 w-24">
+                  Gender
+                </TableCell>
+                <TableCell className="px-4 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400 w-24">
+                  Sport
+                </TableCell>
+                <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
+                  Earnings
+                </TableCell>
+                <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
+                  Address
+                </TableCell>
+                <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
+                  Status
+                </TableCell>
+                <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
+                  History
+                </TableCell>
+                <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
+                  Suspend
+                </TableCell>
+                <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
+                  Actions
+                </TableCell>
               </TableRow>
+
             </TableHeader>
 
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {data.map((coach) => (
                 <TableRow key={`${coach.id}-${coach.is_deleted}`} className={coach.is_deleted === 0 ? "bg-red-100" : "bg-white"}>
-                  <TableCell className="px-4 py-3 text-start">
+                  <TableCell className="px-6 py-3 text-start">
                     <div className="flex items-center gap-3">
-                      <Image width={40} height={40} src={!coach.image || coach.image === "null" ? "/images/signin/d1.png" : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${coach.image}`} alt={`${coach.firstName ?? "Coach"} ${coach.lastName ?? ""}`} className="rounded-full" />
-                      <div>
-                        <span className="block font-medium text-gray-800 dark:text-white/90">{coach.firstName} {coach.lastName}</span>
+                      <Image
+                        width={40}
+                        height={40}
+                        src={
+                          !coach.image || coach.image === "null"
+                            ? "/images/signin/d1.png"
+                            : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${coach.image}`
+                        }
+                        alt={`${coach.firstName ?? "Coach"} ${coach.lastName ?? ""}`}
+                        className="rounded-full"
+                      />
+                      <div className="flex items-center gap-1">
+                        {coach.verified === 1 && (
+                          <Image
+                            src="/uploads/king_icon.png"
+                            alt="Verified Crown"
+                            width={18}
+                            height={12}
+                            className="inline-block"
+                          />
+                        )}
+                        <span className="font-medium text-gray-800 dark:text-white/90">
+                          {coach.firstName} {coach.lastName}
+                        </span>
                       </div>
                     </div>
                   </TableCell>
+
                   <TableCell className="px-4 py-3 text-gray-500">{coach.gender}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500">{coach.sport}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500">{coach.totalEvaluations || 0}</TableCell>
