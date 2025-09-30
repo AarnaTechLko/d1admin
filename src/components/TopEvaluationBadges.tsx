@@ -1,12 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import Image from "next/image"; // ✅ Make sure to import from next/image
+import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
 interface Evaluation {
   id: number;
   eval_average: number;
 }
 interface BadgeData {
   firstName: string;
+  image: string | null;
   lastName: string;
   playerId: number;
   avg: number | null;
@@ -57,27 +59,31 @@ export default function PlayerEvaluationBadges({ playerId }: Props) {
           title={`Evaluation ${e.id} — Avg: ${e.eval_average.toFixed(1)}`}
         >
           {/* Grey Circle wrapper */}
-          <div
-            className="relative w-15 h-15 rounded-full border-2 border-green-800 flex items-center justify-center"
-          >
-            {/* Badge Image */}
-            <Image
-              src="/uploads/badge.png"
-              alt="Verified Badge"
-              width={50}
-              height={50}
-              className="object-contain"
-            />
+     <div className="relative w-24 h-24 rounded-full border-2 border-green-800 flex items-center justify-center">
+  {/* Badge Image (larger) */}
+  <Image
+    src="/uploads/badge.png"
+    alt="Verified Badge"
+    width={96} // larger width
+    height={96} // larger height
+    className="object-contain rounded-full"
+  />
 
-            {/* Average value */}
-            <span className="absolute text-xs font-bold text-white bg-black/50 px-1 py-0.5 rounded-full">
-              {e.eval_average.toFixed(1)}
-            </span>
-          </div>
+  {/* Player Image (smaller, with margin) */}
+  <span className="absolute p-1 rounded-full bg-transparent">
+    <Image
+      src={`${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${badge.image}`}
+      alt={`${badge.firstName} ${badge.lastName}`}
+      width={54} // smaller width
+      height={54} // smaller height
+      className="object-cover rounded-full border-2 border-gray-200 shadow"
+    />
+  </span>
+</div>
 
           {/* Player Name BELOW the circle */}
           <span className="mt-2 text-xs font-semibold  bg-green-800 text-white px-2 py-1 rounded-full shadow-sm text-center">
-            {badge.firstName} {badge.lastName}
+            {e.eval_average.toFixed(1)}  {badge.firstName} {badge.firstName}
           </span>
 
         </div>

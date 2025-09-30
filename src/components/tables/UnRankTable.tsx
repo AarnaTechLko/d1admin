@@ -384,7 +384,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                                 className="bg-red-500 text-white px-2 py-1 rounded"
                                                                 onClick={() => setUnrankModalOpen(Number(player.id))}
                                                             >
-                                                                 UnRanking
+                                                                 UnRank
                                                             </button>
                                                             <UnrankModal
                                                                 open={isUnrankModalOpen === Number(player.id)}
