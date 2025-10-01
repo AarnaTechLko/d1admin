@@ -116,7 +116,7 @@ export async function GET(req: NextRequest) {
       .orderBy(desc(users.createdAt))
     // .limit(limit)
     // .offset(offset);
-
+console.log("result",result);
     const totalCount = await db
       .select({ count: count() })
       .from(users)

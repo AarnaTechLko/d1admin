@@ -153,7 +153,8 @@ export const coaches = pgTable(
     suspend_days: integer("suspend_days"),
     suspend_start_date: date("suspend_start_date"),
     suspend_end_date: date("suspend_end_date"),
-    verified: integer("verified").default(0), 
+    verified: integer("verified").default(0),
+    percentage: numeric("percentage"),
 
   },
   (coaches) => {
@@ -691,6 +692,8 @@ export const ticket = pgTable("ticket", {
   status: varchar("status").default("Pending"),
   role: varchar("role"),
   message: text("message").notNull(),
+    priority: varchar("priority", { length: 20 }).default("Medium"),
+
   escalate: boolean("escalate").default(false), // ✅ new column
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
@@ -703,6 +706,8 @@ export const ticket_messages = pgTable("ticket_messages", {
   status: varchar("status").default("Pending"),
   createdAt: timestamp("created_at").defaultNow(),
   filename: text('file_name'),
+  priority: varchar("priority", { length: 20 }).default("Medium"),
+
 
 });
 
@@ -950,6 +955,8 @@ export const verified = pgTable("verified", {
 });
 export const ranking = pgTable("ranking", {
   id: serial("id").primaryKey(), // auto-increment id
+  rank: integer("rank").notNull(),          // rank column
+
   playerId: integer("player_id").notNull(), // foreign key to players table
   addedBy: integer("added_by").notNull(),   // foreign key to users/admins
   createdAt: timestamp("created_at", { withTimezone: true })

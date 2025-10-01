@@ -8,7 +8,7 @@ interface BreadcrumbProps {
   onStatus?: (query: string) => void;
   onDays?: (query: string) => void;
   onSport?: (query: string) => void;
-  onCrowned?: (query: string) => void;
+  onCrowned?: (query: string[]) => void; // updated to array
 }
 
 interface Sport {
@@ -34,7 +34,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
   const [ticketStatus, setTicketStatus] = useState("");
   const [ticketDays, setTicketDays] = useState("");
   const [sport, setSport] = useState("");
-  const [crowned, setCrowned] = useState("");
+  const [crowned, setCrowned] = useState<string[]>([]);
   const [filteredSports, setFilteredSports] = useState<Sport[]>([]);
   const [crownedOptions, setCrownedOptions] = useState<CrownedOption[]>([]);
 
@@ -47,10 +47,14 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
     };
 
     const fetchSports = async () => {
-      const response = await fetch(`/api/sports`);
-      if (!response.ok) throw new Error("Failed to fetch sports");
-      const data = await response.json();
-      setFilteredSports(data.sport);
+      try {
+        const response = await fetch(`/api/sports`);
+        if (!response.ok) throw new Error("Failed to fetch sports");
+        const data = await response.json();
+        setFilteredSports(data.sport);
+      } catch (err) {
+        console.error(err);
+      }
     };
 
     const fetchCrownedOptions = async () => {
@@ -58,7 +62,6 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
         const response = await fetch(`/api/coach/crowned`);
         if (!response.ok) throw new Error("Failed to fetch crowned options");
         const data = await response.json();
-        // Expecting data format: [{ value: "1", label: "Yes" }, { value: "0", label: "No" }]
         setCrownedOptions(data);
       } catch (err) {
         console.error(err);
@@ -67,7 +70,6 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
 
     fetchSports();
     fetchCrownedOptions();
-
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
@@ -96,11 +98,19 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
     onSport?.(query);
   };
 
-  const handleCrownedChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const query = event.target.value;
-    setCrowned(query);
-    onCrowned?.(query);
-  };
+  // ✅ Final Crowned checkbox handler
+  // const handleCrownedChange = (value: string) => {
+  //   setCrowned((prev) => {
+  //     let updated: string[];
+  //     if (prev.includes(value)) {
+  //       updated = prev.filter((v) => v !== value);
+  //     } else {
+  //       updated = [...prev, value];
+  //     }
+  //     onCrowned?.(updated); // pass updated array to parent
+  //     return updated;
+  //   });
+  // };
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -164,19 +174,34 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
               ))}
             </select>
 
-            <span className="md:ml-5">Crowned</span>
-            <select
-              className="mt-6 w-64 md:w-40 p-2 md:mt-0 border rounded-lg bg-white"
-              value={crowned}
-              onChange={handleCrownedChange}
-            >
-              <option value="">All</option>
-              {crownedOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            {/* ✅ Crowned checkboxes */}
+            <div className="mt-6 md:mt-0 md:ml-5 inline-flex gap-4 items-center">
+              <span className="font-semibold">Crowned</span>
+              <div className="flex gap-2">
+                {crownedOptions.map((option) => (
+                  <label key={option.value} className="inline-flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      value={option.value}
+                      checked={crowned.includes(option.value)}
+                      onChange={() => {
+                        let updated: string[];
+                        if (crowned.includes(option.value)) {
+                          updated = crowned.filter((v) => v !== option.value);
+                        } else {
+                          updated = [...crowned, option.value];
+                        }
+                        setCrowned(updated);           // update local state
+                        onCrowned?.(updated);          // notify parent
+                      }}
+                      className="form-checkbox h-4 w-4 text-green-600 border-gray-300 rounded"
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+
+              </div>
+            </div>
           </>
         )}
       </div>

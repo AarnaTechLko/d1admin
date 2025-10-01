@@ -46,8 +46,11 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
   const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
   const [loadingCoachId, setLoadingCoachId] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  // const isVerified = coach?.verified === 1;
-
+  const [coaches, setCoaches] = useState<Coach[]>(data);
+  const [percentageOpen, setPercentageOpen] = useState(false);
+  const [tempPercentage, setTempPercentage] = useState<number>(0);
+  // const [inputValue, setInputValue] = useState<number>(0);
+  const [loading, setLoading] = useState(false);
   // const itemsPerPage = 10;
   // const numberOfPages = Math.ceil(totalPages / itemsPerPage);
 
@@ -88,6 +91,54 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
       })();
     }
   }, [selectedCoachid]);
+
+  // Keep it in sync when data prop changes
+  useEffect(() => {
+    setCoaches(data);
+  }, [data]);
+
+  const handleSavePercentage = async (id: string, tempPercentage: number) => {
+    if (tempPercentage < 0 || tempPercentage > 20) {
+      Swal.fire("Warning", "Percentage must be between 0 and 20.", "warning");
+      return;
+    }
+
+    // Find the coach in state
+    const coachToUpdate = coaches.find((coach) => coach.id === id);
+    if (!coachToUpdate) return;
+
+    setLoading(true);
+
+    try {
+      const res = await fetch(`/api/coach/${id}/percentage`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ percentage: tempPercentage }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update percentage");
+      }
+
+      // Update frontend state
+      setCoaches((prev) =>
+        prev.map((coach) =>
+          coach.id === id ? { ...coach, percentage: tempPercentage } : coach
+        )
+      );
+
+      Swal.fire("Success", "Percentage updated successfully!", "success");
+      setPercentageOpen(false);
+      setTempPercentage(0); // reset temporary input
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Error", "Failed to update percentage.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCloseCoachModal = () => {
     setSelectedCoachId(null);
@@ -226,6 +277,8 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                 </TableCell>
                 <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
                   Suspend
+                </TableCell>  <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
+                  %
                 </TableCell>
                 <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
                   Actions
@@ -291,7 +344,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                               </select>
                               <div className="flex justify-center mt-4">
                                 <Button onClick={handleStatusChange}
-                                  className="bg-blue-500 text-white">Save</Button>
+                                  className="bg-blue-500 text-white"> {loading ? "Saving..." : "Save"}</Button>
                               </div>
                             </div>
                           )}
@@ -343,6 +396,67 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                           : "Unsuspend"}
                       </Badge>
                     </button>
+                  </TableCell>
+
+
+                  <TableCell className="px-4 py-3 text-center">
+                    <button
+                      onClick={() => {
+                        setSelectedCoach(coach); // store coach to state
+                        setPercentageOpen(true);
+                        setTempPercentage(coach.percentage ?? 0); // use existing percentage
+                      }}
+                      className={`w-full rounded px-2 py-1 ${(coach.percentage ?? 0) > 0 ? "bg-green-500 text-white" : "bg-gray-100 hover:bg-gray-200"
+                        }`}                      >
+                      {coach.percentage ?? 20}
+                    </button>
+
+                    {/* Modal / Dialog */}
+                    {selectedCoach && selectedCoach.id === coach.id && (
+                      <Dialog open={percentageOpen} onOpenChange={setPercentageOpen}>
+                        <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">
+                          <DialogHeader>
+                            <DialogTitle>Update Percentage</DialogTitle>
+                          </DialogHeader>
+                          <div className="mt-4">
+                            <input
+                              type="number"
+                              min={0}
+                              max={20}
+                              value={tempPercentage}
+                              onChange={(e) => setTempPercentage(Number(e.target.value))}
+                              className="w-full border rounded px-3 py-2"
+                            />
+                          </div>
+                          <div className="flex justify-end gap-2 mt-4">
+                            <Button
+                              onClick={() => setPercentageOpen(false)}
+                              className="bg-gray-300 text-black hover:bg-gray-400"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                if (tempPercentage < 0 || tempPercentage > 20) {
+                                  Swal.fire({
+                                    icon: "warning",
+                                    title: "Invalid Value",
+                                    text: "Please enter a value between 0 and 20",
+                                  });
+                                  return;
+                                }
+                                // save percentage (update table state / API)
+                                handleSavePercentage(coach.id, tempPercentage);
+                                setPercentageOpen(false);
+                              }}
+                              className="bg-green-600 text-white hover:bg-green-700"
+                            >
+                              Save
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                   </TableCell>
 
                   <TableCell className="px-4 py-3">

@@ -8,15 +8,15 @@ export async function GET() {
 
   try {
 
-  // id: number;
-  // name: string;
-  // email: string;
-  // subject: string;
-  // message: string;
-  // assign_to: number;
-  // assign_to_username: string;
-  // createdAt: string;
-  // status: string;
+    // id: number;
+    // name: string;
+    // email: string;
+    // subject: string;
+    // message: string;
+    // assign_to: number;
+    // assign_to_username: string;
+    // createdAt: string;
+    // status: string;
 
     const getTickets = await db
       .select({
@@ -27,6 +27,8 @@ export async function GET() {
         createdAt: ticket.createdAt,
         status: ticket.status,
         message: ticket.message,
+        priority: ticket.priority, // ✅ Include priority
+
 
       })
       .from(ticket)
@@ -36,11 +38,11 @@ export async function GET() {
     console.log("Tickets: ", getTickets)
 
     return NextResponse.json({
-        tickets: getTickets
-      }, {status: 200});
+      tickets: getTickets
+    }, { status: 200 });
   }
-  
-  catch(error){
+
+  catch (error) {
 
     return NextResponse.json({
       error: error instanceof Error ? error.message : "Unknown error retrieving unassigned tickets"
@@ -115,4 +117,4 @@ export async function POST(req: Request) {
   }
 }
 
- // Convert ID to username
+// Convert ID to username

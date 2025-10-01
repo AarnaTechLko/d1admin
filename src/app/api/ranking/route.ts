@@ -11,14 +11,16 @@ interface JwtPayload {
     id: number;
     email?: string;
 }
-
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { playerId } = body;
+        const { playerId, rank } = body;
 
-        if (!playerId) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        if (!playerId || rank === undefined) {
+            return NextResponse.json(
+                { error: "Missing required fields: playerId or rank" },
+                { status: 400 }
+            );
         }
 
         // ✅ Get cookies properly
@@ -33,6 +35,7 @@ export async function POST(req: NextRequest) {
         if (!token) {
             return NextResponse.json({ error: "Unauthorized, no token found" }, { status: 401 });
         }
+
         // Decode JWT
         let decoded: JwtPayload;
         try {
@@ -42,13 +45,18 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 });
         }
         const currentUserId = decoded.id;
-        console.log("current user id:", currentUserId);
-        // Insert ranking
-        const inserted = await db.insert(ranking).values({
-            playerId: Number(playerId),
-            addedBy: currentUserId,
-            createdAt: new Date(),
-        }).returning();
+
+        // Insert ranking including rank
+        const inserted = await db
+            .insert(ranking)
+            .values({
+                playerId: Number(playerId),
+                rank: Number(rank), // ✅ store rank value
+                addedBy: currentUserId,
+                createdAt: new Date(),
+            })
+            .returning();
+
         return NextResponse.json({
             message: "Ranking added successfully",
             data: inserted,
@@ -59,6 +67,55 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Failed to add ranking" }, { status: 500 });
     }
 }
+
+
+// export async function POST(req: NextRequest) {
+//     try {
+//         const body = await req.json();
+//         const { playerId } = body;
+
+//         if (!playerId) {
+//             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+//         }
+
+//         // ✅ Get cookies properly
+//         const cookieHeader = req.headers.get("cookie") || "";
+//         const cookies = Object.fromEntries(
+//             cookieHeader.split("; ").map((c) => {
+//                 const [key, ...v] = c.split("=");
+//                 return [key, decodeURIComponent(v.join("="))];
+//             })
+//         );
+//         const token = cookies["session_token"];
+//         if (!token) {
+//             return NextResponse.json({ error: "Unauthorized, no token found" }, { status: 401 });
+//         }
+//         // Decode JWT
+//         let decoded: JwtPayload;
+//         try {
+//             decoded = jwt.verify(token, SECRET_KEY) as JwtPayload;
+//         } catch (err) {
+//             console.error("JWT verification failed:", err);
+//             return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 });
+//         }
+//         const currentUserId = decoded.id;
+//         console.log("current user id:", currentUserId);
+//         // Insert ranking
+//         const inserted = await db.insert(ranking).values({
+//             playerId: Number(playerId),
+//             addedBy: currentUserId,
+//             createdAt: new Date(),
+//         }).returning();
+//         return NextResponse.json({
+//             message: "Ranking added successfully",
+//             data: inserted,
+//         });
+
+//     } catch (err) {
+//         console.error("POST /api/ranking error:", err);
+//         return NextResponse.json({ error: "Failed to add ranking" }, { status: 500 });
+//     }
+// }
 
 
 
@@ -120,7 +177,12 @@ export async function POST(req: NextRequest) {
 export async function GET() {
     try {
         // Step 1: Fetch all player IDs from ranking table
-        const rankingPlayers = await db.select({ playerId: ranking.playerId, rankId: ranking.id, addedBy: ranking.addedBy })
+        const rankingPlayers = await db.select({ 
+            playerId: ranking.playerId, 
+            rankId: ranking.id,
+             addedBy: ranking.addedBy, 
+             rank: ranking.rank 
+            })
             .from(ranking);
 
         if (rankingPlayers.length === 0) {
@@ -181,6 +243,7 @@ export async function GET() {
             return {
                 ...p,
                 rankId: rankInfo?.rankId ?? null,
+                rank: rankInfo?.rank ?? null,
                 addedBy: rankInfo?.addedBy ?? null,
                 overallAverage,
             };

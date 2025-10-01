@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter } from "lucide-react";
 
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
-
 // import { FaTwitter, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -55,6 +54,44 @@ interface Player {
     countrycode: string;
     earnings: number;
 
+}
+interface Coach {
+  sportName: string;
+  approved_or_denied: number;
+  verified: number;
+  latestLoginIp: string;
+  id: number;
+  first_name: string;
+  last_name: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  gender: string;
+  country: string;
+  state: string;
+  city: string;
+  sport: string;
+  status: string;
+  qualifications: string;
+  consumeLicenseCount: number;
+  assignedLicenseCount: number;
+  earnings: number;
+  image?: string;
+  evaluations: Evaluation[];
+  evaluationResults: EvaluationResult[];
+  payments: Payment[];
+  clubName: string;
+  license_type: string;
+  facebook: string;
+  instagram: string;
+  linkedin: string;
+  xlink: string;
+  youtube: string;
+  cv: string;
+  license: string;
+  countryName: string;
+  countrycode: string;
 }
 
 interface Earnings {
@@ -121,6 +158,11 @@ interface Evaluation {
     remarks?: string;
     created_at: string;
     is_deleted: number;
+    Coachname?: string;
+  coachLastname?: string;
+  image?: string | null;
+  coachId?:number;
+  coachImage?: string | null;
 
 }
 
@@ -131,6 +173,7 @@ export default function PlayerDetailPage() {
     const [data, setData] = useState<{
         view_finance: number;
         player: Player;
+        coach:Coach;
         evaluations: Evaluation[];
         earnings: Earnings[];
         payments: Payment[];
@@ -381,7 +424,7 @@ export default function PlayerDetailPage() {
     if (!data) return <p className="p-4">Player not found.</p>;
 
     const { player } = data;
-
+//console.log('all palayer data:',data?.player.id);
     const view_finance = Number(sessionStorage.getItem("view_finance") || 0);
 
     return (
@@ -685,7 +728,10 @@ export default function PlayerDetailPage() {
                 </div>
                 <div className="p-2">
                     <h2 className="text-xl font-semibold mb-4">🏅 Top 10 Evaluation Badges</h2>
-                    {data?.player?.id && <TopEvaluationBadges playerId={data.player.id} />}
+                    {data?.player?.id && (
+  <TopEvaluationBadges playerId={data.player?.id} />
+)}
+
                 </div>
             </section>
             {/* Payments */}
