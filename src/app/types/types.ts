@@ -121,8 +121,7 @@ export interface inCompletePlayer {
   email: string;
 }
 export interface Coach {
-
-  // [x: string]: number;
+  percentage: number;
   id: string;
   evaluationId: number;
   firstName: string;

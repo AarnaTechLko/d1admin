@@ -23,6 +23,7 @@ interface Ticket {
   assign_to: number;
   createdAt: string;
   status: string;
+  priority: string;
   // assignee_name: string;
 }
 
@@ -76,6 +77,7 @@ const TicketsPage = () => {
   const [replyMessage, setReplyMessage] = useState<string>("");
   const [replyStatus, setReplyStatus] = useState<string>("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [replyPriority, setReplyPriority] = useState<string>("Medium");
 
   const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
@@ -141,6 +143,7 @@ const TicketsPage = () => {
       formData.append("repliedBy", userId ?? "");
       formData.append("message", replyMessage.trim());
       formData.append("status", replyStatus);
+      formData.append("priority", replyPriority);
 
       if (attachmentFile) {
         formData.append("attachment", attachmentFile);
@@ -394,6 +397,7 @@ const TicketsPage = () => {
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Email</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Subject</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Message</TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Priority</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Assign To</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Status</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Actions</TableCell>
@@ -409,6 +413,8 @@ const TicketsPage = () => {
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.message}</TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.priority}</TableCell>
+
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       <button
                         className="text-blue-500 hover:underline"
@@ -565,18 +571,38 @@ const TicketsPage = () => {
               </div>
 
               {/* Status Dropdown */}
-              <label className="block text-sm font-medium text-gray-700 mt-4">Status</label>
-              <select
-                className="w-full p-2 border rounded"
-                value={replyStatus}
-                onChange={(e) => setReplyStatus(e.target.value)}
-              >
-                <option value="Pending">Pending</option>
-                <option value="Open">Open</option>
-                <option value="Fixed">Fixed</option>
-                <option value="Closed">Closed</option>
-                <option value="Escalate">Escalate</option>
-              </select>
+              <div className="flex gap-4 mt-4">
+                {/* Status */}
+                <div className="w-1/2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    className="w-full p-2 border rounded"
+                    value={replyStatus}
+                    onChange={(e) => setReplyStatus(e.target.value)}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Open">Open</option>
+                    <option value="Fixed">Fixed</option>
+                    <option value="Closed">Closed</option>
+                    <option value="Escalate">Escalate</option>
+                  </select>
+                </div>
+
+                {/* Priority */}
+                <div className="w-1/2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                  <select
+                    className="w-full p-2 border rounded"
+                    value={replyPriority}
+                    onChange={(e) => setReplyPriority(e.target.value)}
+                  >
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+              </div>
+
 
               {/* Buttons */}
               <div className="mt-6 flex justify-end gap-3">

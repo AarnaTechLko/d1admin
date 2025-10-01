@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users, countries, playerEvaluation, coachearnings, payments, evaluationResults, ip_logs, role, sports } from '@/lib/schema';
+import { users, countries, playerEvaluation, coachearnings, payments, evaluationResults, ip_logs, role, sports, coaches } from '@/lib/schema';
 import { eq, sql } from 'drizzle-orm';
 
 export async function GET(
@@ -51,6 +51,7 @@ export async function GET(
         youtube: users.youtube,
         countryName: countries.name,
         countrycode: users.countrycode,
+        coachId: sql`coa."id"`.as("coachId"),
         coachName: sql`coa."firstName"`.as("coachName"),
         coachLastName: sql`coa."lastName"`.as("coachLastName"),
         enterpriseName: sql`ent."organizationName"`.as("enterpriseName"),
@@ -96,9 +97,15 @@ export async function GET(
         playerSlug: users.slug,
         is_deleted: playerEvaluation.is_deleted,
 
+        coachId:coaches.id,
+        Coachname:coaches.firstName,
+        coachLastname:coaches.lastName,
+        coachImage:coaches.image,
+
       })
       .from(playerEvaluation)
       .leftJoin(users, eq(users.id, playerEvaluation.player_id))
+      .leftJoin(coaches, eq(coaches.id, playerEvaluation.coach_id))
 
       .where(eq(playerEvaluation.player_id, id))
       .execute();
@@ -109,7 +116,7 @@ export async function GET(
       .from(coachearnings)
       .where(eq(coachearnings.player_id, id))
       .execute();
-
+//console.log('evaluations data:',evaluations);
     // Get player's payments from payments table
     const paymentsData = await db
       .select({

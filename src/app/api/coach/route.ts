@@ -101,6 +101,7 @@ export async function GET(req: NextRequest) {
     const coachesData = await db
       .select({
         id: coaches.id,
+        percentage: coaches.percentage,
         firstName: coaches.firstName,
         lastName: coaches.lastName,
         email: coaches.email,
@@ -152,6 +153,7 @@ export async function GET(req: NextRequest) {
         countries.name,
         coaches.state,
         coaches.city,
+        coaches.percentage,
         coaches.approved_or_denied
       )
       .orderBy(desc(coaches.createdAt))
