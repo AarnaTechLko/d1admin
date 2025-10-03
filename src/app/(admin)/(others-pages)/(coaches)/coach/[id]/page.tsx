@@ -211,19 +211,19 @@ const handleVerify = async () => {
       method: "PATCH",
       credentials: "include",
     });
-
-    const data = await res.json();
-    console.log("verify response:", data);
-
     if (res.status === 403) {
       Swal.fire({
         icon: "warning",
         title: "Action Denied",
-        text: data.error || "Only Executive level sub-admin can verify coaches",
+        text:  "Only Executive level sub-admin can verify coaches",
         confirmButtonColor: "#2563eb",
       });
       return;
     }
+
+    const data = await res.json();
+    console.log("verify response:", data);
+
 
     if (!res.ok) throw new Error(data.error || "Failed to verify");
 
@@ -247,8 +247,6 @@ const handleVerify = async () => {
     setLoading(false);
   }
 };
-
-
 
 const handleUnverify = async () => {
   if (!coach?.id) return;
@@ -292,7 +290,15 @@ const handleUnverify = async () => {
       method: "PATCH",
       credentials: "include",
     });
-
+ if (res.status === 403) {
+      Swal.fire({
+        icon: "warning",
+        title: "Action Denied",
+        text:  "Only Executive level sub-admin can unverify coaches",
+        confirmButtonColor: "#2563eb",
+      });
+      return;
+    }
     const data = await res.json();
     console.log("unverify response:", data);
 

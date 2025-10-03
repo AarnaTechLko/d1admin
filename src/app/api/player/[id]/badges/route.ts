@@ -44,7 +44,7 @@
 //   }
 // }
 import { db } from "@/lib/db";
-import { evaluationResults, coaches } from "@/lib/schema";
+import { evaluationResults, coaches, users } from "@/lib/schema";
 import { desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -69,9 +69,12 @@ export async function GET(
         firstName: coaches.firstName,
         lastName: coaches.lastName,
         image: coaches.image,
+        first_name:users.first_name,
+        last_name:users.last_name,
       })
       .from(evaluationResults)
       .leftJoin(coaches, eq(coaches.id, evaluationResults.coachId)) // ✅ join with coach user
+      .leftJoin(users, eq(users.id, evaluationResults.playerId)) // ✅ join with coach user
       .where(eq(evaluationResults.playerId, playerId))
       .orderBy(desc(evaluationResults.eval_average));
     console.log("all data:", badges);
@@ -91,6 +94,8 @@ export async function GET(
         id: b.id,
         eval_average: Number(b.evalAverage),
         coachId: b.coachId,
+        first_name:b.first_name,
+        last_name:b.last_name,
         firstName: b.firstName ? b.firstName[0] : "", // first letter
         lastName: b.lastName ? b.lastName[0] : "",   // first letter
         image: b.image,

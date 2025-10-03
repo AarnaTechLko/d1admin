@@ -779,7 +779,6 @@ export const ability = pgTable('ability', {
 
 export const admin_message = pgTable("admin_message", {
   id: serial("id").primaryKey(),
-
   sender_id: integer("sender_id").default(1),
   receiver_id: integer("receiver_id").notNull(),
   methods: text("methods").$type<string>(), // store JSON string
@@ -810,7 +809,6 @@ export const ip_logs = pgTable("ip_logs", {
   created_at: timestamp("created_at").defaultNow().notNull(),
   login_time: timestamp("login_time"),
   logout_time: timestamp("logout_time"),
-
   // New fields for geolocation details
   city: varchar("city", { length: 100 }),
   region: varchar("region", { length: 100 }),
@@ -832,17 +830,14 @@ export const block_ips = pgTable("block_ips", {
 });
 export const role = pgTable("role", {
   id: serial("id").primaryKey(),
-
   user_id: integer("user_id").notNull(),
   role: bigint("role", { mode: "number" }),
   role_name: varchar("role_name", { length: 100 }),
-
   change_password: integer("change_password").default(0),
   refund: integer("refund").default(0),
   monitor_activity: integer("monitor_activity").default(0),
   view_finance: integer("view_finance").default(0),
   access_ticket: integer("access_ticket").default(0),
-
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });

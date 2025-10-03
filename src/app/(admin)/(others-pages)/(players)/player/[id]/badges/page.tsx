@@ -9,6 +9,8 @@ import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
 interface Badge {
   playerId: number;
   eval_average: number | string | null;
+  first_name: string;
+  last_name: string;
   firstName: string;
   lastName: string;
   image: string | null;
@@ -74,6 +76,7 @@ const PlayerBadgesPage: React.FC = () => {
   const [badges, setBadges] = useState<Badge[]>([]);
   const [overallAverage, setOverallAverage] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+const [playerName, setPlayerName] = useState<string>("");
 
   useEffect(() => {
     const fetchBadges = async () => {
@@ -88,6 +91,10 @@ const PlayerBadgesPage: React.FC = () => {
         if (res.ok) {
           setBadges(data.evaluations ?? []);  // ✅ match API response
           setOverallAverage(data.overallAverage ?? null);
+           if (data.evaluations?.length > 0) {
+          const p = data.evaluations[0];
+          setPlayerName(`${p.first_name} ${p.last_name}`);
+        }
         }
         else {
           console.error(data.error);
@@ -115,7 +122,7 @@ const PlayerBadgesPage: React.FC = () => {
 
       <h1 className="text-2xl font-bold mb-2">Top Evaluation Badges</h1>
       <p className="mb-4">
-        Player ID: {playerId} | Overall Average: {overallAverage ?? "N/A"}
+        Player Name: {playerName || "N/A"} | Overall Average: {overallAverage ?? "N/A"}
       </p>
 
       {badges.length === 0 ? (
