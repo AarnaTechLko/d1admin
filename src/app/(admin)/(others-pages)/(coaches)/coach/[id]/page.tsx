@@ -301,17 +301,6 @@ const handleUnverify = async () => {
     }
     const data = await res.json();
     console.log("unverify response:", data);
-
-    if (res.status === 403) {
-      Swal.fire({
-        icon: "warning",
-        title: "Action Denied",
-        text: data.error || "Only Executive level sub-admin can unverify coaches",
-        confirmButtonColor: "#2563eb",
-      });
-      return;
-    }
-
     if (!res.ok) throw new Error(data.error || "Failed to unverify");
 
     // ✅ Update local state
