@@ -23,9 +23,9 @@ type RecentMessage = {
 };
 
 interface Player {
-
   id: string;
   first_name: string;
+  rank?: number | null;
   last_name: string;
   image: string;
   position: string;
@@ -333,6 +333,9 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                       <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Player
                       </TableCell>
+                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        Rank
+                      </TableCell>
                       <TableCell className=" px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Positions
                       </TableCell>
@@ -367,6 +370,9 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
                       <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Suspend
+                      </TableCell>
+                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        Badges
                       </TableCell>
 
                       <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
@@ -407,6 +413,11 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                               </span>
                             </div>
                           </div>
+                        </TableCell>
+                        <TableCell className="py-3  text-gray-700 rounded">
+                          <span className="inline-block px-3 py-1 text-white font-semibold text-sm rounded-full bg-green-600">
+                            {player.rank || 0}
+                          </span>
                         </TableCell>
                         <TableCell className=" py-3 text-gray-500 dark:text-gray-400">{player.position}</TableCell>
                         <TableCell className=" py-3 text-gray-500 dark:text-gray-400">{player.league}</TableCell>
@@ -514,6 +525,15 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                 : "Unsuspend"}
                             </Badge>
                           </button>
+                        </TableCell>
+                        <TableCell className="px-2 py-3">
+                          <button
+                            onClick={() => router.push(`/player/${player.id}/badges`)}
+                            className="inline-flex items-center justify-center px-1 py-1 text-xs text-white rounded-full bg-green-600 hover:bg-green-700 transition"
+                          >
+                            View Badges
+                          </button>
+                         
                         </TableCell>
 
 

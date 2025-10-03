@@ -395,7 +395,7 @@ return (
                                                         {/* Unrank Button */}
                                                         <button
                                                             onClick={() => setUnrankModalOpen(Number(player.id))}
-                                                            className="inline-flex items-center justify-center px-2 py-1 text-xs font-semibold text-white rounded-full bg-red-600 hover:bg-red-700 transition"
+                                                            className="inline-flex items-center justify-center px-2 py-1 text-xs text-white rounded-full bg-red-600 hover:bg-red-700 transition"
                                                         >
                                                             UnRank
                                                         </button>
@@ -411,7 +411,7 @@ return (
                                                         {/* View Badges Button */}
                                                         <button
                                                             onClick={() => router.push(`/player/${player.id}/badges`)}
-                                                            className="inline-flex items-center justify-center px-2 py-1 text-xs font-semibold text-white rounded-full bg-green-600 hover:bg-green-700 transition"
+                                                            className="inline-flex items-center justify-center px-1 py-1 text-xs text-white rounded-full bg-green-600 hover:bg-green-700 transition"
                                                         >
                                                             View Badges
                                                         </button>

@@ -158,11 +158,16 @@ const TicketsPage = () => {
 
       if (response.ok) {
         Swal.fire("Success", "Reply sent successfully!", "success");
-
         setTickets((prevTickets) =>
           prevTickets.map((t) =>
-            t.id === selectedTicket.id
-              ? { ...t, status: replyStatus, message: replyMessage.trim() }
+            t.id === selectedTicket.id    
+              ? {
+                ...t,
+                status: replyStatus,
+                message: replyMessage.trim(),
+                priority: replyPriority // ✅ update priority
+
+              }
               : t
           )
         );
@@ -205,7 +210,7 @@ const TicketsPage = () => {
         if (!response.ok) throw new Error("Failed to fetch tickets");
 
         const data = await response.json();
-        console.log("daata", data);
+        // console.log("daata", data);
         setTickets(data.tickets ?? []);
         setTotalPages(data.totalPages);
       } catch (err) {

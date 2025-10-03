@@ -114,6 +114,7 @@ export interface Player {
   suspend_days: number;
   team: number;
   age: number;
+  rank: number | null; // ✅ allow null
 }
 
 export interface inCompletePlayer {

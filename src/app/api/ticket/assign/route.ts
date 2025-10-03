@@ -35,7 +35,7 @@ export async function GET() {
       .where(eq(ticket.assign_to, 0))
 
 
-    console.log("Tickets: ", getTickets)
+    // console.log("Tickets: ", getTickets)
 
     return NextResponse.json({
       tickets: getTickets
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     }
 
     // Log the received data for debugging
-    console.log(`Assigning ticket ID: ${ticketId} to sub-admin ID: ${assignTo}`);
+    // console.log(`Assigning ticket ID: ${ticketId} to sub-admin ID: ${assignTo}`);
 
     // Perform the update operation in the ticket table
     const updatedTicket = await db
