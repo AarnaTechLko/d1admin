@@ -24,6 +24,7 @@ interface Ticket {
   assign_to_username: string;
   createdAt: string;
   status: string;
+  
 }
 interface Admin {
   id: number;
@@ -41,6 +42,7 @@ interface TicketReply {
   createdAt: string;
   fullAttachmentUrl?: string;
   parsedFiles?: string[];
+  priority:string;
 }
 
 // const Pagination: React.FC<PaginationProps> = ({
@@ -198,7 +200,7 @@ const SentTickets: React.FC = () => {
         if (!response.ok) throw new Error("Failed to fetch tickets");
 
         const data = await response.json();
-        console.log("daata", data);
+        console.log("daatasent", data);
 
         setSentTickets(data.sent ?? [])
         setTotalPages(data.totalPages);
@@ -560,6 +562,16 @@ const handleModalSubmit = async () => {
                         <div className="text-sm text-gray-700">
                           <span className="font-semibold">Date:</span> {reply.repliedBy} —{" "}
                           {new Date(reply.createdAt).toLocaleString()}
+                        </div>
+                         <div className="text-sm text-gray-700">
+                          <span className="font-semibold">Prority:</span>  <span
+                        className={`px-2 py-1 text-xs font-semibold rounded-full
+                          ${reply.priority === "High" ? "bg-red-100 text-red-700" : ""}
+                          ${reply.priority === "Medium" ? "bg-yellow-100 text-yellow-700" : ""}
+                          ${reply.priority === "Low" ? "bg-green-100 text-green-700" : ""}`}
+                      >
+                        {reply.priority}
+                      </span>
                         </div>
                       </div>
                     ))

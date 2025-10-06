@@ -138,7 +138,9 @@ export async function GET(req: NextRequest) {
       message: ticket.message,
       assign_to: ticket.assign_to,
       status: ticket.status,
-      createdAt: ticket.createdAt,
+      createdAt: ticket.createdAt,       
+       priority: ticket.priority, // ✅ Include priority
+
       assign_to_username: admin.username, // From joined admin table
     };
 

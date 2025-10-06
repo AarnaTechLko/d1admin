@@ -58,6 +58,8 @@ interface TicketReply {
   createdAt: string;
   fullAttachmentUrl?: string;
   parsedFiles?: string[];
+    priority: string;
+
 }
 
 const TicketsPage = () => {
@@ -78,7 +80,6 @@ const TicketsPage = () => {
   const [replyStatus, setReplyStatus] = useState<string>("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [replyPriority, setReplyPriority] = useState<string>("Medium");
-
   const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
   const [ticketReplies, setTicketReplies] = useState<TicketReply[]>([]);
@@ -160,7 +161,7 @@ const TicketsPage = () => {
         Swal.fire("Success", "Reply sent successfully!", "success");
         setTickets((prevTickets) =>
           prevTickets.map((t) =>
-            t.id === selectedTicket.id    
+            t.id === selectedTicket.id
               ? {
                 ...t,
                 status: replyStatus,
@@ -418,7 +419,16 @@ const TicketsPage = () => {
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.message}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.priority}</TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      <span
+                        className={`px-2 py-1 text-xs font-semibold rounded-full
+      ${ticket.priority === "High" ? "bg-red-100 text-red-700" : ""}
+      ${ticket.priority === "Medium" ? "bg-yellow-100 text-yellow-700" : ""}
+      ${ticket.priority === "Low" ? "bg-green-100 text-green-700" : ""}`}
+                      >
+                        {ticket.priority}
+                      </span>
+                    </TableCell>
 
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       <button
@@ -535,6 +545,16 @@ const TicketsPage = () => {
                           <span className="font-semibold">Date:</span> {reply.repliedBy} —{" "}
                           {new Date(reply.createdAt).toLocaleString()}
                         </div>
+                           <div className="text-sm text-gray-700">
+                          <span className="font-semibold">Prority:</span>  <span
+                        className={`px-2 py-1 text-xs font-semibold rounded-full
+                          ${reply.priority === "High" ? "bg-red-100 text-red-700" : ""}
+                          ${reply.priority === "Medium" ? "bg-yellow-100 text-yellow-700" : ""}
+                          ${reply.priority === "Low" ? "bg-green-100 text-green-700" : ""}`}
+                      >
+                        {reply.priority}
+                      </span>
+                        </div>
                       </div>
                     ))
                   )}
@@ -574,7 +594,7 @@ const TicketsPage = () => {
                   )}
                 </div>
               </div>
-
+ 
               {/* Status Dropdown */}
               <div className="flex gap-4 mt-4">
                 {/* Status */}
