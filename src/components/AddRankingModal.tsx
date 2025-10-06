@@ -31,8 +31,12 @@ const AddRankingModal: React.FC<AddRankingModalProps> = ({ playerId, onSuccess }
 
       onSuccess?.();
       Swal.fire("Success", "Ranking added successfully!", "success");
+      window.location.reload(); // reload page after success alert is closed
+
     } catch (err) {
       Swal.fire("Error", (err as Error).message, "error");
+      window.location.reload(); // reload page after success alert is closed
+
     } finally {
       setLoading(false); // stop spinner
       setOpen(false); // close modal

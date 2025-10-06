@@ -8,9 +8,9 @@ import CoachTable from "@/components/tables/CoachTable";
 import { Coach } from "@/app/types/types";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 const CoachesPage = () => {
-      useRoleGuard();
-    const [allCoaches, setAllCoaches] = useState<Coach[]>([]);
-const [crowned, setCrowned] = useState<string[]>([]); // ✅ array of strings
+  useRoleGuard();
+  const [allCoaches, setAllCoaches] = useState<Coach[]>([]);
+  const [crowned, setCrowned] = useState<string[]>([]); // ✅ array of strings
   const [searchQuery, setSearchQuery] = useState("");
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,7 +35,7 @@ const [crowned, setCrowned] = useState<string[]>([]); // ✅ array of strings
         const data = await response.json();
         console.log("coach", data)
         setCoaches(data.coaches);
-         setAllCoaches(data.coaches); 
+        setAllCoaches(data.coaches);
         setTotalPages(data.totalPages);
 
         // const uniqueCountries = [...new Set(data.map((item) => item.country).filter(Boolean))] as string[];
@@ -50,29 +50,30 @@ const [crowned, setCrowned] = useState<string[]>([]); // ✅ array of strings
 
     fetchCoaches();
   }, [searchQuery, currentPage, sport]);
-//  if (loading) {
-//         return <Loading />;
-//     }
-useEffect(() => {
-  let filtered = [...allCoaches];
+  //  if (loading) {
+  //         return <Loading />;
+  //     }
+  useEffect(() => {
+    let filtered = [...allCoaches];
 
-  if (crowned.length > 0) { // check if any checkbox is selected
-    filtered = filtered.filter((coach) =>
-      crowned.includes(coach.verified.toString())
-    );
-  }
+    if (crowned.length > 0) { // check if any checkbox is selected
+      filtered = filtered.filter((coach) =>
+        crowned.includes(coach.verified.toString())
+      );
+    }
 
-  setCoaches(filtered);
-}, [crowned, allCoaches]);
+    setCoaches(filtered);
+  }, [crowned, allCoaches]);
 
   return (
     <div>
-<PageBreadcrumb 
-  pageTitle="Coaches" 
-  onSearch={setSearchQuery} 
-  onSport={setSport} 
-  onCrowned={(selected: string[]) => setCrowned(selected)} // ✅ correct type
+     <PageBreadcrumb
+  pageTitle="Coaches"
+  onSearch={setSearchQuery}
+  onSport={setSport}
+  onCrowned={(value: string) => setCrowned(value === "1" ? ["1"] : [])}
 />
+
       {loading && (
         <div className="flex items-center justify-center gap-4 ">
           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>

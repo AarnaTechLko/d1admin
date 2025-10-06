@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
         email: ticket.email,
         subject: ticket.subject,
         escalate: ticket.escalate,
+        priority: ticket.priority,
         message: ticket.message,
         assign_to: ticket.assign_to,
         status: ticket.status,

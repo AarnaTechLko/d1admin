@@ -4,8 +4,10 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
   Admin: "*", // Full access for admin
 
   "Customer Support": [
-    "/ticket*",
     "/dashboard*",
+    "/ticket*",
+    "/myticket*",
+    "/assignticket*",
     "/createticket*",
     "/coach*",
     "/suspend",
@@ -21,15 +23,16 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
 
   Manager: [
     "/dashboard*",
-      "/ticket*",
+    "/ticket*",
+    "/myticket*",
+    "/assignticket*",
+    "/createticket*",
     "/coach*",
     "/player*",
     "/organization*",
     "/team*",
     "/evaluationdetails",
-    "/ticket",
-    "/createticket",
-    "/assignticket",
+
   ],
 
   // "Executive Level": [
@@ -52,6 +55,9 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
   "Tech": [
     "/dashboard*",
     "/ticket*",
+    "/myticket*",
+    "/assignticket*",
+    "/createticket*",
     "/coach*",
     "/suspend",
     "/disablecoach",
