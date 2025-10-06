@@ -125,9 +125,145 @@ const TicketsPage = () => {
     }
   };
 
-  const handleReplySubmit = async () => {
-    setIsReplyModalOpen(false);
+  // const handleReplySubmit = async () => {
+  //   setIsReplyModalOpen(false);
 
+  //   if (!selectedTicket) {
+  //     Swal.fire("Error", "No ticket selected.", "error");
+  //     return;
+  //   }
+
+  //   if (!replyMessage.trim()) {
+  //     Swal.fire("Error", "Message cannot be empty.", "warning");
+  //     return;
+  //   }
+
+  //   setLoading(true);
+
+  //   try {
+  //     // 1️⃣ Prepare FormData for reply API
+  //     const formData = new FormData();
+  //     formData.append("ticketId", String(selectedTicket.id));
+  //     formData.append("repliedBy", userId ?? "");
+  //     formData.append("message", replyMessage.trim());
+  //     formData.append("status", replyStatus);
+  //     formData.append("priority", replyPriority);
+  //     formData.append("escalate", isEscalate.toString());
+
+
+
+  //     if (attachmentFile) {
+  //       formData.append("attachment", attachmentFile);
+  //     }
+
+  //     // 2️⃣ Call reply API
+  //     const response = await fetch("/api/ticket/reply", {
+  //       method: "POST",
+  //       body: formData,
+  //     });
+
+  //     const data = await response.json();
+
+  //     if (!response.ok) {
+  //       Swal.fire("Error", data.error || "Failed to send reply.", "error");
+  //       return;
+  //     }
+
+  //     // 3️⃣ Update ticket in frontend state
+  //     setTickets((prevTickets) =>
+  //       prevTickets.map((t) =>
+  //         t.id === selectedTicket.id
+  //           ? {
+  //             ...t,
+  //             status: replyStatus,
+  //             message: replyMessage.trim(),
+  //             priority: replyPriority // ✅ update priority
+
+  //           }
+  //           : t
+  //       )
+  //     );
+
+  //     // 4️⃣ Save note in ticket_notes table
+  //     if (adminNotes?.trim()) {
+  //       try {
+  //         const noteResponse = await fetch("/api/ticket-notes", {
+  //           method: "POST",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //           },
+  //           body: JSON.stringify({
+  //             ticketId: selectedTicket.id,
+  //             notes: adminNotes.trim(),
+  //           }),
+  //         });
+
+  //         const noteData = await noteResponse.json();
+  //         if (!noteResponse.ok) {
+  //           console.error("Error saving ticket note:", noteData.error);
+  //         } else {
+  //           setAdminNotes(""); // clear note box
+  //         }
+  //       } catch (noteError) {
+  //         console.error("Failed to save ticket note:", noteError);
+  //       }
+  //     }
+
+  //     // 5️⃣ Save escalation/assignment if escalate checkbox is checked
+  //     if (isEscalate && selectedSubAdmin) {
+  //       try {
+  //         const assignResponse = await fetch("/api/ticket-assign", {
+  //           method: "POST",
+  //           headers: { "Content-Type": "application/json" },
+  //           body: JSON.stringify({
+  //             ticketId: selectedTicket.id,
+  //             fromId: userId,            // current logged-in user
+  //             toId: selectedSubAdmin,    // selected sub-admin
+  //             escalate: true,
+  //           }),
+  //         });
+
+  //         const assignData = await assignResponse.json();
+  //         if (!assignResponse.ok) {
+  //           console.error("Error saving ticket assignment:", assignData.error);
+  //           Swal.fire(
+  //             "Error",
+  //             assignData.error || "Failed to assign ticket.",
+  //             "error"
+  //           );
+  //         } else {
+  //           console.log("Ticket assignment saved:", assignData.data);
+  //         }
+  //       } catch (assignError) {
+  //         console.error("Failed to save ticket assignment:", assignError);
+  //         Swal.fire("Error", "Failed to assign ticket.", "error");
+  //       }
+  //     }
+
+
+
+  //     // 6️⃣ Success feedback and reset modal
+  //     Swal.fire("Success", "Reply, note, and assignment saved successfully!", "success");
+  //     setReplyMessage("");
+  //     setAttachmentFile(null);
+  //     setIsEscalate(false);
+  //     setAdminNotes("");
+  //     setSelectedSubAdmin("");
+  //     setIsReplyModalOpen(false);
+
+  //   } catch (error) {
+  //     console.error("Error submitting ticket reply:", error);
+  //     Swal.fire(
+  //       "Error",
+  //       "An unexpected error occurred while sending reply.",
+  //       "error"
+  //     );
+  //     setTicketReplies([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+  const handleReplySubmit = async () => {
     if (!selectedTicket) {
       Swal.fire("Error", "No ticket selected.", "error");
       return;
@@ -141,33 +277,32 @@ const TicketsPage = () => {
     setLoading(true);
 
     try {
-      // 1️⃣ Prepare FormData for reply API
+      // 1️⃣ Prepare form data for reply API
       const formData = new FormData();
       formData.append("ticketId", String(selectedTicket.id));
       formData.append("repliedBy", userId ?? "");
       formData.append("message", replyMessage.trim());
       formData.append("status", replyStatus);
       formData.append("priority", replyPriority);
-
+      formData.append("escalate", isEscalate ? "true" : "false");
 
       if (attachmentFile) {
         formData.append("attachment", attachmentFile);
       }
 
-      // 2️⃣ Call reply API
+      // 2️⃣ Send reply to backend
       const response = await fetch("/api/ticket/reply", {
         method: "POST",
         body: formData,
       });
 
       const data = await response.json();
-
       if (!response.ok) {
         Swal.fire("Error", data.error || "Failed to send reply.", "error");
         return;
       }
 
-      // 3️⃣ Update ticket in frontend state
+      // 3️⃣ Update ticket in frontend list
       setTickets((prevTickets) =>
         prevTickets.map((t) =>
           t.id === selectedTicket.id
@@ -175,39 +310,37 @@ const TicketsPage = () => {
               ...t,
               status: replyStatus,
               message: replyMessage.trim(),
-              priority: replyPriority // ✅ update priority
-
+              priority: replyPriority,
+              escalate: isEscalate, // ✅ update escalation flag
             }
             : t
         )
       );
 
-      // 4️⃣ Save note in ticket_notes table
+      // 4️⃣ Save internal note (if provided)
       if (adminNotes?.trim()) {
         try {
           const noteResponse = await fetch("/api/ticket-notes", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               ticketId: selectedTicket.id,
               notes: adminNotes.trim(),
             }),
           });
 
-          const noteData = await noteResponse.json();
           if (!noteResponse.ok) {
-            console.error("Error saving ticket note:", noteData.error);
+            const noteData = await noteResponse.json();
+            console.error("Error saving note:", noteData.error);
           } else {
-            setAdminNotes(""); // clear note box
+            setAdminNotes("");
           }
         } catch (noteError) {
-          console.error("Failed to save ticket note:", noteError);
+          console.error("Failed to save note:", noteError);
         }
       }
 
-      // 5️⃣ Save escalation/assignment if escalate checkbox is checked
+      // 5️⃣ Handle escalation assignment (only if checked)
       if (isEscalate && selectedSubAdmin) {
         try {
           const assignResponse = await fetch("/api/ticket-assign", {
@@ -215,48 +348,36 @@ const TicketsPage = () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               ticketId: selectedTicket.id,
-              fromId: userId,            // current logged-in user
-              toId: selectedSubAdmin,    // selected sub-admin
+              fromId: userId,
+              toId: selectedSubAdmin,
               escalate: true,
             }),
           });
 
           const assignData = await assignResponse.json();
           if (!assignResponse.ok) {
-            console.error("Error saving ticket assignment:", assignData.error);
-            Swal.fire(
-              "Error",
-              assignData.error || "Failed to assign ticket.",
-              "error"
-            );
+            Swal.fire("Error", assignData.error || "Failed to assign ticket.", "error");
           } else {
-            console.log("Ticket assignment saved:", assignData.data);
+            console.log("Ticket escalated successfully:", assignData.data);
           }
         } catch (assignError) {
-          console.error("Failed to save ticket assignment:", assignError);
+          console.error("Failed to assign ticket:", assignError);
           Swal.fire("Error", "Failed to assign ticket.", "error");
         }
       }
 
+      // 6️⃣ Success feedback and cleanup
+      Swal.fire("Success", "Reply, note, and escalation saved successfully!", "success");
 
-
-      // 6️⃣ Success feedback and reset modal
-      Swal.fire("Success", "Reply, note, and assignment saved successfully!", "success");
       setReplyMessage("");
       setAttachmentFile(null);
       setIsEscalate(false);
       setAdminNotes("");
       setSelectedSubAdmin("");
       setIsReplyModalOpen(false);
-
     } catch (error) {
       console.error("Error submitting ticket reply:", error);
-      Swal.fire(
-        "Error",
-        "An unexpected error occurred while sending reply.",
-        "error"
-      );
-      setTicketReplies([]);
+      Swal.fire("Error", "An unexpected error occurred while sending reply.", "error");
     } finally {
       setLoading(false);
     }
@@ -287,9 +408,10 @@ const TicketsPage = () => {
         if (!response.ok) throw new Error("Failed to fetch tickets");
 
         const data = await response.json();
-        console.log("daata", data);
+        console.log("daatasdf", data);
         setTickets(data.ticket ?? []);
         setTotalPages(data.totalPages);
+
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -371,8 +493,9 @@ const TicketsPage = () => {
 
       // const data = await response.json();
       setTickets((prevTickets) =>
-        prevTickets.map((t) => (t.id === selectedTicket.id ? { 
-          ...t, assign_to: subAdmin.id, assign_to_username: subAdmin.username } : t))
+        prevTickets.map((t) => (t.id === selectedTicket.id ? {
+          ...t, assign_to: subAdmin.id, assign_to_username: subAdmin.username
+        } : t))
       );
 
 
@@ -536,6 +659,7 @@ const TicketsPage = () => {
               {Array.isArray(tickets) && tickets.length > 0 ? (
                 tickets.map((ticket) => (
                   // <TableRow key={ticket.id}>
+
                   <TableRow
                     key={ticket.id}
                     className={ticket.escalate ? "bg-red-100 dark:bg-red-900/20" : ""}

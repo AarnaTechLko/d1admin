@@ -22,6 +22,7 @@ export async function POST(req: Request) {
     const status = formData.get("status")?.toString();
     const priority = formData.get("priority")?.toString(); // ✅ New
     const file = formData.get("attachment") as File | null;
+    const escalate = formData.get("escalate") === "true"; // ✅ define escalate
 
     if (!ticketId || !repliedBy || !message || !status) {
       return NextResponse.json(
@@ -74,6 +75,7 @@ export async function POST(req: Request) {
       .set({
         status,
         message,
+         escalate,
         priority: priority || "medium", // update ticket priority as well
       })
       .where(eq(ticket.id, Number(ticketId)));

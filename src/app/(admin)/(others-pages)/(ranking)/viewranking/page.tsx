@@ -9,6 +9,7 @@ interface Ranking {
   rank: number;
   firstName?: string;
   lastName?: string;
+  image:string;
 }
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -36,11 +37,10 @@ export default function RankingPage() {
     };
     fetchPlayers();
   }, []);
-
   if (isLoading || loading) return <div>Loading...</div>;
   if (error) return <p className="text-red-500">{error}</p>;
 
-  // Merge player info with ranking
+  // Merge player info with ranking  
   const mergedData = rankingData?.data.map((rank: Ranking) => {
     const playerInfo = players.find((p) => p.id === rank.playerId);
     return { ...rank, ...playerInfo };

@@ -1,22 +1,49 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from "@/lib/db";
-import { ticket, admin } from '@/lib/schema'; // Import admin schema
-import { eq } from 'drizzle-orm'; // Ensure eq is imported correctly
+import { ticket,admin } from '@/lib/schema';
+import { and, eq, gte, ilike, or, SQL } from 'drizzle-orm';
 
-
-export async function GET() {
-
+export async function GET(req: NextRequest) {
   try {
+    const url = new URL(req.url);
+    const user_id = url.searchParams.get("userId");
+    const search = url.searchParams.get("search")?.trim() || '';
+    const status = url.searchParams.get("status")?.trim() || "";
+    const days = Number(url.searchParams.get("days")) || 0;
 
-    // id: number;
-    // name: string;
-    // email: string;
-    // subject: string;
-    // message: string;
-    // assign_to: number;
-    // assign_to_username: string;
-    // createdAt: string;
-    // status: string;
+    const conditions: (SQL | undefined)[] = [];
+
+    // Only filter by user_id if provided
+    if (user_id) {
+      conditions.push(eq(ticket.assign_to, Number(user_id)));
+    } else {
+      // If no user_id, fetch unassigned tickets
+      conditions.push(eq(ticket.assign_to, 0));
+    }
+
+    // Search filters
+    if (search) {
+      conditions.push(
+        or(
+          ilike(ticket.name, `%${search}%`),
+          ilike(ticket.email, `%${search}%`),
+          ilike(ticket.subject, `%${search}%`),
+          ilike(ticket.message, `%${search}%`)
+        )
+      );
+    }
+
+    if (status) {
+      conditions.push(ilike(ticket.status, `%${status}%`));
+    }
+
+    if (days > 0) {
+      const today = new Date();
+      today.setDate(today.getDate() - days);
+      conditions.push(gte(ticket.createdAt, today));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const getTickets = await db
       .select({
@@ -27,30 +54,22 @@ export async function GET() {
         createdAt: ticket.createdAt,
         status: ticket.status,
         message: ticket.message,
-        priority: ticket.priority, // ✅ Include priority
-
-
+        priority: ticket.priority,
       })
       .from(ticket)
-      .where(eq(ticket.assign_to, 0))
+      .where(whereClause);
 
-
-    // console.log("Tickets: ", getTickets)
-
-    return NextResponse.json({
-      tickets: getTickets
-    }, { status: 200 });
+    return NextResponse.json({ tickets: getTickets }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Unknown error retrieving tickets",
+      },
+      { status: 500 }
+    );
   }
-
-  catch (error) {
-
-    return NextResponse.json({
-      error: error instanceof Error ? error.message : "Unknown error retrieving unassigned tickets"
-    }, { status: 500 });
-
-  }
-
 }
+
 
 
 export async function POST(req: Request) {

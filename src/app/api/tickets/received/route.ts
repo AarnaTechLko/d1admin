@@ -110,7 +110,7 @@ export async function GET(req: NextRequest) {
     if (status) {
       conditions.push(ilike(ticket.status, `%${status}%`));
     }
-
+ 
     if (days > 0) {
       const today = new Date();
       today.setDate(today.getDate() - days);
@@ -127,6 +127,7 @@ export async function GET(req: NextRequest) {
         subject: ticket.subject,
         escalate: ticket.escalate,
         message: ticket.message,
+        priority: ticket.priority,
         assign_to: ticket.assign_to,
         status: ticket.status,
         createdAt: ticket.createdAt,

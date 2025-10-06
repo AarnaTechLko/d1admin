@@ -8,7 +8,7 @@ interface BreadcrumbProps {
   onStatus?: (query: string) => void;
   onDays?: (query: string) => void;
   onSport?: (query: string) => void;
-  onCrowned?: (query: string[]) => void; // updated to array
+  onCrowned?: (value: string) => void; // pass "1" or "0"
 }
 
 interface Sport {
@@ -18,7 +18,6 @@ interface Sport {
 
 interface CrownedOption {
   value: string;
-  label: string;
 }
 
 const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
@@ -34,7 +33,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
   const [ticketStatus, setTicketStatus] = useState("");
   const [ticketDays, setTicketDays] = useState("");
   const [sport, setSport] = useState("");
-  const [crowned, setCrowned] = useState<string[]>([]);
+  const [isCrowned, setIsCrowned] = useState(false);
   const [filteredSports, setFilteredSports] = useState<Sport[]>([]);
   const [crownedOptions, setCrownedOptions] = useState<CrownedOption[]>([]);
 
@@ -98,19 +97,11 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
     onSport?.(query);
   };
 
-  // ✅ Final Crowned checkbox handler
-  // const handleCrownedChange = (value: string) => {
-  //   setCrowned((prev) => {
-  //     let updated: string[];
-  //     if (prev.includes(value)) {
-  //       updated = prev.filter((v) => v !== value);
-  //     } else {
-  //       updated = [...prev, value];
-  //     }
-  //     onCrowned?.(updated); // pass updated array to parent
-  //     return updated;
-  //   });
-  // };
+  const handleCrownedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = event.target.checked; // boolean from checkbox
+    setIsCrowned(isChecked);
+    onCrowned?.(isChecked ? "1" : "0"); // pass string "1" or "0"
+  };
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -173,34 +164,21 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
                 </option>
               ))}
             </select>
-
-            {/* ✅ Crowned checkboxes */}
+            {crownedOptions.map((opt) => (
+              <input type="hidden" value="{opt.value}" key={opt.value} />
+            ))}
+            {/* ✅ Single Crowned checkbox */}
             <div className="mt-6 md:mt-0 md:ml-5 inline-flex gap-4 items-center">
-              <span className="font-semibold">Crowned</span>
-              <div className="flex gap-2">
-                {crownedOptions.map((option) => (
-                  <label key={option.value} className="inline-flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      value={option.value}
-                      checked={crowned.includes(option.value)}
-                      onChange={() => {
-                        let updated: string[];
-                        if (crowned.includes(option.value)) {
-                          updated = crowned.filter((v) => v !== option.value);
-                        } else {
-                          updated = [...crowned, option.value];
-                        }
-                        setCrowned(updated);           // update local state
-                        onCrowned?.(updated);          // notify parent
-                      }}
-                      className="form-checkbox h-4 w-4 text-green-600 border-gray-300 rounded"
-                    />
-                    <span>{option.label}</span>
-                  </label>
-                ))}
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={isCrowned}
+                  onChange={handleCrownedChange} // React passes event automatically
+                  className="form-checkbox h-4 w-4 text-green-600 border-gray-300 rounded"
+                />
 
-              </div>
+                <span className="font-semibold">Crowned</span>
+              </label>
             </div>
           </>
         )}
