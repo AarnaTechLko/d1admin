@@ -198,9 +198,9 @@ const ReceivedTickets: React.FC = () => {
         if (!response.ok) throw new Error("Failed to fetch tickets");
 
         const data = await response.json();
-        console.log("daata", data);
+        console.log("daatadfgdfgggh", data);
 
-        setReceivedTickets(data.received ?? [])
+        setReceivedTickets(data);
         setTotalPages(data.totalPages);
       } catch (err) {
         setError((err as Error).message);
@@ -249,15 +249,9 @@ const ReceivedTickets: React.FC = () => {
 //     setIsModalOpen(true);
 //   };
 
-
-
-
-
   const handleAssignSubAdmin = async (subAdmin: Admin) => {
     if (!selectedTicket) return;
     setIsSubmitting(true);
-
-
     try {
       const response = await fetch(`/api/ticket/assign`, {
         method: "POST",
@@ -419,7 +413,8 @@ const handleModalSubmit = async () => {
       {error && <p className="text-center py-5 text-red-500">{error}</p>}
 
       {!loading && !error && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] 
+        dark:bg-white/[0.03]">
           {/* <div className="p-4 text-gray-700 dark:text-gray-300">Total Tickets: {tickets.length}</div> */}
           <Table className="text-xs">
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">

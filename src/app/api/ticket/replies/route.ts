@@ -29,6 +29,7 @@ export async function GET(req: Request) {
       status: reply.status,
       createdAt: reply.createdAt,
       filename: reply.filename,
+      priority: reply.priority,
       fullAttachmentUrl: reply.filename ? `${baseUrl}${reply.filename}` : null,
     }));
 

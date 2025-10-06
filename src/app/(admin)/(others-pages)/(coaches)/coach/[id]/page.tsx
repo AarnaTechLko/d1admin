@@ -261,7 +261,6 @@ const handleUnverify = async () => {
     cancelButtonColor: "#2563eb", // blue
     confirmButtonText: "Yes, continue",
   });
-
   if (!firstConfirm.isConfirmed) return;
 
   // Second confirmation with input
@@ -678,7 +677,6 @@ const handleUnverify = async () => {
           approved_or_denied: 2,
         };
       });
-
     }
     catch (err) {
 

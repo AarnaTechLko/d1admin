@@ -27,11 +27,13 @@ interface Ticket {
   email: string;
   subject: string;
   message: string;
+  escalate: boolean;
   assign_to: number;
   assign_to_username: string;
   createdAt: string;
   status: string;
   assignee_name: string;
+  priority: string;
 
 }
 interface Admin {
@@ -49,6 +51,7 @@ interface TicketReply {
   repliedBy: string;
   createdAt: string;
   fullAttachmentUrl?: string;
+  priority: string;
   parsedFiles?: string[];
 }
 
@@ -58,7 +61,7 @@ const TicketsPage = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusQuery, setStatusQuery] = useState<string>("");
 
-
+  const [replyPriority, setReplyPriority] = useState<string>("Medium");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -101,17 +104,18 @@ const TicketsPage = () => {
       }
 
       // Parse filenames in each reply (if available)
-      const parsedReplies = data.replies.map((reply: TicketReply): TicketReply & { parsedFiles: string[] } => ({
-        ...reply,
-        parsedFiles: (() => {
-          try {
-            const parsed = JSON.parse(reply.filename || '[]');
-            return Array.isArray(parsed) ? parsed : [];
-          } catch {
-            return [];
-          }
-        })(),
-      }));
+      const parsedReplies = data.replies.map((
+        reply: TicketReply): TicketReply & { parsedFiles: string[] } => ({
+          ...reply,
+          parsedFiles: (() => {
+            try {
+              const parsed = JSON.parse(reply.filename || '[]');
+              return Array.isArray(parsed) ? parsed : [];
+            } catch {
+              return [];
+            }
+          })(),
+        }));
 
       setTicketReplies(parsedReplies);
     } catch (error) {
@@ -143,6 +147,8 @@ const TicketsPage = () => {
       formData.append("repliedBy", userId ?? "");
       formData.append("message", replyMessage.trim());
       formData.append("status", replyStatus);
+      formData.append("priority", replyPriority);
+
 
       if (attachmentFile) {
         formData.append("attachment", attachmentFile);
@@ -165,7 +171,13 @@ const TicketsPage = () => {
       setTickets((prevTickets) =>
         prevTickets.map((t) =>
           t.id === selectedTicket.id
-            ? { ...t, status: replyStatus, message: replyMessage.trim() }
+            ? {
+              ...t,
+              status: replyStatus,
+              message: replyMessage.trim(),
+              priority: replyPriority // ✅ update priority
+
+            }
             : t
         )
       );
@@ -305,6 +317,7 @@ const TicketsPage = () => {
         }
 
         const data = await response.json();
+        console.log("fetchsubadmins", data);
         setSubAdmins(data.admin);
       } catch (err) {
         console.error("Error fetching sub-admins:", err);
@@ -358,7 +371,8 @@ const TicketsPage = () => {
 
       // const data = await response.json();
       setTickets((prevTickets) =>
-        prevTickets.map((t) => (t.id === selectedTicket.id ? { ...t, assign_to: subAdmin.id, assign_to_username: subAdmin.username } : t))
+        prevTickets.map((t) => (t.id === selectedTicket.id ? { 
+          ...t, assign_to: subAdmin.id, assign_to_username: subAdmin.username } : t))
       );
 
 
@@ -371,21 +385,19 @@ const TicketsPage = () => {
       setIsSubmitting(false);
     }
   };
- const handleViewNotesClick = async (ticket: Ticket) => {
-  setIsNotesOpen(true);
-  setLoading(true);
+  const handleViewNotesClick = async (ticket: Ticket) => {
+    setIsNotesOpen(true);
 
-  try {
-    const res = await fetch(`/api/ticket-notes/${ticket.id}`);
-    const data = await res.json();
-    setNotes(Array.isArray(data) ? data : []);
-  } catch (err) {
-    console.error("Failed to fetch notes:", err);
-    setNotes([]);
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      const res = await fetch(`/api/ticket-notes/${ticket.id}`);
+      const data = await res.json();
+      setNotes(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to fetch notes:", err);
+      setNotes([]);
+    } finally {
+    }
+  };
 
   const handleModalSubmit = async () => {
     if (!selectedTicket) {
@@ -512,6 +524,7 @@ const TicketsPage = () => {
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Email</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Subject</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Message</TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Priority</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Assign To</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Status</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Actions</TableCell>
@@ -522,11 +535,25 @@ const TicketsPage = () => {
 
               {Array.isArray(tickets) && tickets.length > 0 ? (
                 tickets.map((ticket) => (
-                  <TableRow key={ticket.id}>
+                  // <TableRow key={ticket.id}>
+                  <TableRow
+                    key={ticket.id}
+                    className={ticket.escalate ? "bg-red-100 dark:bg-red-900/20" : ""}
+                  >
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.name}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.message}</TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      <span
+                        className={`px-2 py-1 text-xs font-semibold rounded-full
+                          ${ticket.priority === "High" ? "bg-red-100 text-red-700" : ""}
+                          ${ticket.priority === "Medium" ? "bg-yellow-100 text-yellow-700" : ""}
+                          ${ticket.priority === "Low" ? "bg-green-100 text-green-700" : ""}`}
+                      >
+                        {ticket.priority}
+                      </span>
+                    </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       <button
                         className="text-blue-500 hover:underline"
@@ -577,16 +604,13 @@ const TicketsPage = () => {
             </TableBody>
           </Table>
 
-
           <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Ticket Notes</DialogTitle>
               </DialogHeader>
 
-              {loading ? (
-                <p className="text-gray-500">Loading notes...</p>
-              ) : !Array.isArray(notes) || notes.length === 0 ? (
+              {!Array.isArray(notes) || notes.length === 0 ? (
                 <p className="text-gray-500">No notes found for this ticket.</p>
               ) : (
                 <ul className="space-y-3 max-h-64 overflow-y-auto">
@@ -603,9 +627,9 @@ const TicketsPage = () => {
                   ))}
                 </ul>
               )}
-
             </DialogContent>
           </Dialog>
+
 
           <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
             <DialogContent className="p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
@@ -675,6 +699,16 @@ const TicketsPage = () => {
                         <div className="text-sm text-gray-700">
                           <span className="font-semibold">Date:</span> {reply.repliedBy} —{" "}
                           {new Date(reply.createdAt).toLocaleString()}
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          <span className="font-semibold">Prority:</span>  <span
+                            className={`px-2 py-1 text-xs font-semibold rounded-full
+                          ${reply.priority === "High" ? "bg-red-100 text-red-700" : ""}
+                          ${reply.priority === "Medium" ? "bg-yellow-100 text-yellow-700" : ""}
+                          ${reply.priority === "Low" ? "bg-green-100 text-green-700" : ""}`}
+                          >
+                            {reply.priority}
+                          </span>
                         </div>
                       </div>
                     ))
@@ -766,7 +800,7 @@ const TicketsPage = () => {
                 </div>
               )}
               {/* Status Dropdown */}
-              <label className="block text-sm font-medium text-gray-700 mt-4">Status</label>
+              {/* <label className="block text-sm font-medium text-gray-700 mt-4">Status</label>
               <select
                 className="w-full p-2 border rounded"
                 value={replyStatus}
@@ -777,8 +811,39 @@ const TicketsPage = () => {
                 <option value="Fixed">Fixed</option>
                 <option value="Closed">Closed</option>
                 <option value="Escalate">Escalate</option>
-              </select>
+              </select> */}
+              {/* Status Dropdown */}
+              <div className="flex gap-4 mt-4">
+                {/* Status */}
+                <div className="w-1/2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    className="w-full p-2 border rounded"
+                    value={replyStatus}
+                    onChange={(e) => setReplyStatus(e.target.value)}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Open">Open</option>
+                    <option value="Fixed">Fixed</option>
+                    <option value="Closed">Closed</option>
+                    <option value="Escalate">Escalate</option>
+                  </select>
+                </div>
 
+                {/* Priority */}
+                <div className="w-1/2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                  <select
+                    className="w-full p-2 border rounded"
+                    value={replyPriority}
+                    onChange={(e) => setReplyPriority(e.target.value)}
+                  >
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+              </div>
               {/* Buttons */}
               <div className="mt-6 flex justify-end gap-3">
                 <button

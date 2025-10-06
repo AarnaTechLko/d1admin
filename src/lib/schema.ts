@@ -332,7 +332,6 @@ export const evaluationResults = pgTable('evaluation_results', {
   club_id: integer("club_id"),
   evaluationId: integer('evaluation_id').notNull(),
   finalRemarks: text('finalRemarks'),           // Long text for final remarks
-
   coach_input: json('coach_input'),
   eval_average: numeric('eval_average'),
   // physicalRemarks: text('physicalRemarks'),     // Long text for physical remarks
@@ -425,7 +424,6 @@ export const orderHistory = pgTable('orderHistory', {
   rate: integer('rate'),
   description: text('description'),
   status: text('status'),
-
   payment_info: text('payment_info'),
   createdAt: timestamp('createdAt').defaultNow(),
 });
