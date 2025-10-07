@@ -12,6 +12,7 @@ import Swal from "sweetalert2";
 // import { useSession } from 'next-auth/react';
 import { UploadCloud } from "lucide-react";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import toast from "react-hot-toast";
 
 
 type TicketNote = {
@@ -126,17 +127,35 @@ const TicketsPage = () => {
     }
   };
 
-  
+
   const handleReplySubmit = async () => {
     if (!selectedTicket) {
-      Swal.fire("Error", "No ticket selected.", "error");
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No ticket selected.",
+        confirmButtonText: "OK",
+        allowOutsideClick: false,
+        allowEscapeKey: true,
+      });
       return;
     }
 
-    if (!replyMessage.trim()) {
-      Swal.fire("Error", "Message cannot be empty.", "warning");
-      return;
-    }
+ if (!replyMessage.trim()) {
+  toast.error("Message cannot be empty.", {
+    duration: 4000,
+    position: "top-right",
+    style: {
+      background: "red",       // background color
+      color: "white",          // text color
+      minWidth: "300px",       // width of the toast
+      minHeight: "60px",       // height of the toast
+     
+    },
+  });
+  return;
+}
+
 
     setLoading(true);
 
@@ -162,7 +181,14 @@ const TicketsPage = () => {
 
       const data = await response.json();
       if (!response.ok) {
-        Swal.fire("Error", data.error || "Failed to send reply.", "error");
+        await Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: data.error || "Failed to send reply.",
+          confirmButtonText: "OK",
+          allowOutsideClick: false,
+          allowEscapeKey: true,
+        });
         return;
       }
 
@@ -175,7 +201,7 @@ const TicketsPage = () => {
               status: replyStatus,
               message: replyMessage.trim(),
               priority: replyPriority,
-              escalate: isEscalate, // ✅ update escalation flag
+              escalate: isEscalate,
             }
             : t
         )
@@ -220,18 +246,34 @@ const TicketsPage = () => {
 
           const assignData = await assignResponse.json();
           if (!assignResponse.ok) {
-            Swal.fire("Error", assignData.error || "Failed to assign ticket.", "error");
-          } else {
-            console.log("Ticket escalated successfully:", assignData.data);
+            await Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: assignData.error || "Failed to assign ticket.",
+              confirmButtonText: "OK",
+              allowOutsideClick: false,
+            });
           }
         } catch (assignError) {
           console.error("Failed to assign ticket:", assignError);
-          Swal.fire("Error", "Failed to assign ticket.", "error");
+          await Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Failed to assign ticket.",
+            confirmButtonText: "OK",
+            allowOutsideClick: false,
+          });
         }
       }
 
       // 6️⃣ Success feedback and cleanup
-      Swal.fire("Success", "Reply, note, and escalation saved successfully!", "success");
+      await Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Reply, note, and escalation saved successfully!",
+        confirmButtonText: "OK",
+        allowOutsideClick: false,
+      });
 
       setReplyMessage("");
       setAttachmentFile(null);
@@ -241,11 +283,18 @@ const TicketsPage = () => {
       setIsReplyModalOpen(false);
     } catch (error) {
       console.error("Error submitting ticket reply:", error);
-      Swal.fire("Error", "An unexpected error occurred while sending reply.", "error");
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "An unexpected error occurred while sending reply.",
+        confirmButtonText: "OK",
+        allowOutsideClick: false,
+      });
     } finally {
       setLoading(false);
     }
   };
+
 
 
   useEffect(() => {
@@ -258,7 +307,7 @@ const TicketsPage = () => {
   }, [router]);
 
   // ✅ Fetch tickets when userId, searchQuery, statusQuery, or currentPage changes
- useEffect(() => {
+  useEffect(() => {
     if (!userId) return;
 
     const fetchTickets = async () => {
@@ -283,7 +332,7 @@ const TicketsPage = () => {
     };
 
     fetchTickets();
-  }, [userId, searchQuery, currentPage,statusQuery,daysQuery]);
+  }, [userId, searchQuery, currentPage, statusQuery, daysQuery]);
 
 
   useEffect(() => {
@@ -862,60 +911,60 @@ const TicketsPage = () => {
 
       {/* Modal for Assigning Subadmin */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-      <DialogContent className="p-6 max-h-[80vh] flex flex-col">
-        <DialogTitle>Assign Subadmin</DialogTitle>
-        <p className="text-gray-500">Select a sub-admin to assign:</p>
-    
-        {/* Scrollable list */}
-        <div className="mt-4 flex-1 overflow-y-auto">
-          {subAdmins?.length > 0 ? (
-            <ul className="space-y-2">
-              {subAdmins.map((subAdmin) => (
-                <li
-                  key={subAdmin.id}
-                  className={`p-2 border rounded-md cursor-pointer 
+        <DialogContent className="p-6 max-h-[80vh] flex flex-col">
+          <DialogTitle>Assign Subadmin</DialogTitle>
+          <p className="text-gray-500">Select a sub-admin to assign:</p>
+
+          {/* Scrollable list */}
+          <div className="mt-4 flex-1 overflow-y-auto">
+            {subAdmins?.length > 0 ? (
+              <ul className="space-y-2">
+                {subAdmins.map((subAdmin) => (
+                  <li
+                    key={subAdmin.id}
+                    className={`p-2 border rounded-md cursor-pointer 
                   ${selectedTicket?.assign_to === subAdmin.id
-                      ? "bg-blue-200 dark:bg-blue-700"
-                      : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
-                  onClick={() =>
-                    setSelectedTicket((prev) =>
-                      prev ? { ...prev, assign_to: subAdmin.id } : null
-                    )
-                  }
-                >
-                  {subAdmin.username}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-500 text-sm">No sub-admins available</p>
-          )}
-        </div>
-    
-        {/* Buttons fixed at bottom */}
-        <div className="mt-4 flex justify-end gap-3">
-          <button
-            className="px-4 py-2 bg-red-500 text-white rounded-md"
-            onClick={() => setIsModalOpen(false)}
-          >
-            Cancel
-          </button>
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded-md"
-            onClick={handleModalSubmit}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="animate-spin inline mr-2" size={16} />
-                Submitting...
-              </>
+                        ? "bg-blue-200 dark:bg-blue-700"
+                        : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+                    onClick={() =>
+                      setSelectedTicket((prev) =>
+                        prev ? { ...prev, assign_to: subAdmin.id } : null
+                      )
+                    }
+                  >
+                    {subAdmin.username}
+                  </li>
+                ))}
+              </ul>
             ) : (
-              "Submit"
+              <p className="text-gray-500 text-sm">No sub-admins available</p>
             )}
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          </div>
+
+          {/* Buttons fixed at bottom */}
+          <div className="mt-4 flex justify-end gap-3">
+            <button
+              className="px-4 py-2 bg-red-500 text-white rounded-md"
+              onClick={() => setIsModalOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="px-4 py-2 bg-blue-500 text-white rounded-md"
+              onClick={handleModalSubmit}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="animate-spin inline mr-2" size={16} />
+                  Submitting...
+                </>
+              ) : (
+                "Submit"
+              )}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
 
   );

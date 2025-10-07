@@ -82,6 +82,7 @@ export const users = pgTable(
     suspend_days: integer("suspend_days"),
     suspend_start_date: date("suspend_start_date"),
     suspend_end_date: date("suspend_end_date"),
+    diamond: integer("diamond").default(0),
 
   },
   (users) => {

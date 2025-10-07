@@ -28,6 +28,7 @@ export async function GET(
         sport: users.sport,
         sportName: sports.name,
         state: users.state,
+        diamond: users.diamond,
         city: users.city,
         gender: users.gender,
         gpa: users.gpa,

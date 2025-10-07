@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table"
 import Image from "next/image";
 import d1 from "@/public/images/signin/d1.png";
 import Button from "../ui/button/Button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "../ui/dialog";
 import Badge from "../ui/badge/Badge";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
 
@@ -418,12 +418,26 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                                 View Badges
                                                             </button>
 
-                                                            {selectedPlayer && (
-                                                                <PlayerBadgesModal
-                                                                    playerId={Number(selectedPlayer.id)}
-                                                                    onClose={() => setSelectedPlayer(null)}
-                                                                />
-                                                            )}
+                                                            <Dialog open={!!selectedPlayer} onOpenChange={() => setSelectedPlayer(null)}>
+                                                                <DialogContent
+                                                                    className="p-6 max-w-sm bg-white p-6 rounded-lg shadow-lg h-[80vh] overflow-y-auto bg-transparent shadow-none"
+                                                                >
+
+
+                                                                    <DialogHeader>
+                                                                        <DialogTitle>
+                                                                            {selectedPlayer?.firstName} {selectedPlayer?.lastName} Badges
+                                                                        </DialogTitle>
+                                                                        <DialogClose />
+                                                                    </DialogHeader>
+
+                                                                    {/* Dialog body */}
+                                                                    <div className="mt-4">
+                                                                        {/* Replace this with your PlayerBadges content */}
+                                                                        <PlayerBadgesModal playerId={Number(selectedPlayer?.id)} onClose={() => setSelectedPlayer(null)} />
+                                                                    </div>
+                                                                </DialogContent>
+                                                            </Dialog>
                                                         </>
                                                     )}
                                                 </TableCell>
@@ -683,7 +697,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                     </Dialog>
 
                 </div>
-            </div>
+            </div >
         </>
     );
 };

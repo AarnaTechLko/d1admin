@@ -93,6 +93,7 @@ export async function GET(req: NextRequest) {
         weight: users.weight,
         birthday: users.birthday,
         graduation: users.graduation,
+        diamond: users.diamond,
         suspend: users.suspend,
         suspend_days: users.suspend_days,
         birth_year: users.birth_year,

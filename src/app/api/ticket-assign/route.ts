@@ -9,8 +9,8 @@ import { admin, ticket_assign, ticket } from "@/lib/schema";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { ticketId, toId, escalate,fromId } = body;
-console.log("dataetdd:",body);
+    const { ticketId, toId, escalate, fromId } = body;
+    console.log("dataetdd:", body);
     // ⚠️ Example: Extract fromId (current user ID) from headers or cookies (replace as needed)
     // In real apps, use JWT/session to extract user info securely
     // const fromId = Number(req.headers.get("x-user-id"));
@@ -47,14 +47,22 @@ console.log("dataetdd:",body);
       return NextResponse.json({ error: "Assigner or assignee not found." }, { status: 404 });
     }
 
+
     // ✅ Insert ticket assignment
     await db.insert(ticket_assign).values({
-  ticketId: Number(ticketId),
-  fromId: Number(fromId),
-  toId: Number(toId),
-  escalate: escalate ?? false,
-});
+      ticketId: Number(ticketId),
+      fromId: Number(fromId),
+      toId: Number(toId),
+      escalate: escalate ?? false,
+    });
 
+    await db
+      .update(ticket)
+      .set({
+        assign_to: Number(toId),
+        escalate: escalate ?? false,
+      })
+      .where(eq(ticket.id, Number(ticketId)));
 
     return NextResponse.json({ message: "Ticket assigned successfully." }, { status: 201 });
   } catch (error) {

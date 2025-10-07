@@ -113,6 +113,7 @@ export interface Player {
   suspend: number;
   suspend_days: number;
   team: number;
+  diamond: number;
   age: number;
   rank: number | null; // ✅ allow null
 }
