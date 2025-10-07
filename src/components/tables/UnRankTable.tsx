@@ -15,6 +15,7 @@ import { FaSpinner } from "react-icons/fa";
 import { Eye, EyeOff } from "lucide-react";
 // import AddRankingModal from "../AddRankingModal";
 import UnrankModal from "../UnrankModal";
+import PlayerBadgesModal from "../PlayerBadgesModal";
 type Badge = {
     id: number;
     name: string;
@@ -410,11 +411,19 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
                                                             {/* View Badges Button */}
                                                             <button
-                                                                onClick={() => router.push(`/player/${player.id}/badges`)}
-                                                                className="inline-flex items-center justify-center px-1 py-1 text-xs text-white rounded-full bg-green-600 hover:bg-green-700 transition"
+                                                                onClick={() => setSelectedPlayer(player)}
+                                                                className="inline-flex items-center justify-center px-1 py-1 text-xs
+                                                                 text-white rounded-full bg-green-600 hover:bg-green-700 transition"
                                                             >
                                                                 View Badges
                                                             </button>
+
+                                                            {selectedPlayer && (
+                                                                <PlayerBadgesModal
+                                                                    playerId={Number(selectedPlayer.id)}
+                                                                    onClose={() => setSelectedPlayer(null)}
+                                                                />
+                                                            )}
                                                         </>
                                                     )}
                                                 </TableCell>

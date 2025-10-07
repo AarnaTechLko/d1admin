@@ -64,7 +64,7 @@ const TicketsPage = () => {
   const [daysQuery, setDaysQuery] = useState<string>("");
 
   const [replyPriority, setReplyPriority] = useState<string>("Medium");
- 
+
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
@@ -862,56 +862,62 @@ const TicketsPage = () => {
         </div>
       )}
 
-      {/* Modal for Assigning Subadmin */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="p-6 max-h-[80vh] overflow-y-auto">
-          <DialogTitle>Assign Subadmin</DialogTitle>
-          <p className="text-gray-500">Select a sub-admin to assign:</p>
+  <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+  <DialogContent className="p-6 max-h-[80vh] flex flex-col">
+    <DialogTitle>Assign Subadmin</DialogTitle>
+    <p className="text-gray-500">Select a sub-admin to assign:</p>
 
-          <ul className="mt-4 space-y-2">
-            {subAdmins?.length > 0 ? (
-              subAdmins.map((subAdmin) => (
-                <li
-                  key={subAdmin.id}
-                  className={`p-2 border rounded-md cursor-pointer 
-          ${selectedTicket?.assign_to === subAdmin.id
-                      ? "bg-blue-200 dark:bg-blue-700"
-                      : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
-                  onClick={() =>
-                    setSelectedTicket((prev) =>
-                      prev ? { ...prev, assign_to: subAdmin.id } : null
-                    )
-                  }
-                >
-                  {subAdmin.username}
-                </li>
-              ))
-            ) : (
-              <p className="text-gray-500 text-sm">No sub-admins available</p>
-            )}
-          </ul>
-
-          {/* Submit & Cancel Buttons */}
-          <div className="mt-4 flex justify-end gap-3">
-            <button
-              className="px-4 py-2 bg-red-500 text-white rounded-md"
-              onClick={() => setIsModalOpen(false)}
+    {/* Scrollable list */}
+    <div className="mt-4 flex-1 overflow-y-auto">
+      {subAdmins?.length > 0 ? (
+        <ul className="space-y-2">
+          {subAdmins.map((subAdmin) => (
+            <li
+              key={subAdmin.id}
+              className={`p-2 border rounded-md cursor-pointer 
+              ${selectedTicket?.assign_to === subAdmin.id
+                  ? "bg-blue-200 dark:bg-blue-700"
+                  : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+              onClick={() =>
+                setSelectedTicket((prev) =>
+                  prev ? { ...prev, assign_to: subAdmin.id } : null
+                )
+              }
             >
-              Cancel
-            </button>
-            <button
-              className="px-4 py-2 bg-blue-500 text-white rounded-md"
-              onClick={handleModalSubmit}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="animate-spin inline mr-2" size={16} />Submitting...
-                </>
-              ) : (
-                "Submit"
-              )}            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+              {subAdmin.username}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-gray-500 text-sm">No sub-admins available</p>
+      )}
+    </div>
+
+    {/* Buttons fixed at bottom */}
+    <div className="mt-4 flex justify-end gap-3">
+      <button
+        className="px-4 py-2 bg-red-500 text-white rounded-md"
+        onClick={() => setIsModalOpen(false)}
+      >
+        Cancel
+      </button>
+      <button
+        className="px-4 py-2 bg-blue-500 text-white rounded-md"
+        onClick={handleModalSubmit}
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 className="animate-spin inline mr-2" size={16} />
+            Submitting...
+          </>
+        ) : (
+          "Submit"
+        )}
+      </button>
+    </div>
+  </DialogContent>
+</Dialog>
+
     </div>
 
   );
