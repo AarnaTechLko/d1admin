@@ -46,6 +46,7 @@ interface Player {
   grade_level: string;
   is_deleted: number;
   suspend: number;
+  diamond: number;
   suspend_days: number;
 }
 
@@ -407,8 +408,22 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                               />
 
                             </div>
-                            <div>
+                            {/* <div>
                               <span className="block font-medium text-gray-800 dark:text-white/90">
+                                {player.first_name} {player.last_name}
+                              </span>
+                            </div> */}
+                            <div className="flex items-center">
+                              {player.diamond === 1 && (
+                                <Image
+                                  src="/uploads/diamond.jpg"
+                                  alt="Player Diamond"
+                                  width={25}
+                                  height={12}
+                                  className="inline-block"
+                                />
+                              )}
+                              <span className="font-medium text-gray-800 dark:text-white/90">
                                 {player.first_name} {player.last_name}
                               </span>
                             </div>
@@ -533,7 +548,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                           >
                             View Badges
                           </button>
-                         
+
                         </TableCell>
 
 

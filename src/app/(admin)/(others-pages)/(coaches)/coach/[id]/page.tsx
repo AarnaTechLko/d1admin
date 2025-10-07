@@ -187,141 +187,141 @@ export default function CoachDetailsPage() {
 
   // Handle verify button click
 
-const handleVerify = async () => {
-  if (!coach?.id) return;
+  const handleVerify = async () => {
+    if (!coach?.id) return;
 
-  // Ask confirmation before proceeding
-  const confirmResult = await Swal.fire({
-    title: "Are you sure?",
-    text: "Do you want to verify this coach?",
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonColor: "#2563eb",
-    cancelButtonColor: "#d33",
-    confirmButtonText: "Yes, verify",
-    cancelButtonText: "Cancel",
-  });
-
-  if (!confirmResult.isConfirmed) return;
-
-  setLoading(true);
-
-  try {
-    const res = await fetch(`/api/coach/verify/${coach.id}`, {
-      method: "PATCH",
-      credentials: "include",
+    // Ask confirmation before proceeding
+    const confirmResult = await Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to verify this coach?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#2563eb",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, verify",
+      cancelButtonText: "Cancel",
     });
-    if (res.status === 403) {
-      Swal.fire({
-        icon: "warning",
-        title: "Action Denied",
-        text:  "Only Executive level sub-admin can verify coaches",
-        confirmButtonColor: "#2563eb",
+
+    if (!confirmResult.isConfirmed) return;
+
+    setLoading(true);
+
+    try {
+      const res = await fetch(`/api/coach/verify/${coach.id}`, {
+        method: "PATCH",
+        credentials: "include",
       });
-      return;
-    }
-
-    const data = await res.json();
-    console.log("verify response:", data);
-
-
-    if (!res.ok) throw new Error(data.error || "Failed to verify");
-
-    setCoach((prev) => (prev ? { ...prev, verified: 1 } : prev));
-
-    Swal.fire({
-      icon: "success",
-      title: "Verified!",
-      text: "Coach has been verified successfully.",
-      confirmButtonColor: "#2563eb",
-    });
-
-  } catch (err) {
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text: (err as Error).message,
-      confirmButtonColor: "#2563eb",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-const handleUnverify = async () => {
-  if (!coach?.id) return;
-
-  // First confirmation popup
-  const firstConfirm = await Swal.fire({
-    title: "Unverify Coach?",
-    text: "Are you sure you want to mark this coach as unverified?",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#d33", // red
-    cancelButtonColor: "#2563eb", // blue
-    confirmButtonText: "Yes, continue",
-  });
-  if (!firstConfirm.isConfirmed) return;
-
-  // Second confirmation with input
-  const secondConfirm = await Swal.fire({
-    title: "Type UNVERIFY to confirm",
-    input: "text",
-    inputPlaceholder: "Type UNVERIFY here",
-    inputValidator: (value) => {
-      if (value !== "UNVERIFY") {
-        return "You must type UNVERIFY to proceed!";
+      if (res.status === 403) {
+        Swal.fire({
+          icon: "warning",
+          title: "Action Denied",
+          text: "Only Executive level sub-admin can verify coaches",
+          confirmButtonColor: "#2563eb",
+        });
+        return;
       }
-      return null;
-    },
-    showCancelButton: true,
-    confirmButtonColor: "#d33",
-    cancelButtonColor: "#2563eb",
-    confirmButtonText: "Confirm Unverify",
-  });
 
-  if (!secondConfirm.isConfirmed || secondConfirm.value !== "UNVERIFY") return;
+      const data = await res.json();
+      console.log("verify response:", data);
 
-  setLoading(true);
 
-  try {
-    const res = await fetch(`/api/coach/unverify/${coach.id}`, {
-      method: "PATCH",
-      credentials: "include",
-    });
- if (res.status === 403) {
+      if (!res.ok) throw new Error(data.error || "Failed to verify");
+
+      setCoach((prev) => (prev ? { ...prev, verified: 1 } : prev));
+
       Swal.fire({
-        icon: "warning",
-        title: "Action Denied",
-        text:  "Only Executive level sub-admin can unverify coaches",
+        icon: "success",
+        title: "Verified!",
+        text: "Coach has been verified successfully.",
         confirmButtonColor: "#2563eb",
       });
-      return;
+
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text: (err as Error).message,
+        confirmButtonColor: "#2563eb",
+      });
+    } finally {
+      setLoading(false);
     }
-    const data = await res.json();
-    console.log("unverify response:", data);
-    if (!res.ok) throw new Error(data.error || "Failed to unverify");
+  };
 
-    // ✅ Update local state
-    setCoach((prev) => (prev ? { ...prev, verified: 0 } : prev));
+  const handleUnverify = async () => {
+    if (!coach?.id) return;
 
-    Swal.fire({
-      icon: "success",
-      title: "Unverified!",
-      text: "Coach has been marked as unverified successfully.",
-      confirmButtonColor: "#2563eb",
+    // First confirmation popup
+    const firstConfirm = await Swal.fire({
+      title: "Unverify Coach?",
+      text: "Are you sure you want to mark this coach as unverified?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33", // red
+      cancelButtonColor: "#2563eb", // blue
+      confirmButtonText: "Yes, continue",
     });
-  } catch (err) {
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text: (err as Error).message,
-      confirmButtonColor: "#2563eb",
+    if (!firstConfirm.isConfirmed) return;
+
+    // Second confirmation with input
+    const secondConfirm = await Swal.fire({
+      title: "Type UNVERIFY to confirm",
+      input: "text",
+      inputPlaceholder: "Type UNVERIFY here",
+      inputValidator: (value) => {
+        if (value !== "UNVERIFY") {
+          return "You must type UNVERIFY to proceed!";
+        }
+        return null;
+      },
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#2563eb",
+      confirmButtonText: "Confirm Unverify",
     });
-  } finally {
-    setLoading(false);
-  }
-};
+
+    if (!secondConfirm.isConfirmed || secondConfirm.value !== "UNVERIFY") return;
+
+    setLoading(true);
+
+    try {
+      const res = await fetch(`/api/coach/unverify/${coach.id}`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+      if (res.status === 403) {
+        Swal.fire({
+          icon: "warning",
+          title: "Action Denied",
+          text: "Only Executive level sub-admin can unverify coaches",
+          confirmButtonColor: "#2563eb",
+        });
+        return;
+      }
+      const data = await res.json();
+      console.log("unverify response:", data);
+      if (!res.ok) throw new Error(data.error || "Failed to unverify");
+
+      // ✅ Update local state
+      setCoach((prev) => (prev ? { ...prev, verified: 0 } : prev));
+
+      Swal.fire({
+        icon: "success",
+        title: "Unverified!",
+        text: "Coach has been marked as unverified successfully.",
+        confirmButtonColor: "#2563eb",
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text: (err as Error).message,
+        confirmButtonColor: "#2563eb",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
 
@@ -779,7 +779,7 @@ const handleUnverify = async () => {
                 className="w-24 h-24 object-cover rounded-full border-4 border-gray-200 shadow"
               />
             )}
-        
+
           </div>
 
 
@@ -787,8 +787,8 @@ const handleUnverify = async () => {
           {/* Name + Socials */}
           <div className="flex flex-col items-center md:items-start gap-2 md:flex-1">
             <h1 className="text-xl flex gap-2 sm:text-2xl md:text-3xl font-bold text-gray-800 text-center md:text-left">
-                 {isVerified && (
-           
+              {isVerified && (
+
                 <Image
                   src="/uploads/king_icon.png" // path relative to public folder
                   alt="Verified Crown"
@@ -796,8 +796,8 @@ const handleUnverify = async () => {
                   height={32} // adjust size
                   className="object-contain"
                 />
-           
-            )}
+
+              )}
               {coach.firstName} {coach.lastName}
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 text-center md:text-left">

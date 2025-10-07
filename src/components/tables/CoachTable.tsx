@@ -407,7 +407,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                         setTempPercentage(coach.percentage ?? 0); // use existing percentage
                       }}
                       className={`w-full rounded px-2 py-1 ${(coach.percentage ?? 0) > 0 ? "bg-green-500 text-white" : "bg-gray-100 hover:bg-gray-200"
-                        }`}                      >
+                        }`}>
                       {coach.percentage ?? 20}
                     </button>
 

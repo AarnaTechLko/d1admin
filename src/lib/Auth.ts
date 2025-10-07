@@ -35,7 +35,12 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  // session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt", // or "database"
+    maxAge: 24 * 60 * 60, // session duration in seconds (here: 24 hours)
+    updateAge: 60 * 60,  // how often the session is updated in seconds (here: 1 hour)
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {

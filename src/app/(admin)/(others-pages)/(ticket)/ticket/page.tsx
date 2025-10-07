@@ -12,6 +12,8 @@ import Swal from "sweetalert2";
 // import { useSession } from 'next-auth/react';
 import { UploadCloud } from "lucide-react";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+// import toast from "react-hot-toast";
+import toast from "react-hot-toast";
 
 
 type TicketNote = {
@@ -124,156 +126,26 @@ const TicketsPage = () => {
       Swal.fire("Error", "Could not load ticket messages.", "error");
     }
   };
-
-  // const handleReplySubmit = async () => {
-  //   setIsReplyModalOpen(false);
-
-  //   if (!selectedTicket) {
-  //     Swal.fire("Error", "No ticket selected.", "error");
-  //     return;
-  //   }
-
-  //   if (!replyMessage.trim()) {
-  //     Swal.fire("Error", "Message cannot be empty.", "warning");
-  //     return;
-  //   }
-
-  //   setLoading(true);
-
-  //   try {
-  //     // 1️⃣ Prepare FormData for reply API
-  //     const formData = new FormData();
-  //     formData.append("ticketId", String(selectedTicket.id));
-  //     formData.append("repliedBy", userId ?? "");
-  //     formData.append("message", replyMessage.trim());
-  //     formData.append("status", replyStatus);
-  //     formData.append("priority", replyPriority);
-  //     formData.append("escalate", isEscalate.toString());
-
-
-
-  //     if (attachmentFile) {
-  //       formData.append("attachment", attachmentFile);
-  //     }
-
-  //     // 2️⃣ Call reply API
-  //     const response = await fetch("/api/ticket/reply", {
-  //       method: "POST",
-  //       body: formData,
-  //     });
-
-  //     const data = await response.json();
-
-  //     if (!response.ok) {
-  //       Swal.fire("Error", data.error || "Failed to send reply.", "error");
-  //       return;
-  //     }
-
-  //     // 3️⃣ Update ticket in frontend state
-  //     setTickets((prevTickets) =>
-  //       prevTickets.map((t) =>
-  //         t.id === selectedTicket.id
-  //           ? {
-  //             ...t,
-  //             status: replyStatus,
-  //             message: replyMessage.trim(),
-  //             priority: replyPriority // ✅ update priority
-
-  //           }
-  //           : t
-  //       )
-  //     );
-
-  //     // 4️⃣ Save note in ticket_notes table
-  //     if (adminNotes?.trim()) {
-  //       try {
-  //         const noteResponse = await fetch("/api/ticket-notes", {
-  //           method: "POST",
-  //           headers: {
-  //             "Content-Type": "application/json",
-  //           },
-  //           body: JSON.stringify({
-  //             ticketId: selectedTicket.id,
-  //             notes: adminNotes.trim(),
-  //           }),
-  //         });
-
-  //         const noteData = await noteResponse.json();
-  //         if (!noteResponse.ok) {
-  //           console.error("Error saving ticket note:", noteData.error);
-  //         } else {
-  //           setAdminNotes(""); // clear note box
-  //         }
-  //       } catch (noteError) {
-  //         console.error("Failed to save ticket note:", noteError);
-  //       }
-  //     }
-
-  //     // 5️⃣ Save escalation/assignment if escalate checkbox is checked
-  //     if (isEscalate && selectedSubAdmin) {
-  //       try {
-  //         const assignResponse = await fetch("/api/ticket-assign", {
-  //           method: "POST",
-  //           headers: { "Content-Type": "application/json" },
-  //           body: JSON.stringify({
-  //             ticketId: selectedTicket.id,
-  //             fromId: userId,            // current logged-in user
-  //             toId: selectedSubAdmin,    // selected sub-admin
-  //             escalate: true,
-  //           }),
-  //         });
-
-  //         const assignData = await assignResponse.json();
-  //         if (!assignResponse.ok) {
-  //           console.error("Error saving ticket assignment:", assignData.error);
-  //           Swal.fire(
-  //             "Error",
-  //             assignData.error || "Failed to assign ticket.",
-  //             "error"
-  //           );
-  //         } else {
-  //           console.log("Ticket assignment saved:", assignData.data);
-  //         }
-  //       } catch (assignError) {
-  //         console.error("Failed to save ticket assignment:", assignError);
-  //         Swal.fire("Error", "Failed to assign ticket.", "error");
-  //       }
-  //     }
-
-
-
-  //     // 6️⃣ Success feedback and reset modal
-  //     Swal.fire("Success", "Reply, note, and assignment saved successfully!", "success");
-  //     setReplyMessage("");
-  //     setAttachmentFile(null);
-  //     setIsEscalate(false);
-  //     setAdminNotes("");
-  //     setSelectedSubAdmin("");
-  //     setIsReplyModalOpen(false);
-
-  //   } catch (error) {
-  //     console.error("Error submitting ticket reply:", error);
-  //     Swal.fire(
-  //       "Error",
-  //       "An unexpected error occurred while sending reply.",
-  //       "error"
-  //     );
-  //     setTicketReplies([]);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const handleReplySubmit = async () => {
     if (!selectedTicket) {
       Swal.fire("Error", "No ticket selected.", "error");
       return;
     }
-
-    if (!replyMessage.trim()) {
-      Swal.fire("Error", "Message cannot be empty.", "warning");
-      return;
-    }
-
+    
+ if (!replyMessage.trim()) {
+  toast.error("Message cannot be empty.", {
+    duration: 4000,
+    position: "top-right",
+    style: {
+      background: "red",       // background color
+      color: "white",          // text color
+      minWidth: "300px",       // width of the toast
+      minHeight: "60px",       // height of the toast
+     
+    },
+  });
+  return;
+}
     setLoading(true);
 
     try {
@@ -510,7 +382,7 @@ const TicketsPage = () => {
   };
   const handleViewNotesClick = async (ticket: Ticket) => {
     setIsNotesOpen(true);
-
+setLoading(true);
     try {
       const res = await fetch(`/api/ticket-notes/${ticket.id}`);
       const data = await res.json();
@@ -518,8 +390,9 @@ const TicketsPage = () => {
     } catch (err) {
       console.error("Failed to fetch notes:", err);
       setNotes([]);
-    } finally {
-    }
+    }  finally {
+        setLoading(false);
+      }
   };
 
   const handleModalSubmit = async () => {

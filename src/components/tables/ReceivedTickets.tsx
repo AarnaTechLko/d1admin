@@ -12,6 +12,7 @@ import Swal from "sweetalert2";
 // import { useSession } from 'next-auth/react';
 import { UploadCloud } from "lucide-react";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import toast from "react-hot-toast";
 
 
 type TicketNote = {
@@ -136,10 +137,19 @@ const TicketsPage = () => {
     }
 
     if (!replyMessage.trim()) {
-      Swal.fire("Error", "Message cannot be empty.", "warning");
-      return;
-    }
-
+  toast.error("Message cannot be empty.", {
+    duration: 4000,
+    position: "top-right",
+    style: {
+      background: "red",       // background color
+      color: "white",          // text color
+      minWidth: "300px",       // width of the toast
+      minHeight: "60px",       // height of the toast
+     
+    },
+  });
+  return;
+}
     setLoading(true);
 
     try {

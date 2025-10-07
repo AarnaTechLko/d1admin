@@ -53,45 +53,45 @@ interface Player {
     countryName: string;
     countrycode: string;
     earnings: number;
-
+    diamond: number;
 }
 interface Coach {
-  sportName: string;
-  approved_or_denied: number;
-  verified: number;
-  latestLoginIp: string;
-  id: number;
-  first_name: string;
-  last_name: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  gender: string;
-  country: string;
-  state: string;
-  city: string;
-  sport: string;
-  status: string;
-  qualifications: string;
-  consumeLicenseCount: number;
-  assignedLicenseCount: number;
-  earnings: number;
-  image?: string;
-  evaluations: Evaluation[];
-  evaluationResults: EvaluationResult[];
-  payments: Payment[];
-  clubName: string;
-  license_type: string;
-  facebook: string;
-  instagram: string;
-  linkedin: string;
-  xlink: string;
-  youtube: string;
-  cv: string;
-  license: string;
-  countryName: string;
-  countrycode: string;
+    sportName: string;
+    approved_or_denied: number;
+    verified: number;
+    latestLoginIp: string;
+    id: number;
+    first_name: string;
+    last_name: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+    gender: string;
+    country: string;
+    state: string;
+    city: string;
+    sport: string;
+    status: string;
+    qualifications: string;
+    consumeLicenseCount: number;
+    assignedLicenseCount: number;
+    earnings: number;
+    image?: string;
+    evaluations: Evaluation[];
+    evaluationResults: EvaluationResult[];
+    payments: Payment[];
+    clubName: string;
+    license_type: string;
+    facebook: string;
+    instagram: string;
+    linkedin: string;
+    xlink: string;
+    youtube: string;
+    cv: string;
+    license: string;
+    countryName: string;
+    countrycode: string;
 }
 
 interface Earnings {
@@ -159,10 +159,10 @@ interface Evaluation {
     created_at: string;
     is_deleted: number;
     Coachname?: string;
-  coachLastname?: string;
-  image?: string | null;
-  coachId?:number;
-  coachImage?: string | null;
+    coachLastname?: string;
+    image?: string | null;
+    coachId?: number;
+    coachImage?: string | null;
 
 }
 
@@ -173,7 +173,7 @@ export default function PlayerDetailPage() {
     const [data, setData] = useState<{
         view_finance: number;
         player: Player;
-        coach:Coach;
+        coach: Coach;
         evaluations: Evaluation[];
         earnings: Earnings[];
         payments: Payment[];
@@ -424,8 +424,73 @@ export default function PlayerDetailPage() {
     if (!data) return <p className="p-4">Player not found.</p>;
 
     const { player } = data;
-//console.log('all palayer data:',data?.player.id);
+    console.log('all palayer data:', data);
     const view_finance = Number(sessionStorage.getItem("view_finance") || 0);
+
+    // const isDiamond = player?.diamond === 1;
+    const isDiamond = data?.player?.diamond === 1;
+
+    const handleDiamondClick = async () => {
+        if (!player?.id) return;
+
+        const action = isDiamond ? "remove" : "add";
+        const confirmResult = await Swal.fire({
+            title: `${isDiamond ? "Remove" : "Add"} Diamond?`,
+            text: `Do you want to ${action} a diamond for this player?`,
+            icon: isDiamond ? "warning" : "question",
+            showCancelButton: true,
+            confirmButtonColor: isDiamond ? "#d33" : "#2563eb",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: `Yes, ${action}`,
+            cancelButtonText: "Cancel",
+        });
+
+        if (!confirmResult.isConfirmed) return;
+
+        setLoading(true);
+        try {
+            const res = await fetch(
+                `/api/player/${player.id}/${isDiamond ? "undiamond" : "diamond"}`,
+                {
+                    method: "PATCH",
+                    credentials: "include",
+                }
+            );
+
+            if (res.status === 403) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Action Denied",
+                    text: "Only sub-admin or executive level can perform this action",
+                    confirmButtonColor: "#2563eb",
+                });
+                return;
+            }
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to update diamond");
+
+            // Update local state
+            setData((prev) =>
+                prev ? { ...prev, player: { ...prev.player, diamond: isDiamond ? 0 : 1 } } : prev
+            );
+            Swal.fire({
+                icon: "success",
+                title: `Diamond ${isDiamond ? "Removed" : "Added"}!`,
+                text: `Player's diamond has been ${isDiamond ? "removed" : "added"} successfully.`,
+                confirmButtonColor: "#2563eb",
+            });
+        } catch (err) {
+            Swal.fire({
+                icon: "error",
+                title: "Error!",
+                text: (err as Error).message,
+                confirmButtonColor: "#2563eb",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-8">
@@ -440,8 +505,21 @@ export default function PlayerDetailPage() {
                     />
                 )}
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800 whitespace-nowrap">
-                        {player.first_name} {player.last_name}
+                    {/* <h1 className="text-3xl font-bold text-gray-800 whitespace-nowrap"> */}
+                    <h1 className="flex items-center text-center md:text-left font-bold text-gray-800
+                     text-xl sm:text-2xl md:text-3xl whitespace-nowrap">
+                        {isDiamond && (
+                            <Image
+                                src="/uploads/diamond.jpg"
+                                alt="Diamond"
+                                width={60}   // 60px width
+                                height={60}  // 60px height
+                                className="object-contain"
+                            />
+                        )}
+                        <span className="leading-none">
+                            {player.first_name} {player.last_name}
+                        </span>
                     </h1>
                     <div className="flex gap-3 mt-2 text-xl text-gray-500">
                         {player.facebook && (
@@ -496,14 +574,22 @@ export default function PlayerDetailPage() {
                         )}
                     </div>
                 </div>
-                <div className="w-full flex justify-end ">
-                    <div className="flex flex-col items-center bg-gradient-to-r from-blue-500 to-indigo-600 
-                    text-white rounded-xl shadow-lg p-4">
+                <div className="w-full flex flex-col items-end gap-2">
+                    <div className="flex flex-col items-center bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl shadow-lg p-4">
                         <p className="text-sm font-medium tracking-wide text-center">Overall Avg</p>
                         <p className="text-2xl font-extrabold text-center">
                             {overallAverage != null ? overallAverage : "N/A"}
                         </p>
                     </div>
+                    <button
+                        onClick={handleDiamondClick}
+                        className={`mt-2 flex items-center gap-2 px-3 py-1 rounded-lg text-white font-semibold 
+                            shadow ${isDiamond ? "bg-gray-400 hover:bg-gray-500" : "bg-yellow-400 hover:bg-yellow-500"
+                            }`}
+                    >
+
+                        {isDiamond ? "Remove Diamond" : "Add Diamond"}
+                    </button>
                 </div>
             </div>
 
@@ -729,8 +815,8 @@ export default function PlayerDetailPage() {
                 <div className="p-2">
                     <h2 className="text-xl font-semibold mb-4">🏅 Top 10 Evaluation Badges</h2>
                     {data?.player?.id && (
-  <TopEvaluationBadges playerId={data.player?.id} />
-)}
+                        <TopEvaluationBadges playerId={data.player?.id} />
+                    )}
 
                 </div>
             </section>

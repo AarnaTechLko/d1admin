@@ -28,9 +28,9 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(url.searchParams.get("limit") || "10", 10);
   const offset = (page - 1) * limit;
   const timeRange = url.searchParams.get("timeRange") || "";
-  const sport = parseInt(url.searchParams.get("sport") || "0", 0)
-
-
+  const sport = parseInt(url.searchParams.get("sport") || "0", 0);
+  const crowned = parseInt(url.searchParams.get("crowned") || "1", 0);
+console.log("crowned data:",crowned);
   // 🕒 time filter
   const now = new Date();
   let timeFilterCondition;
@@ -74,6 +74,7 @@ export async function GET(req: NextRequest) {
     );
 
     const sportCondition = sport !== 0 ? eq(coaches.sport, sport) : undefined;
+    const crownedCondition = crowned !== 0 ? eq(coaches.verified, crowned) : undefined;
 
     // 🔍 search filters
     const searchCondition = search
@@ -94,7 +95,7 @@ export async function GET(req: NextRequest) {
       baseCondition,
       ...(searchCondition ? [searchCondition] : []),
       ...(timeFilterCondition ? [timeFilterCondition] : []),
-      sportCondition,
+      sportCondition,crownedCondition,
     );
 
     // 📊 main query with aggregations
