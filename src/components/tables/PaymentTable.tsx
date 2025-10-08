@@ -77,7 +77,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
                 title="Hide"
                 className="text-green-600 hover:underline"
               >
-                ♻️ 
+                👻 
               </button>
             )}
           </div>

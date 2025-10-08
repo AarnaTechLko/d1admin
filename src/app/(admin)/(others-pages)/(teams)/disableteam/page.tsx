@@ -424,7 +424,7 @@ const TeamsPage = () => {
                             title="Hide team"
 
                           >
-                            ♻️
+                            👻
                           </button>
                         )}
                       </div>

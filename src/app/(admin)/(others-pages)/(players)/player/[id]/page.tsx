@@ -781,7 +781,7 @@ export default function PlayerDetailPage() {
                                                             fontSize: '1.2rem',
                                                         }}
                                                     >
-                                                        ♻️
+                                                        👻
                                                     </button>
                                                 )}
 
@@ -889,7 +889,7 @@ export default function PlayerDetailPage() {
                                                                 fontSize: '1.2rem',
                                                             }}
                                                         >
-                                                            ♻️
+                                                            ⏎
                                                         </button>
                                                     )}
                                                 </td>
