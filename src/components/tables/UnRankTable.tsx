@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table"
 import Image from "next/image";
 import d1 from "@/public/images/signin/d1.png";
 import Button from "../ui/button/Button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import Badge from "../ui/badge/Badge";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
 
@@ -283,7 +283,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                 </TableCell>
                                                 <TableCell className="py-3  text-gray-700 rounded">
                                                     <span className="inline-block px-3 py-1 text-white font-semibold text-sm rounded-full bg-green-600">
-                                                        {player.rank}
+                                                     {player.rank || 0}
                                                     </span>
                                                 </TableCell>
 
@@ -297,9 +297,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                 <TableCell className=" py-3 text-gray-500 dark:text-gray-400">
                                                     {[player.countryName, player.state, player.city].filter(Boolean).join(", ")}
                                                 </TableCell>
-
-
-
                                                 {/* Clickable Status Badge */}
                                                 <TableCell className=" py-3  text-gray-500 dark:text-gray-400 background-overlay">
                                                     <Dialog open={open} onOpenChange={setOpen}>
@@ -315,9 +312,9 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                                 </Badge>
                                                             </button>
                                                         </DialogTrigger>
-
                                                         {selectedPlayer && (
-                                                            <DialogContent className="max-w-sm rounded-lg p-6 bg-white shadow-lg fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 backdrop-blur-md ">
+                                                            <DialogContent className="max-w-sm rounded-lg p-6 bg-white shadow-lg 
+                                                            fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 backdrop-blur-md ">
                                                                 <DialogHeader>
                                                                     <DialogTitle className="text-lg font-semibold">Change Status</DialogTitle>
                                                                 </DialogHeader>

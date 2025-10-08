@@ -1,5 +1,75 @@
+// import { AuthOptions } from "next-auth";
+// import CredentialsProvider from "next-auth/providers/credentials";
+// interface UserType {
+//   id: string;
+//   name: string;
+//   username: string;
+//   role: string;
+//   type: string;
+// }
+
+
+
+// export const authOptions: AuthOptions = {
+//   providers: [
+//     CredentialsProvider({
+//       name: "Credentials",
+//       credentials: {
+//         email: { label: "Email", type: "text" },
+//         password: { label: "Password", type: "password" },
+//       },
+//       async authorize(credentials) {
+//         if (
+//           credentials?.email === "admin@test.com" &&
+//           credentials.password === "123"
+//         ) {
+//           return {
+//             id: "1",
+//             name: "Admin User",
+//             username: "Admin",
+//             role: "admin",
+//             type: "admin",
+//           };
+//         }
+//         return null;
+//       },
+//     }),
+//   ],
+//   // session: { strategy: "jwt" },
+//   session: {
+//     strategy: "jwt", // or "database"
+//     maxAge: 24 * 60 * 60, // session duration in seconds (here: 24 hours)
+//   updateAge: 12 * 60 * 60, // refresh token every 12 hours
+//   },
+//   callbacks: {
+//     async jwt({ token, user }) {
+//       if (user) {
+//         token.id = user.id;
+//         token.role = user.role;
+//         token.type = (user as UserType).type;
+//       }
+//       return token;
+//     },
+//     async session({ session, token }) {
+//       if (token) {
+//         session.user.id = token.id as string;
+//         session.user.role = token.role as string;
+//         session.user.type = token.type as string;
+//       }
+//       return session;
+//     },
+//   },
+//   pages: {
+//     signIn: "/login",
+//   },
+// };
+
+// export default authOptions;
+
+
 import { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+
 interface UserType {
   id: string;
   name: string;
@@ -7,8 +77,6 @@ interface UserType {
   role: string;
   type: string;
 }
-
-
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -35,13 +103,30 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
-  // session: { strategy: "jwt" },
+
+  // Session configuration
   session: {
-    strategy: "jwt", // or "database"
-    maxAge: 24 * 60 * 60, // session duration in seconds (here: 24 hours)
-    updateAge: 60 * 60,  // how often the session is updated in seconds (here: 1 hour)
+    strategy: "jwt", // JWT-based session
+    maxAge: 24 * 60 * 60, // 24 hours
+    updateAge: 12 * 60 * 60, // refresh every 12 hours
   },
+
+  // Make JWT cookie persistent across browser tabs
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 24 * 60 * 60, // 24 hours cookie lifetime
+      },
+    },
+  },
+
   callbacks: {
+    // Add user data to JWT token
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
@@ -50,6 +135,8 @@ export const authOptions: AuthOptions = {
       }
       return token;
     },
+
+    // Map JWT token data to session
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
@@ -59,9 +146,13 @@ export const authOptions: AuthOptions = {
       return session;
     },
   },
+
   pages: {
-    signIn: "/login",
+    signIn: "/login", // custom login page
   },
+
+  // Optional: debug mode in dev
+  debug: process.env.NODE_ENV === "development",
 };
 
 export default authOptions;
