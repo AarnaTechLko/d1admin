@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { FaSpinner } from "react-icons/fa";
 import { Eye, EyeOff } from "lucide-react";
+import toast from "react-hot-toast";
 type RecentMessage = {
   sender_id: string;
   from: string;
@@ -130,6 +131,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
       );
 
       Swal.fire("Success", "Percentage updated successfully!", "success");
+      window.location.reload();
       setPercentageOpen(false);
       setTempPercentage(0); // reset temporary input
     } catch (err) {
@@ -437,15 +439,25 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                             </Button>
                             <Button
                               onClick={() => {
-                                if (tempPercentage < 0 || tempPercentage > 20) {
-                                  Swal.fire({
-                                    icon: "warning",
-                                    title: "Invalid Value",
-                                    text: "Please enter a value between 0 and 20",
+                                // if (tempPercentage < 0 || tempPercentage > 20) {
+                                      if (tempPercentage < 0 || tempPercentage > 20 || isNaN(tempPercentage)) {
+
+                                  toast.error("Please enter a value between 0 and 20", {
+                                    duration: 2000,
+                                    style: {
+                                      background: "red",
+                                      color: "white",
+                                      minHeight: "50px",
+                                      minWidth: "300px",
+                                    },
                                   });
+
+                                  // Close modal immediately after showing toast
+                                  setPercentageOpen(false);
                                   return;
                                 }
-                                // save percentage (update table state / API)
+
+                                // Save percentage (update table state / API)
                                 handleSavePercentage(coach.id, tempPercentage);
                                 setPercentageOpen(false);
                               }}

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import Image from "next/image";
 import { FaArrowLeft } from "react-icons/fa";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
@@ -78,6 +78,7 @@ const PlayerBadgesModal: React.FC<Props> = ({ playerId, onClose }) => {
       try {
         const res = await fetch(`/api/player/${playerId}/badges`);
         const data = await res.json();
+        console.log("data",data);
         if (res.ok) {
           setBadges(data.evaluations ?? []);
           setOverallAverage(data.overallAverage ?? null);
@@ -99,29 +100,56 @@ const PlayerBadgesModal: React.FC<Props> = ({ playerId, onClose }) => {
   }, [playerId]);
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="p-6 max-w-4xl w-full h-[80vh] overflow-y-auto">
-        <button
-          onClick={onClose}
-          className="mb-4 flex items-center gap-2 text-blue-500"
-        >
-          <FaArrowLeft /> Back
-        </button>
+    // <Dialog open onOpenChange={onClose}>
+    //   <DialogContent className="p-6 max-w-4xl w-full h-[80vh] overflow-y-auto">
+    //     <button
+    //       onClick={onClose}
+    //       className="mb-4 flex items-center gap-2 text-blue-500"
+    //     >
+    //       <FaArrowLeft /> Back
+    //     </button>
 
-        <h1 className="text-2xl font-bold mb-2">Top Evaluation Badges</h1>
-        <p className="mb-4">
-          Player Name: {playerName || "N/A"} | Overall Average: {overallAverage ?? "N/A"}
-        </p>
+    //     <h1 className="text-2xl font-bold mb-2">Top Evaluation Badges</h1>
+    //     <p className="mb-4">
+    //       Player Name: {playerName || "N/A"} | Overall Average: {overallAverage ?? "N/A"}
+    //     </p>
 
-        {loading ? (
-          <p>Loading badges...</p>
-        ) : badges.length === 0 ? (
-          <p>No badges found for this player.</p>
-        ) : (
-          <TopEvaluationBadges badges={badges} />
-        )}
-      </DialogContent>
-    </Dialog>
+    //     {loading ? (
+    //       <p>Loading badges...</p>
+    //     ) : badges.length === 0 ? (
+    //       <p>No badges found for this player.</p>
+    //     ) : (
+    //       <TopEvaluationBadges badges={badges} />
+    //     )}
+    //   </DialogContent>
+    // </Dialog>
+    
+<Dialog open onOpenChange={onClose}>
+  <DialogContent className="p-6 max-w-4xl w-full h-[80vh] overflow-y-auto">
+    <button
+      onClick={onClose}
+      className="mb-4 flex items-center gap-2 text-blue-500"
+    >
+      <FaArrowLeft /> Back
+    </button>
+
+    <DialogTitle className="text-2xl font-bold">
+      Top Evaluation Badges
+    </DialogTitle>
+
+    <p className="mb-2">
+      Player Name: {playerName || "N/A"} | Overall Average: {overallAverage ?? "N/A"}
+    </p>
+
+    {loading ? (
+      <p>Loading badges...</p>
+    ) : badges.length === 0 ? (
+      <p>No badges found for this player.</p>
+    ) : (
+      <TopEvaluationBadges badges={badges} />
+    )}
+  </DialogContent>
+</Dialog>
   );
 };
 

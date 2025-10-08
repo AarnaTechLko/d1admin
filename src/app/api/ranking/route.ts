@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import jwt from "jsonwebtoken";
@@ -13,68 +12,99 @@ interface JwtPayload {
 }
 
 export async function POST(req: NextRequest) {
-    try {
-        const body = await req.json();
-        const { playerId, rank } = body;
+  try {
+    const body = await req.json();
+    const { playerId, rank } = body;
 
-        if (!playerId || rank === undefined) {
-            return NextResponse.json(
-                { error: "Missing required fields: playerId or rank" },
-                { status: 400 }
-            );
-        }
-
-        const cookieHeader = req.headers.get("cookie") || "";
-        const cookies = Object.fromEntries(
-            cookieHeader.split("; ").map((c) => {
-                const [key, ...v] = c.split("=");
-                return [key, decodeURIComponent(v.join("="))];
-            })
-        );
-
-        const token = cookies["session_token"];
-        // if (!token) {
-        //     return NextResponse.json({ error: "Unauthorized, no token found" }, { status: 401 });
-        // }
-        if (!token) {
-            return NextResponse.redirect(new URL("/auth/signout", req.url));
-        }
-        let decoded: JwtPayload;
-        try {
-            decoded = jwt.verify(token, SECRET_KEY) as JwtPayload;
-        } catch (err) {
-            console.error("JWT verification failed:", err);
-            return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 });
-        }
-
-        const currentUserId = decoded.id;
-
-        // Insert ranking
-        const inserted = await db
-            .insert(ranking)
-            .values({
-                playerId: Number(playerId),
-                rank: Number(rank),
-                addedBy: currentUserId,
-                createdAt: new Date(),
-            })
-            .returning();
-
-        // Convert playerId to string in the response
-        const responseData = inserted.map((r) => ({
-            ...r,
-            playerId: String(r.playerId),
-        }));
-
-        return NextResponse.json({
-            message: "Ranking added successfully",
-            data: responseData,
-        });
-
-    } catch (err) {
-        console.error("POST /api/ranking error:", err);
-        return NextResponse.json({ error: "Failed to add ranking" }, { status: 500 });
+    if (!playerId || rank === undefined) {
+      return NextResponse.json(
+        { error: "Missing required fields: playerId or rank" },
+        { status: 400 }
+      );
     }
+
+    const cookieHeader = req.headers.get("cookie") || "";
+    const cookies = Object.fromEntries(
+      cookieHeader.split("; ").map((c) => {
+        const [key, ...v] = c.split("=");
+        return [key, decodeURIComponent(v.join("="))];
+      })
+    );
+
+    const token = cookies["session_token"];
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized, no token found" }, { status: 401 });
+    }
+
+    let decoded: JwtPayload;
+    try {
+      decoded = jwt.verify(token, SECRET_KEY) as JwtPayload;
+    } catch (err) {
+      console.error("JWT verification failed:", err);
+      return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 });
+    }
+
+    const currentUserId = decoded.id;
+
+    // ✅ Check if the rank value already exists for another player
+    const existingRank = await db
+      .select()
+      .from(ranking)
+      .where(eq(ranking.rank, Number(rank)));
+
+    if (existingRank.length > 0 && existingRank[0].playerId !== Number(playerId)) {
+      return NextResponse.json(
+        { error: `Rank ${rank} is already assigned to another player` },
+        { status: 400 }
+      );
+    }
+
+    // ✅ Check if player already has a ranking
+    const existingPlayerRank = await db
+      .select()
+      .from(ranking)
+      .where(eq(ranking.playerId, Number(playerId)));
+
+    let result;
+    if (existingPlayerRank.length > 0) {
+      // Update existing player's ranking
+      result = await db
+        .update(ranking)
+        .set({
+          rank: Number(rank),
+          addedBy: currentUserId,
+        })
+        .where(eq(ranking.playerId, Number(playerId)))
+        .returning();
+    } else {
+      // Insert new ranking
+      result = await db
+        .insert(ranking)
+        .values({
+          playerId: Number(playerId),
+          rank: Number(rank),
+          addedBy: currentUserId,
+          createdAt: new Date(),
+        })
+        .returning();
+    }
+
+    const responseData = result.map((r) => ({
+      ...r,
+      playerId: String(r.playerId),
+    }));
+
+    return NextResponse.json({
+      message: existingPlayerRank.length > 0
+        ? "Ranking updated successfully"
+        : "Ranking added successfully",
+      data: responseData,
+    });
+
+  } catch (err) {
+    console.error("POST /api/ranking error:", err);
+    return NextResponse.json({ error: "Failed to add/update ranking" }, { status: 500 });
+  }
 }
 
 export async function GET() {

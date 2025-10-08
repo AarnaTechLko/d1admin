@@ -8,6 +8,7 @@ import Link from "next/link";
 import React, { useState ,useEffect,useRef} from "react";
 import LL from "@/public/images/logo/LL.png"; 
 import { useRouter } from "next/navigation";
+import { Toaster } from "react-hot-toast";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
@@ -153,7 +154,17 @@ const AppHeader: React.FC = () => {
           </div>
           {/* <!-- User Area --> */}
           <UserDropdown /> 
-    
+  <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: "red",
+            color: "white",
+            minHeight: "50px",
+            minWidth: "300px",
+          },
+        }}
+      />
         </div>
       </div>
     </header>
