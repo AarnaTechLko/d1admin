@@ -472,7 +472,7 @@ const handleRevert = async (id: number) => {
                                                 fontSize: '1rem',
                                             }}
                                         >
-                                            ♻️
+                                            👻
                                         </button>
                                     )}
                                 </td>

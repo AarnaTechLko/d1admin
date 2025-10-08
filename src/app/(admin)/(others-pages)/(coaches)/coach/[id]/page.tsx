@@ -1117,7 +1117,7 @@ export default function CoachDetailsPage() {
                               fontSize: '1.2rem',
                             }}
                           >
-                            ♻️
+                            👻
                           </button>
                         )}
 
@@ -1431,7 +1431,7 @@ export default function CoachDetailsPage() {
                                 fontSize: '1.2rem',
                               }}
                             >
-                              ♻️
+                              ⏎
                             </button>
                           )}
                         </td>

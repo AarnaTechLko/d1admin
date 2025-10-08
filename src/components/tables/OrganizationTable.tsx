@@ -570,7 +570,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                                 title="Revert Organization"
 
                               >
-                                ♻️
+                                ⏎
                               </button>
                             )}
                             {/* 👁️ View IP Info button */}

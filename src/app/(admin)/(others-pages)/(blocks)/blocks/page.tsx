@@ -330,7 +330,7 @@ const handleAddIP = async () => {
                                             fontSize: '1.2rem',
                                         }}
                                     >
-                                        ♻️
+                                        👻
                                     </button>
                                 )}
 

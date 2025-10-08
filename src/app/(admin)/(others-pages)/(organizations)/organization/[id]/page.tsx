@@ -581,7 +581,7 @@ function TableSection<T extends Entity>({
                               className="text-green-600 rounded-full bg-transparent m-0 p-0 hover:bg-transparent"
                               title="Revert"
                             >
-                              <span role="img" aria-label="Revert">♻️</span>
+                              <span role="img" aria-label="Revert">⏎</span>
                             </Button>
                           )}
                         </td>

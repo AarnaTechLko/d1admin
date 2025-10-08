@@ -416,7 +416,7 @@ export default function CategoryPage() {
                                                 fontSize: '1rem',
                                             }}
                                         >
-                                            ♻️
+                                            👻
                                         </button>
                                     )}
                                 </td>
