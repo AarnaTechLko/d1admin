@@ -67,6 +67,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
     const router = useRouter();
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+    const [selectedPlayers, setSelectedPlayers] = useState<Player | null>(null);
     const [status, setStatus] = useState<string | null>(null);
     const [open, setOpen] = useState(false); // State for modal visibility
     const [showConfirmation, setShowConfirmation] = useState(false); // State for confirmation modal visibility
@@ -106,14 +107,14 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
     console.log("data", data)
     // Function to handle status change after confirmation
     const handleStatusChange = async () => {
-        if (!selectedPlayer) return;
+        if (!selectedPlayers) return;
 
         try {
             const response = await fetch("/api/player", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    playerId: selectedPlayer.id,
+                    playerId: selectedPlayers.id,
                     newStatus: status,
                 }),
             });
@@ -283,7 +284,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                 </TableCell>
                                                 <TableCell className="py-3  text-gray-700 rounded">
                                                     <span className="inline-block px-3 py-1 text-white font-semibold text-sm rounded-full bg-green-600">
-                                                     {player.rank || 0}
+                                                        {player.rank || 0}
                                                     </span>
                                                 </TableCell>
 
@@ -298,12 +299,12 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                     {[player.countryName, player.state, player.city].filter(Boolean).join(", ")}
                                                 </TableCell>
                                                 {/* Clickable Status Badge */}
-                                                <TableCell className=" py-3  text-gray-500 dark:text-gray-400 background-overlay">
+                                                <TableCell className="px-2 py-3">
                                                     <Dialog open={open} onOpenChange={setOpen}>
                                                         <DialogTrigger asChild>
                                                             <button
                                                                 onClick={() => {
-                                                                    setSelectedPlayer(player);
+                                                                    setSelectedPlayers(player);
                                                                     setStatus(player.status);
                                                                 }}
                                                             >
@@ -312,19 +313,18 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                                 </Badge>
                                                             </button>
                                                         </DialogTrigger>
-                                                        {selectedPlayer && (
-                                                            <DialogContent className="max-w-sm rounded-lg p-6 bg-white shadow-lg 
-                                                            fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 backdrop-blur-md ">
+                                                        {selectedPlayers && (
+                                                            <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">
                                                                 <DialogHeader>
                                                                     <DialogTitle className="text-lg font-semibold">Change Status</DialogTitle>
                                                                 </DialogHeader>
 
-                                                                {selectedPlayer.status === "Pending" ? (
+                                                                {selectedPlayers.status === "Pending" ? (
                                                                     <p className="text-red-500">Pending status cannot be changed.</p>
                                                                 ) : (
                                                                     <div>
                                                                         <select
-                                                                            value={status ?? selectedPlayer.status}
+                                                                            value={status ?? selectedPlayers.status}
                                                                             onChange={(e) => setStatus(e.target.value)}
                                                                             className="w-full p-2 border rounded-md text-gray-700"
                                                                         >

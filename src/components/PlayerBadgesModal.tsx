@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import Image from "next/image";
 import { FaArrowLeft } from "react-icons/fa";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
+import { useRouter } from "next/navigation";
 
 interface Badge {
   playerId: number;
@@ -24,14 +25,17 @@ interface Props {
 
 const TopEvaluationBadges: React.FC<{ badges: Badge[] }> = ({ badges }) => {
   if (!badges || badges.length === 0) return <p>No badges available.</p>;
+   const router = useRouter();
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-6">
       {badges.map((badge) => {
         const average = Number(badge.eval_average) || 0;
         return (
-          <div
+          <div 
             key={badge.id}
+            //  onClick={() => router.push(`/evaluationdetails/${badge.id}`)}
+             onClick={() => router.push(`/evaluationdetails?evaluationId=${badge.id}`)}
             className="flex flex-col items-center border rounded-xl w-28 p-2 shadow-md bg-gray-100"
             title={`Badge ID ${badge.id} — Avg: ${average.toFixed(1)}`}
           >

@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const url = request.nextUrl;
     const evaluationId = Number(url.searchParams.get('evaluationId'));
+    console.log('eval ID:',evaluationId);
 
     if (isNaN(evaluationId)) {
       return NextResponse.json({ error: 'Invalid evaluationId' }, { status: 400 });
