@@ -384,7 +384,8 @@ export default function CategoryPage() {
                         currentCategories.map((cat) => (
                             <tr
                                 key={cat.id}
-                                className={`hover:bg-gray-50 transition-colors duration-300 ${cat.is_deleted === 0 ? "bg-red-100" : "bg-white"}`} >                                <td className="p-2 text-xs border">{cat.categoryName}</td>
+                                className={`hover:bg-gray-50 transition-colors duration-300 ${cat.is_deleted === 0 ? "bg-red-100" : "bg-white"}`}>
+                                <td className="p-2 text-xs border">{cat.categoryName}</td>
                                 <td className="p-2 text-xs border">${cat.totalAmount || 0}</td>
                                 <td className="p-2 text-xs border">
                                     {new Date(cat.createdAt).toLocaleDateString()}

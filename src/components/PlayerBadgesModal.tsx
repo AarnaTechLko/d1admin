@@ -24,8 +24,9 @@ interface Props {
 }
 
 const TopEvaluationBadges: React.FC<{ badges: Badge[] }> = ({ badges }) => {
+    const router = useRouter();
   if (!badges || badges.length === 0) return <p>No badges available.</p>;
-   const router = useRouter();
+ 
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-6">
@@ -104,30 +105,6 @@ const PlayerBadgesModal: React.FC<Props> = ({ playerId, onClose }) => {
   }, [playerId]);
 
   return (
-    // <Dialog open onOpenChange={onClose}>
-    //   <DialogContent className="p-6 max-w-4xl w-full h-[80vh] overflow-y-auto">
-    //     <button
-    //       onClick={onClose}
-    //       className="mb-4 flex items-center gap-2 text-blue-500"
-    //     >
-    //       <FaArrowLeft /> Back
-    //     </button>
-
-    //     <h1 className="text-2xl font-bold mb-2">Top Evaluation Badges</h1>
-    //     <p className="mb-4">
-    //       Player Name: {playerName || "N/A"} | Overall Average: {overallAverage ?? "N/A"}
-    //     </p>
-
-    //     {loading ? (
-    //       <p>Loading badges...</p>
-    //     ) : badges.length === 0 ? (
-    //       <p>No badges found for this player.</p>
-    //     ) : (
-    //       <TopEvaluationBadges badges={badges} />
-    //     )}
-    //   </DialogContent>
-    // </Dialog>
-    
 <Dialog open onOpenChange={onClose}>
   <DialogContent className="p-6 max-w-4xl w-full h-[80vh] overflow-y-auto">
     <button

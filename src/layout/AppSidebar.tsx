@@ -13,7 +13,6 @@ import { useSidebar } from "../context/SidebarContext";
 import {
   Bell,
   Building2,
-  Calculator,
   ChevronDownIcon,
   ClipboardList,
   GridIcon,
@@ -25,6 +24,7 @@ import {
   UserCheck,
   Users,
 } from "lucide-react";
+import { FaTrophy, FaWallet } from "react-icons/fa";
 // import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
@@ -159,7 +159,7 @@ const AppSidebar: React.FC = () => {
           },
           {
             name: "Accounting",
-            icon: <Calculator />,
+            icon: <FaWallet />,
             subItems: [
               { name: "Add Category", path: "/category", pro: false },
               { name: "Add Expense", path: "/expense", pro: false },
@@ -167,10 +167,21 @@ const AppSidebar: React.FC = () => {
           },
            {
             name: "Ranking",
-            icon: <Calculator />,
+            icon: <FaTrophy />,
             subItems: [
               { name: " Add Ranking", path: "/ranking", pro: false },
               { name: " View Ranking", path: "/viewranking", pro: false },
+            ],
+          },
+            {
+            name: "Payment",
+            icon: <FaTrophy />,
+            subItems: [
+              { name: " Refunded", path: "/refunded", pro: false },
+              { name: " Captured", path: "/captured", pro: false },
+              { name: "Authorize", path: "/authorize", pro: false },
+              { name: "Canceled", path: "/canceled", pro: false },
+              { name: "Failed", path: "/failed", pro: false },
             ],
           },
           {
