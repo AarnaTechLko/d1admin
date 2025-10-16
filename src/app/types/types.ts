@@ -230,6 +230,21 @@ export interface Category {
   attributes: Attribute[] | null;
 }
 
+export interface Payment {
+  id: number;
+  coach_id: number;
+  evaluation_id: number;
+  review_title: string;
+  playerFirstName: string;
+  amount: number;
+  status: string;
+  description: string;
+  created_at: string;
+  is_deleted: number;
+}
+
+
+
 export interface Props {
   category: Category;
   valuesForCategory?: Record<string, string | number | undefined>;

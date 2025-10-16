@@ -957,3 +957,14 @@ export const ranking = pgTable("ranking", {
     .defaultNow()
     .notNull(), // default current timestamp
 });
+
+export const refunds = pgTable("refunds", {
+  id: serial("id").primaryKey(),
+  payment_id: integer("payment_id").notNull(), // you can later add foreign key constraint in DB
+  refund_type: varchar("refund_type", { length: 10 }).notNull(), // 'full' or 'partial'
+  amount_refunded: numeric("amount_refunded", { precision: 10, scale: 2 }).notNull(),
+  remaining_amount: numeric("remaining_amount", { precision: 10, scale: 2 }).notNull(),
+  refund_by: varchar("refund_by", { length: 255 }).notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});

@@ -438,10 +438,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                         </>
                                                     )}
                                                 </TableCell>
-
-
-
-
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -449,7 +445,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                             </>
                         )}
                         <div className="flex justify-end items-center gap-2 p-4 border-t border-gray-200 dark:border-white/[0.05]">
-
                             {[...Array(totalPages)].map((_, index) => {
                                 const pageNumber = index + 1;
                                 return (
@@ -472,7 +467,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                             <DialogHeader>
                                 <DialogTitle className="text-lg font-semibold">Change Coach Password</DialogTitle>
                             </DialogHeader>
-
                             <div className="mt-4 space-y-4">
                                 <div className="relative">
                                     <input
@@ -490,7 +484,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
-
                                 <div className="flex justify-end gap-2">
                                     <button
                                         onClick={handleClosePlayerModal}
@@ -498,7 +491,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                     >
                                         Cancel
                                     </button>
-
                                     <button
                                         className="bg-blue-600 text-white px-4 py-2 rounded"
                                         onClick={async () => {
@@ -510,7 +502,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                 Swal.fire("Warning", "Password must be at least 6 characters", "warning");
                                                 return;
                                             }
-
                                             try {
                                                 const res = await fetch(`/api/player/${selectedPlayerId}/change-password`, {
                                                     method: "POST",
@@ -543,9 +534,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                             </div>
                         </DialogContent>
                     </Dialog>
-
-
-
                     <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
                         <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">
                             <DialogHeader>
@@ -553,7 +541,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                     {suspendPlayer?.suspend === 1 ? "Suspend Player" : "Unsuspend Player"}
                                 </DialogTitle>
                             </DialogHeader>
-
                             {suspendPlayer && (
                                 <div className="space-y-4">
                                     {suspendPlayer.suspend === 1 ? (
@@ -562,7 +549,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                             <p>
                                                 Suspend {suspendPlayer.firstName} {suspendPlayer.lastName} for how many days?
                                             </p>
-
                                             <input
                                                 type="number"
                                                 min={1}
@@ -574,7 +560,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                 }}
                                                 className="w-full p-2 border border-gray-300 rounded"
                                             />
-
                                             <div className="flex justify-end gap-2">
                                                 <Button variant="outline" onClick={() => setSuspendOpen(false)}>
                                                     Cancel
@@ -590,14 +575,12 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                             });
                                                             return;
                                                         }
-
                                                         try {
                                                             const res = await fetch(`/api/player/${suspendPlayer.id}/suspend`, {
                                                                 method: "POST",
                                                                 headers: { "Content-Type": "application/json" },
                                                                 body: JSON.stringify({ suspend_days: suspendDays }),
                                                             });
-
                                                             const result = await res.json();
                                                             if (!res.ok) throw new Error('Failed to suspend player');
                                                             console.log(result); // or use it in some logic
