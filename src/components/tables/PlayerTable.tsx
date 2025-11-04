@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { FaSpinner } from "react-icons/fa";
 import { Eye, EyeOff } from "lucide-react";
+import dayjs from "dayjs";
 
 type RecentMessage = {
   id: number;
@@ -24,6 +25,7 @@ type RecentMessage = {
 
 interface Player {
   id: string;
+  createdAt: number;
   first_name: string;
   rank?: number | null;
   last_name: string;
@@ -378,6 +380,9 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
                       <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Actions
+                      </TableCell>  
+                       <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                        Timestamp
                       </TableCell>
 
                     </TableRow>
@@ -815,6 +820,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
                           </div>
                         </TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500"> {dayjs(player.createdAt).format("D-MM-YYYY ,h:mm A")}</TableCell>
 
                       </TableRow>
                     ))}

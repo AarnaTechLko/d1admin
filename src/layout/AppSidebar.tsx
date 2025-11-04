@@ -136,7 +136,8 @@ const AppSidebar: React.FC = () => {
             name: "Notifications",
             icon: <Bell />,
             subItems: [
-              { name: "View Notification", path: "/notification", pro: false },
+              { name: "Send Notification", path: "/notification", pro: false },
+              { name: "View Notification", path: "/viewnotification", pro: false },
             ],
           },
           {

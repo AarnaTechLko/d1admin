@@ -14,11 +14,13 @@ import { useRouter } from "next/navigation";
 import { FaSpinner } from "react-icons/fa";
 import { Eye, EyeOff } from "lucide-react";
 import AddRankingModal from "../AddRankingModal";
+import dayjs from "dayjs";
 
 
 interface Player {
 
     id: string;
+    createdAt: number;
     first_name: string;
     last_name: string;
     image: string;
@@ -236,6 +238,9 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                             <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                                                 Actions
                                             </TableCell>
+                                            <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                                                Timestamp
+                                            </TableCell>
 
                                         </TableRow>
                                     </TableHeader>
@@ -385,6 +390,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                 </TableCell>
 
 
+                                                <TableCell className=" py-3 text-gray-500 dark:text-gray-400"> {dayjs(player.createdAt).format("D-MM-YYYY, h:mm A")}</TableCell>
 
                                             </TableRow>
                                         ))}

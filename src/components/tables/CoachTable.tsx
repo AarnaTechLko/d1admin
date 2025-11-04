@@ -16,6 +16,7 @@ import axios from "axios";
 import { FaSpinner } from "react-icons/fa";
 import { Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
+import dayjs from "dayjs";
 type RecentMessage = {
   sender_id: string;
   from: string;
@@ -751,7 +752,8 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                     </div>
 
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500">{coach.createdAt}</TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500">  {dayjs(coach.createdAt).format("D-MM-YYYY, h:mm A")}
+</TableCell>
 
 
                 </TableRow>
