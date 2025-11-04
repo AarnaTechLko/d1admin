@@ -284,6 +284,9 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                 </TableCell>
                 <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
                   Actions
+                </TableCell>   
+                <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
+                  Timestamp
                 </TableCell>
               </TableRow>
 
@@ -748,6 +751,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
                     </div>
 
                   </TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500">{coach.createdAt}</TableCell>
 
 
                 </TableRow>
