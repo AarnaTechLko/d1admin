@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import Input from "@/components/form/input/InputField";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
 import { Loader2 } from "lucide-react";
+import dayjs from "dayjs";
 
 // Payment interface
 export interface Payment {
@@ -224,7 +225,7 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
                   </TableCell>
 
                   {/* Created At */}
-                  <TableCell>{new Date(item.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell> {dayjs(item.created_at).format("D-MM-YYYY, h:mm A")}</TableCell>
                 </TableRow>
               ))
             ) : (

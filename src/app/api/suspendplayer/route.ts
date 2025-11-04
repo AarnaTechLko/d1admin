@@ -102,6 +102,7 @@ export async function GET(req: NextRequest) {
         state: users.state,
         league: users.league,
         city: users.city,
+        createdAt: users.createdAt,
         gender: users.gender,
         is_deleted: users.is_deleted,
         coachName: sql`coa."firstName"`.as("coachName"),

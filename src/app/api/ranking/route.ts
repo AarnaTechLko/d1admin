@@ -142,6 +142,7 @@ export async function GET() {
             weight: users.weight,
             jersey: users.jersey,
             birthday: users.birthday,
+            createdAt: users.createdAt,
             graduation: users.graduation,
             birth_year: users.birth_year,
             age_group: users.age_group,

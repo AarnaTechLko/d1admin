@@ -17,6 +17,7 @@ import {
 
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
+import dayjs from "dayjs";
 type Permission = {
   change_password: number;
   refund: number;
@@ -28,6 +29,7 @@ type Permission = {
 
 interface Admin {
   id: number;
+  created_at: number;
   username: string;
   email: string;
   role: string;
@@ -303,6 +305,11 @@ const AdminListPage = () => {
                     <div className="flex items-center gap-2">
                       <MoreHorizontal size={16} /> Actions
                     </div>
+                  </TableCell>  
+                   <TableCell className="px-5 py-3 text-sm font-bold text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-2">
+                      <MoreHorizontal size={16} /> Timestamp
+                    </div>
                   </TableCell>
                 </TableRow>
               </TableHeader>
@@ -340,7 +347,11 @@ const AdminListPage = () => {
                         </button>
                       </div>
                     </TableCell>
+                     <TableCell className="px-4 py-3 text-xs text-gray-800 dark:text-white/90">
+                    {dayjs(admin.created_at).format("D-MM-YYYY ,h:mm A")}
+                    </TableCell>
                   </TableRow>
+                  
                 ))}
               </TableBody>
             </Table>

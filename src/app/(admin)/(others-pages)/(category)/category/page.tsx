@@ -11,6 +11,7 @@ import {
     DialogFooter,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import dayjs from "dayjs";
 
 interface Category {
     amount: number;
@@ -360,8 +361,8 @@ export default function CategoryPage() {
                     <tr>
                         <th className="p-3 text-left border">Name</th>
                         <th className="p-3 text-left border">Total Expense ($)</th>
-                        <th className="p-3 text-left border">Created At</th>
                         <th className="p-3 text-left border">Action</th>
+                        <th className="p-3 text-left border">Timestamp</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -387,9 +388,7 @@ export default function CategoryPage() {
                                 className={`hover:bg-gray-50 transition-colors duration-300 ${cat.is_deleted === 0 ? "bg-red-100" : "bg-white"}`}>
                                 <td className="p-2 text-xs border">{cat.categoryName}</td>
                                 <td className="p-2 text-xs border">${cat.totalAmount || 0}</td>
-                                <td className="p-2 text-xs border">
-                                    {new Date(cat.createdAt).toLocaleDateString()}
-                                </td>
+                        
                                 <td className="p-2 text-xs border flex gap-3">
                                     <button
                                         className="text-blue-600 hover:text-blue-800"
@@ -421,6 +420,8 @@ export default function CategoryPage() {
                                         </button>
                                     )}
                                 </td>
+                               <td className="p-2 text-xs border">{dayjs(cat.createdAt).format("D-MM-YYYY, h:mm A")}</td>
+
                             </tr>
                         ))
                     )}

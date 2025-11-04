@@ -13,6 +13,7 @@ import Swal from "sweetalert2";
 import { UploadCloud } from "lucide-react";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import toast from "react-hot-toast";
+import dayjs from "dayjs";
 
 
 type TicketNote = {
@@ -527,6 +528,7 @@ const TicketsPage = () => {
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Assign To</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Status</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Actions</TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Timestamp</TableCell>
 
               </TableRow>
             </TableHeader>
@@ -591,6 +593,9 @@ const TicketsPage = () => {
                         </button>
                       </div>
 
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      {dayjs(ticket.createdAt).format("D-MM-YYYY, h:mm A")}
                     </TableCell>
                   </TableRow>
                 ))

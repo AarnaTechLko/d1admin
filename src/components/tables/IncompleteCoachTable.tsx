@@ -53,49 +53,6 @@ const IncompleteCoachTable: React.FC<CoachTableProps> = ({ data = [], currentPag
   const [sendInternal, setSendInternal] = useState(false);
   const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
 
-  // const userRole = sessionStorage.getItem("role");
-  // const router = useRouter();
-  // const handleOpenCoachModal = (coachId: number) => {
-  //   setSelectedCoachId(coachId);
-  //   setCoachPasswordModalOpen(true);
-  // };
-
-  // useEffect(() => {
-  //   if (selectedCoachid) {
-  //     (async () => {
-  //       try {
-  //         const res = await axios.get(`/api/messages?type=coach&id=${selectedCoachid}`);
-  //         setRecentMessages(res.data.messages || []);
-  //       } catch (err) {
-  //         console.error("Error fetching messages:", err);
-  //       }
-  //     })();
-  //   }
-  // }, [selectedCoachid]);
-
-  // const handleCloseCoachModal = () => {
-  //   setSelectedCoachId(null);
-  //   setNewCoachPassword("");
-  //   setCoachPasswordModalOpen(false);
-  // };
-
-  // const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'enterprise') => {
-  //   try {
-  //     const res = await fetch(`/api/ip_logstab?userId=${userId}&type=${type}`);
-  //     if (!res.ok) {
-  //       throw new Error(`API error: ${res.status}`);
-  //     }
-
-  //     const result = await res.json();
-  //     console.log("IP Log Response:", result);
-
-  //     setIpData(result.data || []); // Set the IP data for dialog
-  //     setIpOpen(userId);            // Open dialog for that user
-  //   } catch (error) {
-  //     console.error("Failed to fetch IP logs:", error);
-  //   }
-  // };
-
   return (
     <div>
       <div className=" mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">

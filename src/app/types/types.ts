@@ -90,6 +90,7 @@ export interface EvaluationData {
 
 export interface Player {
   id: string;
+  createdAt: number;
   first_name: string;
   last_name: string;
   image: string;

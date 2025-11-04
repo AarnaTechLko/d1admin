@@ -14,6 +14,7 @@ import {
 import Button from "@/components/ui/button/Button";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import dayjs from "dayjs";
 
 interface Category {
     id: number;
@@ -417,6 +418,7 @@ const handleRevert = async (id: number) => {
                         <th className="p-3 text-left border">Amount ($)</th>
                         <th className="p-3 text-left border">Description</th>
                         <th className="p-3 text-left border">Action</th>
+                        <th className="p-3 text-left border">Timestamp</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -476,6 +478,8 @@ const handleRevert = async (id: number) => {
                                         </button>
                                     )}
                                 </td>
+                                <td className="p-2 text-xs border">{dayjs(exp.createdAt).format("D-MM-YYYY, h:mm A")}</td>
+
                             </tr>
                         ))
                     )}
