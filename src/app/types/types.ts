@@ -123,6 +123,7 @@ export interface inCompletePlayer {
   email: string;
 }
 export interface Coach {
+  createdAt: number;
   percentage: number;
   id: string;
   evaluationId: number;

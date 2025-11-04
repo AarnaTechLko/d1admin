@@ -22,7 +22,7 @@ export async function GET() {
       .leftJoin(coaches, eq(payments.coach_id, coaches.id))
       .where(eq(payments.status, "refunded")); // ✅ fetch only captured payments
 
-    console.log("Captured Payments:", result);
+    // console.log("Captured Payments:", result);
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching payments:", error);
