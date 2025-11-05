@@ -1,8 +1,7 @@
 "use client";
-
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-
+import dayjs from "dayjs";
 // ✅ Define TypeScript interface for a message
 interface AdminMessage {
   id: number;
@@ -15,7 +14,6 @@ interface AdminMessage {
   senderImage: string | null;
   formattedDate: string | null;
 }
-
 export default function AdminMessagesTable() {
   const [messages, setMessages] = useState<AdminMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,10 +98,9 @@ export default function AdminMessagesTable() {
             setSearch(e.target.value);
             setCurrentPage(1);
           }}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring focus:ring-blue-300"
+          className="w-1/2 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring focus:ring-blue-300"
         />
       </div>
-
       {/* 🧾 Table */}
       <table className="w-full text-left border-collapse">
         <thead className="bg-gray-100 dark:bg-gray-800">
@@ -125,7 +122,6 @@ export default function AdminMessagesTable() {
               const displayText = isExpanded
                 ? msg.message
                 : msg.message?.slice(0, 50) + (isLong ? "..." : "");
-
               return (
                 <tr
                   key={msg.id}
@@ -177,7 +173,7 @@ export default function AdminMessagesTable() {
 
                   {/* Date */}
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                    {msg.formattedDate || "—"}
+                    {dayjs(msg.formattedDate).format("D-MM-YYYY, h:mm A")}
                   </td>
                 </tr>
               );

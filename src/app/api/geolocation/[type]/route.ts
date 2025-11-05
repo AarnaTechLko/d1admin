@@ -288,6 +288,7 @@ const messages = targetIds.map((receiverId: string) => ({
   read: 0,
   created_at: now,
   updated_at: now,
+  type,
 }));
 
 await db.insert(admin_message).values(messages);

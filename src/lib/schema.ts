@@ -691,7 +691,7 @@ export const ticket = pgTable("ticket", {
   status: varchar("status").default("Pending"),
   role: varchar("role"),
   message: text("message").notNull(),
-    priority: varchar("priority", { length: 20 }).default("Medium"),
+  priority: varchar("priority", { length: 20 }).default("Medium"),
 
   escalate: boolean("escalate").default(false), // ✅ new column
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
@@ -785,6 +785,7 @@ export const admin_message = pgTable("admin_message", {
   status: integer("status").default(1),   // e.g., 1 = active, 0 = deleted/inactive
   read: integer("read").default(0),       // e.g., 0 = unread, 1 = read
   subject: text("subject").notNull(),
+  type: varchar('type', { length: 20 }),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -800,10 +801,8 @@ export const suspendlog = pgTable('suspendlog', {
 
 export const ip_logs = pgTable("ip_logs", {
   id: serial("id").primaryKey(),
-
   userId: integer("user_id").notNull(),
   ip_address: varchar("ip_address", { length: 45 }).notNull(), // IPv4 + IPv6
-
   type: varchar("type", { length: 20 }), // 'login', 'logout', etc.
   created_at: timestamp("created_at").defaultNow().notNull(),
   login_time: timestamp("login_time"),

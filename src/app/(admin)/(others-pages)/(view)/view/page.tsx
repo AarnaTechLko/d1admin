@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Table, TableCell, TableBody, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil, ShieldCheck, Trash } from "lucide-react";
+import { Clock, Pencil, Settings, ShieldCheck, Trash } from "lucide-react";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import { User, Mail, Shield, MoreHorizontal } from "lucide-react";
+import { User, Mail, Shield } from "lucide-react";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import {
   Dialog,
@@ -303,12 +303,12 @@ const AdminListPage = () => {
                   </TableCell>
                   <TableCell className="px-5 py-3 text-sm font-bold text-gray-500 dark:text-gray-400">
                     <div className="flex items-center gap-2">
-                      <MoreHorizontal size={16} /> Actions
+                       <Settings size={16} /> Actions
                     </div>
                   </TableCell>  
                    <TableCell className="px-5 py-3 text-sm font-bold text-gray-500 dark:text-gray-400">
                     <div className="flex items-center gap-2">
-                      <MoreHorizontal size={16} /> Timestamp
+                        <Clock size={16} /> Timestamp
                     </div>
                   </TableCell>
                 </TableRow>
