@@ -51,7 +51,6 @@ export async function GET(
   { params }: { params: Promise<{ type: string }> }
 ) {
   try {
-
     const { searchParams } = new URL(req.url);
 
     // const type = searchParams.get('type');
@@ -445,6 +444,7 @@ export async function POST(req: NextRequest) {
       methods: JSON.stringify(selectedMethods),
       status: 1,
       read: 0,
+      type,
       created_at: now,
       updated_at: now,
     }));

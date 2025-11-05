@@ -86,13 +86,13 @@ export default function NotificationPage() {
     'Pro',
   ];
 
-const currentYear = new Date().getFullYear();
-const graduationYears = Array.from(
-  { length: 31 },
-  (_, i) => currentYear - 20 + i,
-)
-  .map(year => year.toString())
-  .sort((a, b) => parseInt(b) - parseInt(a));
+  const currentYear = new Date().getFullYear();
+  const graduationYears = Array.from(
+    { length: 31 },
+    (_, i) => currentYear - 20 + i,
+  )
+    .map(year => year.toString())
+    .sort((a, b) => parseInt(b) - parseInt(a));
   const [subject, setSubject] = useState('');
 
   const matchingEntities = Array.isArray(entities)
@@ -102,20 +102,20 @@ const graduationYears = Array.from(
         (!state || item.state === state) &&
         (!city || item.city === city);
 
-        const matchesPlayerCriteria =
-          type !== 'player' ||
-          ((!gender || item.gender?.toLowerCase() === gender.toLowerCase()) &&
-            (!position || item.position?.toLowerCase() === position.toLowerCase()) && 
-            (!ageGroup || item.ageGroup === ageGroup) &&
-            (!graduation || item.graduation === graduation)
-          );
+      const matchesPlayerCriteria =
+        type !== 'player' ||
+        ((!gender || item.gender?.toLowerCase() === gender.toLowerCase()) &&
+          (!position || item.position?.toLowerCase() === position.toLowerCase()) &&
+          (!ageGroup || item.ageGroup === ageGroup) &&
+          (!graduation || item.graduation === graduation)
+        );
 
-        // console.log("Sport: ", sport)
+      // console.log("Sport: ", sport)
 
-        const matchesSport = (!sport || item.sport === sport)
-            
-        return matchesLocation && matchesPlayerCriteria && matchesSport;
-      })
+      const matchesSport = (!sport || item.sport === sport)
+
+      return matchesLocation && matchesPlayerCriteria && matchesSport;
+    })
     : [];
 
   useEffect(() => {
@@ -157,7 +157,7 @@ const graduationYears = Array.from(
         setGender('');
         setPosition('');
         setSport(0);
-        setAgeGroup('');       
+        setAgeGroup('');
       } catch (err) {
         console.error('Failed to fetch entities:', err);
       }
@@ -167,33 +167,23 @@ const graduationYears = Array.from(
   }, [type, status]);
 
 
-  useEffect( () => {
-
-
+  useEffect(() => {
     const fetchData = async () => {
-
-      try{
+      try {
         const response = await fetch(
           `/api/sports`
         );
-
         if (!response.ok) throw new Error("Failed to fetch data");
-
         const data = await response.json();
-
         console.log("DATA: ", data.sport)
-
-
         setFilteredSports(data.sport)
       }
-      catch (error){
+      catch (error) {
         console.error('Failed to fetch sports: ', error)
       }
     };
-
     fetchData();
-
-  },[])
+  }, [])
 
   useEffect(() => {
     if (!country) {
@@ -204,7 +194,6 @@ const graduationYears = Array.from(
     const states = [...new Set(
       entities.filter((item) => item.country === country).map((item) => item.state)
     )].filter(Boolean) as string[];
-
     setFilteredStates(states);
     setState('');
     setCity('');
@@ -220,7 +209,6 @@ const graduationYears = Array.from(
     const cities = [...new Set(
       entities.filter((item) => item.country === country && item.state === state).map((item) => item.city)
     )].filter(Boolean) as string[];
-
     setFilteredCities(cities);
     setCity('');
   }, [state, country, entities]);
@@ -342,11 +330,11 @@ const graduationYears = Array.from(
             <Label>Sport</Label>
             <select className="w-full p-2 mt-1 border rounded-lg bg-white" value={sport} onChange={(e) => setSport(Number(e.target.value))} disabled={!type}>
               <option value="">Select Sport</option>
-                {filteredSports.map((sp) => (
-                  <option key={sp.name} value={sp.id}>
-                    {sp.name}
-                  </option>
-                ))}
+              {filteredSports.map((sp) => (
+                <option key={sp.name} value={sp.id}>
+                  {sp.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -414,26 +402,26 @@ const graduationYears = Array.from(
 
               <div>
                 <Label>Age Group</Label>
-                  <select className="w-full p-2 mt-1 border rounded-lg bg-white" value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)} disabled={type !== 'player'}>
-                    <option value="">Select Age Group</option>
-                    {ageGroups.map(group => (
-                      <option key={group} value={group}>
-                        {group}
-                      </option>
-                    ))}
-                  </select>
+                <select className="w-full p-2 mt-1 border rounded-lg bg-white" value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)} disabled={type !== 'player'}>
+                  <option value="">Select Age Group</option>
+                  {ageGroups.map(group => (
+                    <option key={group} value={group}>
+                      {group}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <Label>Graduation Year</Label>
-                  <select className="w-full p-2 mt-1 border rounded-lg bg-white" value={graduation} onChange={(e) => setGraduation(e.target.value)} disabled={type !== 'player'}>
-                    <option value="">Select Graduation Year</option>
-                    {graduationYears.map(year => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
+                <select className="w-full p-2 mt-1 border rounded-lg bg-white" value={graduation} onChange={(e) => setGraduation(e.target.value)} disabled={type !== 'player'}>
+                  <option value="">Select Graduation Year</option>
+                  {graduationYears.map(year => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
               </div>
 
             </>

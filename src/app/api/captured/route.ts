@@ -20,7 +20,7 @@ export async function GET() {
       .from(payments)
       .leftJoin(users, eq(payments.player_id, users.id))
       .leftJoin(coaches, eq(payments.coach_id, coaches.id))
-      .where(eq(payments.status, "captured")); // ✅ fetch only captured payments
+      .where(eq(payments.status, "Captured")); // ✅ fetch only captured payments
 
     console.log("Captured Payments:", result);
     return NextResponse.json(result);
