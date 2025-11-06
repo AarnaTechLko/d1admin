@@ -14,12 +14,12 @@ export async function GET(req: NextRequest) {
     const conditions: (SQL | undefined)[] = [];
 
     // Only filter by user_id if provided
-    if (user_id) {
-      conditions.push(eq(ticket.assign_to, Number(user_id)));
-    } else {
-      // If no user_id, fetch unassigned tickets
-      conditions.push(eq(ticket.assign_to, 0));
-    }
+    // if (user_id) {
+    //   conditions.push(eq(ticket.assign_to, Number(user_id)));
+    // } else {
+    //   // If no user_id, fetch unassigned tickets
+    //   conditions.push(eq(ticket.assign_to, 0));
+    // }
 
     // Search filters
     if (search) {
