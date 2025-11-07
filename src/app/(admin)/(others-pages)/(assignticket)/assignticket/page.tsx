@@ -67,7 +67,7 @@ const TicketsPage = () => {
   const [replyPriority, setReplyPriority] = useState<string>("Medium");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
+  // const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [subAdmins, setSubAdmins] = useState<Admin[]>([]);
@@ -87,7 +87,27 @@ const TicketsPage = () => {
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [notes, setNotes] = useState<TicketNote[]>([]);
   // Fetch all sub-admins when modal opens
+  const [expandedMessages, setExpandedMessages] = useState<Record<number, boolean>>({});
 
+  const toggleMessage = (id: number) => {
+    setExpandedMessages((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+const [metrics, setMetrics] = useState({
+  pending: 0,
+  open: 0,
+  fixed: 0,
+  closed: 0,
+  escalated: 0,
+});
+
+  const itemsPerPage = 10;
+
+  const totalPages = Math.ceil(tickets.length / itemsPerPage);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  const paginatedTickets = tickets.slice(startIndex, endIndex);
   const handleReplyClick = async (ticket: Ticket) => {
     setSelectedTicket(ticket);
     setReplyStatus(ticket.status);
@@ -142,20 +162,20 @@ const TicketsPage = () => {
       return;
     }
 
- if (!replyMessage.trim()) {
-  toast.error("Message cannot be empty.", {
-    duration: 4000,
-    position: "top-right",
-    style: {
-      background: "red",       // background color
-      color: "white",          // text color
-      minWidth: "300px",       // width of the toast
-      minHeight: "60px",       // height of the toast
-     
-    },
-  });
-  return;
-}
+    if (!replyMessage.trim()) {
+      toast.error("Message cannot be empty.", {
+        duration: 4000,
+        position: "top-right",
+        style: {
+          background: "red",       // background color
+          color: "white",          // text color
+          minWidth: "300px",       // width of the toast
+          minHeight: "60px",       // height of the toast
+
+        },
+      });
+      return;
+    }
 
 
     setLoading(true);
@@ -296,8 +316,6 @@ const TicketsPage = () => {
     }
   };
 
-
-
   useEffect(() => {
     const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
     if (!storedUserId) {
@@ -324,7 +342,9 @@ const TicketsPage = () => {
         const data = await response.json();
         // console.log("daata", data);
         setTickets(data.tickets ?? []);
-        setTotalPages(data.totalPages);
+        setMetrics(data.metrics);  // ✅ Save metrics
+
+        // setTotalPages(data.totalPages);
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -364,10 +384,10 @@ const TicketsPage = () => {
 
   const handleAssignToClick = (ticket: Ticket) => {
     // If already assigned, don't open the modal
-    if (ticket.assign_to) {
-      Swal.fire('Already Assigned', 'This ticket has already been assigned to a sub-admin.', 'info');
-      return;
-    }
+    // if (ticket.assign_to) {
+    //   Swal.fire('Already Assigned', 'This ticket has already been assigned to a sub-admin.', 'info');
+    //   return;
+    // }
 
     setSelectedTicket(ticket);
     setIsModalOpen(true);
@@ -523,6 +543,34 @@ const TicketsPage = () => {
 
   return (
     <div>
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+
+  <div className="p-4 bg-green-100 border border-green-300 rounded-xl shadow">
+    <h3 className="text-lg font-semibold text-green-700">Pending</h3>
+    <p className="text-xl font-bold text-green-800">{metrics.pending}</p>
+  </div>
+
+  <div className="p-4 bg-yellow-100 border border-yellow-300 rounded-xl shadow">
+    <h3 className="text-lg font-semibold text-yellow-700">Open</h3>
+    <p className="text-xl font-bold text-yellow-800">{metrics.open}</p>
+  </div>
+
+  <div className="p-4 bg-blue-100 border border-blue-300 rounded-xl shadow">
+    <h3 className="text-lg font-semibold text-blue-700">Fixed</h3>
+    <p className="text-xl font-bold text-blue-800">{metrics.fixed}</p>
+  </div>
+
+  <div className="p-4 bg-purple-100 border border-purple-300 rounded-xl shadow">
+    <h3 className="text-lg font-semibold text-purple-700">Closed</h3>
+    <p className="text-xl font-bold text-purple-800">{metrics.closed}</p>
+  </div>
+
+  <div className="p-4 bg-red-100 border border-red-300 rounded-xl shadow">
+    <h3 className="text-lg font-semibold text-red-700">Escalated</h3>
+    <p className="text-xl font-bold text-red-800">{metrics.escalated}</p>
+  </div>
+
+</div>
 
       {/* <div className="p-4">
         {userId && (
@@ -534,6 +582,7 @@ const TicketsPage = () => {
       <div className="flex justify-end items-center gap-2 p-4 dark:border-white/[0.05]">
         {[...Array(totalPages)].map((_, index) => {
           const pageNumber = index + 1;
+          console.log("pages", totalPages);
           return (
             <button
               key={pageNumber}
@@ -546,6 +595,7 @@ const TicketsPage = () => {
           );
         })}
       </div>
+
 
       {loading && <p className="text-center py-5">Loading...</p>}
       {error && <p className="text-center py-5 text-red-500">{error}</p>}
@@ -569,71 +619,91 @@ const TicketsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {Array.isArray(paginatedTickets) && paginatedTickets.length > 0 ? (
+                paginatedTickets.map((ticket) => {
 
-              {Array.isArray(tickets) && tickets.length > 0 ? (
-                tickets.map((ticket) => (
                   // <TableRow key={ticket.id}>
-
-                  <TableRow
-                    key={ticket.id}
-                    className={ticket.escalate ? "bg-red-100 dark:bg-red-900/20" : ""}
-                  >
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.name}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.message}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full
+                  const isLong = ticket.message?.length > 50;
+                  const isExpanded = expandedMessages[ticket.id];
+                  const displayedMessage = isLong
+                    ? isExpanded
+                      ? ticket.message
+                      : ticket.message.slice(0, 50) + "..."
+                    : ticket.message;
+                  return (
+                    <TableRow
+                      key={ticket.id}
+                      className={ticket.escalate ? "bg-red-100 dark:bg-red-900/20" : ""}
+                    >
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.name}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs">
+                        <p className="whitespace-pre-wrap break-words">
+                          {displayedMessage}
+                        </p>
+                        {isLong && (
+                          <button
+                            className="text-blue-500 text-sm mt-1 hover:underline"
+                            onClick={() => toggleMessage(ticket.id)}
+                          >
+                            {isExpanded ? "View Less" : "View More"}
+                          </button>
+                        )}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-full
                           ${ticket.priority === "High" ? "bg-red-100 text-red-700" : ""}
                           ${ticket.priority === "Medium" ? "bg-yellow-100 text-yellow-700" : ""}
                           ${ticket.priority === "Low" ? "bg-green-100 text-green-700" : ""}`}
-                      >
-                        {ticket.priority}
-                      </span>
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      <button
-                        className="text-blue-500 hover:underline"
-                        onClick={() => handleAssignToClick(ticket)}
-                      >
-
-                        {ticket.assign_to_username || 'Assign To'}
-                      </button>
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-yellow-500">
-                      <Badge
-                        color={
-                          ticket.status.toLowerCase() === "closed" ? "error" :
-                            ticket.status.toLowerCase() === "open" ? "info" :
-                              ticket.status.toLowerCase() === "fixed" ? "success" :
-                                ticket.status.toLowerCase() === "pending" ? "warning" :
-                                  "light" // Default color
-                        }
-                      >
-                        {ticket.status || "Pending"}
-                      </Badge>
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      <div className="flex gap-3">
-                        <button className="text-green-500" onClick={() => handleReplyClick(ticket)}>
-                          <MessageSquare size={18} />
-                        </button>
-                        <button
-                          className="text-blue-500 hover:text-blue-600"
-                          onClick={() => handleViewNotesClick(ticket)}
-                          title="View Notes"
                         >
-                          <StickyNote size={18} />
+                          {ticket.priority}
+                        </span>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <button
+                          className="text-blue-500 hover:underline"
+                          onClick={() => handleAssignToClick(ticket)}
+                        >
+
+                          {ticket.assign_to_username || 'Assign To'}
                         </button>
-                      </div>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-yellow-500">
+                        <Badge
+                          color={
+                            ticket.status.toLowerCase() === "closed" ? "error" :
+                              ticket.status.toLowerCase() === "open" ? "info" :
+                                ticket.status.toLowerCase() === "fixed" ? "success" :
+                                  ticket.status.toLowerCase() === "pending" ? "warning" :
+                                    "light" // Default color
+                          }
+                        >
+                          {ticket.status || "Pending"}
+                        </Badge>
+                      </TableCell>
 
-                    </TableCell>
-                   <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{dayjs(ticket.createdAt).format("D-MM-YYYY, h:mm A")}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <div className="flex gap-3">
+                          <button className="text-green-500" onClick={() => handleReplyClick(ticket)}>
+                            <MessageSquare size={18} />
+                          </button>
+                          <button
+                            className="text-blue-500 hover:text-blue-600"
+                            onClick={() => handleViewNotesClick(ticket)}
+                            title="View Notes"
+                          >
+                            <StickyNote size={18} />
+                          </button>
+                        </div>
 
-                  </TableRow>
-                ))
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{dayjs(ticket.createdAt).format("D-MM-YYYY, h:mm A")}</TableCell>
+
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell className="text-center text-gray-500 py-4">

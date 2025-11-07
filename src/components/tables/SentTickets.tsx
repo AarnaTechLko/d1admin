@@ -326,10 +326,10 @@ const TicketsPage = () => {
 
   const handleAssignToClick = (ticket: Ticket) => {
     // If already assigned, don't open the modal
-    if (ticket.assign_to) {
-      Swal.fire('Already Assigned', 'This ticket has already been assigned to a sub-admin.', 'info');
-      return;
-    }
+    // if (ticket.assign_to) {
+    //   Swal.fire('Already Assigned', 'This ticket has already been assigned to a sub-admin.', 'info');
+    //   return;
+    // }
 
     setSelectedTicket(ticket);
     setIsModalOpen(true);

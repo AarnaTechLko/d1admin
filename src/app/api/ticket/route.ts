@@ -5,7 +5,6 @@ import { ticket, admin } from "@/lib/schema";
 import { ilike, desc, and, sql, or, eq, gte } from "drizzle-orm";
 
 // Default admin user ID (you can replace this with env config or session auth)
-const ADMIN_ID = 9;
 type TimeRange = "24h" | "1w" | "1m" | "1y";
 
 /**
@@ -33,23 +32,34 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const {
+      recipient_name,
+      assign_to_name,
+      user_id,
       name,
       email,
       subject,
       message = "",
-      ticket_from,
-      assign_to,
       status,
-      recipientType, // ✅ comes from frontend
-      user_id,       // ✅ logged-in user ID from frontend
+      recipientType,
+      assign_to,
+      ticket_from,
     } = body;
 
-    if (!name || !email || !subject || !message || !recipientType || !user_id ) {
+    if (!name || !email || !subject || !message || !recipientType) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
+
+    // ✅ Store extra fields in message JSON
+    const messagePayload = JSON.stringify({
+      text: message,
+      recipient_name,
+      assign_to_name,
+      role: recipientType,
+      user_id,
+    });
 
     const result = await db
       .insert(ticket)
@@ -57,19 +67,20 @@ export async function POST(req: Request) {
         name,
         email,
         subject,
-        assign_to: Number(assign_to) || 0,
-        message,
-        ticket_from: Number(ticket_from) || 0,
+        message: messagePayload, // ✅ stored as JSON string
         status: status || "Pending",
-        role: recipientType,       // ✅ store recipient type in role
+        role: recipientType,       // ✅ still storing type in role column
+        assign_to: Number(assign_to) || 0,
+        ticket_from: Number(ticket_from) || 0,
         createdAt: new Date(),
       })
       .returning();
-
+console.log("result",result);
     return NextResponse.json(
       { message: "Ticket created successfully", ticket: result[0] },
       { status: 200 }
     );
+
   } catch (error) {
     console.error("❌ Error creating ticket:", error);
     return NextResponse.json(
@@ -82,11 +93,17 @@ export async function POST(req: Request) {
 /**
  * ✅ GET /api/tickets → Fetch paginated tickets with filters
  */
+type TicketMessagePayload = {
+  text?: string;
+  recipient_name?: string;
+  assign_to_name?: string;
+  role?: string;
+  user_id?: number;
+};
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
 
-    // Extract query params
     const search = url.searchParams.get("search")?.trim() || "";
     const timeRange = url.searchParams.get("timeRange") as TimeRange | null;
     const page = parseInt(url.searchParams.get("page") || "1", 10);
@@ -98,12 +115,27 @@ export async function GET(req: NextRequest) {
     }
 
     const offset = (page - 1) * limit;
-    const isAdmin = userId === ADMIN_ID;
 
-    // WHERE conditions
+    // ✅ Get logged-in user's role
+    const userRecord = await db
+      .select({
+        id: admin.id,
+        role: admin.role,
+      })
+      .from(admin)
+      .where(eq(admin.id, userId))
+      .limit(1);
+
+    if (!userRecord.length) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const userRole = userRecord[0].role?.toLowerCase() || "";
+    const isAdmin = userRole === "admin";
+
+    // ✅ WHERE conditions
     const conditions = [];
 
-    // 🔍 Search filter
     if (search) {
       conditions.push(
         or(
@@ -115,39 +147,33 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // 🕒 Time range filter
     const timeCondition = getTimeFilterCondition(ticket.createdAt, timeRange);
-    if (timeCondition) {
-      conditions.push(timeCondition);
-    }
+    if (timeCondition) conditions.push(timeCondition);
 
-    // 👤 Role-based filter
+    // ✅ Non-admin can only see assigned tickets
     if (!isAdmin) {
       conditions.push(eq(ticket.assign_to, userId));
     }
 
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereClause = conditions.length ? and(...conditions) : undefined;
 
-    // Fields to select
-    const ticketSelectFields = {
+    const selectedFields = {
       id: ticket.id,
       name: ticket.name,
       email: ticket.email,
       subject: ticket.subject,
       escalate: ticket.escalate,
-      message: ticket.message,
+      message: ticket.message, // ✅ We will parse this after fetch
       assign_to: ticket.assign_to,
       status: ticket.status,
-      createdAt: ticket.createdAt,       
-       priority: ticket.priority, // ✅ Include priority
-
-      assign_to_username: admin.username, // From joined admin table
+      createdAt: ticket.createdAt,
+      priority: ticket.priority,
+      assign_to_username: admin.username,
     };
 
-    // Fetch paginated data & total count
     const [ticketList, totalResult] = await Promise.all([
       db
-        .select(ticketSelectFields)
+        .select(selectedFields)
         .from(ticket)
         .leftJoin(admin, eq(ticket.assign_to, admin.id))
         .where(whereClause)
@@ -163,12 +189,37 @@ export async function GET(req: NextRequest) {
 
     const total = totalResult[0]?.count ?? 0;
 
+    // ✅ Parse message JSON here
+    const formattedTickets = ticketList.map((t) => {
+      let parsedMessage: TicketMessagePayload = {};
+      let actualMessage = t.message;
+
+      try {
+        parsedMessage = JSON.parse(t.message);
+        actualMessage = parsedMessage.text || t.message;
+      } catch {
+        // ❗ message was plain text (old tickets)
+        parsedMessage = {};
+      }
+
+      return {
+        ...t,
+        message: actualMessage,
+        recipient_name: parsedMessage.recipient_name || null,
+        assign_to_name: parsedMessage.assign_to_name || t.assign_to_username || null,
+        role: parsedMessage.role || null,
+        created_by: parsedMessage.user_id || null,
+      };
+    });
+
     return NextResponse.json({
-      ticket: ticketList,
+      ticket: formattedTickets,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       totalCount: total,
+      userRole,
     });
+
   } catch (error) {
     console.error("❌ Error fetching tickets:", error);
     return NextResponse.json({ error: "Failed to load tickets" }, { status: 500 });

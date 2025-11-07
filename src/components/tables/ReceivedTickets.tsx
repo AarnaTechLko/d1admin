@@ -360,10 +360,10 @@ const TicketsPage = () => {
 
   const handleAssignToClick = (ticket: Ticket) => {
     // If already assigned, don't open the modal
-    if (ticket.assign_to) {
-      Swal.fire('Already Assigned', 'This ticket has already been assigned to a sub-admin.', 'info');
-      return;
-    }
+    // if (ticket.assign_to) {
+    //   Swal.fire('Already Assigned', 'This ticket has already been assigned to a sub-admin.', 'info');
+    //   return;
+    // }
 
     setSelectedTicket(ticket);
     setIsModalOpen(true);
@@ -561,7 +561,6 @@ const TicketsPage = () => {
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Status</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Actions</TableCell>
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Timestamp</TableCell>
-
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
@@ -572,10 +571,9 @@ const TicketsPage = () => {
                   const displayedMessage = isLong
                     ? isExpanded
                       ? ticket.message
-                      : ticket.message.slice(0, 100) + "..."
+                      : ticket.message.slice(0, 100) + "..."  
+
                     : ticket.message;
-
-
                   return (
                     <TableRow
                       key={ticket.id}

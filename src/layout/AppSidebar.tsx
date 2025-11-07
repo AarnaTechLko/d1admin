@@ -151,7 +151,8 @@ const AppSidebar: React.FC = () => {
           {
             name: "Ticket",
             icon: <Ticket />,
-            subItems: [{ name: "My Ticket", path: "/myticket", pro: false },
+            subItems: [
+              // { name: "My Ticket", path: "/myticket", pro: false },
             { name: "Assign Ticket", path: "/assignticket", pro: false },
             { name: "View Ticket", path: "/ticket", pro: false },
             { name: "Create Ticket", path: "/createticket", pro: false },

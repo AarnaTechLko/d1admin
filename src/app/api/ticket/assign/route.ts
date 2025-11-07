@@ -1,27 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from "@/lib/db";
 import { ticket,admin } from '@/lib/schema';
-import { and, eq, gte, ilike, or, SQL } from 'drizzle-orm';
+import { and, eq, gte, ilike, or, sql, SQL } from 'drizzle-orm';
+
+// export async function GET(req: NextRequest) {
+//   try {
+//     const url = new URL(req.url);
+//     const user_id = url.searchParams.get("userId");
+//     const search = url.searchParams.get("search")?.trim() || '';
+//     const status = url.searchParams.get("status")?.trim() || "";
+//     const days = Number(url.searchParams.get("days")) || 0;
+
+//     const conditions: (SQL | undefined)[] = [];
+
+//     // Only filter by user_id if provided
+//     // if (user_id) {
+//     //   conditions.push(eq(ticket.assign_to, Number(user_id)));
+//     // } else {
+//     //   // If no user_id, fetch unassigned tickets
+//     //   conditions.push(eq(ticket.assign_to, 0));
+//     // }
+
+//     // Search filters
+//     if (search) {
+//       conditions.push(
+//         or(
+//           ilike(ticket.name, `%${search}%`),
+//           ilike(ticket.email, `%${search}%`),
+//           ilike(ticket.subject, `%${search}%`),
+//           ilike(ticket.message, `%${search}%`)
+//         )
+//       );
+//     }
+
+//     if (status) {
+//       conditions.push(ilike(ticket.status, `%${status}%`));
+//     }
+
+//     if (days > 0) {
+//       const today = new Date();
+//       today.setDate(today.getDate() - days);
+//       conditions.push(gte(ticket.createdAt, today));
+//     }
+
+//     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+//     const getTickets = await db
+//       .select({
+//         id: ticket.id,
+//         name: ticket.name,
+//         email: ticket.email,
+//         subject: ticket.subject,
+//         createdAt: ticket.createdAt,
+//         status: ticket.status,
+//         message: ticket.message,
+//         priority: ticket.priority,
+//       })
+//       .from(ticket)
+//       .where(whereClause);
+
+//     return NextResponse.json({ tickets: getTickets }, { status: 200 });
+//   } catch (error) {
+//     return NextResponse.json(
+//       {
+//         error: error instanceof Error ? error.message : "Unknown error retrieving tickets",
+//       },
+//       { status: 500 }
+//     );
+//   }
+// }
 
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
-    const user_id = url.searchParams.get("userId");
-    const search = url.searchParams.get("search")?.trim() || '';
+    // const user_id = url.searchParams.get("userId");
+    const search = url.searchParams.get("search")?.trim() || "";
     const status = url.searchParams.get("status")?.trim() || "";
     const days = Number(url.searchParams.get("days")) || 0;
 
     const conditions: (SQL | undefined)[] = [];
 
-    // Only filter by user_id if provided
-    // if (user_id) {
-    //   conditions.push(eq(ticket.assign_to, Number(user_id)));
-    // } else {
-    //   // If no user_id, fetch unassigned tickets
-    //   conditions.push(eq(ticket.assign_to, 0));
-    // }
-
-    // Search filters
+    // ✅ Search filters
     if (search) {
       conditions.push(
         or(
@@ -33,18 +92,22 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // ✅ Status filter
     if (status) {
       conditions.push(ilike(ticket.status, `%${status}%`));
     }
 
+    // ✅ Days filter
     if (days > 0) {
       const today = new Date();
       today.setDate(today.getDate() - days);
       conditions.push(gte(ticket.createdAt, today));
     }
 
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereClause =
+      conditions.length > 0 ? and(...conditions) : undefined;
 
+    // ✅ Fetch Tickets
     const getTickets = await db
       .select({
         id: ticket.id,
@@ -59,17 +122,67 @@ export async function GET(req: NextRequest) {
       .from(ticket)
       .where(whereClause);
 
-    return NextResponse.json({ tickets: getTickets }, { status: 200 });
+    // ✅ FETCH STATUS METRICS
+    const [
+      pending,
+      open,
+      inprogress,
+      closed,
+      escalated,
+    ] = await Promise.all([
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(ticket)
+        .where(eq(ticket.status, "Pending")),
+
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(ticket)
+        .where(eq(ticket.status, "Open")),
+
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(ticket)
+        .where(eq(ticket.status, "Inprogress")),
+
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(ticket)
+        .where(eq(ticket.status, "Closed")),
+
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(ticket)
+        .where(eq(ticket.escalate, true)),
+    ]);
+
+    return NextResponse.json(
+      {
+        tickets: getTickets,
+
+        // ✅ ADD STATUS COUNTS HERE
+        metrics: {
+          pending: pending[0]?.count ?? 0,
+          open: open[0]?.count ?? 0,
+          inprogress: inprogress[0]?.count ?? 0,
+          closed: closed[0]?.count ?? 0,
+          escalated: escalated[0]?.count ?? 0,
+        },
+      },
+      { status: 200 }
+    );
   } catch (error) {
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Unknown error retrieving tickets",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown error retrieving tickets",
       },
       { status: 500 }
     );
   }
 }
-
 
 
 export async function POST(req: Request) {
