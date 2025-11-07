@@ -166,10 +166,10 @@ const TicketTable: React.FC<Props> = ({
     }
   };
   const handleAssignToClick = (ticket: Ticket) => {
-    if (ticket.assign_to) {
-      Swal.fire("Already Assigned", "This ticket is already assigned.", "info");
-      return;
-    }
+    // if (ticket.assign_to) {
+    //   Swal.fire("Already Assigned", "This ticket is already assigned.", "info");
+    //   return;
+    // }
     setSelectedTicket(ticket);
     setIsModalOpen(true);
   };

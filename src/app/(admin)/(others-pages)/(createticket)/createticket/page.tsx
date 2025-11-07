@@ -1,12 +1,20 @@
+
+// export default NewTicketPage;
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
 import { Loader2, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 // import { useSession } from "next-auth/react";
-
+interface Admin {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+}
 interface Recipient {
+  role: string;
   id: string;
   name: string;
   email: string;
@@ -20,15 +28,23 @@ const NewTicketPage = () => {
   // const { data: session } = useSession();
 
   const [formData, setFormData] = useState({
+      recipient_name: "",
     name: "",
     email: "",
     subject: "",
     message: "",
     status: "",
     recipientType: "", // ✅ selected type
-    role: "",          // ✅ will be saved in DB
+    role: "",  
+    assign_to_name: "", 
+    assign_to: 0,
   });
+   const [isAssignOpen, setIsAssignOpen] = useState(false);
+   const [assignSearch, setAssignSearch] = useState("");
+  const [subAdmins, setSubAdmins] = useState<Admin[]>([]);
 
+   const recipientDropdownRef = useRef<HTMLDivElement>(null);
+   const assignDropdownRef = useRef<HTMLDivElement>(null);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -39,6 +55,27 @@ const [loadingRecipients, setLoadingRecipients] = useState(false);
   const filteredRecipients = recipients.filter((r) =>
     r.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        recipientDropdownRef.current &&
+        !recipientDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+      if (
+        assignDropdownRef.current &&
+        !assignDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsAssignOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
 
   useEffect(() => {
     const storedUserId =
@@ -90,6 +127,7 @@ useEffect(() => {
       ticket_from: "", // reset when changing type
     }));
     setSearchTerm("");
+    setAssignSearch("");
   };
 
   // const handleSubmit = async (e: React.FormEvent) => {
@@ -133,6 +171,30 @@ useEffect(() => {
   //     setIsSubmitting(false);
   //   }
   // };
+   useEffect(() => {
+      const fetchSubAdmins = async () => {
+        try {
+          const response = await fetch(`/api/subadmin`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          });
+          if (!response.ok) throw new Error("Failed to fetch sub-admins");
+          //console.log("response data add:",response.text());
+          const contentType = response.headers.get("Content-Type");
+          if (!contentType || !contentType.includes("application/json")) {
+            const text = await response.text();
+            throw new Error(`Expected JSON, but got: ${text}`);
+          }
+  
+          const data = await response.json();
+          console.log("fetchsubadmins", data);
+          setSubAdmins(data.admin);
+        } catch (err) {
+          console.error("Error fetching sub-admins:", err);
+        }
+      };
+      fetchSubAdmins();
+    }, []);
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   setIsSubmitting(true);
@@ -216,11 +278,11 @@ const handleSubmit = async (e: React.FormEvent) => {
             Select Recipient
           </label>
 
-          <div className="relative w-full">
+          <div className="relative w-full"  ref={recipientDropdownRef}>
             <input
               type="text"
               placeholder="Search recipient..."
-              value={searchTerm}
+              value={ formData.name}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setIsOpen(true);
@@ -263,7 +325,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                         email: r.email, // ✅ save recipient email
                         ticket_from: sessionStorage.getItem("user_id"),
                       }));
-                      setSearchTerm(r.name || r.email);
+                      setSearchTerm("");
                       setIsOpen(false);
                     }}
                   >
@@ -276,6 +338,70 @@ const handleSubmit = async (e: React.FormEvent) => {
             </ul>
 
             )}
+          </div>
+        </div>
+     {/* ✅ Assign To Dropdown */}
+         <div>
+           <label className="block text-sm font-medium text-gray-700 mb-1">
+             Assign To
+           </label>
+
+           <div className="relative" ref={assignDropdownRef}>
+             <input
+              type="text"
+              placeholder="Search staff..."
+              value={assignSearch || formData.assign_to_name}
+              onChange={(e) => {
+                setAssignSearch(e.target.value);
+                setIsAssignOpen(true);
+              }}
+              onFocus={() => setIsAssignOpen(true)}
+              className="w-full p-3 border rounded-md"
+            />
+
+            <button
+              type="button"
+              className="absolute right-2 top-3"
+              onClick={() => setIsAssignOpen((prev) => !prev)}
+            >
+              <ChevronDown />
+            </button>
+{isAssignOpen && (
+  <ul className="absolute w-full bg-white border mt-1 rounded-md max-h-60 overflow-y-auto">
+    {loadingRecipients ? (
+      <li className="p-4 text-center text-gray-500">
+        <span className="animate-spin h-5 w-5 mr-2 inline-block border-2 border-blue-500 border-t-transparent rounded-full"></span>
+        Loading...
+      </li>
+    ) : subAdmins.length > 0 ? (
+      subAdmins.map((r) => (
+        <li
+          key={r.id}
+          className="p-2 hover:bg-blue-100 cursor-pointer"
+          onClick={() => {
+            setFormData((prev) => ({
+              ...prev,
+              assign_to: r.id,              // ✅ store ID
+              assign_to_name: r.username,    // ✅ store username
+              recipient_name: r.username,    // ✅ store selected recipient name
+              recipientType: r.role,         // ✅ store type
+              ticket_from: userId,           // ✅ logged-in user
+            }));
+
+            setAssignSearch("");
+            setIsAssignOpen(false);
+          }}
+        >
+          {r.username} ({r.role})
+        </li>
+      ))
+    ) : (
+      <li className="p-2 text-gray-500">No sub-admins found</li>
+    )}
+  </ul>
+)}
+
+
           </div>
         </div>
 
