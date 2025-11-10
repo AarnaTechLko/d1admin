@@ -77,6 +77,7 @@ export async function GET(req: NextRequest) {
     const search = url.searchParams.get("search")?.trim() || "";
     const status = url.searchParams.get("status")?.trim() || "";
     const days = Number(url.searchParams.get("days")) || 0;
+   const staff = Number(url.searchParams.get("staff")) || 0;
 
     const conditions: (SQL | undefined)[] = [];
 
@@ -96,6 +97,11 @@ export async function GET(req: NextRequest) {
     if (status) {
       conditions.push(ilike(ticket.status, `%${status}%`));
     }
+
+    // ✅ Staff filter (FINAL FIX)
+        if (staff > 0) {
+          conditions.push(eq(ticket.assign_to, staff));
+        }
 
     // ✅ Days filter
     if (days > 0) {

@@ -8,7 +8,9 @@ interface BreadcrumbProps {
   onStatus?: (query: string) => void;
   onDays?: (query: string) => void;
   onSport?: (query: string) => void;
-  onCrowned?: (value: string) => void; // pass "1" or "0"
+  onCrowned?: (value: string) => void; // "1" or "0"
+  onStaff?: (staffId: string) => void;
+
 }
 
 interface Sport {
@@ -20,6 +22,13 @@ interface CrownedOption {
   value: string;
 }
 
+interface Staff {
+  name: string;
+  id: number;
+  username: string;
+  role: string;
+}
+
 const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
   pageTitle,
   onSearch,
@@ -27,6 +36,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
   onDays,
   onSport,
   onCrowned,
+  onStaff,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,8 +44,11 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
   const [ticketDays, setTicketDays] = useState("");
   const [sport, setSport] = useState("");
   const [isCrowned, setIsCrowned] = useState(false);
+  const [staffId, setStaffId] = useState("");
+
   const [filteredSports, setFilteredSports] = useState<Sport[]>([]);
   const [crownedOptions, setCrownedOptions] = useState<CrownedOption[]>([]);
+  const [staffList, setStaffList] = useState<Staff[]>([]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -45,62 +58,93 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
       }
     };
 
+    // ✅ Fetch Sports
     const fetchSports = async () => {
       try {
         const response = await fetch(`/api/sports`);
-        if (!response.ok) throw new Error("Failed to fetch sports");
         const data = await response.json();
-        setFilteredSports(data.sport);
+        setFilteredSports(Array.isArray(data?.sport) ? data.sport : []);
       } catch (err) {
-        console.error(err);
+        console.error("Sports error:", err);
       }
     };
 
+    // ✅ Fetch Crowned Options
     const fetchCrownedOptions = async () => {
       try {
         const response = await fetch(`/api/coach/crowned`);
-        if (!response.ok) throw new Error("Failed to fetch crowned options");
         const data = await response.json();
-        setCrownedOptions(data);
+        setCrownedOptions(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error(err);
+        console.error("Crowned error:", err);
       }
     };
 
+    // ✅ Fetch Subadmin Staff List
+    const fetchStaff = async () => {
+      try {
+        const response = await fetch(`/api/subadmin`);
+        const data = await response.json();
+        console.log("data6776", data);
+
+        // ✅ Your backend returns: { admin: [...] }
+        const list = data?.admin || [];
+
+        setStaffList(Array.isArray(list) ? list : []);
+      } catch (err) {
+        console.error("Staff error:", err);
+      }
+    };
+
+
     fetchSports();
     fetchCrownedOptions();
+    fetchStaff();
+
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const query = event.target.value;
+  // ✅ Search
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
     setSearchQuery(query);
     onSearch(query);
   };
 
-  const handleStatusChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const query = event.target.value;
+  // ✅ Status
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const query = e.target.value;
     setTicketStatus(query);
     onStatus?.(query);
   };
 
-  const handleDaysChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const query = event.target.value;
+  // ✅ Days
+  const handleDaysChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const query = e.target.value;
     setTicketDays(query);
     onDays?.(query);
   };
 
-  const handleSportsChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const query = event.target.value;
+  // ✅ Sports
+  const handleSportsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const query = e.target.value;
     setSport(query);
     onSport?.(query);
   };
 
-  const handleCrownedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const isChecked = event.target.checked; // boolean from checkbox
-    setIsCrowned(isChecked);
-    onCrowned?.(isChecked ? "1" : "0"); // pass string "1" or "0"
+  // ✅ Crowned
+  const handleCrownedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    setIsCrowned(checked);
+    onCrowned?.(checked ? "1" : "0");
+  };
+
+  // ✅ Staff
+  const handleStaffChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    setStaffId(id);
+    onStaff?.(id);
   };
 
   return (
@@ -110,75 +154,103 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
       </h2>
 
       <div className="relative flex flex-wrap items-center gap-3">
+        {/* ✅ Search Box */}
         <input
           ref={inputRef}
           type="text"
           value={searchQuery}
           onChange={handleSearchChange}
           placeholder="Search..."
-          className="h-10 w-64 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-10 w-64 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900"
         />
+      
+         
+{["View Ticket", "Recieved Ticket", "Sent Ticket"].includes(pageTitle) && (
+            <>
+                <span className="md:ml-5">Staff</span>
 
-        {["Ticket", "Received Ticket", "Sent Ticket"].includes(pageTitle) && (
-          <>
-            <span className="md:ml-5">Status</span>
-            <select
-              className="mt-6 w-64 md:w-40 p-2 md:mt-0 border rounded-lg bg-white"
-              value={ticketStatus}
-              onChange={handleStatusChange}
-            >
-              <option value="">Select</option>
-              <option value="Pending">Pending</option>
-              <option value="Open">Open</option>
-              <option value="Fixed">Fixed</option>
-              <option value="Closed">Closed</option>
-              <option value="Escalate">Escalate</option>
-            </select>
+                <select
+                  className=" w-64 md:w-40 p-2 border rounded-lg bg-white"
+                  value={staffId}
+                  onChange={handleStaffChange}
+                >
+                  <option value="">All Staff</option>
 
-            <span className="md:ml-5">Days</span>
-            <select
-              className="mt-6 w-64 md:w-40 p-2 md:mt-0 border rounded-lg bg-white"
-              value={ticketDays}
-              onChange={handleDaysChange}
-            >
-              <option value="15">Select</option>
-              <option value="30">30</option>
-              <option value="60">60</option>
-              <option value="90">90</option>
-            </select>
-          </>
-        )}
+                  {staffList?.length > 0 &&
+                    staffList.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.username || s.name}       {/* ✅ Safe fallback */}
+                      </option>
+                    ))}
+                </select>
+</>
+            )}
+                {/* ✅ Status */}
+                <span className="md:ml-5">Status</span>
+                <select
+                  className="w-64 md:w-40 p-2 border rounded-lg bg-white"
+                  value={ticketStatus}
+                  onChange={handleStatusChange}
+                >
+                  <option value="">Select</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Open">Open</option>
+                  <option value="Fixed">Fixed</option>
+                  <option value="Closed">Closed</option>
+                  <option value="Escalate">Escalate</option>
+                </select>
 
+                {/* ✅ Days */}
+                <span className="md:ml-5">Days</span>
+                <select
+                  className="w-64 md:w-40 p-2 border rounded-lg bg-white"
+                  value={ticketDays}
+                  onChange={handleDaysChange}
+                >
+                  <option value="">Select</option>
+                  <option value="15">15</option>
+                  <option value="30">30</option>
+                  <option value="60">60</option>
+                  <option value="90">90</option>
+                </select>
+           
+       
+      
+
+        {/* ✅ Coaches Page Filters */}
         {pageTitle === "Coaches" && (
           <>
+            {/* ✅ Sports */}
             <span className="md:ml-5">Sports</span>
             <select
-              className="mt-6 w-64 md:w-40 p-2 md:mt-0 border rounded-lg bg-white"
+              className="mt-6 w-64 md:w-40 p-2 border rounded-lg bg-white"
               value={sport}
               onChange={handleSportsChange}
             >
               <option value="">Select Sport</option>
-              {filteredSports.map((sp) => (
-                <option key={sp.id} value={sp.id}>
-                  {sp.name}
-                </option>
-              ))}
+              {filteredSports?.length > 0 &&
+                filteredSports.map((sp) => (
+                  <option key={sp.id} value={sp.id}>
+                    {sp.name}
+                  </option>
+                ))}
             </select>
-            {crownedOptions.map((opt) => (
-              <input type="hidden" value="{opt.value}" key={opt.value} />
-            ))}
-            {/* ✅ Single Crowned checkbox */}
-            <div className="mt-6 md:mt-0 md:ml-5 inline-flex gap-4 items-center">
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={isCrowned}
-                  onChange={handleCrownedChange} // React passes event automatically
-                  className="form-checkbox h-4 w-4 text-green-600 border-gray-300 rounded"
-                />
 
-                <span className="font-semibold">Crowned</span>
-              </label>
+            {/* ✅ Hidden Crowned Values */}
+            {crownedOptions?.length > 0 &&
+              crownedOptions.map((opt) => (
+                <input type="hidden" value={opt.value} key={opt.value} />
+              ))}
+
+            {/* ✅ Crowned Checkbox */}
+            <div className="mt-6 md:mt-0 md:ml-5 inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={isCrowned}
+                onChange={handleCrownedChange}
+                className="h-4 w-4"
+              />
+              <span className="font-semibold">Crowned</span>
             </div>
           </>
         )}

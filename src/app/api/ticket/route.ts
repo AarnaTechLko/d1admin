@@ -75,7 +75,7 @@ export async function POST(req: Request) {
         createdAt: new Date(),
       })
       .returning();
-console.log("result",result);
+    console.log("result", result);
     return NextResponse.json(
       { message: "Ticket created successfully", ticket: result[0] },
       { status: 200 }
@@ -109,10 +109,14 @@ export async function GET(req: NextRequest) {
     const page = parseInt(url.searchParams.get("page") || "1", 10);
     const limit = parseInt(url.searchParams.get("limit") || "10", 10);
     const userId = parseInt(url.searchParams.get("userId") || "0", 10);
+    const status = url.searchParams.get("status")?.trim() || "";
+    const days = Number(url.searchParams.get("days")) || 0;
+    const staff = Number(url.searchParams.get("staff")) || 0;
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
 
     const offset = (page - 1) * limit;
 
@@ -145,6 +149,23 @@ export async function GET(req: NextRequest) {
           ilike(ticket.message, `%${search}%`)
         )
       );
+    }
+
+    // ✅ Status filter
+    if (status) {
+      conditions.push(ilike(ticket.status, `%${status}%`));
+    }
+
+    // ✅ Staff filter (FINAL FIX)
+    if (staff > 0) {
+      conditions.push(eq(ticket.assign_to, staff));
+    }
+
+    // ✅ Days filter
+    if (days > 0) {
+      const today = new Date();
+      today.setDate(today.getDate() - days);
+      conditions.push(gte(ticket.createdAt, today));
     }
 
     const timeCondition = getTimeFilterCondition(ticket.createdAt, timeRange);
