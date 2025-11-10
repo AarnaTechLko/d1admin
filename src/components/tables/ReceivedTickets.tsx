@@ -410,6 +410,9 @@ const TicketsPage = () => {
 
 
       setIsModalOpen(false); // Close modal after assigning sub-admin
+    window.location.reload();
+
+    
     } catch (err) {
       console.error("Error assigning sub-admin:", err);
       setError((err as Error).message); // Set the error state

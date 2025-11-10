@@ -63,7 +63,7 @@ const TicketsPage = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusQuery, setStatusQuery] = useState<string>("");
   const [daysQuery, setDaysQuery] = useState<string>("");
-
+const [staffQuery, setStaffQuery] = useState("");
   const [replyPriority, setReplyPriority] = useState<string>("Medium");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -334,7 +334,7 @@ const [metrics, setMetrics] = useState({
       setError(null);
       try {
         const response = await fetch(
-          `/api/ticket/assign?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}&status=${statusQuery}&days=${daysQuery}`
+          `/api/ticket/assign?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}&status=${statusQuery}&days=${daysQuery}&staff=${staffQuery}`
         );
 
         if (!response.ok) throw new Error("Failed to fetch tickets");
@@ -353,7 +353,7 @@ const [metrics, setMetrics] = useState({
     };
 
     fetchTickets();
-  }, [userId, searchQuery, currentPage, statusQuery, daysQuery]);
+  }, [userId, searchQuery, currentPage, statusQuery, daysQuery,staffQuery]);
 
 
   useEffect(() => {
@@ -578,7 +578,8 @@ const [metrics, setMetrics] = useState({
         )}
       </div> */}
 
-      <PageBreadcrumb pageTitle="Ticket" onStatus={setStatusQuery} onSearch={setSearchQuery} onDays={setDaysQuery} />
+      <PageBreadcrumb pageTitle="Ticket" onStatus={setStatusQuery} onSearch={setSearchQuery} onDays={setDaysQuery}  
+       onStaff={setStaffQuery}/>
       <div className="flex justify-end items-center gap-2 p-4 dark:border-white/[0.05]">
         {[...Array(totalPages)].map((_, index) => {
           const pageNumber = index + 1;

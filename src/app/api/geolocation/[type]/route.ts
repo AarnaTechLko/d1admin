@@ -49,49 +49,21 @@ export async function GET(
   { params }: { params: Promise<{ type: string }> }
 ) {
   try {
-
-    const { searchParams } = new URL(req.url);
-
-    // const type = searchParams.get('type');
-
-    const status = searchParams.get('status') || '';
-
-
     const { type } = await params;
-
-    // let status = '';
-
-    console.log("Status: ", status);
+    const url = new URL(req.url);
+    const status = url.searchParams.get("status") || "";
 
     let data: LocationItem[] = [];
 
-    if (type === 'player') {
+    if (type === "player") {
+      const conditions = [isNotNull(users.first_name), ne(users.first_name, "")];
 
-
-      const conditions = [
-
-        isNotNull(users.first_name), 
-        ne(users.first_name, '')
-
-      ]
-
-      const whereClause = status === "no-profile" 
-        ? eq(users.isCompletedProfile, false) 
-        : status === "profile" 
-        ? eq(users.isCompletedProfile, true)
-        : status === "unsuspend"
-        ? eq(users.suspend, 1)
-        : status === "suspend"
-        ? eq(users.suspend, 0)
-        : status === "inactive"
-        ? eq(users.visibility, "off")
-        : status === "active"
-        ? eq(users.visibility, "on")
-        : undefined
-
-        if (whereClause){
-          conditions.push(whereClause);
-        }
+      if (status === "no-profile") conditions.push(eq(users.isCompletedProfile, false));
+      else if (status === "profile") conditions.push(eq(users.isCompletedProfile, true));
+      else if (status === "unsuspend") conditions.push(eq(users.suspend, 1));
+      else if (status === "suspend") conditions.push(eq(users.suspend, 0));
+      else if (status === "inactive") conditions.push(eq(users.visibility, "off"));
+      else if (status === "active") conditions.push(eq(users.visibility, "on"));
 
       const players = await db
         .select({
@@ -112,54 +84,30 @@ export async function GET(
       data = players.map((p) => ({
         id: String(p.id),
         name: `${p.firstName} ${p.lastName}`,
-        email: p.email ?? null, // ✅ include email
+        email: p.email ?? null,
         country: p.countryName,
-        gender: p.gender ?? undefined,
-        position: p.position ?? undefined,
         state: p.state,
         city: p.city,
+        gender: p.gender ?? undefined,
+        position: p.position ?? undefined,
       }));
-    } else if (type === 'coach') {
 
+    } else if (type === "coach") {
+      const conditions = [isNotNull(coaches.firstName), ne(coaches.firstName, "")];
 
-      const conditions = []
-
-      const whereClause = status === "no-profile" 
-        ? eq(coaches.isCompletedProfile, false) 
-        : status === "profile" 
-        ? eq(coaches.isCompletedProfile, true)
-        : status === "unsuspend"
-        ? eq(coaches.suspend, 1)
-        : status === "suspend"
-        ? eq(coaches.suspend, 0)
-        : status === "inactive"
-        ? eq(coaches.visibility, "off")
-        : status === "active"
-        ? eq(coaches.visibility, "on")
-        : status === "unapproved"
-        ? eq(coaches.approved_or_denied, 0) 
-        : status === "approved"
-        ? eq(coaches.approved_or_denied, 1)
-        : undefined
-
-        if (status === "no-profile"){
-          conditions.push(whereClause);
-        }
-        else if (whereClause){
-
-          conditions.push(isNotNull(coaches.firstName)); 
-          conditions.push(ne(coaches.firstName, ''));
-          conditions.push(whereClause);
-        }
-        else {
-          conditions.push(isNotNull(coaches.firstName));
-          conditions.push(ne(coaches.firstName, ''));
-        }
+      if (status === "no-profile") conditions.push(eq(coaches.isCompletedProfile, false));
+      else if (status === "profile") conditions.push(eq(coaches.isCompletedProfile, true));
+      else if (status === "unsuspend") conditions.push(eq(coaches.suspend, 1));
+      else if (status === "suspend") conditions.push(eq(coaches.suspend, 0));
+      else if (status === "inactive") conditions.push(eq(coaches.visibility, "off"));
+      else if (status === "active") conditions.push(eq(coaches.visibility, "on"));
+      else if (status === "unapproved") conditions.push(eq(coaches.approved_or_denied, 0));
+      else if (status === "approved") conditions.push(eq(coaches.approved_or_denied, 1));
 
       const coachList = await db
         .select({
           id: coaches.id,
-          email: coaches.email, // ✅ add email in select
+          email: coaches.email,
           firstName: coaches.firstName,
           lastName: coaches.lastName,
           state: coaches.state,
@@ -170,50 +118,39 @@ export async function GET(
         .leftJoin(countries, eq(coaches.country, sql`CAST(${countries.id} AS TEXT)`))
         .where(and(...conditions));
 
-
       data = coachList.map((c) => ({
         id: String(c.id),
         name: `${c.firstName} ${c.lastName}`,
-        email: c.email ?? null, // ✅ include email
+        email: c.email ?? null,
         country: c.countryName,
         state: c.state,
         city: c.city,
       }));
 
-      console.log("DATA: ", data);
-
-    } else if (type === 'organization') {
+    } else if (type === "organization") {
       const orgs = await db
         .select({
           id: enterprises.id,
-          email: enterprises.email, // ✅ make sure org has email in schema
+          email: enterprises.email,
           organizationName: enterprises.organizationName,
           state: enterprises.state,
           city: enterprises.city,
           countryName: countries.name,
         })
         .from(enterprises)
-        .leftJoin(
-          countries,
-          eq(enterprises.country, sql`CAST(${countries.id} AS TEXT)`)
-        )
-        .where(
-          and(
-            isNotNull(enterprises.organizationName),
-            ne(enterprises.organizationName, "")
-          )
-        );
+        .leftJoin(countries, eq(enterprises.country, sql`CAST(${countries.id} AS TEXT)`))
+        .where(and(isNotNull(enterprises.organizationName), ne(enterprises.organizationName, "")));
 
       data = orgs.map((o) => ({
         id: String(o.id),
         name: o.organizationName,
-        email: o.email ?? null, // ✅ include email
+        email: o.email ?? null,
         country: o.countryName,
         state: o.state,
         city: o.city,
       }));
+
     } else if (type === "staff") {
-      // --- Staff/Admin list ---
       const staffList = await db
         .select({
           id: admin.id,
@@ -227,28 +164,23 @@ export async function GET(
       data = staffList.map((s) => ({
         id: String(s.id),
         name: s.username,
-        email: s.email ?? null, // ✅ include email
+        email: s.email ?? null,
         country: null,
         state: null,
         city: null,
+        role: s.role,
       }));
+
     } else {
-      return NextResponse.json(
-        { error: "Invalid type provided." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid type provided." }, { status: 400 });
     }
 
     return NextResponse.json(data);
   } catch (error) {
     console.error("❌ GET Error fetching recipients:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
-
 
 // -------------------- POST Handler --------------------
 export async function POST(req: NextRequest) {

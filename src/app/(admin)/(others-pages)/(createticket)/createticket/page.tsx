@@ -28,29 +28,29 @@ const NewTicketPage = () => {
   // const { data: session } = useSession();
 
   const [formData, setFormData] = useState({
-      recipient_name: "",
+    recipient_name: "",
     name: "",
     email: "",
     subject: "",
     message: "",
     status: "",
     recipientType: "", // ✅ selected type
-    role: "",  
-    assign_to_name: "", 
+    role: "",
+    assign_to_name: "",
     assign_to: 0,
   });
-   const [isAssignOpen, setIsAssignOpen] = useState(false);
-   const [assignSearch, setAssignSearch] = useState("");
+  const [isAssignOpen, setIsAssignOpen] = useState(false);
+  const [assignSearch, setAssignSearch] = useState("");
   const [subAdmins, setSubAdmins] = useState<Admin[]>([]);
 
-   const recipientDropdownRef = useRef<HTMLDivElement>(null);
-   const assignDropdownRef = useRef<HTMLDivElement>(null);
+  const recipientDropdownRef = useRef<HTMLDivElement>(null);
+  const assignDropdownRef = useRef<HTMLDivElement>(null);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
-const [loadingRecipients, setLoadingRecipients] = useState(false);
+  const [loadingRecipients, setLoadingRecipients] = useState(false);
 
   const filteredRecipients = recipients.filter((r) =>
     r.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -85,24 +85,24 @@ const [loadingRecipients, setLoadingRecipients] = useState(false);
   }, [router]);
 
   // Fetch recipients whenever recipientType changes
-useEffect(() => {
-  const fetchRecipients = async () => {
-    if (!formData.recipientType) return;
+  useEffect(() => {
+    const fetchRecipients = async () => {
+      if (!formData.recipientType) return;
 
-    setLoadingRecipients(true); // ⏳ start loader
-    try {
-      const res = await axios.get(`/api/geolocation/${formData.recipientType}`);
-      setRecipients(res.data || []);
-    } catch (err) {
-      console.error("Error fetching recipients:", err);
-      setRecipients([]);
-    } finally {
-      setLoadingRecipients(false); // ✅ stop loader
-    }
-  };
+      setLoadingRecipients(true); // ⏳ start loader
+      try {
+        const res = await axios.get(`/api/geolocation/${formData.recipientType}`);
+        setRecipients(res.data || []);
+      } catch (err) {
+        console.error("Error fetching recipients:", err);
+        setRecipients([]);
+      } finally {
+        setLoadingRecipients(false); // ✅ stop loader
+      }
+    };
 
-  fetchRecipients();
-}, [formData.recipientType]);
+    fetchRecipients();
+  }, [formData.recipientType]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -171,80 +171,80 @@ useEffect(() => {
   //     setIsSubmitting(false);
   //   }
   // };
-   useEffect(() => {
-      const fetchSubAdmins = async () => {
-        try {
-          const response = await fetch(`/api/subadmin`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          });
-          if (!response.ok) throw new Error("Failed to fetch sub-admins");
-          //console.log("response data add:",response.text());
-          const contentType = response.headers.get("Content-Type");
-          if (!contentType || !contentType.includes("application/json")) {
-            const text = await response.text();
-            throw new Error(`Expected JSON, but got: ${text}`);
-          }
-  
-          const data = await response.json();
-          console.log("fetchsubadmins", data);
-          setSubAdmins(data.admin);
-        } catch (err) {
-          console.error("Error fetching sub-admins:", err);
+  useEffect(() => {
+    const fetchSubAdmins = async () => {
+      try {
+        const response = await fetch(`/api/subadmin`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!response.ok) throw new Error("Failed to fetch sub-admins");
+        //console.log("response data add:",response.text());
+        const contentType = response.headers.get("Content-Type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text();
+          throw new Error(`Expected JSON, but got: ${text}`);
         }
-      };
-      fetchSubAdmins();
-    }, []);
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsSubmitting(true);
 
-  try {
-    const payload = {
-      ...formData,
-      user_id: userId, // ✅ include user id
+        const data = await response.json();
+        console.log("fetchsubadmins", data);
+        setSubAdmins(data.admin);
+      } catch (err) {
+        console.error("Error fetching sub-admins:", err);
+      }
     };
+    fetchSubAdmins();
+  }, []);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-    const response = await fetch("/api/ticket", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const result = await response.json();
-    if (response.ok) {
-      Swal.fire({
-        title: "Success!",
-        text: result.message,
-        icon: "success",
-        confirmButtonText: "OK",
-      }).then(() => {
-    window.location.reload(); // 🔄 reload the full page
+    try {
+      const payload = {
+        ...formData,
+        user_id: userId, // ✅ include user id
+      };
+      console.log('posted data:', payload);
+      const response = await fetch("/api/ticket", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
-    } else {
+
+      const result = await response.json();
+      if (response.ok) {
+        Swal.fire({
+          title: "Success!",
+          text: result.message,
+          icon: "success",
+          confirmButtonText: "OK",
+        }).then(() => {
+          window.location.reload(); // 🔄 reload the full page
+        });
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: result.error || "Failed to create ticket",
+          icon: "error",
+          confirmButtonText: "Try Again",
+        });
+      }
+    } catch (err) {
+      console.error("❌ Ticket submit error:", err);
       Swal.fire({
         title: "Error!",
-        text: result.error || "Failed to create ticket",
+        text: "An error occurred while submitting the ticket.",
         icon: "error",
         confirmButtonText: "Try Again",
+      }).then(() => {
+        window.location.reload(); // 🔄 reload the full page
       });
+    } finally {
+      setIsSubmitting(false);
     }
-  } catch (err) {
-    console.error("❌ Ticket submit error:", err);
-    Swal.fire({
-      title: "Error!",
-      text: "An error occurred while submitting the ticket.",
-      icon: "error",
-      confirmButtonText: "Try Again",
-    }).then(() => {
-    window.location.reload(); // 🔄 reload the full page
-      });
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 mt-0">
@@ -278,11 +278,11 @@ const handleSubmit = async (e: React.FormEvent) => {
             Select Recipient
           </label>
 
-          <div className="relative w-full"  ref={recipientDropdownRef}>
+          <div className="relative w-full" ref={recipientDropdownRef}>
             <input
               type="text"
               placeholder="Search recipient..."
-              value={ formData.name}
+              value={formData.name}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setIsOpen(true);
@@ -299,55 +299,54 @@ const handleSubmit = async (e: React.FormEvent) => {
               className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
             >
               <ChevronDown
-                className={`w-5 h-5 transition-transform ${
-                  isOpen ? "rotate-180" : "rotate-0"
-                }`}
+                className={`w-5 h-5 transition-transform ${isOpen ? "rotate-180" : "rotate-0"
+                  }`}
               />
             </button>
 
             {/* Dropdown list */}
             {isOpen && (
-             <ul className="absolute left-0 right-0 mt-1 z-10 bg-white border rounded-md max-h-60 overflow-y-auto shadow-lg">
-              {loadingRecipients ? (
-                <li className="p-4 text-center text-gray-500">
-                  <span className="animate-spin h-5 w-5 mr-2 inline-block border-2 border-blue-500 border-t-transparent rounded-full"></span>
-                  Loading...
-                </li>
-              ) : filteredRecipients.length > 0 ? (
-                filteredRecipients.map((r) => (
-                  <li
-                    key={r.id}
-                    className="p-2 cursor-pointer hover:bg-blue-100"
-                    onClick={() => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        name: r.name, // ✅ save recipient name
-                        email: r.email, // ✅ save recipient email
-                        ticket_from: sessionStorage.getItem("user_id"),
-                      }));
-                      setSearchTerm("");
-                      setIsOpen(false);
-                    }}
-                  >
-                    {r.name} ({r.email})
+              <ul className="absolute left-0 right-0 mt-1 z-10 bg-white border rounded-md max-h-60 overflow-y-auto shadow-lg">
+                {loadingRecipients ? (
+                  <li className="p-4 text-center text-gray-500">
+                    <span className="animate-spin h-5 w-5 mr-2 inline-block border-2 border-blue-500 border-t-transparent rounded-full"></span>
+                    Loading...
                   </li>
-                ))
-              ) : (
-                <li className="p-2 text-gray-500">No results found</li>
-              )}
-            </ul>
+                ) : filteredRecipients.length > 0 ? (
+                  filteredRecipients.map((r) => (
+                    <li
+                      key={r.id}
+                      className="p-2 cursor-pointer hover:bg-blue-100"
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          name: r.name, // ✅ save recipient name
+                          email: r.email, // ✅ save recipient email
+                          ticket_from: r.id,
+                        }));
+                        setSearchTerm("");
+                        setIsOpen(false);
+                      }}
+                    >
+                      {r.name} ({r.email})
+                    </li>
+                  ))
+                ) : (
+                  <li className="p-2 text-gray-500">No results found</li>
+                )}
+              </ul>
 
             )}
           </div>
         </div>
-     {/* ✅ Assign To Dropdown */}
-         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-1">
-             Assign To
-           </label>
+        {/* ✅ Assign To Dropdown */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Assign To
+          </label>
 
-           <div className="relative" ref={assignDropdownRef}>
-             <input
+          <div className="relative" ref={assignDropdownRef}>
+            <input
               type="text"
               placeholder="Search staff..."
               value={assignSearch || formData.assign_to_name}
@@ -366,40 +365,40 @@ const handleSubmit = async (e: React.FormEvent) => {
             >
               <ChevronDown />
             </button>
-{isAssignOpen && (
-  <ul className="absolute w-full bg-white border mt-1 rounded-md max-h-60 overflow-y-auto">
-    {loadingRecipients ? (
-      <li className="p-4 text-center text-gray-500">
-        <span className="animate-spin h-5 w-5 mr-2 inline-block border-2 border-blue-500 border-t-transparent rounded-full"></span>
-        Loading...
-      </li>
-    ) : subAdmins.length > 0 ? (
-      subAdmins.map((r) => (
-        <li
-          key={r.id}
-          className="p-2 hover:bg-blue-100 cursor-pointer"
-          onClick={() => {
-            setFormData((prev) => ({
-              ...prev,
-              assign_to: r.id,              // ✅ store ID
-              assign_to_name: r.username,    // ✅ store username
-              recipient_name: r.username,    // ✅ store selected recipient name
-              recipientType: r.role,         // ✅ store type
-              ticket_from: userId,           // ✅ logged-in user
-            }));
+            {isAssignOpen && (
+              <ul className="absolute w-full bg-white border mt-1 rounded-md max-h-60 overflow-y-auto">
+                {loadingRecipients ? (
+                  <li className="p-4 text-center text-gray-500">
+                    <span className="animate-spin h-5 w-5 mr-2 inline-block border-2 border-blue-500 border-t-transparent rounded-full"></span>
+                    Loading...
+                  </li>
+                ) : subAdmins.length > 0 ? (
+                  subAdmins.map((r) => (
+                    <li
+                      key={r.id}
+                      className="p-2 hover:bg-blue-100 cursor-pointer"
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          assign_to: r.id,              // ✅ store ID
+                          assign_to_name: r.username,    // ✅ store username
+                          recipient_name: r.username,    // ✅ store selected recipient name
+                          recipientType: r.role,         // ✅ store type
+                          // ticket_from: userId,           // ✅ logged-in user
+                        }));
 
-            setAssignSearch("");
-            setIsAssignOpen(false);
-          }}
-        >
-          {r.username} ({r.role})
-        </li>
-      ))
-    ) : (
-      <li className="p-2 text-gray-500">No sub-admins found</li>
-    )}
-  </ul>
-)}
+                        setAssignSearch("");
+                        setIsAssignOpen(false);
+                      }}
+                    >
+                      {r.username} ({r.role})
+                    </li>
+                  ))
+                ) : (
+                  <li className="p-2 text-gray-500">No sub-admins found</li>
+                )}
+              </ul>
+            )}
 
 
           </div>
@@ -441,23 +440,23 @@ const handleSubmit = async (e: React.FormEvent) => {
           />
         </div>
 
-      {/* Action Buttons */}
-      <div className="mt-6 flex justify-between items-center">
-        {/* Escalate button */}
-        <button
-          type="submit"
-          className="w-full py-3 bg-blue-500 text-white font-semibold rounded-md flex items-center justify-center"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="animate-spin mr-2" size={16} /> Submitting...
-            </>
-          ) : (
-            "Submit Ticket"
-          )}
-        </button>
-      </div>
+        {/* Action Buttons */}
+        <div className="mt-6 flex justify-between items-center">
+          {/* Escalate button */}
+          <button
+            type="submit"
+            className="w-full py-3 bg-blue-500 text-white font-semibold rounded-md flex items-center justify-center"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="animate-spin mr-2" size={16} /> Submitting...
+              </>
+            ) : (
+              "Submit Ticket"
+            )}
+          </button>
+        </div>
       </form>
     </div>
   );
