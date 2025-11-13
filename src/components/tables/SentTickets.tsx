@@ -324,6 +324,9 @@ const TicketsPage = () => {
     fetchSubAdmins();
   }, []);
 
+
+  
+
   const handleAssignToClick = (ticket: Ticket) => {
     // If already assigned, don't open the modal
     // if (ticket.assign_to) {
