@@ -32,9 +32,9 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const {
-      recipient_name,
-      assign_to_name,
-      user_id,
+      // recipient_name,
+      // assign_to_name,
+      // user_id,
       name,
       email,
       subject,
@@ -53,13 +53,10 @@ export async function POST(req: Request) {
     }
 
     // ✅ Store extra fields in message JSON
-    const messagePayload = JSON.stringify({
-      text: message,
-      recipient_name,
-      assign_to_name,
-      role: recipientType,
-      user_id,
-    });
+      const cleanMessage =
+      typeof message === "string"
+        ? message.trim()
+        : message?.text?.trim() || "";
 
     const result = await db
       .insert(ticket)
@@ -67,7 +64,7 @@ export async function POST(req: Request) {
         name,
         email,
         subject,
-        message: messagePayload, // ✅ stored as JSON string
+        message: cleanMessage, // ✅ stored as JSON string
         status: status || "Pending",
         role: recipientType,       // ✅ still storing type in role column
         assign_to: Number(assign_to) || 0,

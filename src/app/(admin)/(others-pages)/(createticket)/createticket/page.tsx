@@ -383,7 +383,7 @@ const NewTicketPage = () => {
                           assign_to: r.id,              // ✅ store ID
                           assign_to_name: r.username,    // ✅ store username
                           recipient_name: r.username,    // ✅ store selected recipient name
-                          recipientType: r.role,         // ✅ store type
+                          recipientType: "staff",         // ✅ store type
                           // ticket_from: userId,           // ✅ logged-in user
                         }));
 

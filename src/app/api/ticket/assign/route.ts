@@ -132,6 +132,7 @@ export async function GET(req: NextRequest) {
     const [
       pending,
       open,
+      fixed,
       inprogress,
       closed,
       escalated,
@@ -145,6 +146,7 @@ export async function GET(req: NextRequest) {
         .select({ count: sql<number>`count(*)` })
         .from(ticket)
         .where(eq(ticket.status, "Open")),
+  db.select({ count: sql<number>`count(*)` }).from(ticket).where(eq(ticket.status, "Fixed")),
 
       db
         .select({ count: sql<number>`count(*)` })
@@ -169,6 +171,7 @@ export async function GET(req: NextRequest) {
         // ✅ ADD STATUS COUNTS HERE
         metrics: {
           pending: pending[0]?.count ?? 0,
+          fixed: fixed[0]?.count ?? 0,
           open: open[0]?.count ?? 0,
           inprogress: inprogress[0]?.count ?? 0,
           closed: closed[0]?.count ?? 0,

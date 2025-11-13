@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface BreadcrumbProps {
   pageTitle: string;
@@ -45,6 +46,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
   const [sport, setSport] = useState("");
   const [isCrowned, setIsCrowned] = useState(false);
   const [staffId, setStaffId] = useState("");
+const router = useRouter();
 
   const [filteredSports, setFilteredSports] = useState<Sport[]>([]);
   const [crownedOptions, setCrownedOptions] = useState<CrownedOption[]>([]);
@@ -254,7 +256,16 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
             </div>
           </>
         )}
+          {["View Ticket", "Recieved Ticket", "Sent Ticket","Ticket"].includes(pageTitle) && (
+        <button
+          onClick={() => router.push("/createticket")}
+          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition"
+        >
+          + Create Ticket
+        </button>
+      )}
       </div>
+     
     </div>
   );
 };
