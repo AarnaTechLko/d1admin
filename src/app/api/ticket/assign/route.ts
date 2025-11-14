@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
     }
         // conditions.push(eq(ticket.assign_to, 0));
 
-  if (role === "admin") {
+  if (role === "Admin") {
       // Admin sees all tickets where assign_to = 0
       conditions.push(eq(ticket.assign_to, 0));
     } else {
