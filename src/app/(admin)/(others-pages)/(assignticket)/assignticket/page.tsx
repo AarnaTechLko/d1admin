@@ -79,6 +79,8 @@ const [staffQuery, setStaffQuery] = useState("");
   const [replyStatus, setReplyStatus] = useState<string>("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [role, setRole] = useState("");
+
   const router = useRouter();
   const [ticketReplies, setTicketReplies] = useState<TicketReply[]>([]);
   const [isEscalate, setIsEscalate] = useState(false);
@@ -315,15 +317,32 @@ const [metrics, setMetrics] = useState({
       setLoading(false);
     }
   };
+useEffect(() => {
+  if (typeof window !== "undefined") {
+    const storedUserId = sessionStorage.getItem("user_id");
+    const storedRole = sessionStorage.getItem("role") || "";
 
-  useEffect(() => {
-    const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
     if (!storedUserId) {
       router.push("/signin");
     } else {
       setUserId(storedUserId);
+      setRole(storedRole);
     }
-  }, [router]);
+  }
+}, []);
+// const storedUserId = sessionStorage.getItem("user_id");
+// const storedRole =  sessionStorage.getItem("role") || "";
+
+// useEffect(() => {
+//   if (!storedUserId) {
+//     router.push("/signin");
+//   } else {
+//     setUserId(storedUserId);
+//     setRole(storedRole); // 👈 Add this
+//   }
+// }, []);
+
+
 
   // ✅ Fetch tickets when userId, searchQuery, statusQuery, or currentPage changes
   useEffect(() => {
@@ -334,7 +353,7 @@ const [metrics, setMetrics] = useState({
       setError(null);
       try {
         const response = await fetch(
-          `/api/ticket/assign?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}&status=${statusQuery}&days=${daysQuery}&staff=${staffQuery}`
+          `/api/ticket/assign?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}&role=${role}&status=${statusQuery}&days=${daysQuery}&staff=${staffQuery}`
         );
 
         if (!response.ok) throw new Error("Failed to fetch tickets");
@@ -747,6 +766,7 @@ const [metrics, setMetrics] = useState({
               <DialogTitle>Reply to Ticket</DialogTitle>
 
               <input type="hidden" value={userId ?? ""} name="userId" />
+              <input type="hidden" value={role ?? ""} name="role" />
               <input type="hidden" value={selectedTicket?.id ?? ""} name="ticketId" />
 
               {/* Previous Messages */}
