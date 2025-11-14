@@ -73,12 +73,16 @@ import { and, eq, gte, ilike, or, sql, SQL } from 'drizzle-orm';
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
-    // const user_id = url.searchParams.get("userId");
+ const role = url.searchParams.get("role")?.trim() || "";
+    const user_id = Number(url.searchParams.get("userId")) || 0;
     const search = url.searchParams.get("search")?.trim() || "";
     const status = url.searchParams.get("status")?.trim() || "";
     const days = Number(url.searchParams.get("days")) || 0;
-   const staff = Number(url.searchParams.get("staff")) || 0;
+    const staff = Number(url.searchParams.get("staff")) || 0;
 
+    // Debug logs
+    console.log("role:", role);
+    console.log("user_id:", user_id);
     const conditions: (SQL | undefined)[] = [];
 
     // ✅ Search filters
@@ -92,9 +96,20 @@ export async function GET(req: NextRequest) {
         )
       );
     }
-        conditions.push(eq(ticket.assign_to, 0));
+        // conditions.push(eq(ticket.assign_to, 0));
 
-
+  if (role === "admin") {
+      // Admin sees all tickets where assign_to = 0
+      conditions.push(eq(ticket.assign_to, 0));
+    } else {
+      // Normal user sees only their own tickets where assign_to = 0
+      conditions.push(
+        and(
+          eq(ticket.assign_to, 0),
+          eq(ticket.ticket_from, user_id)
+        )
+      );
+    }
     // ✅ Status filter
     if (status) {
       conditions.push(ilike(ticket.status, `%${status}%`));

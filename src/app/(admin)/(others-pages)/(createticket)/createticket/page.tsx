@@ -51,6 +51,7 @@ const NewTicketPage = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
   const [loadingRecipients, setLoadingRecipients] = useState(false);
+  const [loadingSubadmin, setLoadingSubadmin] = useState(false);
 
   const filteredRecipients = recipients.filter((r) =>
     r.name.toLowerCase().includes(searchTerm.toLowerCase())||
@@ -189,6 +190,7 @@ const handleRecipientTypeChange = (
   // };
   useEffect(() => {
     const fetchSubAdmins = async () => {
+      setLoadingSubadmin(true);
       try {
         const response = await fetch(`/api/subadmin`, {
           method: "GET",
@@ -207,6 +209,8 @@ const handleRecipientTypeChange = (
         setSubAdmins(data.admin);
       } catch (err) {
         console.error("Error fetching sub-admins:", err);
+      } finally {
+        setLoadingSubadmin(false); // ✅ stop loader
       }
     };
     fetchSubAdmins();
@@ -384,7 +388,7 @@ const handleRecipientTypeChange = (
             </button>
             {isAssignOpen && (
               <ul className="absolute w-full bg-white border mt-1 rounded-md max-h-60 overflow-y-auto">
-                {loadingRecipients ? (
+                {loadingSubadmin ? (
                   <li className="p-4 text-center text-gray-500">
                     <span className="animate-spin h-5 w-5 mr-2 inline-block border-2 border-blue-500 border-t-transparent rounded-full"></span>
                     Loading...
@@ -400,7 +404,6 @@ const handleRecipientTypeChange = (
                           assign_to: r.id,              // ✅ store ID
                           assign_to_name: r.username,    // ✅ store username
                           recipient_name: r.username,    // ✅ store selected recipient name
-                          recipientType: "staff",         // ✅ store type
                           // ticket_from: userId,           // ✅ logged-in user
                         }));
 
