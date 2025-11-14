@@ -50,7 +50,9 @@ const AppSidebar: React.FC = () => {
           name: "Ticket",
             icon: <Ticket />,
           subItems: [{ name: "My Ticket", path: "/myticket", pro: false },
-          { name: "Assign Ticket", path: "/assignticket", pro: false },
+           { name: "Received Ticket", path: "/receivedticket", pro: false },
+         { name: "Sent Ticket", path: "/sentticket", pro: false },
+          // { name: "Assign Ticket", path: "/assignticket", pro: false },
           { name: "View Ticket", path: "/ticket", pro: false },
           { name: "Create Ticket", path: "/createticket", pro: false },
 
@@ -154,6 +156,7 @@ const AppSidebar: React.FC = () => {
             subItems: [
               // { name: "My Ticket", path: "/myticket", pro: false },
             { name: "Assign Ticket", path: "/assignticket", pro: false },
+         { name: "Sent Ticket", path: "/sentticket", pro: false },
             { name: "View Ticket", path: "/ticket", pro: false },
             { name: "Create Ticket", path: "/createticket", pro: false },
 
@@ -227,6 +230,8 @@ const AppSidebar: React.FC = () => {
               name: "Ticket",
             icon: <Ticket />,
               subItems: [{ name: "My Ticket", path: "/myticket", pro: false },
+                { name: "Received Ticket", path: "/receivedticket", pro: false },
+         { name: "Sent Ticket", path: "/sentticket", pro: false },
               { name: "Assign Ticket", path: "/assignticket", pro: false },
               { name: "View Ticket", path: "/ticket", pro: false },
               { name: "Create Ticket", path: "/createticket", pro: false },
@@ -302,6 +307,8 @@ const AppSidebar: React.FC = () => {
                 name: "Ticket",
             icon: <Ticket />,
                 subItems: [{ name: "My Ticket", path: "/myticket", pro: false },
+                  { name: "Received Ticket", path: "/receivedticket", pro: false },
+         { name: "Sent Ticket", path: "/sentticket", pro: false },
                 { name: "Assign Ticket", path: "/assignticket", pro: false },
                 { name: "View Ticket", path: "/ticket", pro: false },
                 { name: "Create Ticket", path: "/createticket", pro: false },
@@ -319,6 +326,8 @@ const AppSidebar: React.FC = () => {
                   name: "Ticket",
             icon: <Ticket />,
                   subItems: [{ name: "My Ticket", path: "/myticket", pro: false },
+                    { name: "Received Ticket", path: "/receivedticket", pro: false },
+         { name: "Sent Ticket", path: "/sentticket", pro: false },
                   { name: "Assign Ticket", path: "/assignticket", pro: false },
                   { name: "View Ticket", path: "/ticket", pro: false },
 

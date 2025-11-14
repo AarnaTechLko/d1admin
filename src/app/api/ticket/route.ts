@@ -69,6 +69,8 @@ export async function POST(req: Request) {
         role: recipientType,       // ✅ still storing type in role column
         assign_to: Number(assign_to) || 0,
         ticket_from: Number(ticket_from) || 0,
+        created_by: Number(ticket_from) || 0,   // stores ticket_from
+        created_for: Number(assign_to) || 0,    // stores assign_to
         createdAt: new Date(),
       })
       .returning();
@@ -86,7 +88,6 @@ export async function POST(req: Request) {
     );
   }
 }
-
 /**
  * ✅ GET /api/tickets → Fetch paginated tickets with filters
  */
@@ -183,6 +184,8 @@ export async function GET(req: NextRequest) {
       escalate: ticket.escalate,
       message: ticket.message, // ✅ We will parse this after fetch
       assign_to: ticket.assign_to,
+      created_by: ticket.created_by,
+      created_for: ticket.created_for,
       status: ticket.status,
       createdAt: ticket.createdAt,
       priority: ticket.priority,
@@ -229,8 +232,49 @@ export async function GET(req: NextRequest) {
         created_by: parsedMessage.user_id || null,
       };
     });
+const [
+      pending,
+      open,
+      fixed,
+      inprogress,
+      closed,
+      escalated,
+    ] = await Promise.all([
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(ticket)
+        .where(eq(ticket.status, "Pending")),
 
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(ticket)
+        .where(eq(ticket.status, "Open")),
+  db.select({ count: sql<number>`count(*)` }).from(ticket).where(eq(ticket.status, "Fixed")),
+
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(ticket)
+        .where(eq(ticket.status, "Inprogress")),
+
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(ticket)
+        .where(eq(ticket.status, "Closed")),
+
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(ticket)
+        .where(eq(ticket.escalate, true)),
+    ]);
     return NextResponse.json({
+       metrics: {
+          pending: pending[0]?.count ?? 0,
+          fixed: fixed[0]?.count ?? 0,
+          open: open[0]?.count ?? 0,
+          inprogress: inprogress[0]?.count ?? 0,
+          closed: closed[0]?.count ?? 0,
+          escalated: escalated[0]?.count ?? 0,
+        },
       ticket: formattedTickets,
       currentPage: page,
       totalPages: Math.ceil(total / limit),

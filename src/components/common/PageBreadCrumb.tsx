@@ -256,7 +256,7 @@ const router = useRouter();
             </div>
           </>
         )}
-          {["View Ticket", "Recieved Ticket", "Sent Ticket","Ticket"].includes(pageTitle) && (
+          {["View Ticket", "Recieved Ticket","Ticket"].includes(pageTitle) && (
         <button
           onClick={() => router.push("/createticket")}
           className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition"

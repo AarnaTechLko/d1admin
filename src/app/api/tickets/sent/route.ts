@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     const search = url.searchParams.get("search")?.trim() || "";
     const status = url.searchParams.get("status")?.trim() || "";
     const days = Number(url.searchParams.get("days")) || 0;
-
+console.log("userid",userId);
     if (!userId) {
       return NextResponse.json(
         { message: "Missing userId parameter" },

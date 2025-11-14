@@ -66,6 +66,7 @@ const TicketsPage = () => {
   const [daysQuery, setDaysQuery] = useState<string>("");
 
   const [replyPriority, setReplyPriority] = useState<string>("Medium");
+const [expandedRows, setExpandedRows] = useState<{ [key: string]: boolean }>({});
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -88,6 +89,12 @@ const TicketsPage = () => {
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [notes, setNotes] = useState<TicketNote[]>([]);
   // Fetch all sub-admins when modal opens
+const toggleRow = (id: number) => {
+  setExpandedRows(prev => ({
+    ...prev,
+    [id]: !prev[id]
+  }));
+};
 
   const handleReplyClick = async (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -548,7 +555,24 @@ const TicketsPage = () => {
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.name}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.message}</TableCell>
+<TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+  {ticket.message.length > 40 ? (
+    <>
+      {expandedRows[ticket.id]
+        ? ticket.message
+        : ticket.message.slice(0, 40) + "..."}
+      
+      <button
+        className="text-blue-600 ml-2 underline"
+        onClick={() => toggleRow(ticket.id)}
+      >
+        {expandedRows[ticket.id] ? "View Less" : "View More"}
+      </button>
+    </>
+  ) : (
+    ticket.message
+  )}
+</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       <span
                         className={`px-2 py-1 text-xs font-semibold rounded-full
