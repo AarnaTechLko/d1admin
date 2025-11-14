@@ -90,7 +90,13 @@ const [staffQuery, setStaffQuery] = useState("");
   const [notes, setNotes] = useState<TicketNote[]>([]);
   // Fetch all sub-admins when modal opens
 const [expandedMessages, setExpandedMessages] = useState<Record<number, boolean>>({});
-
+const [metrics, setMetrics] = useState({
+  pending: 0,
+  open: 0,
+  fixed: 0,
+  closed: 0,
+  escalated: 0,
+});
   const toggleMessage = (id: number) => {
     setExpandedMessages((prev) => ({
       ...prev,
@@ -293,6 +299,7 @@ const [expandedMessages, setExpandedMessages] = useState<Record<number, boolean>
         console.log("daatasdf", data);
         setTickets(data.ticket ?? []);
         setTotalPages(data.totalPages);
+        setMetrics(data.metrics);  // ✅ Save metrics
 
       } catch (err) {
         setError((err as Error).message);
@@ -493,6 +500,34 @@ setLoading(true);
 
   return (
     <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+
+  <div className="p-4 bg-green-100 border border-green-300 rounded-xl shadow">
+    <h3 className="text-lg font-semibold text-green-700">Pending</h3>
+    <p className="text-xl font-bold text-green-800">{metrics.pending}</p>
+  </div>
+
+  <div className="p-4 bg-yellow-100 border border-yellow-300 rounded-xl shadow">
+    <h3 className="text-lg font-semibold text-yellow-700">Open</h3>
+    <p className="text-xl font-bold text-yellow-800">{metrics.open}</p>
+  </div>
+
+  <div className="p-4 bg-blue-100 border border-blue-300 rounded-xl shadow">
+    <h3 className="text-lg font-semibold text-blue-700">Fixed</h3>
+    <p className="text-xl font-bold text-blue-800">{metrics.fixed}</p>
+  </div>
+
+  <div className="p-4 bg-purple-100 border border-purple-300 rounded-xl shadow">
+    <h3 className="text-lg font-semibold text-purple-700">Closed</h3>
+    <p className="text-xl font-bold text-purple-800">{metrics.closed}</p>
+  </div>
+
+  <div className="p-4 bg-red-100 border border-red-300 rounded-xl shadow">
+    <h3 className="text-lg font-semibold text-red-700">Escalated</h3>
+    <p className="text-xl font-bold text-red-800">{metrics.escalated}</p>
+  </div>
+
+</div>
 
       {/* <div className="p-4">
         {userId && (

@@ -37,5 +37,7 @@ export const config = {
     "/view",
     "/createticket",
     "/ticket",
+    "/receivedticket",
+    "/sentticket",
   ]
 };

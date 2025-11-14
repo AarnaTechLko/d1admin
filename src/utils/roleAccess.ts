@@ -6,6 +6,8 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
   "Customer Support": [
     "/dashboard*",
     "/ticket*",
+    "/receivedticket*",
+    "/sentticket*",
     "/myticket*",
     "/assignticket*",
     "/createticket*",
@@ -25,6 +27,9 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
     "/dashboard*",
     "/ticket*",
     "/myticket*",
+    "/receivedticket*",
+    "/sentticket*",
+    
     "/assignticket*",
     "/createticket*",
     "/coach*",
@@ -59,6 +64,8 @@ export const roleBasedAccess: Record<string, string[] | "*"> = {
     "/assignticket*",
     "/createticket*",
     "/coach*",
+    "/receivedticket*",
+    "/sentticket*",
     "/suspend",
     "/disablecoach",
     "/player*",

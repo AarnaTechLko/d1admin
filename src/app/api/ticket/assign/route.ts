@@ -92,6 +92,8 @@ export async function GET(req: NextRequest) {
         )
       );
     }
+        conditions.push(eq(ticket.assign_to, 0));
+
 
     // ✅ Status filter
     if (status) {

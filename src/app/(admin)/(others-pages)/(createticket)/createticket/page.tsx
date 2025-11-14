@@ -53,8 +53,17 @@ const NewTicketPage = () => {
   const [loadingRecipients, setLoadingRecipients] = useState(false);
 
   const filteredRecipients = recipients.filter((r) =>
-    r.name.toLowerCase().includes(searchTerm.toLowerCase())
+    r.name.toLowerCase().includes(searchTerm.toLowerCase())||
+    r.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const filteredStaff = subAdmins.filter((s) => {
+    const term = assignSearch.toLowerCase();
+    return (
+      s.username.toLowerCase().includes(term) ||
+      s.role.toLowerCase().includes(term)
+    );
+  });
+
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -116,19 +125,26 @@ const NewTicketPage = () => {
     }));
   };
 
-  // ✅ when recipientType changes, update role too
-  const handleRecipientTypeChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      recipientType: e.target.value,
-      role: e.target.value, // ✅ store role = type
-      ticket_from: "", // reset when changing type
-    }));
-    setSearchTerm("");
-    setAssignSearch("");
-  };
+const handleRecipientTypeChange = (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
+
+  const selectedType = e.target.value;
+
+  setFormData((prev) => ({
+    ...prev,
+    recipientType: selectedType,
+    role: selectedType,
+    name: "",            // ✅ Clear recipient name
+    email: "",           // ✅ Clear recipient email
+    ticket_from: "",     // ✅ Clear selected user ID
+  }));
+
+  setSearchTerm("");      // ✅ Clear search text
+  setAssignSearch("");    // ✅ Clear assign search
+  setIsOpen(false);       // ✅ Close recipient dropdown
+  setRecipients([]);      // ✅ Clear old list before fetching new one
+};
 
   // const handleSubmit = async (e: React.FormEvent) => {
   //   e.preventDefault();
@@ -282,7 +298,7 @@ const NewTicketPage = () => {
             <input
               type="text"
               placeholder="Search recipient..."
-              value={formData.name}
+              value={searchTerm || formData.name}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setIsOpen(true);
@@ -350,6 +366,7 @@ const NewTicketPage = () => {
               type="text"
               placeholder="Search staff..."
               value={assignSearch || formData.assign_to_name}
+
               onChange={(e) => {
                 setAssignSearch(e.target.value);
                 setIsAssignOpen(true);
@@ -372,8 +389,8 @@ const NewTicketPage = () => {
                     <span className="animate-spin h-5 w-5 mr-2 inline-block border-2 border-blue-500 border-t-transparent rounded-full"></span>
                     Loading...
                   </li>
-                ) : subAdmins.length > 0 ? (
-                  subAdmins.map((r) => (
+                ) : filteredStaff.length > 0 ? (
+                  filteredStaff.map((r) => (
                     <li
                       key={r.id}
                       className="p-2 hover:bg-blue-100 cursor-pointer"
