@@ -52,7 +52,7 @@ export default function CreateSubAdminWithRole() {
     password: "",
     street: "",
     phone_number: "",
-    country_code: "+91",
+    country_code: "+1",
     role: "Customer Support",
     image: "",
     birthday: "",
@@ -63,11 +63,27 @@ export default function CreateSubAdminWithRole() {
   const [success, setSuccess] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const handleAdminChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+ const handleAdminChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+) => {
+  const { name } = e.target;
+  let { value } = e.target;
+
+  if (name === "phone_number") {
+    value = value.replace(/\D/g, ""); 
+
+    if (value.length > 10) {
+      value = value.slice(0, 10);
+    }
+  }
+
+  setFormData({
+    ...formData,
+    [name]: value,
+  });
+};
+
+
 
   const handleDateChange = (date: Date | null) => {
     if (!date) {
@@ -433,7 +449,7 @@ export default function CreateSubAdminWithRole() {
                 name="phone_number"
                 value={formData.phone_number}
                 onChange={handleAdminChange}
-                placeholder="9876543210"
+                placeholder="xxxxxxxxxx"
                 pattern="\d{10,}" // ✅ ensures only digits with at least 10 numbers
                 minLength={10}    // ✅ extra safeguard
                 maxLength={10}    // ✅ optional: international numbers can go up to 15 digits

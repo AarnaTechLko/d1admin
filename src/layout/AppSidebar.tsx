@@ -17,6 +17,7 @@ import {
   ClipboardList,
   GridIcon,
   LayoutDashboard,
+  MessageCircle,
   // HorizontaLDots,
  
   Ticket,
@@ -85,6 +86,13 @@ const AppSidebar: React.FC = () => {
 
           ],
         },
+           {
+            icon:<MessageCircle/>,
+            name: "Chat",
+            subItems: [
+              { name: "View Chat", path: "/chats", pro: false },
+            ],
+          },
       ]
       : role === "Admin"
         ? [
@@ -132,6 +140,13 @@ const AppSidebar: React.FC = () => {
             { name: "Suspended Team", path: "/suspendteam", pro: false },
             { name: "Disable Team", path: "/disableteam", pro: false },
 
+            ],
+          },
+           {
+            icon:<MessageCircle/>,
+            name: "Chat",
+            subItems: [
+              { name: "View Chat", path: "/chats", pro: false },
             ],
           },
           {

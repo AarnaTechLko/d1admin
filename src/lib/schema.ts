@@ -968,3 +968,18 @@ export const refunds = pgTable("refunds", {
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
+export const guestUser = pgTable("guest_user", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 20 }),
+  message: text("message"),
+  status: integer("status").default(1), // 1 = active chat
+});
+export const guestMessages = pgTable("guest_messages", {
+  id: serial("id").primaryKey(),
+  chatId: integer("chat_id").notNull(),
+  message: text("message").notNull(),
+  sender: varchar("sender", { length: 20 }).notNull(), // "user" or "admin"
+  createdAt: text("created_at").default("now()"),
+});
