@@ -702,7 +702,7 @@ setLoading(true);
             </DialogContent>
           </Dialog>
 
-
+   
           <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
             <DialogContent className="p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
               <DialogTitle>Reply to Ticket</DialogTitle>

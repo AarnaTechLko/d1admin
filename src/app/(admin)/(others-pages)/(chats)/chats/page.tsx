@@ -553,7 +553,7 @@ export default function GuestChatsPage() {
             {/* MESSAGES */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {activeChat.message && (
-                <div className="px-4 py-2 rounded-xl max-w-[70%] text-sm shadow mt-3 ml-4 self-start">
+                <div className="px-4 py-2 rounded-xl max-w-[70%] text-sm shadow mt-3 self-start">
                   {activeChat.message}
                 </div>
               )}

@@ -66,7 +66,7 @@ const TicketsPage = () => {
   const [daysQuery, setDaysQuery] = useState<string>("");
 
   const [replyPriority, setReplyPriority] = useState<string>("Medium");
-const [expandedRows, setExpandedRows] = useState<{ [key: string]: boolean }>({});
+  const [expandedRows, setExpandedRows] = useState<{ [key: string]: boolean }>({});
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -81,6 +81,7 @@ const [expandedRows, setExpandedRows] = useState<{ [key: string]: boolean }>({})
   const [replyStatus, setReplyStatus] = useState<string>("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
   const [ticketReplies, setTicketReplies] = useState<TicketReply[]>([]);
   const [isEscalate, setIsEscalate] = useState(false);
@@ -89,12 +90,12 @@ const [expandedRows, setExpandedRows] = useState<{ [key: string]: boolean }>({})
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [notes, setNotes] = useState<TicketNote[]>([]);
   // Fetch all sub-admins when modal opens
-const toggleRow = (id: number) => {
-  setExpandedRows(prev => ({
-    ...prev,
-    [id]: !prev[id]
-  }));
-};
+  const toggleRow = (id: number) => {
+    setExpandedRows(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
 
   const handleReplyClick = async (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -143,19 +144,19 @@ const toggleRow = (id: number) => {
     }
 
     if (!replyMessage.trim()) {
-  toast.error("Message cannot be empty.", {
-    duration: 4000,
-    position: "top-right",
-    style: {
-      background: "red",       // background color
-      color: "white",          // text color
-      minWidth: "300px",       // width of the toast
-      minHeight: "60px",       // height of the toast
-     
-    },
-  });
-  return;
-}
+      toast.error("Message cannot be empty.", {
+        duration: 4000,
+        position: "top-right",
+        style: {
+          background: "red",       // background color
+          color: "white",          // text color
+          minWidth: "300px",       // width of the toast
+          minHeight: "60px",       // height of the toast
+
+        },
+      });
+      return;
+    }
 
     setLoading(true);
 
@@ -268,42 +269,45 @@ const toggleRow = (id: number) => {
 
 
   useEffect(() => {
+    const storedRole = localStorage.getItem("role") || sessionStorage.getItem("role");
     const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
     if (!storedUserId) {
       router.push("/signin");
     } else {
       setUserId(storedUserId);
+      setUserRole(storedRole);
     }
   }, [router]);
 
   // ✅ Fetch tickets when userId, searchQuery, statusQuery, or currentPage changes
   useEffect(() => {
-    if (!userId) return;
+  if (!userId) return;
 
-    const fetchTickets = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(
-          `/api/tickets/sent?userId=${userId}&search=${searchQuery}&status=${statusQuery}&days=${daysQuery}`
-        );
+  const fetchTickets = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/tickets/sent?userId=${userId}&page=${currentPage}&search=${searchQuery}&status=${statusQuery}&days=${daysQuery}&role=${userRole}`
+      );
 
-        if (!response.ok) throw new Error("Failed to fetch tickets");
+      if (!response.ok) throw new Error("Failed to fetch tickets");
 
-        const data = await response.json();
-        console.log("daatasent", data);
+      const data = await response.json();
+      console.log("daatasent", data);
 
-        setSentTickets(data.sent ?? [])
-        setTotalPages(data.totalPages);
-      } catch (err) {
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
-      }
-    };
+      setSentTickets(data.tickets ?? []);
+      setTotalPages(data.totalPages);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchTickets();
-  }, [userId, searchQuery, currentPage, statusQuery, daysQuery]);
+  fetchTickets();
+}, [userId, searchQuery, currentPage, statusQuery, daysQuery]);
+
 
   useEffect(() => {
     const fetchSubAdmins = async () => {
@@ -332,7 +336,7 @@ const toggleRow = (id: number) => {
   }, []);
 
 
-  
+
 
   const handleAssignToClick = (ticket: Ticket) => {
     // If already assigned, don't open the modal
@@ -555,24 +559,24 @@ const toggleRow = (id: number) => {
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.name}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
-<TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-  {ticket.message.length > 40 ? (
-    <>
-      {expandedRows[ticket.id]
-        ? ticket.message
-        : ticket.message.slice(0, 40) + "..."}
-      
-      <button
-        className="text-blue-600 ml-2 underline"
-        onClick={() => toggleRow(ticket.id)}
-      >
-        {expandedRows[ticket.id] ? "View Less" : "View More"}
-      </button>
-    </>
-  ) : (
-    ticket.message
-  )}
-</TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      {ticket.message.length > 40 ? (
+                        <>
+                          {expandedRows[ticket.id]
+                            ? ticket.message
+                            : ticket.message.slice(0, 40) + "..."}
+
+                          <button
+                            className="text-blue-600 ml-2 underline"
+                            onClick={() => toggleRow(ticket.id)}
+                          >
+                            {expandedRows[ticket.id] ? "View Less" : "View More"}
+                          </button>
+                        </>
+                      ) : (
+                        ticket.message
+                      )}
+                    </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       <span
                         className={`px-2 py-1 text-xs font-semibold rounded-full
@@ -905,61 +909,61 @@ const toggleRow = (id: number) => {
         </div>
       )}
 
-  <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-  <DialogContent className="p-6 max-h-[80vh] flex flex-col">
-    <DialogTitle>Assign Subadmin</DialogTitle>
-    <p className="text-gray-500">Select a sub-admin to assign:</p>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="p-6 max-h-[80vh] flex flex-col">
+          <DialogTitle>Assign Subadmin</DialogTitle>
+          <p className="text-gray-500">Select a sub-admin to assign:</p>
 
-    {/* Scrollable list */}
-    <div className="mt-4 flex-1 overflow-y-auto">
-      {subAdmins?.length > 0 ? (
-        <ul className="space-y-2">
-          {subAdmins.map((subAdmin) => (
-            <li
-              key={subAdmin.id}
-              className={`p-2 border rounded-md cursor-pointer 
+          {/* Scrollable list */}
+          <div className="mt-4 flex-1 overflow-y-auto">
+            {subAdmins?.length > 0 ? (
+              <ul className="space-y-2">
+                {subAdmins.map((subAdmin) => (
+                  <li
+                    key={subAdmin.id}
+                    className={`p-2 border rounded-md cursor-pointer 
               ${selectedTicket?.assign_to === subAdmin.id
-                  ? "bg-blue-200 dark:bg-blue-700"
-                  : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
-              onClick={() =>
-                setSelectedTicket((prev) =>
-                  prev ? { ...prev, assign_to: subAdmin.id } : null
-                )
-              }
-            >
-              {subAdmin.username}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-gray-500 text-sm">No sub-admins available</p>
-      )}
-    </div>
+                        ? "bg-blue-200 dark:bg-blue-700"
+                        : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+                    onClick={() =>
+                      setSelectedTicket((prev) =>
+                        prev ? { ...prev, assign_to: subAdmin.id } : null
+                      )
+                    }
+                  >
+                    {subAdmin.username}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500 text-sm">No sub-admins available</p>
+            )}
+          </div>
 
-    {/* Buttons fixed at bottom */}
-    <div className="mt-4 flex justify-end gap-3">
-      <button
-        className="px-4 py-2 bg-red-500 text-white rounded-md"
-        onClick={() => setIsModalOpen(false)}
-      >
-        Cancel
-      </button>
-      <button
-        className="px-4 py-2 bg-blue-500 text-white rounded-md"
-        onClick={handleModalSubmit}
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="animate-spin inline mr-2" size={16} />
-            Submitting...
-          </>
-        ) : (
-          "Submit"
-        )}
-      </button>
-    </div>
-  </DialogContent>
-</Dialog>
+          {/* Buttons fixed at bottom */}
+          <div className="mt-4 flex justify-end gap-3">
+            <button
+              className="px-4 py-2 bg-red-500 text-white rounded-md"
+              onClick={() => setIsModalOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="px-4 py-2 bg-blue-500 text-white rounded-md"
+              onClick={handleModalSubmit}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="animate-spin inline mr-2" size={16} />
+                  Submitting...
+                </>
+              ) : (
+                "Submit"
+              )}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
     </div>
 
