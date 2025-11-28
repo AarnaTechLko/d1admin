@@ -60,14 +60,14 @@ interface PlayerTableProps {
 }
 
 const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
-  // currentPage = 1,
-  // totalPages = 1,
-  // setCurrentPage = () => { },
+  currentPage,
+totalPages,
+  setCurrentPage = () => { },
 }) => {
   const MySwal = withReactContent(Swal);
   const router = useRouter();
 
-  const [currentPage, setCurrentPage] = useState(1);
+  // const [currentPage, setCurrentPage] = useState(1);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [open, setOpen] = useState(false); // State for modal visibility
@@ -75,7 +75,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
   const itemsPerPage = 10;
   const [ipOpen, setIpOpen] = useState<number | null>(null);
   const [ipData, setIpData] = useState<{ ip: string; loginTime: string }[]>([]);
-  const totalPages = Math.ceil(data.length / itemsPerPage);
+  // const totalPages = Math.ceil(data.length / itemsPerPage);
   const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const [Player, setPlayer] = useState<{ players: Player[] } | null>(null);
   const [suspendPlayer, setSuspendPlayer] = useState<Player | null>(null);
