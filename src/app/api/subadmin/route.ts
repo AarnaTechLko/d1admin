@@ -1,7 +1,7 @@
 // src/app/api/admin/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { admin, role  } from "@/lib/schema";
+import { admin, role } from "@/lib/schema";
 import { eq, or, desc, count, ilike, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 type AdminFromDB = {
@@ -102,18 +102,25 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const search = url.searchParams.get("search")?.trim() || "";
-    // const page = parseInt(url.searchParams.get("page") || "1", 10);
-    // const limit = parseInt(url.searchParams.get("limit") || "10", 10);
-    // const offset = (page - 1) * limit;
+    const page = parseInt(url.searchParams.get("page") || "1", 10);
+    const limit = parseInt(url.searchParams.get("limit") || "10", 10);
+    const offset = (page - 1) * limit;
 
     const baseCondition = eq(admin.is_deleted, 1);
+
     const searchCondition = search
-      ? or(ilike(admin.username, `%${search}%`), ilike(admin.email, `%${search}%`))
+      ? or(
+          ilike(admin.username, `%${search}%`),
+          ilike(admin.email, `%${search}%`)
+        )
       : undefined;
 
-    const whereClause = searchCondition ? and(baseCondition, searchCondition) : baseCondition;
+    const whereClause = searchCondition
+      ? and(baseCondition, searchCondition)
+      : baseCondition;
 
-    const [adminData] = await Promise.all([
+    // FIX: Extract both adminData and totalResult
+    const [adminData, totalResult] = await Promise.all([
       db
         .select({
           id: admin.id,
@@ -135,19 +142,19 @@ export async function GET(req: Request) {
         .from(admin)
         .leftJoin(role, eq(admin.id, role.user_id))
         .where(whereClause)
-        .orderBy(desc(admin.created_at)),
-        // .offset(offset)
-        // .limit(limit),
+        .orderBy(desc(admin.created_at))
+        .offset(offset)
+        .limit(limit),
 
+      // Count Query
       db
         .select({ count: count() })
         .from(admin)
         .where(whereClause)
-        .then((res) => res[0]?.count || 0),
-        
+        .then((res) => Number(res[0]?.count || 0)),
     ]);
 
-   
+    // Fix permissions mapping
     const adminWithPermissions = (adminData as AdminFromDB[]).map((a) => {
       const permissions: Partial<Record<PermissionKey, number>> = {};
       allPermissions.forEach((perm) => {
@@ -155,22 +162,28 @@ export async function GET(req: Request) {
           permissions[perm as PermissionKey] = 1;
         }
       });
-      const { ...rest } = a;
-      return { ...rest, permission: permissions };
+
+      return {
+        ...a,
+        permission: permissions,
+      };
     });
 
     return NextResponse.json({
       admin: adminWithPermissions,
-      // currentPage: page,
-      // ///countries: countryList, 
-      // totalPages: Math.ceil(totalResult / limit),
-      // hasNextPage: page * limit < totalResult,
-      // hasPrevPage: page > 1,
+      currentPage: page,
+      totalPages: Math.ceil(totalResult / limit),
+      hasNextPage: page * limit < totalResult,
+      hasPrevPage: page > 1,
+      totalRecords: totalResult,
     });
   } catch (error) {
     console.error("GET /api/admin error:", error);
     return NextResponse.json(
-      { message: "Failed to fetch admin", error: error instanceof Error ? error.message : String(error) },
+      {
+        message: "Failed to fetch admin",
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }

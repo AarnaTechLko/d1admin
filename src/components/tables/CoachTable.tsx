@@ -34,7 +34,8 @@ interface CoachTableProps {
   setCurrentPage: (page: number) => void;
 }
 
-const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPages, setCurrentPage }) => {
+const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
+   totalPages, setCurrentPage }) => {
   const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -250,6 +251,25 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage, totalPa
 
   return (
     <div>
+   {totalPages > 0 && (
+        <div className="flex justify-end items-center gap-2 p-2">
+          {[...Array(totalPages)].map((_, index) => {
+            const pageNumber = index + 1;
+            return (
+              <button
+                key={pageNumber}
+                onClick={() => setCurrentPage?.(pageNumber)}
+                className={`px-3 py-2 rounded-md ${currentPage === pageNumber
+                  ? "bg-blue-500 text-white"
+                  : "text-blue-500 hover:bg-gray-200"
+                  }`}
+              >
+                {pageNumber}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
 
       <div className=" mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
