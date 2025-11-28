@@ -66,8 +66,6 @@ const TicketsPage = () => {
   const [daysQuery, setDaysQuery] = useState<string>("");
 
   const [replyPriority, setReplyPriority] = useState<string>("Medium");
-  const [expandedRows, setExpandedRows] = useState<{ [key: string]: boolean }>({});
-
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
@@ -89,14 +87,57 @@ const TicketsPage = () => {
   const [selectedSubAdmin, setSelectedSubAdmin] = useState("");
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [notes, setNotes] = useState<TicketNote[]>([]);
-  // Fetch all sub-admins when modal opens
-  const toggleRow = (id: number) => {
-    setExpandedRows(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
+
+  // React state for popup
+  const [popupMessage, setPopupMessage] = useState<string>("");
+  const [showPopup, setShowPopup] = useState<boolean>(false);
+  // Helper function to check valid JSON
+  // Extract JSON safely from mixed message
+  const extractJson = (str: string) => {
+    const jsonStart = str.indexOf("{");
+    const jsonEnd = str.lastIndexOf("}");
+
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      const jsonString = str.substring(jsonStart, jsonEnd + 1);
+      try {
+        return JSON.parse(jsonString);
+      } catch (error) {
+  console.error("Failed to parse ticket message:", error);
+  return null;
+}
+
+    }
+    return null;
   };
 
+  const openPopupMessage = (message: string) => {
+    console.log("📩 Raw Message Received:", message);
+
+    const parsed = extractJson(message); // your helper function
+
+    if (parsed) {
+      console.log("🟢 Extracted JSON:", parsed);
+
+      // Convert JSON to readable format
+      const formatted = Object.entries(parsed)
+        .map(([key, value]) => `${key}: ${value ?? ""}`)
+        .join("\n");
+
+      // Get text before JSON (if any)
+      const textBeforeJson = message.split("{")[0].trim();
+
+      const finalMessage = textBeforeJson
+        ? textBeforeJson + "\n\n" + formatted
+        : formatted;
+      console.log("popup messages:", finalMessage);
+      setPopupMessage(finalMessage);
+    } else {
+      console.log("⚠️ No JSON found → using raw message");
+      setPopupMessage(message);
+    }
+
+    setShowPopup(true);
+  };
   const handleReplyClick = async (ticket: Ticket) => {
     setSelectedTicket(ticket);
     setReplyStatus(ticket.status);
@@ -281,32 +322,32 @@ const TicketsPage = () => {
 
   // ✅ Fetch tickets when userId, searchQuery, statusQuery, or currentPage changes
   useEffect(() => {
-  if (!userId) return;
+    if (!userId) return;
 
-  const fetchTickets = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        `/api/tickets/sent?userId=${userId}&page=${currentPage}&search=${searchQuery}&status=${statusQuery}&days=${daysQuery}&role=${userRole}`
-      );
+    const fetchTickets = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(
+          `/api/tickets/sent?userId=${userId}&page=${currentPage}&search=${searchQuery}&status=${statusQuery}&days=${daysQuery}&role=${userRole}`
+        );
 
-      if (!response.ok) throw new Error("Failed to fetch tickets");
+        if (!response.ok) throw new Error("Failed to fetch tickets");
 
-      const data = await response.json();
-      console.log("daatasent", data);
+        const data = await response.json();
+        console.log("daatasent", data);
 
-      setSentTickets(data.tickets ?? []);
-      setTotalPages(data.totalPages);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
+        setSentTickets(data.tickets ?? []);
+        setTotalPages(data.totalPages);
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchTickets();
-}, [userId, searchQuery, currentPage, statusQuery, daysQuery]);
+    fetchTickets();
+  }, [userId, searchQuery, currentPage, statusQuery, daysQuery]);
 
 
   useEffect(() => {
@@ -549,87 +590,86 @@ const TicketsPage = () => {
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
 
               {Array.isArray(sentTickets) && sentTickets.length > 0 ? (
-                sentTickets.map((ticket) => (
+                sentTickets.map((ticket) => {
+                  const isLong = ticket.message?.length > 50;
+
                   // <TableRow key={ticket.id}>
+                  return (
+                    <TableRow
+                      key={ticket.id}
+                      className={ticket.escalate ? "bg-red-100 dark:bg-red-900/20" : ""}
+                    >
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.name}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs">
+                        <p className="whitespace-pre-wrap break-words">
+                          {isLong ? ticket.message.slice(0, 100) + "..." : ticket.message}
+                        </p>
 
-                  <TableRow
-                    key={ticket.id}
-                    className={ticket.escalate ? "bg-red-100 dark:bg-red-900/20" : ""}
-                  >
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.name}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      {ticket.message.length > 40 ? (
-                        <>
-                          {expandedRows[ticket.id]
-                            ? ticket.message
-                            : ticket.message.slice(0, 40) + "..."}
-
+                        {isLong && (
                           <button
-                            className="text-blue-600 ml-2 underline"
-                            onClick={() => toggleRow(ticket.id)}
+                            className="text-blue-500 text-sm mt-1 hover:underline"
+                            onClick={() => openPopupMessage(ticket.message)}
                           >
-                            {expandedRows[ticket.id] ? "View Less" : "View More"}
+                            View More
                           </button>
-                        </>
-                      ) : (
-                        ticket.message
-                      )}
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full
+                        )}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-full
                           ${ticket.priority === "High" ? "bg-red-100 text-red-700" : ""}
                           ${ticket.priority === "Medium" ? "bg-yellow-100 text-yellow-700" : ""}
                           ${ticket.priority === "Low" ? "bg-green-100 text-green-700" : ""}`}
-                      >
-                        {ticket.priority}
-                      </span>
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      <button
-                        className="text-blue-500 hover:underline"
-                        onClick={() => handleAssignToClick(ticket)}
-                      >
-
-                        {ticket.assign_to_username || 'Assign To'}
-                      </button>
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-yellow-500">
-                      <Badge
-                        color={
-                          ticket.status.toLowerCase() === "closed" ? "error" :
-                            ticket.status.toLowerCase() === "open" ? "info" :
-                              ticket.status.toLowerCase() === "fixed" ? "success" :
-                                ticket.status.toLowerCase() === "pending" ? "warning" :
-                                  "light" // Default color
-                        }
-                      >
-                        {ticket.status || "Pending"}
-                      </Badge>
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      <div className="flex gap-3">
-                        <button className="text-green-500" onClick={() => handleReplyClick(ticket)}>
-                          <MessageSquare size={18} />
-                        </button>
-                        <button
-                          className="text-blue-500 hover:text-blue-600"
-                          onClick={() => handleViewNotesClick(ticket)}
-                          title="View Notes"
                         >
-                          <StickyNote size={18} />
-                        </button>
-                      </div>
+                          {ticket.priority}
+                        </span>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <button
+                          className="text-blue-500 hover:underline"
+                          onClick={() => handleAssignToClick(ticket)}
+                        >
 
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      {dayjs(ticket.createdAt).format("D-MM-YYYY, h:mm A")}
-                    </TableCell>
-                  </TableRow>
-                ))
+                          {ticket.assign_to_username || 'Assign To'}
+                        </button>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-yellow-500">
+                        <Badge
+                          color={
+                            ticket.status.toLowerCase() === "closed" ? "error" :
+                              ticket.status.toLowerCase() === "open" ? "info" :
+                                ticket.status.toLowerCase() === "fixed" ? "success" :
+                                  ticket.status.toLowerCase() === "pending" ? "warning" :
+                                    "light" // Default color
+                          }
+                        >
+                          {ticket.status || "Pending"}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <div className="flex gap-3">
+                          <button className="text-green-500" onClick={() => handleReplyClick(ticket)}>
+                            <MessageSquare size={18} />
+                          </button>
+                          <button
+                            className="text-blue-500 hover:text-blue-600"
+                            onClick={() => handleViewNotesClick(ticket)}
+                            title="View Notes"
+                          >
+                            <StickyNote size={18} />
+                          </button>
+                        </div>
+
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        {dayjs(ticket.createdAt).format("D-MM-YYYY, h:mm A")}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               ) : (
                 <TableRow>
                   <TableCell className="text-center text-gray-500 py-4">
@@ -639,7 +679,27 @@ const TicketsPage = () => {
               )}
             </TableBody>
           </Table>
+          {showPopup && (
+            <div
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            >
+              <div className="bg-white p-6 rounded-md shadow-lg max-w-lg w-full">
+                <h2 className="text-lg font-semibold mb-3 text-gray-800">Full Message</h2>
+                <p className="whitespace-pre-wrap break-words text-gray-700">
+                  {popupMessage}
+                </p>
 
+                <div className="text-right mt-4">
+                  <button
+                    onClick={() => setShowPopup(false)}
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
             <DialogContent className="max-w-md">
               <DialogHeader>
