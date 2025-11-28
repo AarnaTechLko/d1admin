@@ -63,7 +63,7 @@ const TicketsPage = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusQuery, setStatusQuery] = useState<string>("");
   const [daysQuery, setDaysQuery] = useState<string>("");
-const [staffQuery, setStaffQuery] = useState("");
+  const [staffQuery, setStaffQuery] = useState("");
   const [replyPriority, setReplyPriority] = useState<string>("Medium");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -89,18 +89,65 @@ const [staffQuery, setStaffQuery] = useState("");
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [notes, setNotes] = useState<TicketNote[]>([]);
   // Fetch all sub-admins when modal opens
-  const [expandedMessages, setExpandedMessages] = useState<Record<number, boolean>>({});
+  // React state for popup
+  const [popupMessage, setPopupMessage] = useState<string>("");
+  const [showPopup, setShowPopup] = useState<boolean>(false);
+  // Helper function to check valid JSON
+  // Extract JSON safely from mixed message
+  const extractJson = (str: string) => {
+    const jsonStart = str.indexOf("{");
+    const jsonEnd = str.lastIndexOf("}");
 
-  const toggleMessage = (id: number) => {
-    setExpandedMessages((prev) => ({ ...prev, [id]: !prev[id] }));
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      const jsonString = str.substring(jsonStart, jsonEnd + 1);
+      try {
+        return JSON.parse(jsonString);
+      } catch (error) {
+  console.error("Failed to parse ticket message:", error);
+  return null;
+}
+
+    }
+    return null;
   };
-const [metrics, setMetrics] = useState({
-  pending: 0,
-  open: 0,
-  fixed: 0,
-  closed: 0,
-  escalated: 0,
-});
+
+  const openPopupMessage = (message: string) => {
+    console.log("📩 Raw Message Received:", message);
+
+    const parsed = extractJson(message); // your helper function
+
+    if (parsed) {
+      console.log("🟢 Extracted JSON:", parsed);
+
+      // Convert JSON to readable format
+      const formatted = Object.entries(parsed)
+        .map(([key, value]) => `${key}: ${value ?? ""}`)
+        .join("\n");
+
+      // Get text before JSON (if any)
+      const textBeforeJson = message.split("{")[0].trim();
+
+      const finalMessage = textBeforeJson
+        ? textBeforeJson + "\n\n" + formatted
+        : formatted;
+      console.log("popup messages:", finalMessage);
+      setPopupMessage(finalMessage);
+    } else {
+      console.log("⚠️ No JSON found → using raw message");
+      setPopupMessage(message);
+    }
+
+    setShowPopup(true);
+  };
+
+
+  const [metrics, setMetrics] = useState({
+    pending: 0,
+    open: 0,
+    fixed: 0,
+    closed: 0,
+    escalated: 0,
+  });
 
   const itemsPerPage = 10;
 
@@ -317,30 +364,30 @@ const [metrics, setMetrics] = useState({
       setLoading(false);
     }
   };
-useEffect(() => {
-  if (typeof window !== "undefined") {
-    const storedUserId = sessionStorage.getItem("user_id");
-    const storedRole = sessionStorage.getItem("role") || "";
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedUserId = sessionStorage.getItem("user_id");
+      const storedRole = sessionStorage.getItem("role") || "";
 
-    if (!storedUserId) {
-      router.push("/signin");
-    } else {
-      setUserId(storedUserId);
-      setRole(storedRole);
+      if (!storedUserId) {
+        router.push("/signin");
+      } else {
+        setUserId(storedUserId);
+        setRole(storedRole);
+      }
     }
-  }
-}, []);
-// const storedUserId = sessionStorage.getItem("user_id");
-// const storedRole =  sessionStorage.getItem("role") || "";
+  }, []);
+  // const storedUserId = sessionStorage.getItem("user_id");
+  // const storedRole =  sessionStorage.getItem("role") || "";
 
-// useEffect(() => {
-//   if (!storedUserId) {
-//     router.push("/signin");
-//   } else {
-//     setUserId(storedUserId);
-//     setRole(storedRole); // 👈 Add this
-//   }
-// }, []);
+  // useEffect(() => {
+  //   if (!storedUserId) {
+  //     router.push("/signin");
+  //   } else {
+  //     setUserId(storedUserId);
+  //     setRole(storedRole); // 👈 Add this
+  //   }
+  // }, []);
 
 
 
@@ -372,7 +419,7 @@ useEffect(() => {
     };
 
     fetchTickets();
-  }, [userId, searchQuery, currentPage, statusQuery, daysQuery,staffQuery]);
+  }, [userId, searchQuery, currentPage, statusQuery, daysQuery, staffQuery]);
 
 
   useEffect(() => {
@@ -562,34 +609,34 @@ useEffect(() => {
 
   return (
     <div>
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
 
-  <div className="p-4 bg-green-100 border border-green-300 rounded-xl shadow">
-    <h3 className="text-lg font-semibold text-green-700">Pending</h3>
-    <p className="text-xl font-bold text-green-800">{metrics.pending}</p>
-  </div>
+        <div className="p-4 bg-green-100 border border-green-300 rounded-xl shadow">
+          <h3 className="text-lg font-semibold text-green-700">Pending</h3>
+          <p className="text-xl font-bold text-green-800">{metrics.pending}</p>
+        </div>
 
-  <div className="p-4 bg-yellow-100 border border-yellow-300 rounded-xl shadow">
-    <h3 className="text-lg font-semibold text-yellow-700">Open</h3>
-    <p className="text-xl font-bold text-yellow-800">{metrics.open}</p>
-  </div>
+        <div className="p-4 bg-yellow-100 border border-yellow-300 rounded-xl shadow">
+          <h3 className="text-lg font-semibold text-yellow-700">Open</h3>
+          <p className="text-xl font-bold text-yellow-800">{metrics.open}</p>
+        </div>
 
-  <div className="p-4 bg-blue-100 border border-blue-300 rounded-xl shadow">
-    <h3 className="text-lg font-semibold text-blue-700">Fixed</h3>
-    <p className="text-xl font-bold text-blue-800">{metrics.fixed}</p>
-  </div>
+        <div className="p-4 bg-blue-100 border border-blue-300 rounded-xl shadow">
+          <h3 className="text-lg font-semibold text-blue-700">Fixed</h3>
+          <p className="text-xl font-bold text-blue-800">{metrics.fixed}</p>
+        </div>
 
-  <div className="p-4 bg-purple-100 border border-purple-300 rounded-xl shadow">
-    <h3 className="text-lg font-semibold text-purple-700">Closed</h3>
-    <p className="text-xl font-bold text-purple-800">{metrics.closed}</p>
-  </div>
+        <div className="p-4 bg-purple-100 border border-purple-300 rounded-xl shadow">
+          <h3 className="text-lg font-semibold text-purple-700">Closed</h3>
+          <p className="text-xl font-bold text-purple-800">{metrics.closed}</p>
+        </div>
 
-  <div className="p-4 bg-red-100 border border-red-300 rounded-xl shadow">
-    <h3 className="text-lg font-semibold text-red-700">Escalated</h3>
-    <p className="text-xl font-bold text-red-800">{metrics.escalated}</p>
-  </div>
+        <div className="p-4 bg-red-100 border border-red-300 rounded-xl shadow">
+          <h3 className="text-lg font-semibold text-red-700">Escalated</h3>
+          <p className="text-xl font-bold text-red-800">{metrics.escalated}</p>
+        </div>
 
-</div>
+      </div>
 
       {/* <div className="p-4">
         {userId && (
@@ -597,8 +644,8 @@ useEffect(() => {
         )}
       </div> */}
 
-      <PageBreadcrumb pageTitle="Ticket" onStatus={setStatusQuery} onSearch={setSearchQuery} onDays={setDaysQuery}  
-       onStaff={setStaffQuery}/>
+      <PageBreadcrumb pageTitle="Ticket" onStatus={setStatusQuery} onSearch={setSearchQuery} onDays={setDaysQuery}
+        onStaff={setStaffQuery} />
       <div className="flex justify-end items-center gap-2 p-4 dark:border-white/[0.05]">
         {[...Array(totalPages)].map((_, index) => {
           const pageNumber = index + 1;
@@ -644,12 +691,7 @@ useEffect(() => {
 
                   // <TableRow key={ticket.id}>
                   const isLong = ticket.message?.length > 50;
-                  const isExpanded = expandedMessages[ticket.id];
-                  const displayedMessage = isLong
-                    ? isExpanded
-                      ? ticket.message
-                      : ticket.message.slice(0, 50) + "..."
-                    : ticket.message;
+
                   return (
                     <TableRow
                       key={ticket.id}
@@ -660,14 +702,15 @@ useEffect(() => {
                       <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs">
                         <p className="whitespace-pre-wrap break-words">
-                          {displayedMessage}
+                          {isLong ? ticket.message.slice(0, 100) + "..." : ticket.message}
                         </p>
+
                         {isLong && (
                           <button
                             className="text-blue-500 text-sm mt-1 hover:underline"
-                            onClick={() => toggleMessage(ticket.id)}
+                            onClick={() => openPopupMessage(ticket.message)}
                           >
-                            {isExpanded ? "View Less" : "View More"}
+                            View More
                           </button>
                         )}
                       </TableCell>
@@ -733,7 +776,24 @@ useEffect(() => {
               )}
             </TableBody>
           </Table>
-
+          {showPopup && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-md shadow-lg max-w-lg w-full max-h-[80vh] overflow-y-auto">
+                <h2 className="text-lg font-semibold mb-3 text-gray-800">Full Message</h2>
+                <p className="whitespace-pre-wrap break-words text-gray-700">
+                  {popupMessage}
+                </p>
+                <div className="text-right mt-4">
+                  <button
+                    onClick={() => setShowPopup(false)}
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
             <DialogContent className="max-w-md">
               <DialogHeader>

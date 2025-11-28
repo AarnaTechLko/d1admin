@@ -46,7 +46,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
   const [sport, setSport] = useState("");
   const [isCrowned, setIsCrowned] = useState(false);
   const [staffId, setStaffId] = useState("");
-const router = useRouter();
+  const router = useRouter();
 
   const [filteredSports, setFilteredSports] = useState<Sport[]>([]);
   const [crownedOptions, setCrownedOptions] = useState<CrownedOption[]>([]);
@@ -150,11 +150,23 @@ const router = useRouter();
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
+    <>
+      <div className=" pb-4">
+{["View Ticket", "Recieved Ticket", "Ticket"].includes(pageTitle) && (
+          <button
+            onClick={() => router.push("/createticket")}
+            className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition"
+          >
+            + Create Ticket
+          </button>
+        )}</div>
+          <h2 className="text-xl pb-4 font-semibold text-gray-800 dark:text-white/90">
         {pageTitle}
       </h2>
 
+    <div className="flex flex-wrap items-center gap-3">
+    
+    
       <div className="relative flex flex-wrap items-center gap-3">
         {/* ✅ Search Box */}
         <input
@@ -165,59 +177,59 @@ const router = useRouter();
           placeholder="Search..."
           className="h-10 w-64 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900"
         />
-      
-         
-{["View Ticket", "Recieved Ticket", "Sent Ticket"].includes(pageTitle) && (
-            <>
-                <span className="md:ml-5">Staff</span>
 
-                <select
-                  className=" w-64 md:w-40 p-2 border rounded-lg bg-white"
-                  value={staffId}
-                  onChange={handleStaffChange}
-                >
-                  <option value="">All Staff</option>
 
-                  {staffList?.length > 0 &&
-                    staffList.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.username || s.name}       {/* ✅ Safe fallback */}
-                      </option>
-                    ))}
-                </select>
-</>
-            )}
-                {/* ✅ Status */}
-                <span className="md:ml-5">Status</span>
-                <select
-                  className="w-64 md:w-40 p-2 border rounded-lg bg-white"
-                  value={ticketStatus}
-                  onChange={handleStatusChange}
-                >
-                  <option value="">Select</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Open">Open</option>
-                  <option value="Fixed">Fixed</option>
-                  <option value="Closed">Closed</option>
-                  <option value="Escalate">Escalate</option>
-                </select>
+        {["View Ticket", "Recieved Ticket", "Sent Ticket"].includes(pageTitle) && (
+          <>
+            <span className="md:ml-5">Staff</span>
 
-                {/* ✅ Days */}
-                <span className="md:ml-5">Days</span>
-                <select
-                  className="w-64 md:w-40 p-2 border rounded-lg bg-white"
-                  value={ticketDays}
-                  onChange={handleDaysChange}
-                >
-                  <option value="">Select</option>
-                  <option value="15">15</option>
-                  <option value="30">30</option>
-                  <option value="60">60</option>
-                  <option value="90">90</option>
-                </select>
-           
-       
-      
+            <select
+              className=" w-64 md:w-40 p-2 border rounded-lg bg-white"
+              value={staffId}
+              onChange={handleStaffChange}
+            >
+              <option value="">All Staff</option>
+
+              {staffList?.length > 0 &&
+                staffList.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.username || s.name}       {/* ✅ Safe fallback */}
+                  </option>
+                ))}
+            </select>
+          </>
+        )}
+        {/* ✅ Status */}
+        <span className="md:ml-5">Status</span>
+        <select
+          className="w-64 md:w-40 p-2 border rounded-lg bg-white"
+          value={ticketStatus}
+          onChange={handleStatusChange}
+        >
+          <option value="">Select</option>
+          <option value="Pending">Pending</option>
+          <option value="Open">Open</option>
+          <option value="Fixed">Fixed</option>
+          <option value="Closed">Closed</option>
+          <option value="Escalate">Escalate</option>
+        </select>
+
+        {/* ✅ Days */}
+        <span className="md:ml-5">Days</span>
+        <select
+          className="w-64 md:w-40 p-2 border rounded-lg bg-white"
+          value={ticketDays}
+          onChange={handleDaysChange}
+        >
+          <option value="">Select</option>
+          <option value="15">15</option>
+          <option value="30">30</option>
+          <option value="60">60</option>
+          <option value="90">90</option>
+        </select>
+
+
+
 
         {/* ✅ Coaches Page Filters */}
         {pageTitle === "Coaches" && (
@@ -256,17 +268,11 @@ const router = useRouter();
             </div>
           </>
         )}
-          {["View Ticket", "Recieved Ticket","Ticket"].includes(pageTitle) && (
-        <button
-          onClick={() => router.push("/createticket")}
-          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition"
-        >
-          + Create Ticket
-        </button>
-      )}
+        
       </div>
-     
+
     </div>
+    </>
   );
 };
 
