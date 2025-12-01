@@ -2,6 +2,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { admin, role } from "@/lib/schema";
+import { SQL, gte } from "drizzle-orm";
+
 import { eq, or, desc, count, ilike, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 type AdminFromDB = {
@@ -98,10 +100,101 @@ export async function POST(req: Request) {
 }
 
 // --------------------- GET: List Admins ---------------------
+// export async function GET(req: Request) {
+//   try {
+//     const url = new URL(req.url);
+//     const search = url.searchParams.get("search")?.trim() || "";
+//     const page = parseInt(url.searchParams.get("page") || "1", 10);
+//     const limit = parseInt(url.searchParams.get("limit") || "10", 10);
+//     const offset = (page - 1) * limit;
+
+//     const baseCondition = eq(admin.is_deleted, 1);
+
+//     const searchCondition = search
+//       ? or(
+//           ilike(admin.username, `%${search}%`),
+//           ilike(admin.email, `%${search}%`)
+//         )
+//       : undefined;
+
+//     const whereClause = searchCondition
+//       ? and(baseCondition, searchCondition)
+//       : baseCondition;
+
+//     // FIX: Extract both adminData and totalResult
+//     const [adminData, totalResult] = await Promise.all([
+//       db
+//         .select({
+//           id: admin.id,
+//           username: admin.username,
+//           email: admin.email,
+//           role: admin.role,
+//           country_code: admin.country_code,
+//           phone_number: admin.phone_number,
+//           birthdate: admin.birthdate,
+//           image: admin.image,
+//           created_at: admin.created_at,
+//           is_deleted: admin.is_deleted,
+//           change_password: role.change_password,
+//           refund: role.refund,
+//           monitor_activity: role.monitor_activity,
+//           view_finance: role.view_finance,
+//           access_ticket: role.access_ticket,
+//         })
+//         .from(admin)
+//         .leftJoin(role, eq(admin.id, role.user_id))
+//         .where(whereClause)
+//         .orderBy(desc(admin.created_at))
+//         .offset(offset)
+//         .limit(limit),
+
+//       // Count Query
+//       db
+//         .select({ count: count() })
+//         .from(admin)
+//         .where(whereClause)
+//         .then((res) => Number(res[0]?.count || 0)),
+//     ]);
+
+//     // Fix permissions mapping
+//     const adminWithPermissions = (adminData as AdminFromDB[]).map((a) => {
+//       const permissions: Partial<Record<PermissionKey, number>> = {};
+//       allPermissions.forEach((perm) => {
+//         if (a[perm as keyof AdminFromDB] === 1) {
+//           permissions[perm as PermissionKey] = 1;
+//         }
+//       });
+
+//       return {
+//         ...a,
+//         permission: permissions,
+//       };
+//     });
+
+//     return NextResponse.json({
+//       admin: adminWithPermissions,
+//       currentPage: page,
+//       totalPages: Math.ceil(totalResult / limit),
+//       hasNextPage: page * limit < totalResult,
+//       hasPrevPage: page > 1,
+//       totalRecords: totalResult,
+//     });
+//   } catch (error) {
+//     console.error("GET /api/admin error:", error);
+//     return NextResponse.json(
+//       {
+//         message: "Failed to fetch admin",
+//         error: error instanceof Error ? error.message : String(error),
+//       },
+//       { status: 500 }
+//     );
+//   }
+// }
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const search = url.searchParams.get("search")?.trim() || "";
+    const days = url.searchParams.get("days"); // <--- NEW
     const page = parseInt(url.searchParams.get("page") || "1", 10);
     const limit = parseInt(url.searchParams.get("limit") || "10", 10);
     const offset = (page - 1) * limit;
@@ -115,11 +208,38 @@ export async function GET(req: Request) {
         )
       : undefined;
 
-    const whereClause = searchCondition
-      ? and(baseCondition, searchCondition)
-      : baseCondition;
+    // -----------------------------
+    // NEW: Days Filter Condition
+    // -----------------------------
+    let daysCondition: SQL<unknown> | undefined = undefined;
 
-    // FIX: Extract both adminData and totalResult
+    if (days) {
+      const daysInt = parseInt(days, 10);
+
+      if (!isNaN(daysInt) && daysInt > 0) {
+        const fromDate = new Date();
+        fromDate.setDate(fromDate.getDate() - daysInt);
+
+        daysCondition = gte(admin.created_at, fromDate);
+      }
+    }
+
+    // -----------------------------
+    // Combine Conditions Safely
+    // -----------------------------
+    const combinedConditions = [baseCondition];
+
+    if (searchCondition) combinedConditions.push(searchCondition);
+    if (daysCondition) combinedConditions.push(daysCondition);
+
+    const whereClause =
+      combinedConditions.length > 1
+        ? and(...combinedConditions)
+        : baseCondition;
+
+    // ----------------------------------------
+    // Fetch Data + Total Count In Parallel
+    // ----------------------------------------
     const [adminData, totalResult] = await Promise.all([
       db
         .select({
@@ -146,27 +266,25 @@ export async function GET(req: Request) {
         .offset(offset)
         .limit(limit),
 
-      // Count Query
       db
         .select({ count: count() })
         .from(admin)
         .where(whereClause)
-        .then((res) => Number(res[0]?.count || 0)),
+        .then((res) => Number(res[0]?.count ?? 0)),
     ]);
 
-    // Fix permissions mapping
+    // ----------------------------------------
+    // Fix permissions
+    // ----------------------------------------
     const adminWithPermissions = (adminData as AdminFromDB[]).map((a) => {
       const permissions: Partial<Record<PermissionKey, number>> = {};
       allPermissions.forEach((perm) => {
         if (a[perm as keyof AdminFromDB] === 1) {
-          permissions[perm as PermissionKey] = 1;
+          permissions[perm] = 1;
         }
       });
 
-      return {
-        ...a,
-        permission: permissions,
-      };
+      return { ...a, permission: permissions };
     });
 
     return NextResponse.json({
