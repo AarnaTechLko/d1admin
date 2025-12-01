@@ -48,6 +48,7 @@ const AdminListPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const MySwal = withReactContent(Swal);
+  const [daysQuery, setDaysQuery] = useState<string>("");
 
   // 🔹 Edit Modal State
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -73,7 +74,7 @@ const AdminListPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/subadmin?search=${searchQuery}&page=${currentPage}&limit=10`
+          `/api/subadmin?search=${searchQuery}&page=${currentPage}&limit=10&days=${daysQuery}`
         );
         if (!response.ok) throw new Error("Failed to fetch admin data");
 
@@ -90,7 +91,7 @@ const AdminListPage = () => {
       }
     };
     fetchAdmins();
-  }, [searchQuery, currentPage]);
+  }, [searchQuery, currentPage,daysQuery]);
 
   const handleDelete = async (adminID: number) => {
     const result = await MySwal.fire({
@@ -251,8 +252,7 @@ const AdminListPage = () => {
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Admin List" onSearch={setSearchQuery} />
-
+      <PageBreadcrumb pageTitle="Admin List" onSearch={setSearchQuery} onDays={setDaysQuery}/>
       {loading && <p className="text-center py-5">Loading...</p>}
       {error && <p className="text-center py-5 text-red-500">{error}</p>}
 

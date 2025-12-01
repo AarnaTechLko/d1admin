@@ -91,6 +91,8 @@ import { eq, SQL, or, ilike, and, gte, sql } from "drizzle-orm";
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
+        const staff = Number(url.searchParams.get("staff")) || 0;
+
     const userId = url.searchParams.get("userId");
     let role = url.searchParams.get("role")?.trim() || "";
     const search = url.searchParams.get("search")?.trim() || "";
@@ -105,10 +107,8 @@ export async function GET(req: NextRequest) {
         { status: 400 }
       );
     }
-
     role = role.toLowerCase();
     const conditions: SQL[] = [];
-
     /** -----------------------------
      * SEARCH CONDITION
      ------------------------------*/
@@ -188,6 +188,9 @@ export async function GET(req: NextRequest) {
      ------------------------------*/
     if (status) {
       conditions.push(eq(ticket.status, status));
+    }
+  if (staff > 0) {
+      conditions.push(eq(ticket.assign_to, staff));
     }
 
     /** -----------------------------

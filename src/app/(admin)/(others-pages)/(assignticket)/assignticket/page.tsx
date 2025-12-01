@@ -373,7 +373,7 @@ const TicketsPage = () => {
         router.push("/signin");
       } else {
         setUserId(storedUserId);
-        setRole(storedRole);
+        setRole(storedRole);      
       }
     }
   }, []);

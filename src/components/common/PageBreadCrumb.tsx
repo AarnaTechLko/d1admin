@@ -200,19 +200,24 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
           </>
         )}
         {/* ✅ Status */}
-        <span className="md:ml-5">Status</span>
-        <select
-          className="w-64 md:w-40 p-2 border rounded-lg bg-white"
-          value={ticketStatus}
-          onChange={handleStatusChange}
-        >
-          <option value="">Select</option>
-          <option value="Pending">Pending</option>
-          <option value="Open">Open</option>
-          <option value="Fixed">Fixed</option>
-          <option value="Closed">Closed</option>
-          <option value="Escalate">Escalate</option>
-        </select>
+       {pageTitle !== "Admin List" && (
+  <>
+    <span className="md:ml-5">Status</span>
+    <select
+      className="w-64 md:w-40 p-2 border rounded-lg bg-white"
+      value={ticketStatus}
+      onChange={handleStatusChange}
+    >
+      <option value="">Select</option>
+      <option value="Pending">Pending</option>
+      <option value="Open">Open</option>
+      <option value="Fixed">Fixed</option>
+      <option value="Closed">Closed</option>
+      <option value="Escalate">Escalate</option>
+    </select>
+  </>
+)}
+
 
         {/* ✅ Days */}
         <span className="md:ml-5">Days</span>
