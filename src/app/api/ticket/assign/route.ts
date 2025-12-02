@@ -1,91 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from "@/lib/db";
-import { ticket,admin } from '@/lib/schema';
+import { ticket, admin } from '@/lib/schema';
 import { and, eq, gte, ilike, or, sql, SQL } from 'drizzle-orm';
 
-// export async function GET(req: NextRequest) {
-//   try {
-//     const url = new URL(req.url);
-//     const user_id = url.searchParams.get("userId");
-//     const search = url.searchParams.get("search")?.trim() || '';
-//     const status = url.searchParams.get("status")?.trim() || "";
-//     const days = Number(url.searchParams.get("days")) || 0;
-
-//     const conditions: (SQL | undefined)[] = [];
-
-//     // Only filter by user_id if provided
-//     // if (user_id) {
-//     //   conditions.push(eq(ticket.assign_to, Number(user_id)));
-//     // } else {
-//     //   // If no user_id, fetch unassigned tickets
-//     //   conditions.push(eq(ticket.assign_to, 0));
-//     // }
-
-//     // Search filters
-//     if (search) {
-//       conditions.push(
-//         or(
-//           ilike(ticket.name, `%${search}%`),
-//           ilike(ticket.email, `%${search}%`),
-//           ilike(ticket.subject, `%${search}%`),
-//           ilike(ticket.message, `%${search}%`)
-//         )
-//       );
-//     }
-
-//     if (status) {
-//       conditions.push(ilike(ticket.status, `%${status}%`));
-//     }
-
-//     if (days > 0) {
-//       const today = new Date();
-//       today.setDate(today.getDate() - days);
-//       conditions.push(gte(ticket.createdAt, today));
-//     }
-
-//     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-//     const getTickets = await db
-//       .select({
-//         id: ticket.id,
-//         name: ticket.name,
-//         email: ticket.email,
-//         subject: ticket.subject,
-//         createdAt: ticket.createdAt,
-//         status: ticket.status,
-//         message: ticket.message,
-//         priority: ticket.priority,
-//       })
-//       .from(ticket)
-//       .where(whereClause);
-
-//     return NextResponse.json({ tickets: getTickets }, { status: 200 });
-//   } catch (error) {
-//     return NextResponse.json(
-//       {
-//         error: error instanceof Error ? error.message : "Unknown error retrieving tickets",
-//       },
-//       { status: 500 }
-//     );
-//   }
-// }
 
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
- const role = url.searchParams.get("role")?.trim() || "";
+    const role = url.searchParams.get("role")?.trim() || "";
     const user_id = Number(url.searchParams.get("userId")) || 0;
     const search = url.searchParams.get("search")?.trim() || "";
     const status = url.searchParams.get("status")?.trim() || "";
     const days = Number(url.searchParams.get("days")) || 0;
     const staff = Number(url.searchParams.get("staff")) || 0;
 
-    // Debug logs
-    console.log("role:", role);
-    console.log("user_id:", user_id);
     const conditions: (SQL | undefined)[] = [];
 
-    // ✅ Search filters
+    // ---------------------------
+    // SEARCH FILTER
+    // ---------------------------
     if (search) {
       conditions.push(
         or(
@@ -96,41 +29,65 @@ export async function GET(req: NextRequest) {
         )
       );
     }
-        // conditions.push(eq(ticket.assign_to, 0));
 
-  if (role === "Admin") {
-      // Admin sees all tickets where assign_to = 0
-      conditions.push(eq(ticket.assign_to, 0));
-    } else {
-      // Normal user sees only their own tickets where assign_to = 0
-      conditions.push(
-        and(
-          eq(ticket.assign_to, 0),
-          eq(ticket.ticket_from, user_id)
-        )
+    // ---------------------------
+    // ROLE-BASED LOGIC
+    // ---------------------------
+    let baseCondition: SQL | undefined;
+
+
+    if (role === "Admin") {
+      // Admin → All tickets where assign_to = 0
+      baseCondition = eq(ticket.assign_to, 0);
+    } else if (
+      role === "Customer Support" ||
+      role === "Executive Level" ||
+      role === "Manager" ||
+      role === "Tech"
+    ) {
+      // Staff roles → assigned to them OR created by them
+      baseCondition = or(
+        eq(ticket.assign_to, user_id),
+        eq(ticket.ticket_from, user_id)
       );
+    } else {
+      // Normal user → only created tickets
+      baseCondition = eq(ticket.ticket_from, user_id);
     }
-    // ✅ Status filter
+
+    // push the base condition
+    conditions.push(baseCondition);
+
+    // ---------------------------
+    // STATUS FILTER
+    // ---------------------------
     if (status) {
       conditions.push(ilike(ticket.status, `%${status}%`));
     }
 
-    // ✅ Staff filter (FINAL FIX)
-        if (staff > 0) {
-          conditions.push(eq(ticket.assign_to, staff));
-        }
+    // ---------------------------
+    // STAFF FILTER
+    // ---------------------------
+    if (staff > 0) {
+      conditions.push(eq(ticket.assign_to, staff));
+    }
 
-    // ✅ Days filter
+    // ---------------------------
+    // DAYS FILTER
+    // ---------------------------
     if (days > 0) {
       const today = new Date();
       today.setDate(today.getDate() - days);
       conditions.push(gte(ticket.createdAt, today));
     }
 
+    // Final WHERE CLAUSE
     const whereClause =
       conditions.length > 0 ? and(...conditions) : undefined;
 
-    // ✅ Fetch Tickets
+    // ---------------------------
+    // FETCH ALL TICKETS
+    // ---------------------------
     const getTickets = await db
       .select({
         id: ticket.id,
@@ -141,11 +98,17 @@ export async function GET(req: NextRequest) {
         status: ticket.status,
         message: ticket.message,
         priority: ticket.priority,
+        assign_to: ticket.assign_to,
       })
       .from(ticket)
       .where(whereClause);
 
-    // ✅ FETCH STATUS METRICS
+    // ------------------------------------------------------------
+    // STATUS METRICS (based on role like data above)
+    // ------------------------------------------------------------
+
+    const metricCondition = baseCondition; // use same logic for metrics
+
     const [
       pending,
       open,
@@ -154,42 +117,38 @@ export async function GET(req: NextRequest) {
       closed,
       escalated,
     ] = await Promise.all([
-      db
-        .select({ count: sql<number>`count(*)` })
+      db.select({ count: sql<number>`count(*)` })
         .from(ticket)
-        .where(eq(ticket.status, "Pending")),
+        .where(and(metricCondition, eq(ticket.status, "Pending"))),
 
-      db
-        .select({ count: sql<number>`count(*)` })
+      db.select({ count: sql<number>`count(*)` })
         .from(ticket)
-        .where(eq(ticket.status, "Open")),
-  db.select({ count: sql<number>`count(*)` }).from(ticket).where(eq(ticket.status, "Fixed")),
+        .where(and(metricCondition, eq(ticket.status, "Open"))),
 
-      db
-        .select({ count: sql<number>`count(*)` })
+      db.select({ count: sql<number>`count(*)` })
         .from(ticket)
-        .where(eq(ticket.status, "Inprogress")),
+        .where(and(metricCondition, eq(ticket.status, "Fixed"))),
 
-      db
-        .select({ count: sql<number>`count(*)` })
+      db.select({ count: sql<number>`count(*)` })
         .from(ticket)
-        .where(eq(ticket.status, "Closed")),
+        .where(and(metricCondition, eq(ticket.status, "Inprogress"))),
 
-      db
-        .select({ count: sql<number>`count(*)` })
+      db.select({ count: sql<number>`count(*)` })
         .from(ticket)
-        .where(eq(ticket.escalate, true)),
+        .where(and(metricCondition, eq(ticket.status, "Closed"))),
+
+      db.select({ count: sql<number>`count(*)` })
+        .from(ticket)
+        .where(and(metricCondition, eq(ticket.escalate, true))),
     ]);
 
     return NextResponse.json(
       {
         tickets: getTickets,
-
-        // ✅ ADD STATUS COUNTS HERE
         metrics: {
           pending: pending[0]?.count ?? 0,
-          fixed: fixed[0]?.count ?? 0,
           open: open[0]?.count ?? 0,
+          fixed: fixed[0]?.count ?? 0,
           inprogress: inprogress[0]?.count ?? 0,
           closed: closed[0]?.count ?? 0,
           escalated: escalated[0]?.count ?? 0,
@@ -209,7 +168,6 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-
 
 export async function POST(req: Request) {
   try {

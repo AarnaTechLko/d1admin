@@ -2,7 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { ticket, admin } from "@/lib/schema";
-import { ilike, desc, and, sql, or, eq, gte } from "drizzle-orm";
+import { ilike, desc, and, sql, or, eq, gte, ne ,SQL} from "drizzle-orm";
+
 
 // Default admin user ID (you can replace this with env config or session auth)
 type TimeRange = "24h" | "1w" | "1m" | "1y";
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
     const {
       // recipient_name,
       // assign_to_name,
-      // user_id,
+      // userId,
       name,
       email,
       subject,
@@ -96,8 +97,9 @@ type TicketMessagePayload = {
   recipient_name?: string;
   assign_to_name?: string;
   role?: string;
-  user_id?: number;
+  userId?: number;
 };
+
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
@@ -114,7 +116,6 @@ export async function GET(req: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
 
     const offset = (page - 1) * limit;
 
@@ -135,8 +136,10 @@ export async function GET(req: NextRequest) {
     const userRole = userRecord[0].role?.toLowerCase() || "";
     const isAdmin = userRole === "admin";
 
+    // ==============================
     // ✅ WHERE conditions
-    const conditions = [];
+    // ==============================
+const conditions: (SQL | undefined)[] = [];
 
     if (search) {
       conditions.push(
@@ -149,17 +152,17 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // ✅ Status filter
+    // Status filter
     if (status) {
       conditions.push(ilike(ticket.status, `%${status}%`));
     }
 
-    // ✅ Staff filter (FINAL FIX)
+    // Staff filter
     if (staff > 0) {
       conditions.push(eq(ticket.assign_to, staff));
     }
 
-    // ✅ Days filter
+    // Days filter
     if (days > 0) {
       const today = new Date();
       today.setDate(today.getDate() - days);
@@ -169,20 +172,29 @@ export async function GET(req: NextRequest) {
     const timeCondition = getTimeFilterCondition(ticket.createdAt, timeRange);
     if (timeCondition) conditions.push(timeCondition);
 
-    // ✅ Non-admin can only see assigned tickets
-    if (!isAdmin) {
+    // ==============================
+    // ✅ FINAL ROLE BASED VISIBILITY
+    // ==============================
+    if (isAdmin) {
+      // Admin sees ALL assigned tickets (assign_to != 0)
+      conditions.push(ne(ticket.assign_to, 0));
+    } else {
+      // Staff sees ONLY their assigned tickets
       conditions.push(eq(ticket.assign_to, userId));
     }
 
     const whereClause = conditions.length ? and(...conditions) : undefined;
 
+    // ==============================
+    // SELECT FIELDS
+    // ==============================
     const selectedFields = {
       id: ticket.id,
       name: ticket.name,
       email: ticket.email,
       subject: ticket.subject,
       escalate: ticket.escalate,
-      message: ticket.message, // ✅ We will parse this after fetch
+      message: ticket.message,
       assign_to: ticket.assign_to,
       created_by: ticket.created_by,
       created_for: ticket.created_for,
@@ -210,7 +222,9 @@ export async function GET(req: NextRequest) {
 
     const total = totalResult[0]?.count ?? 0;
 
-    // ✅ Parse message JSON here
+    // ==============================
+    // JSON PARSE MESSAGE
+    // ==============================
     const formattedTickets = ticketList.map((t) => {
       let parsedMessage: TicketMessagePayload = {};
       let actualMessage = t.message;
@@ -219,7 +233,6 @@ export async function GET(req: NextRequest) {
         parsedMessage = JSON.parse(t.message);
         actualMessage = parsedMessage.text || t.message;
       } catch {
-        // ❗ message was plain text (old tickets)
         parsedMessage = {};
       }
 
@@ -229,10 +242,18 @@ export async function GET(req: NextRequest) {
         recipient_name: parsedMessage.recipient_name || null,
         assign_to_name: parsedMessage.assign_to_name || t.assign_to_username || null,
         role: parsedMessage.role || null,
-        created_by: parsedMessage.user_id || null,
+        created_by: parsedMessage.userId || null,
       };
     });
-const [
+
+    // ==============================
+    // METRICS (based on role logic)
+    // ==============================
+    const visibilityCondition = isAdmin
+      ? ne(ticket.assign_to, 0)
+      : eq(ticket.assign_to, userId);
+
+    const [
       pending,
       open,
       fixed,
@@ -243,38 +264,47 @@ const [
       db
         .select({ count: sql<number>`count(*)` })
         .from(ticket)
-        .where(eq(ticket.status, "Pending")),
+        .where(and(visibilityCondition, eq(ticket.status, "Pending"))),
 
       db
         .select({ count: sql<number>`count(*)` })
         .from(ticket)
-        .where(eq(ticket.status, "Open")),
-  db.select({ count: sql<number>`count(*)` }).from(ticket).where(eq(ticket.status, "Fixed")),
+        .where(and(visibilityCondition, eq(ticket.status, "Open"))),
 
       db
         .select({ count: sql<number>`count(*)` })
         .from(ticket)
-        .where(eq(ticket.status, "Inprogress")),
+        .where(and(visibilityCondition, eq(ticket.status, "Fixed"))),
 
       db
         .select({ count: sql<number>`count(*)` })
         .from(ticket)
-        .where(eq(ticket.status, "Closed")),
+        .where(and(visibilityCondition, eq(ticket.status, "Inprogress"))),
 
       db
         .select({ count: sql<number>`count(*)` })
         .from(ticket)
-        .where(eq(ticket.escalate, true)),
+        .where(and(visibilityCondition, eq(ticket.status, "Closed"))),
+
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(ticket)
+        .where(and(visibilityCondition, eq(ticket.status, "Escalate"))),
     ]);
+
+    // ==============================
+    // FINAL RESPONSE
+    // ==============================
     return NextResponse.json({
-       metrics: {
-          pending: pending[0]?.count ?? 0,
-          fixed: fixed[0]?.count ?? 0,
-          open: open[0]?.count ?? 0,
-          inprogress: inprogress[0]?.count ?? 0,
-          closed: closed[0]?.count ?? 0,
-          escalated: escalated[0]?.count ?? 0,
-        },
+      metrics: {
+        pending: pending[0]?.count ?? 0,
+        fixed: fixed[0]?.count ?? 0,
+        open: open[0]?.count ?? 0,
+        inprogress: inprogress[0]?.count ?? 0,
+        closed: closed[0]?.count ?? 0,
+        escalated: escalated[0]?.count ?? 0,
+      },
+
       ticket: formattedTickets,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
