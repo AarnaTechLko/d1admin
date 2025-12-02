@@ -91,14 +91,14 @@ import { eq, SQL, or, ilike, and, gte, sql } from "drizzle-orm";
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
-        const staff = Number(url.searchParams.get("staff")) || 0;
+    const staff = Number(url.searchParams.get("staff")) || 0;
 
     const userId = url.searchParams.get("userId");
     let role = url.searchParams.get("role")?.trim() || "";
     const search = url.searchParams.get("search")?.trim() || "";
     const status = url.searchParams.get("status")?.trim() || "";
     const days = Number(url.searchParams.get("days")) || 0;
- const page = parseInt(url.searchParams.get("page") || "1", 10);
+    const page = parseInt(url.searchParams.get("page") || "1", 10);
     const limit = parseInt(url.searchParams.get("limit") || "10", 10);
     const offset = (page - 1) * limit;
     if (!userId || !role) {
@@ -119,7 +119,6 @@ export async function GET(req: NextRequest) {
         ilike(ticket.subject, `%${search}%`),
         ilike(ticket.message, `%${search}%`)
       ) as SQL;
-
       conditions.push(searchCondition);
     }
 
@@ -189,7 +188,7 @@ export async function GET(req: NextRequest) {
     if (status) {
       conditions.push(eq(ticket.status, status));
     }
-  if (staff > 0) {
+    if (staff > 0) {
       conditions.push(eq(ticket.assign_to, staff));
     }
 
@@ -205,7 +204,6 @@ export async function GET(req: NextRequest) {
 
       conditions.push(gte(ticket.createdAt, fromDate));
     }
-
     /** -----------------------------
      * FINAL WHERE CLAUSE
      ------------------------------*/
@@ -218,7 +216,6 @@ export async function GET(req: NextRequest) {
       .from(ticket)
       .where(whereClause);
     const totalTickets = totalCountResult[0]?.count ?? 0;
-
     /** -----------------------------
      * FETCH TICKETS
      ------------------------------*/
@@ -245,11 +242,9 @@ export async function GET(req: NextRequest) {
       .leftJoin(users, eq(ticket.ticket_from, users.id))
       .leftJoin(coaches, eq(ticket.ticket_from, coaches.id))
       .where(whereClause)
-            .limit(limit)
-            .offset(offset);
-
-
- return NextResponse.json({
+      .limit(limit)
+      .offset(offset);
+    return NextResponse.json({
       tickets: ticketsSent,
       limit,
       currentPage: page,
