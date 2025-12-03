@@ -311,7 +311,7 @@ const [staffQuery, setStaffQuery] = useState(""); // <-- add this
 
 
   useEffect(() => {
-    const storedRole = localStorage.getItem("role") || sessionStorage.getItem("role");
+    const storedRole = sessionStorage.getItem("role");
     const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
     if (!storedUserId) {
       router.push("/signin");
@@ -319,7 +319,10 @@ const [staffQuery, setStaffQuery] = useState(""); // <-- add this
       setUserId(storedUserId);
       setUserRole(storedRole);
     }
+    console.log("role:",storedRole);
   }, [router]);
+
+  
 
   // ✅ Fetch tickets when userId, searchQuery, statusQuery, or currentPage changes
   useEffect(() => {

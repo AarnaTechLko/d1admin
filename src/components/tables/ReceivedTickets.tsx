@@ -66,6 +66,7 @@ const TicketsPage = () => {
   const [daysQuery, setDaysQuery] = useState<string>("");
   const [popupMessage, setPopupMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
+  const [staffQuery, setStaffQuery] = useState(""); // <-- add this
 
   const [replyPriority, setReplyPriority] = useState<string>("Medium");
   // const [tickets, setReceivedTickets] = useState<Ticket[]>([]);
@@ -81,6 +82,8 @@ const TicketsPage = () => {
   const [replyMessage, setReplyMessage] = useState<string>("");
   const [replyStatus, setReplyStatus] = useState<string>("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
+  
   const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
   const [ticketReplies, setTicketReplies] = useState<TicketReply[]>([]);
@@ -277,11 +280,14 @@ const TicketsPage = () => {
     }
   };
   useEffect(() => {
+    const storedRole = sessionStorage.getItem("role");
     const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
     if (!storedUserId) {
       router.push("/signin");
     } else {
       setUserId(storedUserId);
+            setUserRole(storedRole);
+
     }
   }, [router]);
 
@@ -293,7 +299,7 @@ const TicketsPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/tickets/received?userId=${userId}&search=${searchQuery}&status=${statusQuery}&days=${daysQuery}`
+          `/api/tickets/received?userId=${userId}&search=${searchQuery}&status=${statusQuery}&role=${userRole}&days=${daysQuery}&staff=${staffQuery}`
         );
 
         if (!response.ok) throw new Error("Failed to fetch tickets");
@@ -311,7 +317,7 @@ const TicketsPage = () => {
     };
 
     fetchTickets();
-  }, [userId, searchQuery, currentPage, statusQuery, daysQuery]);
+  }, [userId, searchQuery,userRole, currentPage, statusQuery, daysQuery, staffQuery]);
 
 
   // ✅ Fetch tickets when userId, searchQuery, statusQuery, or currentPage changes
@@ -541,7 +547,8 @@ const TicketsPage = () => {
         )}
       </div> */}
 
-      <PageBreadcrumb pageTitle="Recieved Ticket" onStatus={setStatusQuery} onSearch={setSearchQuery} onDays={setDaysQuery} />
+      <PageBreadcrumb pageTitle="Recieved Ticket" onStatus={setStatusQuery} onSearch={setSearchQuery}
+        onDays={setDaysQuery} onStaff={setStaffQuery} />
       <div className="flex justify-end items-center gap-2 p-4 dark:border-white/[0.05]">
         {[...Array(totalPages)].map((_, index) => {
           const pageNumber = index + 1;

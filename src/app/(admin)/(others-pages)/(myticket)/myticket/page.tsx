@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import SentTickets from "@/components/tables/SentTickets";
+// import SentTickets from "@/components/tables/SentTickets";
 import ReceivedTickets from "@/components/tables/ReceivedTickets";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 const TicketsPage = () => {
@@ -10,8 +10,8 @@ const TicketsPage = () => {
 
         <div className="space-y-8">
             <ReceivedTickets/>
-            <hr />
-            <SentTickets/>
+            {/* <hr /> */}
+            {/* <SentTickets/> */}
         </div>
     )
 

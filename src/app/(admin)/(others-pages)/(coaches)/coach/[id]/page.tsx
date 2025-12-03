@@ -1048,64 +1048,69 @@ export default function CoachDetailsPage() {
                   <th className="px-4 py-3">Payment</th>
                   <th className="px-4 py-3">Created At</th>
                   <th className="px-4 py-3 text-center">Action</th>
-
                 </tr>
               </thead>
+
               <tbody>
-                {paginatedEvaluations
-                  //  .filter((ev: Evaluation) => ev.status !== 0) 
-                  .map((ev: Evaluation) => (
-                    <tr
-                      key={ev.evaluationId}
-                      className={`transition-colors duration-300 ${ev.is_deleted === 0 ? 'bg-red-100' : ev.is_deleted === 1 ? 'bg-white' : ''}`}
+                {paginatedEvaluations.map((ev: Evaluation) => (
+                  <tr
+                    key={ev.evaluationId}
+                    className={`transition-colors duration-300 ${ev.is_deleted === 0 ? "bg-red-100" : ev.is_deleted === 1 ? "bg-white" : ""
+                      }`}
+                  >
+                    <td className="px-4 py-2 text-gray-700">
+                      <Link href={`/coach/${ev.player_id}`} className="text-blue-700 hover:underline">
+                        {ev.firstName}
+                      </Link>
+                    </td>
 
-                    >
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/evaluationdetails?evaluationId=${ev.evaluationId}`}
+                        className="text-blue-700"
+                      >
+                        {ev.review_title}
+                      </Link>
+                    </td>
 
+                    <td className="px-4 py-3">
+                      <a
+                        href={ev.primary_video_link}
+                        className="text-blue-600 hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Watch
+                      </a>
+                    </td>
 
-                      <td className="px-4 py-2 text-gray-700">
-                        <Link href={`/coach/${ev.player_id}`} className="text-blue-700 hover:underline">
+                    <td className="px-4 py-3">{ev.jerseyNumber}</td>
 
-                          {/* <Link href={`/coach/${ev.player_id}`} target="_blank" className="text-blue-700 hover:underline"> */}
-                          {ev.firstName}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3">
-                        {/* <Link href={`/coach/${ev.player_id}`} className="text-blue-700 hover:underline"> */}
-                        {/* <a onClick={() => handleEvaluationDetails(ev)} href='#' className=' text-blue-700'>{ev.review_title}</a> */}
+                    <td className="px-4 py-3">
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full font-medium text-white ${ev.status === 2 ? "bg-green-500" : "bg-gray-400"
+                          }`}
+                      >
+                        {ev.status === 2 ? "Completed" : "Pending"}
+                      </span>
+                    </td>
 
-                        <Link
-                          href={`/evaluationdetails?evaluationId=${ev.evaluationId}`}
-                          className="text-blue-700"
-                        >
-                          {ev.review_title}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3">
-                        <a href={ev.primary_video_link} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
-                          Watch
-                        </a>
-                      </td>
-                      <td className="px-4 py-3">{ev.jerseyNumber}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 text-xs rounded-full font-medium text-white ${ev.status === 2 ? 'bg-green-500' : 'bg-gray-400'}`}>
-                          {ev.status === 2 ? 'Completed' : 'Pending'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">{ev.turnaroundTime} mins</td>
-                      <td className="px-4 py-3">{ev.payment_status}</td>
-                      <td className="px-4 py-3">{new Date(ev.created_at).toLocaleDateString()}</td>
-                      <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
+                    <td className="px-4 py-3">{ev.turnaroundTime} mins</td>
 
+                    <td className="px-4 py-3">{ev.payment_status}</td>
 
+                    <td className="px-4 py-3">
+                      {new Date(ev.created_at).toLocaleDateString()}
+                    </td>
+
+                    {/* ✅ FIXED ACTION CELL — NO WHITESPACE TEXT NODES */}
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-2">
                         {ev.is_deleted === 0 ? (
                           <button
                             onClick={() => handleRevert(ev.evaluationId)}
                             title="Revert Evaluation"
-
-                            style={{
-                              fontSize: '1.2rem',
-                              marginRight: '8px',
-                            }}
+                            style={{ fontSize: "1.2rem" }}
                           >
                             🛑
                           </button>
@@ -1113,20 +1118,18 @@ export default function CoachDetailsPage() {
                           <button
                             onClick={() => handleHide(ev.evaluationId)}
                             title="Hide Evaluation"
-                            style={{
-                              fontSize: '1.2rem',
-                            }}
+                            style={{ fontSize: "1.2rem" }}
                           >
                             👻
                           </button>
                         )}
-
-
-                      </td>
-                    </tr>
-                  ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
+
           )}
 
           {/* Pagination */}
@@ -1180,10 +1183,7 @@ export default function CoachDetailsPage() {
                     {paginatedReviews.map((r: Review) => (
                       // <tr key={p.id} className="hover:bg-gray-50 border-b">
                       <tr
-                        key={r.id}
-                      // className={`transition-colors duration-300 ${p.is_deleted === 0 ? 'bg-red-100' : 'bg-white'
-                      //   }`}
-                      >
+                        key={r.id}>
                         <td className="px-4 py-3">{r.title}</td>
                         <td className="px-4 py-3">{r.comment}</td>
                         <td className="px-4 py-3">{r.player_name}</td>
@@ -1401,8 +1401,7 @@ export default function CoachDetailsPage() {
                       <tr
                         key={p.evaluation_id}
                         className={`transition-colors duration-300 ${p.is_deleted === 0 ? 'bg-red-100' : 'bg-white'
-                          }`}
-                      >
+                          }`}>
 
                         <td className="px-4 py-3">{p.playerFirstName}</td>
                         <td className="px-4 py-3">{p.review_title}</td>

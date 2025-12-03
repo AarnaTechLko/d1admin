@@ -152,7 +152,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
   return (
     <>
       <div className=" pb-4">
-{["View Ticket", "Recieved Ticket", "Ticket"].includes(pageTitle) && (
+        {["View Ticket", "Recieved Ticket", "Ticket"].includes(pageTitle) && (
           <button
             onClick={() => router.push("/createticket")}
             className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition"
@@ -160,123 +160,148 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
             + Create Ticket
           </button>
         )}</div>
-          <h2 className="text-xl pb-4 font-semibold text-gray-800 dark:text-white/90">
+      <h2 className="text-xl pb-4 font-semibold text-gray-800 dark:text-white/90">
         {pageTitle}
       </h2>
 
-    <div className="flex flex-wrap items-center gap-3">
-    
-    
-      <div className="relative flex flex-wrap items-center gap-3">
-        {/* ✅ Search Box */}
-        <input
-          ref={inputRef}
-          type="text"
-          value={searchQuery}
-          onChange={handleSearchChange}
-          placeholder="Search..."
-          className="h-10 w-64 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900"
-        />
+      <div className="flex flex-wrap items-center gap-3">
 
 
-        {["View Ticket", "Recieved Ticket", "Sent Ticket"].includes(pageTitle) && (
-          <>
-            <span className="md:ml-5">Staff</span>
+        <div className="relative flex flex-wrap items-center gap-3">
+          {/* ✅ Search Box */}
+          <input
+            ref={inputRef}
+            type="text"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder="Search..."
+            className="h-10 w-64 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900"
+          />
 
-            <select
-              className=" w-64 md:w-40 p-2 border rounded-lg bg-white"
-              value={staffId}
-              onChange={handleStaffChange}
-            >
-              <option value="">All Staff</option>
 
-              {staffList?.length > 0 &&
-                staffList.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.username || s.name}       {/* ✅ Safe fallback */}
-                  </option>
+          {["View Ticket", "Recieved Ticket", "Sent Ticket"].includes(pageTitle) && (
+            <>
+              <span className="md:ml-5">Staff</span>
+
+              <select
+                className=" w-64 md:w-40 p-2 border rounded-lg bg-white"
+                value={staffId}
+                onChange={handleStaffChange}
+              >
+                <option value="">All Staff</option>
+
+                {staffList?.length > 0 &&
+                  staffList.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.username || s.name}       {/* ✅ Safe fallback */}
+                    </option>
+                  ))}
+              </select>
+              <span className="md:ml-5">Status</span>
+              <select
+                className="w-64 md:w-40 p-2 border rounded-lg bg-white"
+                value={ticketStatus}
+                onChange={handleStatusChange}
+              >
+                <option value="">Select</option>
+                <option value="Pending">Pending</option>
+                <option value="Open">Open</option>
+                <option value="Fixed">Fixed</option>
+                <option value="Closed">Closed</option>
+                <option value="Escalate">Escalate</option>
+              </select>
+              <span className="md:ml-5">Days</span>
+          <select
+            className="w-64 md:w-40 p-2 border rounded-lg bg-white"
+            value={ticketDays}
+            onChange={handleDaysChange}
+          >
+            <option value="">Select</option>
+            <option value="15">15</option>
+            <option value="30">30</option>
+            <option value="60">60</option>
+            <option value="90">90</option>
+          </select>
+            </>
+          )}
+          {/* ✅ Status */}
+          {/* {pageTitle !== "Admin List" && (
+            <>
+              <span className="md:ml-5">Status</span>
+              <select
+                className="w-64 md:w-40 p-2 border rounded-lg bg-white"
+                value={ticketStatus}
+                onChange={handleStatusChange}
+              >
+                <option value="">Select</option>
+                <option value="Pending">Pending</option>
+                <option value="Open">Open</option>
+                <option value="Fixed">Fixed</option>
+                <option value="Closed">Closed</option>
+                <option value="Escalate">Escalate</option>
+              </select>
+            </>
+          )} */}
+
+
+          {/* ✅ Days */}
+          {/* <span className="md:ml-5">Days</span>
+          <select
+            className="w-64 md:w-40 p-2 border rounded-lg bg-white"
+            value={ticketDays}
+            onChange={handleDaysChange}
+          >
+            <option value="">Select</option>
+            <option value="15">15</option>
+            <option value="30">30</option>
+            <option value="60">60</option>
+            <option value="90">90</option>
+          </select> */}
+
+
+
+
+          {/* ✅ Coaches Page Filters */}
+          {pageTitle === "Coaches" && (
+            <>
+              {/* ✅ Sports */}
+              <span className="md:ml-5">Sports</span>
+              <select
+                className="w-64 md:w-40 p-2 border rounded-lg bg-white"
+                value={sport}
+                onChange={handleSportsChange}
+              >
+                <option value="">Select Sport</option>
+                {filteredSports?.length > 0 &&
+                  filteredSports.map((sp) => (
+                    <option key={sp.id} value={sp.id}>
+                      {sp.name}
+                    </option>
+                  ))}
+              </select>
+
+              {/* ✅ Hidden Crowned Values */}
+              {crownedOptions?.length > 0 &&
+                crownedOptions.map((opt) => (
+                  <input type="hidden" value={opt.value} key={opt.value} />
                 ))}
-            </select>
-          </>
-        )}
-        {/* ✅ Status */}
-       {pageTitle !== "Admin List" && (
-  <>
-    <span className="md:ml-5">Status</span>
-    <select
-      className="w-64 md:w-40 p-2 border rounded-lg bg-white"
-      value={ticketStatus}
-      onChange={handleStatusChange}
-    >
-      <option value="">Select</option>
-      <option value="Pending">Pending</option>
-      <option value="Open">Open</option>
-      <option value="Fixed">Fixed</option>
-      <option value="Closed">Closed</option>
-      <option value="Escalate">Escalate</option>
-    </select>
-  </>
-)}
 
+              {/* ✅ Crowned Checkbox */}
+              <div className="mt-6 md:mt-0 md:ml-5 inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={isCrowned}
+                  onChange={handleCrownedChange}
+                  className="h-4 w-4"
+                />
+                <span className="font-semibold">Crowned</span>
+              </div>
+            </>
+          )}
 
-        {/* ✅ Days */}
-        <span className="md:ml-5">Days</span>
-        <select
-          className="w-64 md:w-40 p-2 border rounded-lg bg-white"
-          value={ticketDays}
-          onChange={handleDaysChange}
-        >
-          <option value="">Select</option>
-          <option value="15">15</option>
-          <option value="30">30</option>
-          <option value="60">60</option>
-          <option value="90">90</option>
-        </select>
+        </div>
 
-
-
-
-        {/* ✅ Coaches Page Filters */}
-        {pageTitle === "Coaches" && (
-          <>
-            {/* ✅ Sports */}
-            <span className="md:ml-5">Sports</span>
-            <select
-              className="mt-6 w-64 md:w-40 p-2 border rounded-lg bg-white"
-              value={sport}
-              onChange={handleSportsChange}
-            >
-              <option value="">Select Sport</option>
-              {filteredSports?.length > 0 &&
-                filteredSports.map((sp) => (
-                  <option key={sp.id} value={sp.id}>
-                    {sp.name}
-                  </option>
-                ))}
-            </select>
-
-            {/* ✅ Hidden Crowned Values */}
-            {crownedOptions?.length > 0 &&
-              crownedOptions.map((opt) => (
-                <input type="hidden" value={opt.value} key={opt.value} />
-              ))}
-
-            {/* ✅ Crowned Checkbox */}
-            <div className="mt-6 md:mt-0 md:ml-5 inline-flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={isCrowned}
-                onChange={handleCrownedChange}
-                className="h-4 w-4"
-              />
-              <span className="font-semibold">Crowned</span>
-            </div>
-          </>
-        )}
-        
       </div>
-
-    </div>
     </>
   );
 };

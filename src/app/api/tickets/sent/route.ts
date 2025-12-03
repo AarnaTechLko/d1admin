@@ -94,20 +94,24 @@ export async function GET(req: NextRequest) {
     const staff = Number(url.searchParams.get("staff")) || 0;
 
     const userId = url.searchParams.get("userId");
-    let role = url.searchParams.get("role")?.trim() || "";
+    const role = url.searchParams.get("role")?.trim() || "";
     const search = url.searchParams.get("search")?.trim() || "";
     const status = url.searchParams.get("status")?.trim() || "";
     const days = Number(url.searchParams.get("days")) || 0;
     const page = parseInt(url.searchParams.get("page") || "1", 10);
     const limit = parseInt(url.searchParams.get("limit") || "10", 10);
     const offset = (page - 1) * limit;
+
+    console.log("role :", role);
+    console.log("userId :", userId);
+    
     if (!userId || !role) {
       return NextResponse.json(
         { message: "Missing userId or role parameter" },
         { status: 400 }
       );
     }
-    role = role.toLowerCase();
+    //role = role.toLowerCase();
     const conditions: SQL[] = [];
     /** -----------------------------
      * SEARCH CONDITION
@@ -127,58 +131,38 @@ export async function GET(req: NextRequest) {
      ------------------------------*/
     let roleCondition: SQL | undefined;
 
-    if (role === "player") {
-      roleCondition = and(
-        eq(ticket.role, "player"),
-        eq(ticket.ticket_from, Number(userId))
-      );
+    if (role === "Player") {
+      roleCondition = and(eq(ticket.role, "Player"), eq(ticket.ticket_from, Number(userId)));
     }
 
-    else if (role === "coach") {
-      roleCondition = and(
-        eq(ticket.role, "coach"),
-        eq(ticket.ticket_from, Number(userId))
-      );
+    else if (role === "Coach") {
+      roleCondition = and(eq(ticket.role, "Coach"), eq(ticket.ticket_from, Number(userId)));
     }
 
-    else if (role === "customer support") {
-      roleCondition = and(
-        eq(ticket.role, "Customer Support"),
-        eq(ticket.ticket_from, Number(userId))
-      );
+    else if (role === "Tech") {
+      roleCondition = and(eq(ticket.role, "Tech"), eq(ticket.ticket_from, Number(userId)));
     }
 
-    else if (role === "manager") {
-      roleCondition = and(
-        eq(ticket.role, "Manager"),
-        eq(ticket.ticket_from, Number(userId))
-      );
+    else if (role === "Staff") {
+      roleCondition = and(eq(ticket.role, "Staff"), eq(ticket.ticket_from, Number(userId)));
     }
 
-    else if (role === "staff") {
-      roleCondition = and(
-        eq(ticket.role, "staff"),
-        eq(ticket.ticket_from, Number(userId))
-      );
+    else if (role === "Manager") {
+      roleCondition = and(eq(ticket.role, "Manager"), eq(ticket.ticket_from, Number(userId)));
     }
 
-    else if (role === "tech") {
-      roleCondition = and(
-        eq(ticket.role, "Tech"),
-        eq(ticket.ticket_from, Number(userId))
-      );
+    else if (role === "Executive Level") {
+      roleCondition = and(eq(ticket.role, "Executive Level"), eq(ticket.ticket_from, Number(userId)));
     }
 
-    else if (role === "executive level") {
-      roleCondition = and(
-        eq(ticket.role, "Executive Level"),
-        eq(ticket.ticket_from, Number(userId))
-      );
+    else if (role === "Customer Support") {
+      roleCondition = and(eq(ticket.role, "Customer Support"), eq(ticket.ticket_from, Number(userId)));
     }
 
     else if (role === "admin") {
-      roleCondition = undefined; // admin sees all tickets
+      roleCondition = undefined;
     }
+
 
     if (roleCondition) conditions.push(roleCondition);
 
@@ -238,12 +222,13 @@ export async function GET(req: NextRequest) {
         coach_name: coaches.firstName,
       })
       .from(ticket)
-      .leftJoin(admin, eq(ticket.assign_to, admin.id))
+      .leftJoin(admin, eq(ticket.ticket_from, admin.id))
       .leftJoin(users, eq(ticket.ticket_from, users.id))
       .leftJoin(coaches, eq(ticket.ticket_from, coaches.id))
       .where(whereClause)
       .limit(limit)
       .offset(offset);
+
     return NextResponse.json({
       tickets: ticketsSent,
       limit,
