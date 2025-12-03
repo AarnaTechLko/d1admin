@@ -222,12 +222,12 @@ const AppSidebar: React.FC = () => {
             {
               name: "Coaches",
                           icon: <UserCheck />,
-              subItems: [{ name: "View Coach", path: "/coach", pro: false }],
+              subItems: [{ name: "Active Coach", path: "/coach", pro: false }],
             },
             {
               name: "Players",
               icon: <User/>,
-              subItems: [{ name: "View Player", path: "/player", pro: false }],
+              subItems: [{ name: "Active Player", path: "/player", pro: false }],
             },
             {
               name: "Organizations",
@@ -345,6 +345,7 @@ const AppSidebar: React.FC = () => {
         //  { name: "Sent Ticket", path: "/sentticket", pro: false },
                   { name: "Assign Ticket", path: "/assignticket", pro: false },
                   { name: "View Ticket", path: "/ticket", pro: false },
+              { name: "Create Ticket", path: "/createticket", pro: false },
 
                   ],
                 },

@@ -59,7 +59,6 @@ const IncompletePlayerTable: React.FC<PlayerTableProps> = ({ data = [], currentP
                     {header}
                   </TableCell>
                 ))}
-
               </TableRow>
             </TableHeader>
 
