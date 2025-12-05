@@ -33,7 +33,8 @@ useEffect(() => {
       if (!response.ok) throw new Error("Failed to fetch data");
 
       const data = await response.json();
-      setCoaches(data.coaches);
+      console.log ("coachdatasdsad",data);
+    setCoaches(data.coaches ?? []);
       setTotalPages(data.totalPages);
 
     } catch (err) {

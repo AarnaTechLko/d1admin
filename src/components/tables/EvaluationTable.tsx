@@ -35,6 +35,25 @@ const EvaluationTable: React.FC<EvaluationTableProps> = ({
 }) => {
   return (
     <div className="overflow-x-auto bg-white shadow-md rounded-2xl border border-gray-200">
+      {totalPages > 0 && (
+        <div className="flex justify-end items-center gap-2 p-2">
+          {[...Array(totalPages)].map((_, index) => {
+            const pageNumber = index + 1;
+            return (
+              <button
+                key={pageNumber}
+                onClick={() => setCurrentPage?.(pageNumber)}
+                className={`px-3 py-2 rounded-md ${currentPage === pageNumber
+                  ? "bg-blue-500 text-white"
+                  : "text-blue-500 hover:bg-gray-200"
+                  }`}
+              >
+                {pageNumber}
+              </button>
+            );
+          })}
+        </div>
+      )}
       {loading ? (
         <p className="p-6 text-gray-500">
           <Loader2 className="animate-spin text-blue-500" size={18} />
@@ -98,28 +117,6 @@ const EvaluationTable: React.FC<EvaluationTableProps> = ({
         </table>
       )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-between items-center p-4 border-t">
-          <button
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
-            onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </button>
-          <div className="text-sm text-gray-700">Page {currentPage}</div>
-          <button
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded disabled:opacity-50"
-            onClick={() =>
-              setCurrentPage(Math.min(currentPage + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </button>
-        </div>
-      )}
     </div>
   );
 };

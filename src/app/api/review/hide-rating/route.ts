@@ -7,9 +7,7 @@ import { eq } from 'drizzle-orm';
 
 export async function PATCH(req: NextRequest,) {
   try {
-
     const {id, status} = await req.json();
-
     if (isNaN(Number(id))) {
       return NextResponse.json({ error: 'Invalid review ID' }, { status: 400 });
     }

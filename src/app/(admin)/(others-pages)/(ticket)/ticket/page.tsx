@@ -15,8 +15,9 @@ import { useRoleGuard } from "@/hooks/useRoleGaurd";
 // import toast from "react-hot-toast";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
-
-
+import { Ticket } from "@/app/types/types";
+import Image from "next/image";
+import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
 type TicketNote = {
   id: number;
   ticketId: number;
@@ -24,21 +25,22 @@ type TicketNote = {
   createdAt: string;
 };
 
-interface Ticket {
-  id: number;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  escalate: boolean;
-  assign_to: number;
-  assign_to_username: string;
-  createdAt: string;
-  status: string;
-  assignee_name: string;
-  priority: string;
-
-}
+// interface Ticket {
+//   id: number;
+//   name: string;
+//   email: string;
+//   subject: string;
+//   message: string;
+//   escalate: boolean;
+//   assign_to: number;
+//   assign_to_username: string;
+//   createdAt: string;
+//   status: string;
+//   assignee_name: string;
+//   priority: string;
+//   ticket_from: string;
+//   role: string;
+// }
 interface Admin {
   id: number;
   username: string;
@@ -114,9 +116,9 @@ const TicketsPage = () => {
       try {
         return JSON.parse(jsonString);
       } catch (error) {
-  console.error("Failed to parse ticket message:", error);
-  return null;
-}
+        console.error("Failed to parse ticket message:", error);
+        return null;
+      }
 
     }
     return null;
@@ -632,17 +634,36 @@ const TicketsPage = () => {
                 tickets.map((ticket) => {
                   const isLong = ticket.message?.length > 100;
 
+
                   // const displayedMessage = isLong
                   //   ? ticket.message.slice(0, 100) + "..."
                   //   : ticket.message;
 
                   return (
-                    <TableRow
-                      key={ticket.id}
-                      className={ticket.escalate ? "bg-red-100 dark:bg-red-900/20" : ""}
-                    >
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.name}</TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
+                    <TableRow key={ticket.id} className={ticket.escalate ? "bg-red-100 dark:bg-red-900/20" : ""}>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-3">
+
+                          <Image
+                            width={40}
+                            height={40}
+                            src={
+                              ticket.coachImage
+                                ? `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${ticket.coachImage}`
+                                : ticket.userImage
+                                  ? `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${ticket.userImage}`
+                                  : "/uploads/d1.png" // default icon
+                            }
+                            alt={ticket.name ?? "User"}
+                            className="rounded-full"
+                          />
+
+                          <span className="font-medium text-gray-800 dark:text-white/90">
+                            {ticket.name}
+                          </span>
+
+                        </div>
+                      </TableCell>                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
 
                       {/* Message column with View More/Less */}

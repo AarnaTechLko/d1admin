@@ -102,6 +102,26 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
 
   return (
     <div className="overflow-x-auto bg-white shadow-md rounded-2xl border border-gray-200">
+      
+      {totalPages > 0 && (
+        <div className="flex justify-end items-center gap-2 p-2">
+          {[...Array(totalPages)].map((_, index) => {
+            const pageNumber = index + 1;
+            return (
+              <button
+                key={pageNumber}
+                onClick={() => setCurrentPage?.(pageNumber)}
+                className={`px-3 py-2 rounded-md ${currentPage === pageNumber
+                  ? "bg-blue-500 text-white"
+                  : "text-blue-500 hover:bg-gray-200"
+                  }`}
+              >
+                {pageNumber}
+              </button>
+            );
+          })}
+        </div>
+      )}
       {data.length === 0 ? (
         <p className="p-6 text-gray-600">No payments found.</p>
       ) : (
@@ -136,26 +156,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
             </tbody>
           </table>
 
-          {/* Simplified Pagination */}
-          <div className="flex items-center justify-between px-4 py-4 border-t bg-gray-50">
-            <button
-              onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 rounded text-sm bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
-            >
-              ◀️ Previous
-            </button>
-            <span className="text-sm text-gray-700">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 rounded text-sm bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
-            >
-              Next ▶️
-            </button>
-          </div>
+        
         </>
       )}
     </div>

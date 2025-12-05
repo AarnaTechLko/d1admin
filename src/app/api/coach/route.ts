@@ -29,8 +29,9 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit;
   const timeRange = url.searchParams.get("timeRange") || "";
   const sport = parseInt(url.searchParams.get("sport") || "0", 0);
-  const crowned = parseInt(url.searchParams.get("crowned") || "1", 0);
-console.log("crowned data:",crowned);
+  /* const crowned = parseInt(url.searchParams.get("crowned") || "1", 0); */
+   const crownedParam = url.searchParams.get("crowned");
+// console.log("crowned data:",crowned);
   // 🕒 time filter
   const now = new Date();
   let timeFilterCondition;
@@ -74,8 +75,17 @@ console.log("crowned data:",crowned);
     );
 
     const sportCondition = sport !== 0 ? eq(coaches.sport, sport) : undefined;
-    const crownedCondition = crowned !== 0 ? eq(coaches.verified, crowned) : undefined;
+    /* const crownedCondition = crowned !== 0 ? eq(coaches.verified, crowned) : undefined;
+ */
 
+     let crownedCondition;
+    if (crownedParam === "1") {
+      crownedCondition = eq(coaches.verified, 1);
+    } else if (crownedParam === "0") {
+      crownedCondition = eq(coaches.verified, 0);
+    } else {
+      crownedCondition = undefined; // show all
+    }
     // 🔍 search filters
     const searchCondition = search
       ? or(
@@ -162,6 +172,7 @@ console.log("crowned data:",crowned);
       .orderBy(desc(coaches.createdAt))
       .limit(limit)
       .offset(offset);
+    console.log("coaches",coachesData);
 
     // 🔢 total count (for pagination)
     const totalCountResult = await db
@@ -180,11 +191,12 @@ console.log("crowned data:",crowned);
       coaches: coachesData,
       currentPage: page,
       totalPages,
-      hasNextPage: page < totalPages,
+      hasNextPage: page * limit < totalCount,
       hasPrevPage: page > 1,
     });
   } catch (error) {
     return NextResponse.json(
+      
       {
         message: "Failed to fetch coaches",
         error: error instanceof Error ? error.message : String(error),

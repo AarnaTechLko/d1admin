@@ -388,18 +388,40 @@ export default function CoachDetailsPage() {
     }
   };
 
+  // const handleEdit = (r: Review) => {
+  //   const evalId = coach?.evaluations[r.player_id].evaluationId
+  //   if (evalId) {
+  //     setEvalId(evalId);
+  //   }
+  //   setNewTitle(r.title || "");
+  //   setNewRating(r?.rating || 0);
+  //   setNewComment(r?.comment || "");
+  //   setShowModal(true);
+  // };
   const handleEdit = (r: Review) => {
+    const evalObj = coach?.evaluations?.find(
+      (ev) => String(ev.player_id) === String(r.player_id)
+    );
 
-    const evalId = coach?.evaluations[r.player_id].evaluationId
+    console.log("Found Evaluation:", evalObj);
 
-    if (evalId) {
-      setEvalId(evalId);
+    const evaluationId =
+      evalObj?.evaluationId ??
+      evalObj?.evaluationId ??
+      evalObj?.id ??
+      null;
+
+    if (evaluationId) {
+      setEvalId(Number(evaluationId));
     }
+
     setNewTitle(r.title || "");
-    setNewRating(r?.rating || 0);
-    setNewComment(r?.comment || "");
+    setNewRating(r.rating || 0);
+    setNewComment(r.comment || "");
     setShowModal(true);
   };
+
+
 
   const handleDelete = async (r: Review) => {
     if (!r) return;
@@ -981,10 +1003,12 @@ export default function CoachDetailsPage() {
         <div><strong className="text-gray-700">Coaching License Type:</strong> {coach.license_type}</div>
         {/* <div><strong className="text-gray-500">Consumed Licenses:</strong> {coach.consumeLicenseCount}</div> */}
         {/* <div><strong className="text-gray-500">Assigned Licenses:</strong> {coach.assignedLicenseCount}</div> */}
-        <div><strong className="text-gray-700">Total Earnings:</strong><span className='ml-2 px-2 py-1 rounded-full  text-xs bg-blue-200 '>
-          ${coach.payments.filter((p: Payment) => p.is_deleted !== 0)
-            .reduce((sum, p) => sum + Number(p.amount), 0)
-            .toFixed(2)}</span></div>
+        <div>
+          <strong className="text-gray-700">Total Earnings:</strong>
+          <span className='ml-2 px-2 py-1 rounded-full  text-xs bg-blue-200 '>
+            ${(coach?.payments ?? []).filter((p: Payment) => p.is_deleted !== 0)
+              .reduce((sum, p) => sum + Number(p.amount), 0)
+              .toFixed(2)}</span></div>
         <div><strong className="text-gray-700">Qualifications:</strong> {coach.qualifications}</div>
         {coach?.latestLoginIp && (
           <div className="mb-2">
@@ -1026,14 +1050,14 @@ export default function CoachDetailsPage() {
         <h2 className="text-2xl font-semibold">Evaluation</h2>
         <div className="text-gray-700">
 
-
-          Total: {coach.evaluations.filter((ev: Evaluation) => ev.is_deleted !== 0).length}
-
+          Total: {(coach?.evaluations ?? []).filter(
+            (ev: Evaluation) => ev.is_deleted !== 0
+          ).length}
         </div>
 
 
         <div className="overflow-x-auto bg-white shadow-md rounded-2xl border border-gray-200">
-          {coach.evaluations.length === 0 ? (
+          {coach?.evaluations?.length === 0 ? (
             <p className="p-6 text-gray-600">No evaluations found.</p>
           ) : (
             <table className="w-full text-sm text-left border-collapse">
@@ -1163,7 +1187,7 @@ export default function CoachDetailsPage() {
         <div className='flex justify-between'>
 
           <div className="overflow-x-auto bg-white shadow-md rounded-2xl w-full border border-gray-200">
-            {coach.reviews.length === 0 ? (
+            {coach?.reviews?.length === 0 ? (
               <p className="p-6 text-gray-600">No reviews found.</p>
             ) : (
               <>
@@ -1183,29 +1207,31 @@ export default function CoachDetailsPage() {
                     {paginatedReviews.map((r: Review) => (
                       // <tr key={p.id} className="hover:bg-gray-50 border-b">
                       <tr
-                        key={r.id}>
+                        key={r.id}
+                        className={r.review_status === 0 ? "bg-red-100" : "bg-white"}
+                      >
                         <td className="px-4 py-3">{r.title}</td>
                         <td className="px-4 py-3">{r.comment}</td>
                         <td className="px-4 py-3">{r.player_name}</td>
                         <td className="px-4 py-3">{r.coach_name}</td>
-
-                        <div className="flex items-center mb-3 px-4 py-6">
-                          {Array.from({ length: 5 }, (_, index) => index + 1).map((star) => (
-                            <svg
-                              key={star}
-                              className={`w-6 h-6 ${star <= (r.rating ?? 0)
-                                ? 'text-yellow-500'
-                                : 'text-gray-300'
-                                }`}
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
-                            </svg>
-                          ))}
-                        </div>
-
+                        <td>
+                          <div className="flex items-center mb-3 px-4 py-6">
+                            {Array.from({ length: 5 }, (_, index) => index + 1).map((star) => (
+                              <svg
+                                key={star}
+                                className={`w-6 h-6 ${star <= (r.rating ?? 0)
+                                  ? 'text-yellow-500'
+                                  : 'text-gray-300'
+                                  }`}
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path d="M12 .587l3.668 7.431 8.21 1.192-5.938 5.784 1.404 8.189L12 18.897l-7.344 3.866 1.404-8.189L.122 9.21l8.21-1.192L12 .587z" />
+                              </svg>
+                            ))}
+                          </div>
+                        </td>
                         <td className="px-4 py-3">{new Date(r.created_at).toLocaleDateString()}</td>
                         <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
                           <button
@@ -1226,7 +1252,7 @@ export default function CoachDetailsPage() {
                               fontSize: '1.2rem',
                             }}
                           >
-                            {r.review_status == 0 ? "👁️" : "🗑️"}
+                            {r.review_status == 0 ? "  🛑" : "👻"}
                           </button>
                         </td>
 
@@ -1430,7 +1456,7 @@ export default function CoachDetailsPage() {
                                 fontSize: '1.2rem',
                               }}
                             >
-                              ⏎
+                              👻
                             </button>
                           )}
                         </td>

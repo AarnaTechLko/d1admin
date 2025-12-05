@@ -105,7 +105,7 @@ const [staffQuery, setStaffQuery] = useState(""); // <-- add this
       } catch (error) {
   console.error("Failed to parse ticket message:", error);
   return null;
-}
+   }
 
     }
     return null;

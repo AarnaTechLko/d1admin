@@ -695,7 +695,7 @@ export const ticket = pgTable("ticket", {
   created_by: integer("created_by").default(0),     // user who created the ticket (user ID)
   created_for: integer("created_for").default(0),
   escalate: boolean("escalate").default(false), // ✅ new column
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const ticket_messages = pgTable("ticket_messages", {

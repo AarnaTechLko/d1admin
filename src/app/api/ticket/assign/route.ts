@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from "@/lib/db";
-import { ticket, admin } from '@/lib/schema';
+import { ticket, admin, coaches, users } from '@/lib/schema';
 import { and, eq, gte, ilike, or, sql, SQL } from 'drizzle-orm';
 
 
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     if (assignedTicket.length === 0) {
       return NextResponse.json({ error: "Assigned sub-admin not found" }, { status: 404 });
     }
-           
+
     // Return the updated ticket with assigned username
     return NextResponse.json({
       message: "Ticket successfully assigned",
@@ -163,16 +163,20 @@ export async function GET(req: NextRequest) {
         message: ticket.message,
         priority: ticket.priority,
         assign_to: ticket.assign_to,
+        coachImage: coaches.image,
+        userImage: users.image,
       })
       .from(ticket)
+      .leftJoin(coaches, eq(ticket.ticket_from, coaches.id)) // 👈 Join coach image
+      .leftJoin(users, eq(ticket.ticket_from, users.id))
       .where(whereClause);
-console.log("all data:",getTickets);
+    // console.log("all data:", getTickets);
     // ------------------------------------------------------------
     // STATUS METRICS (based on role like data above)
     // ------------------------------------------------------------
 
     const metricCondition = baseCondition; // use same logic for metrics
-    
+
 
     const [
       pending,

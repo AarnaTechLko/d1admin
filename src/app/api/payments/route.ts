@@ -27,6 +27,9 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const timeRange = url.searchParams.get("timeRange") || "";
+    const page = parseInt(url.searchParams.get("page") ?? "1", 10);
+    const limit = parseInt(url.searchParams.get("limit") ?? "10", 10);
+    const offset = (page - 1) * limit;
 
     const conditions = [];
     const timeCondition = getTimeFilterCondition(payments.created_at, timeRange);
@@ -35,7 +38,16 @@ export async function GET(req: NextRequest) {
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : sql`1=1`;
+ const totalRec = await db
+      .select({
+        count: sql<number>`COUNT(*)::int`,
+      })
+      .from(payments)
+      .where(whereClause);
 
+    const total = totalRec[0]?.count ?? 0;
+
+    // ---------
     const data = await db
       .select({
         id: payments.id,
@@ -56,11 +68,17 @@ export async function GET(req: NextRequest) {
       .leftJoin(playerEvaluation, eq(payments.evaluation_id, playerEvaluation.id))
       .leftJoin(users, eq(payments.player_id, users.id))
       .where(whereClause)
+      .limit(limit)
+      .offset(offset)
       .orderBy(desc(payments.created_at));
 
     return NextResponse.json({
       data,
       totalCount: data.length,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1,
     });
 
   } catch (error) {

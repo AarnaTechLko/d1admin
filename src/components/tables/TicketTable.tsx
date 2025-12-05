@@ -9,11 +9,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
-import { MessageSquare, Loader2 } from "lucide-react";
+import { MessageSquare, Loader2, UploadCloud, Download, Trash, StickyNote } from "lucide-react";
 import Swal from "sweetalert2";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
+import dayjs from "dayjs";
+import Image from "next/image"; // ✅ MUST BE HERE
 
+import toast from "react-hot-toast";
+import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
+type TicketNote = {
+  id: number;
+  ticketId: number;
+  notes: string;
+  createdAt: string;
+};
 interface Ticket {
+  userImage: string;
+  coachImage: string;
   id: number;
   name: string;
   email: string;
@@ -24,29 +37,35 @@ interface Ticket {
   createdAt: string;
   status: string;
   assignee_name: string;
-  ticket_from:string;
-  role:string;
-  escalate:boolean;
+  ticket_from: string;
+  role: string;
+  priority: string;
+  escalate: boolean;
 }
-
-interface SubAdmin {
+interface Admin {
   id: number;
   username: string;
+  email: string;
+  role: string;
 }
 
+
 interface TicketReply {
+  filename: string;
   id: number;
   ticketId: number;
   message: string;
   status: string;
   repliedBy: string;
   createdAt: string;
+  fullAttachmentUrl?: string;
+  priority: string;
+  parsedFiles?: string[];
 }
-
 interface Props {
   data?: Ticket[];
   currentPage?: number;
-  totalPages?: number;
+  totalPages: number;
   setCurrentPage?: React.Dispatch<React.SetStateAction<number>>;
   onAssignClick?: (ticket: Ticket) => void;
   onReplyClick?: (ticket: Ticket) => void;
@@ -55,15 +74,20 @@ interface Props {
 }
 
 const TicketTable: React.FC<Props> = ({
-  
-  searchQuery = "",
-  page = 1,
+
+  // searchQuery = "",
+  // page = 1,
+  data,
   currentPage,
   totalPages,
   setCurrentPage,
 }) => {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+
+  const [tickets, setTickets] = useState<Ticket[]>(data ?? []);
+  const [userId, setUserId] = useState<string | null>(null);
+  const router = useRouter();
+
+  const [loading, setLoading] = useState<boolean>(!data);
   const [error, setError] = useState<string | null>(null);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isReplyModalOpen, setIsReplyModalOpen] = useState<boolean>(false);
@@ -71,9 +95,43 @@ const TicketTable: React.FC<Props> = ({
   const [replyStatus, setReplyStatus] = useState<string>("");
   const [ticketReplies, setTicketReplies] = useState<TicketReply[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [subAdmins, setSubAdmins] = useState<SubAdmin[]>([]);
+  const [subAdmins, setSubAdmins] = useState<Admin[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [notes, setNotes] = useState<TicketNote[]>([]);
+  const [popupMessage, setPopupMessage] = useState<string>("");
+  const [showPopup, setShowPopup] = useState<boolean>(false);
+  const [isEscalate, setIsEscalate] = useState(false);
+  const [adminNotes, setAdminNotes] = useState("");
+  const [selectedSubAdmin, setSelectedSubAdmin] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [replyPriority, setReplyPriority] = useState<string>("Medium");
 
+  // Extract JSON safely from mixed message
+  const extractJson = (str: string) => {
+    const jsonStart = str.indexOf("{");
+    const jsonEnd = str.lastIndexOf("}");
+
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      const jsonString = str.substring(jsonStart, jsonEnd + 1);
+      try {
+        return JSON.parse(jsonString);
+      } catch (error) {
+        console.error("Failed to parse ticket message:", error);
+        return null;
+      }
+
+    }
+    return null;
+  };
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
+    if (!storedUserId) {
+      router.push("/signin");
+    } else {
+      setUserId(storedUserId);
+    }
+  }, [router]);
   useEffect(() => {
     const fetchSubAdmins = async () => {
       try {
@@ -88,23 +146,25 @@ const TicketTable: React.FC<Props> = ({
     fetchSubAdmins();
   }, []);
 
-  const fetchTickets = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/tickets?search=${searchQuery}&page=${page}&limit=10`);
-      if (!response.ok) throw new Error("Failed to fetch tickets");
-      const data = await response.json();
-      setTickets(data.ticket ?? []);
-    } catch (err) {
-      setError((err as Error).message);
-      setTickets([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const fetchTickets = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const response = await fetch(`/api/tickets?search=${searchQuery}&page=${page}&limit=10`);
+  //     if (!response.ok) throw new Error("Failed to fetch tickets");
+  //     const data = await response.json();
+  //     setTickets(data);
+  //     setLoading(false);
+
+  //   } catch (err) {
+  //     setError((err as Error).message);
+  //     setTickets([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   // useEffect(() => {
-    
+
   // const fetchTickets = async () => {
   //   setLoading(true);
   //   try {
@@ -128,216 +188,894 @@ const TicketTable: React.FC<Props> = ({
   //   }
   // }, [searchQuery, page, data, currentPage,]);
 
-  const handleReplyClick = async (ticket: Ticket) => {
-    setSelectedTicket(ticket);
-    setReplyStatus(ticket.status);
-    setIsReplyModalOpen(true);
-    try {
-      const res = await fetch(`/api/ticket/replies?ticketId=${ticket.id}`);
-      if (!res.ok) throw new Error("Failed to fetch replies");
-      const data = await res.json();
-      setTicketReplies(data.replies);
-    } catch (err) {
-      console.error("Error loading ticket messages:", err);
-      Swal.fire("Error", "Could not load ticket messages.", "error");
-    }
-  };
+  useEffect(() => {
+    const fetchSubAdmins = async () => {
+      try {
+        const response = await fetch(`/api/subadmin`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!response.ok) throw new Error("Failed to fetch sub-admins");
+        //console.log("response data add:",response.text());
+        const contentType = response.headers.get("Content-Type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text();
+          throw new Error(`Expected JSON, but got: ${text}`);
+        }
 
-  const handleReplySubmit = async () => {
-    if (!selectedTicket || !replyMessage || !replyStatus) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/ticket/reply`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ticketId: selectedTicket.id,
-          message: replyMessage,
-          status: replyStatus,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to submit reply");
-      setIsReplyModalOpen(false);
-      fetchTickets();
-    } catch {
-      Swal.fire("Error", "Could not submit reply.", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
+        const data = await response.json();
+        console.log("fetchsubadmins", data);
+        setSubAdmins(data.admin);
+      } catch (err) {
+        console.error("Error fetching sub-admins:", err);
+        setError((err as Error).message);
+      }
+    };
+    fetchSubAdmins();
+  }, []);
+
   const handleAssignToClick = (ticket: Ticket) => {
+    // If already assigned, don't open the modal
     // if (ticket.assign_to) {
-    //   Swal.fire("Already Assigned", "This ticket is already assigned.", "info");
+    //   Swal.fire('Already Assigned', 'This ticket has already been assigned to a sub-admin.', 'info');
     //   return;
     // }
+
     setSelectedTicket(ticket);
     setIsModalOpen(true);
   };
 
-  const handleAssignSubAdmin = async (subAdmin: SubAdmin) => {
+  const handleAssignSubAdmin = async (subAdmin: Admin) => {
     if (!selectedTicket) return;
     setIsSubmitting(true);
+
+
     try {
       const response = await fetch(`/api/ticket/assign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticketId: selectedTicket.id, assignTo: subAdmin.id }),
+        body: JSON.stringify({ ticketId: selectedTicket?.id, assignTo: subAdmin.id }),
       });
-      if (!response.ok) throw new Error("Failed to assign ticket");
-      setTickets((prev) =>
-        prev.map((t) =>
-          t.id === selectedTicket.id ? { ...t, assign_to: subAdmin.id, assign_to_username: subAdmin.username } : t
-        )
+
+      // Log the response status and content
+      console.log("Response Status:", response.status);
+
+      const contentType = response.headers.get("Content-Type");
+      console.log("Response Content-Type:", contentType);
+
+      if (!response.ok) {
+        const errorData = await response.json(); // Assuming the API returns a JSON error message
+        console.error("API Error Response:", errorData);
+        throw new Error(`Failed to assign sub-admin: ${errorData?.error || "Unknown error"}`);
+      }
+
+      // Check if the response is JSON
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text(); // Read the response as text if not JSON
+        console.error("Non-JSON Response:", text);
+        throw new Error(`Expected JSON, but got: ${text}`);
+      }
+
+      // const data = await response.json();
+      setTickets((prevTickets) =>
+        prevTickets.map((t) => (t.id === selectedTicket.id ? {
+          ...t, assign_to: subAdmin.id, assign_to_username: subAdmin.username
+        } : t))
       );
-      setIsModalOpen(false);
+
+
+
+      setIsModalOpen(false); // Close modal after assigning sub-admin
     } catch (err) {
-      setError((err as Error).message);
+      console.error("Error assigning sub-admin:", err);
+      setError((err as Error).message); // Set the error state
     } finally {
       setIsSubmitting(false);
     }
   };
+  const handleViewNotesClick = async (ticket: Ticket) => {
+    setIsNotesOpen(true);
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/ticket-notes/${ticket.id}`);
+      const data = await res.json();
+      setNotes(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to fetch notes:", err);
+      setNotes([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleModalSubmit = async () => {
+    if (!selectedTicket) {
+      setError("No ticket selected");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No ticket selected.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Find the selected sub-admin object
+      const assignedSubAdmin = subAdmins.find(
+        (admin) => admin.id === selectedTicket.assign_to
+      );
+
+      if (assignedSubAdmin) {
+        await handleAssignSubAdmin(assignedSubAdmin); // ✅ Call API function
+
+        Swal.fire({
+          icon: "success",
+          title: "Assigned!",
+          text: `${assignedSubAdmin.username} has been assigned successfully.`,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        setIsModalOpen(false); // close modal on success
+      } else {
+        setError("Please select a sub-admin before submitting.");
+        Swal.fire({
+          icon: "warning",
+          title: "No Sub-Admin Selected",
+          text: "Please select a sub-admin before submitting.",
+        });
+      }
+    } catch (error) {
+      console.error("Assignment failed:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Assignment Failed",
+        text: "Something went wrong while assigning sub-admin.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+
+  };
+  const handleReplyClick = async (ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    setReplyStatus(ticket.status);
+    setIsReplyModalOpen(true);
+
+    try {
+      const response = await fetch(`/api/ticket/replies?ticketId=${ticket.id}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Fetch failed: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log("images dataL", data);
+      if (!data.replies || !Array.isArray(data.replies)) {
+        throw new Error("Invalid response: replies not found");
+      }
+
+      // Parse filenames in each reply (if available)
+      const parsedReplies = data.replies.map((
+        reply: TicketReply): TicketReply & { parsedFiles: string[] } => ({
+          ...reply,
+          parsedFiles: (() => {
+            try {
+              const parsed = JSON.parse(reply.filename || '[]');
+              return Array.isArray(parsed) ? parsed : [];
+            } catch {
+              return [];
+            }
+          })(),
+        }));
+
+      setTicketReplies(parsedReplies);
+    } catch (error) {
+      console.error("Error fetching replies:", error);
+      setTicketReplies([]);
+      Swal.fire("Error", "Could not load ticket messages.", "error");
+    }
+  };
+  const handleDeleteReply = async (replyId: number) => {
+    setIsReplyModalOpen(false);
+
+    const confirmed = await Swal.fire({
+      title: "Are you sure?",
+      text: "This will delete the message permanently.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    });
+
+    if (confirmed.isConfirmed) {
+      try {
+        const res = await fetch(`/api/ticket/reply?id=${replyId}`, {
+          method: "DELETE",
+        });
+
+        if (res.ok) {
+          Swal.fire("Deleted!", "The reply has been removed.", "success");
+          setTicketReplies((prev) => prev.filter((r) => r.id !== replyId));
+        } else {
+          Swal.fire("Error", "Failed to delete reply.", "error");
+        }
+      } catch (err) {
+        console.error("Delete error:", err);
+        Swal.fire("Error", "Something went wrong.", "error");
+      }
+    }
+  };
+  const openPopupMessage = (message: string) => {
+    console.log("📩 Raw Message Received:", message);
+
+    const parsed = extractJson(message); // your helper function
+
+    if (parsed) {
+      console.log("🟢 Extracted JSON:", parsed);
+
+      // Convert JSON to readable format
+      const formatted = Object.entries(parsed)
+        .map(([key, value]) => `${key}: ${value ?? ""}`)
+        .join("\n");
+
+      // Get text before JSON (if any)
+      const textBeforeJson = message.split("{")[0].trim();
+
+      const finalMessage = textBeforeJson
+        ? textBeforeJson + "\n\n" + formatted
+        : formatted;
+      console.log("popup messages:", finalMessage);
+      setPopupMessage(finalMessage);
+    } else {
+      console.log("⚠️ No JSON found → using raw message");
+      setPopupMessage(message);
+    }
+
+    setShowPopup(true);
+  };
+  const handleReplySubmit = async () => {
+    if (!selectedTicket) {
+      Swal.fire("Error", "No ticket selected.", "error");
+      return;
+    }
+
+    if (!replyMessage.trim()) {
+      toast.error("Message cannot be empty.", {
+        duration: 4000,
+        position: "top-right",
+        style: {
+          background: "red",       // background color
+          color: "white",          // text color
+          minWidth: "300px",       // width of the toast
+          minHeight: "60px",       // height of the toast
+
+        },
+      });
+      return;
+    }
+    setLoading(true);
+
+    try {
+      // 1️⃣ Prepare form data for reply API
+      const formData = new FormData();
+      formData.append("ticketId", String(selectedTicket.id));
+      formData.append("repliedBy", userId ?? "");
+      formData.append("message", replyMessage.trim());
+      formData.append("status", replyStatus);
+      formData.append("priority", replyPriority);
+      formData.append("escalate", isEscalate ? "true" : "false");
+
+      if (attachmentFile) {
+        formData.append("attachment", attachmentFile);
+      }
+
+      // 2️⃣ Send reply to backend
+      const response = await fetch("/api/ticket/reply", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        Swal.fire("Error", data.error || "Failed to send reply.", "error");
+        return;
+      }
+
+      // 3️⃣ Update ticket in frontend list
+      setTickets((prevTickets) =>
+        prevTickets.map((t) =>
+          t.id === selectedTicket.id
+            ? {
+              ...t,
+              status: replyStatus,
+              message: replyMessage.trim(),
+              priority: replyPriority,
+              escalate: isEscalate, // ✅ update escalation flag
+            }
+            : t
+        )
+      );
+
+      // 4️⃣ Save internal note (if provided)
+      if (adminNotes?.trim()) {
+        try {
+          const noteResponse = await fetch("/api/ticket-notes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ticketId: selectedTicket.id,
+              notes: adminNotes.trim(),
+            }),
+          });
+
+          if (!noteResponse.ok) {
+            const noteData = await noteResponse.json();
+            console.error("Error saving note:", noteData.error);
+          } else {
+            setAdminNotes("");
+          }
+        } catch (noteError) {
+          console.error("Failed to save note:", noteError);
+        }
+      }
+
+      // 5️⃣ Handle escalation assignment (only if checked)
+      if (isEscalate && selectedSubAdmin) {
+        try {
+          const assignResponse = await fetch("/api/ticket-assign", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ticketId: selectedTicket.id,
+              fromId: userId,
+              toId: selectedSubAdmin,
+              escalate: true,
+            }),
+          });
+
+          const assignData = await assignResponse.json();
+          if (!assignResponse.ok) {
+            Swal.fire("Error", assignData.error || "Failed to assign ticket.", "error");
+          } else {
+            console.log("Ticket escalated successfully:", assignData.data);
+          }
+        } catch (assignError) {
+          console.error("Failed to assign ticket:", assignError);
+          Swal.fire("Error", "Failed to assign ticket.", "error");
+        }
+      }
+
+      // 6️⃣ Success feedback and cleanup
+      Swal.fire("Success", "Reply, note, and escalation saved successfully!", "success");
+
+      setReplyMessage("");
+      setAttachmentFile(null);
+      setIsEscalate(false);
+      setAdminNotes("");
+      setSelectedSubAdmin("");
+      setIsReplyModalOpen(false);
+    } catch (error) {
+      console.error("Error submitting ticket reply:", error);
+      Swal.fire("Error", "An unexpected error occurred while sending reply.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      {isSubmitting && <p>Loading...</p>}
-      {loading && (
-        <p className="text-center py-5">
-          <Loader2 className="animate-spin inline-block text-gray-500 mr-2" size={18} />
-          Loading...
-        </p>
+    <div>
+      {totalPages > 0 && (
+        <div className="flex justify-end items-center gap-2 p-2">
+          {[...Array(totalPages)].map((_, index) => {
+            const pageNumber = index + 1;
+            return (
+              <button
+                key={pageNumber}
+                onClick={() => setCurrentPage?.(pageNumber)}
+                className={`px-3 py-2 rounded-md ${currentPage === pageNumber
+                  ? "bg-blue-500 text-white"
+                  : "text-blue-500 hover:bg-gray-200"
+                  }`}
+              >
+                {pageNumber}
+              </button>
+            );
+          })}
+        </div>
       )}
+      {loading && <p className="text-center py-5">Loading...</p>}
       {error && <p className="text-center py-5 text-red-500">{error}</p>}
 
       {!loading && !error && (
-        <>
-          {tickets.length === 0 ? (
-            <p className="p-6 text-gray-600">No tickets found.</p>
-          ) : (
-            <>
-              <Table className="text-xs">
-                <TableHeader className="border-b border-gray-100 font-medium text-sm bg-gray-200 dark:border-white/[0.05]">
-                  <TableRow className="bg-gray-100">
-                    <TableCell className="px-5 py-3">Name</TableCell>
-                    <TableCell className="px-5 py-3">Email</TableCell>
-                    <TableCell className="px-5 py-3">Subject</TableCell>
-                    <TableCell className="px-5 py-3">Message</TableCell>
-                    <TableCell className="px-5 py-3">Escalate</TableCell>
-                    <TableCell className="px-5 py-3">Assign To</TableCell>
-                    <TableCell className="px-5 py-3">Status</TableCell>
-                    <TableCell className="px-5 py-3">Actions</TableCell>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tickets.map((ticket) => (
-                    <TableRow key={ticket.id}>
-                      <TableCell className="px-4 py-3">{ticket.name}</TableCell>
-                      <TableCell className="px-4 py-3">{ticket.email}</TableCell>
-                      <TableCell className="px-4 py-3">{ticket.subject}</TableCell>
-                      <TableCell className="px-4 py-3">{ticket.message}</TableCell>
-                      <TableCell className="px-4 py-3">{ticket.escalate}</TableCell>
-                      <TableCell className="px-4 py-3">
-                        <button className="text-blue-500 hover:underline" onClick={() => handleAssignToClick(ticket)}>
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+          {/* <div className="p-4 text-gray-700 dark:text-gray-300">Total Tickets: {tickets.length}</div> */}
+          <Table className="text-xs">
+            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+              <TableRow className="bg-gray-100">
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Name</TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Email</TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Subject</TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Message</TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Priority</TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Assign To</TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Status</TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Actions</TableCell>
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Timestamp</TableCell>
+
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {Array.isArray(tickets) && tickets.length > 0 ? (
+                tickets.map((ticket) => {
+                  const isLong = ticket.message?.length > 100;
+
+
+                  // const displayedMessage = isLong
+                  //   ? ticket.message.slice(0, 100) + "..."
+                  //   : ticket.message;
+
+                  return (
+                    <TableRow
+                      key={ticket.id}
+                      className={ticket.escalate ? "bg-red-100 dark:bg-red-900/20" : ""}
+                    >
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-3">
+
+                          <Image
+                            width={40}
+                            height={40}
+                            src={
+                              ticket.coachImage
+                                ? `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${ticket.coachImage}`
+                                : ticket.userImage
+                                  ? `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${ticket.userImage}`
+                                  : "/uploads/d1.png" // default icon
+                            }
+                            alt={ticket.name ?? "User"}
+                            className="rounded-full"
+                          />
+
+                          <span className="font-medium text-gray-800 dark:text-white/90">
+                            {ticket.name}
+                          </span>
+
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
+
+                      {/* Message column with View More/Less */}
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs">
+                        <p className="whitespace-pre-wrap break-words">
+                          {isLong ? ticket.message.slice(0, 100) + "..." : ticket.message}
+                        </p>
+
+                        {isLong && (
+                          <button
+                            className="text-blue-500 text-sm mt-1 hover:underline"
+                            onClick={() => openPopupMessage(ticket.message)}
+                          >
+                            View More
+                          </button>
+                        )}
+                      </TableCell>
+
+
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-full
+                    ${ticket.priority === "High" ? "bg-red-100 text-red-700" : ""}
+                    ${ticket.priority === "Medium" ? "bg-yellow-100 text-yellow-700" : ""}
+                    ${ticket.priority === "Low" ? "bg-green-100 text-green-700" : ""}`}
+                        >
+                          {ticket.priority}
+                        </span>
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <button
+                          className="text-blue-500 hover:underline"
+                          onClick={() => handleAssignToClick(ticket)}
+                        >
                           {ticket.assign_to_username || "Assign To"}
                         </button>
                       </TableCell>
-                      <TableCell className="px-4 py-3">
+
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-yellow-500">
                         <Badge
                           color={
                             ticket.status.toLowerCase() === "closed" ? "error" :
-                            ticket.status.toLowerCase() === "open" ? "info" :
-                            ticket.status.toLowerCase() === "fixed" ? "success" :
-                            ticket.status.toLowerCase() === "pending" ? "warning" : "light"
+                              ticket.status.toLowerCase() === "open" ? "info" :
+                                ticket.status.toLowerCase() === "fixed" ? "success" :
+                                  ticket.status.toLowerCase() === "pending" ? "warning" :
+                                    "light"
                           }
                         >
                           {ticket.status || "Pending"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="px-4 py-3">
-                        <button className="text-green-500" onClick={() => handleReplyClick(ticket)}>
-                          <MessageSquare size={18} />
-                        </button>
+
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <div className="flex gap-3">
+                          <button className="text-green-500" onClick={() => handleReplyClick(ticket)}>
+                            <MessageSquare size={18} />
+                          </button>
+                          <button
+                            className="text-blue-500 hover:text-blue-600"
+                            onClick={() => handleViewNotesClick(ticket)}
+                            title="View Notes"
+                          >
+                            <StickyNote size={18} />
+                          </button>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        {dayjs(ticket.createdAt).format("D-MM-YYYY, h:mm A")}
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </>
-          )}
-          {totalPages && setCurrentPage && (
-            <div className="flex justify-between items-center mt-4 gap-3 px-4">
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1 border rounded disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="text-sm">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 border rounded disabled:opacity-50"
-              >
-                Next
-              </button>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell className="text-center text-gray-500 py-4" colSpan={9}>
+                    No tickets found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          {showPopup && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-md shadow-lg max-w-lg w-full max-h-[80vh] overflow-y-auto">
+                <h2 className="text-lg font-semibold mb-3 text-gray-800">Full Message</h2>
+                <p className="whitespace-pre-wrap break-words text-gray-700">
+                  {popupMessage}
+                </p>
+                <div className="text-right mt-4">
+                  <button
+                    onClick={() => setShowPopup(false)}
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
           )}
-        </>
+
+
+
+          <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Ticket Notes</DialogTitle>
+              </DialogHeader>
+
+              {!Array.isArray(notes) || notes.length === 0 ? (
+                <p className="text-gray-500">No notes found for this ticket.</p>
+              ) : (
+                <ul className="space-y-3 max-h-64 overflow-y-auto">
+                  {notes.map((note) => (
+                    <li
+                      key={note.id}
+                      className="p-3 rounded-lg border bg-gray-50 dark:bg-gray-800 dark:text-gray-200"
+                    >
+                      <p>{note.notes}</p>
+                      <span className="text-xs text-gray-400">
+                        {new Date(note.createdAt).toLocaleString()}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </DialogContent>
+          </Dialog>
+
+
+          <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
+            <DialogContent className="p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
+              <DialogTitle>Reply to Ticket</DialogTitle>
+
+              <input type="hidden" value={selectedTicket?.id ?? ""} name="ticketId" />
+
+              {/* Previous Messages */}
+              <div className="mt-4">
+                <h3 className="text-sm font-medium mb-2 text-blue-600">Previous Messages</h3>
+                <div className="border border-blue-300 rounded-md p-3 max-h-60 overflow-y-auto bg-gray-50 space-y-4 custom-scrollbar">
+                  {ticketReplies.length === 0 ? (
+                    <p className="text-gray-400 text-sm">No messages yet.</p>
+                  ) : (
+                    ticketReplies.map((reply) => (
+                      <div key={reply.id} className="border-b pb-3">
+
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="text-sm text-gray-700">
+                            <span className="font-semibold">Message:</span> {reply.message}
+                          </p>
+                          <button
+                            onClick={() => handleDeleteReply(reply.id)}
+                            className="text-red-500 hover:text-red-700"
+                            title="Delete reply"
+                          >
+                            <Trash className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-sm">Status:</span>
+                          <Badge
+                            color={
+                              reply.status.toLowerCase() === "closed"
+                                ? "error"
+                                : reply.status.toLowerCase() === "open"
+                                  ? "info"
+                                  : reply.status.toLowerCase() === "fixed"
+                                    ? "success"
+                                    : reply.status.toLowerCase() === "pending"
+                                      ? "warning"
+                                      : "light"
+                            }
+                          >
+                            {reply.status}
+                          </Badge>
+                        </div>
+                        {/* Attachment from reply.filename */}
+                        {reply.filename && (
+                          <div className="flex items-center gap-2 text-sm mb-1">
+                            <span className="font-semibold text-sm">Attachment:</span>
+
+                            <a
+                              href={reply.filename}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center hover:underline text-blue-500"
+                            >
+                              <Download className="w-4 h-4 mr-1" />
+                              Download
+                            </a>
+                          </div>
+                        )}
+
+
+                        <div className="text-sm text-gray-700">
+                          <span className="font-semibold">Date:</span> {reply.repliedBy} —{" "}
+                          {new Date(reply.createdAt).toLocaleString()}
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          <span className="font-semibold">Prority:</span>  <span
+                            className={`px-2 py-1 text-xs font-semibold rounded-full
+                          ${reply.priority === "High" ? "bg-red-100 text-red-700" : ""}
+                          ${reply.priority === "Medium" ? "bg-yellow-100 text-yellow-700" : ""}
+                          ${reply.priority === "Low" ? "bg-green-100 text-green-700" : ""}`}
+                          >
+                            {reply.priority}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Message Box */}
+              <label className="block text-sm font-medium text-gray-700 mt-4">Message</label>
+              <textarea
+                className="w-full p-2 border rounded-md resize-none"
+                placeholder="Write your message..."
+                rows={2}
+                value={replyMessage}
+                onChange={(e) => setReplyMessage(e.target.value)}
+              />
+
+              {/* Attachment Upload */}
+              <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
+                Attachment (Image or PDF)
+              </label>
+              <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 hover:border-blue-400 transition">
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <div className="flex flex-col items-center justify-center space-y-2">
+                  <UploadCloud className="w-4 h-4 text-blue-500" />
+                  <span className="text-sm text-gray-600">
+                    Click or drag to upload file
+                  </span>
+                  {attachmentFile && (
+                    <p className="text-xs text-green-600 font-medium">
+                      Selected: {attachmentFile.name}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="escalate"
+                  checked={isEscalate}
+                  onChange={(e) => setIsEscalate(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                />
+                <label htmlFor="escalate" className="text-sm font-medium text-gray-700">
+                  Escalate
+                </label>
+              </div>
+
+              {/* Show Notes + SubAdmin dropdown only if Escalate checked */}
+              {isEscalate && (
+                <div className="mt-4 space-y-4">
+                  {/* Admin Notes */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Admin Notes
+                    </label>
+                    <textarea
+                      className="w-full p-2 border rounded-md resize-none"
+                      rows={2}
+                      placeholder="Enter notes for escalation..."
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                    />
+                  </div>
+
+                  {/* SubAdmin Dropdown */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Escalate To
+                    </label>
+                    <select
+                      className="w-full p-2 border rounded"
+                      value={selectedSubAdmin}
+                      onChange={(e) => setSelectedSubAdmin(e.target.value)}
+                    >
+                      <option value="">-- Select SubAdmin --</option>
+                      {subAdmins.map((sub) => (
+                        <option key={sub.id} value={sub.id}>
+                          {sub.username}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+              {/* Status Dropdown */}
+              {/* <label className="block text-sm font-medium text-gray-700 mt-4">Status</label>
+              <select
+                className="w-full p-2 border rounded"
+                value={replyStatus}
+                onChange={(e) => setReplyStatus(e.target.value)}
+              >
+                <option value="Pending">Pending</option>
+                <option value="Open">Open</option>
+                <option value="Fixed">Fixed</option>
+                <option value="Closed">Closed</option>
+                <option value="Escalate">Escalate</option>
+              </select> */}
+              {/* Status Dropdown */}
+              <div className="flex gap-4 mt-4">
+                {/* Status */}
+                <div className="w-1/2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    className="w-full p-2 border rounded"
+                    value={replyStatus}
+                    onChange={(e) => setReplyStatus(e.target.value)}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Open">Open</option>
+                    <option value="Fixed">Fixed</option>
+                    <option value="Closed">Closed</option>
+                    <option value="Escalate">Escalate</option>
+                  </select>
+                </div>
+
+                {/* Priority */}
+                <div className="w-1/2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                  <select
+                    className="w-full p-2 border rounded"
+                    value={replyPriority}
+                    onChange={(e) => setReplyPriority(e.target.value)}
+                  >
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+              </div>
+              {/* Buttons */}
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  className="px-4 py-2 bg-red-500 text-white rounded-md"
+                  onClick={() => setIsReplyModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md flex items-center justify-center"
+                  onClick={handleReplySubmit}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="animate-spin text-blue-300 mr-2" size={16} />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit"
+                  )}
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+        </div>
       )}
 
-      <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
-        <DialogContent>
-          <DialogTitle>Reply to Ticket</DialogTitle>
-          <div className="space-y-3">
-            {ticketReplies.map((reply) => (
-              <div key={reply.id} className="border-b pb-2">
-                <p className="text-sm text-gray-700"><strong>Message:</strong> {reply.message}</p>
-                <p className="text-sm"><strong>Status:</strong> {reply.status}</p>
-                <p className="text-sm"><strong>By:</strong> {reply.repliedBy} at {new Date(reply.createdAt).toLocaleString()}</p>
-              </div>
-            ))}
-            <textarea
-              value={replyMessage}
-              onChange={(e) => setReplyMessage(e.target.value)}
-              placeholder="Type your reply"
-              className="w-full border p-2 rounded"
-              rows={3}
-            />
-            <select value={replyStatus} onChange={(e) => setReplyStatus(e.target.value)} className="w-full border p-2 rounded">
-              <option value="Pending">Pending</option>
-              <option value="Open">Open</option>
-              <option value="Fixed">Fixed</option>
-              <option value="Closed">Closed</option>
-            </select>
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setIsReplyModalOpen(false)} className="bg-red-500 text-white px-4 py-2 rounded">Cancel</button>
-              <button onClick={handleReplySubmit} className="bg-blue-500 text-white px-4 py-2 rounded">
-                {loading ? <Loader2 className="animate-spin" size={16} /> : "Submit"}
-              </button>
-            </div>
+      {/* Modal for Assigning Subadmin */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="p-6 max-h-[80vh] flex flex-col">
+          <DialogTitle>Assign Subadmin</DialogTitle>
+          <p className="text-gray-500">Select a sub-admin to assign:</p>
+
+          {/* Scrollable list */}
+          <div className="mt-4 flex-1 overflow-y-auto">
+            {subAdmins?.length > 0 ? (
+              <ul className="space-y-2">
+                {subAdmins.map((subAdmin) => (
+                  <li
+                    key={subAdmin.id}
+                    className={`p-2 border rounded-md cursor-pointer 
+                    ${selectedTicket?.assign_to === subAdmin.id
+                        ? "bg-blue-200 dark:bg-blue-700"
+                        : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+                    onClick={() =>
+                      setSelectedTicket((prev) =>
+                        prev ? { ...prev, assign_to: subAdmin.id } : null
+                      )
+                    }
+                  >
+                    {subAdmin.username}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500 text-sm">No sub-admins available</p>
+            )}
+          </div>
+
+          {/* Buttons fixed at bottom */}
+          <div className="mt-4 flex justify-end gap-3">
+            <button
+              className="px-4 py-2 bg-red-500 text-white rounded-md"
+              onClick={() => setIsModalOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="px-4 py-2 bg-blue-500 text-white rounded-md"
+              onClick={handleModalSubmit}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="animate-spin inline mr-2" size={16} />
+                  Submitting...
+                </>
+              ) : (
+                "Submit"
+              )}
+            </button>
           </div>
         </DialogContent>
       </Dialog>
+    </div>
 
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent>
-          <DialogTitle>Assign Subadmin</DialogTitle>
-          <ul className="mt-4 space-y-2">
-            {subAdmins?.map((subAdmin) => (
-              <li
-                key={subAdmin.id}
-                onClick={() => handleAssignSubAdmin(subAdmin)}
-                className="p-2 border rounded hover:bg-gray-100 cursor-pointer"
-              >
-                {subAdmin.username}
-              </li>
-            ))}
-          </ul>
-        </DialogContent>
-      </Dialog>
-    </>
   );
 };
 

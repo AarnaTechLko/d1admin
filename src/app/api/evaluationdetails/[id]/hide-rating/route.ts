@@ -1,36 +1,59 @@
-// src/app/api/evaluations/overallaverage/[playerId]/route.ts
+// /api/evaluationdetails/[id]/hide-rating/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { evaluationResults } from "@/lib/schema";
+import { playerEvaluation } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ playerId: string }> }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const playerIdStr = (await params).playerId;
-    if (!playerIdStr) {
-      return NextResponse.json({ error: "Missing playerId" }, { status: 400 });
+    const evaluationId = Number((await params).id);
+
+    if (isNaN(evaluationId)) {
+      return NextResponse.json(
+        { error: "Invalid evaluation ID" },
+        { status: 400 }
+      );
     }
 
-    const playerId = Number(playerIdStr);
-    if (isNaN(playerId)) {
-      return NextResponse.json({ error: "Invalid playerId" }, { status: 400 });
+    // Check if evaluation exists
+    const evaluation = await db.query.playerEvaluation.findFirst({
+      where: eq(playerEvaluation.id, evaluationId),
+    });
+
+    if (!evaluation) {
+      return NextResponse.json(
+        { error: "Evaluation not found" },
+        { status: 404 }
+      );
     }
 
-    // Fetch eval_average values for this player
-    const results = await db
-      .select({ avg: evaluationResults.eval_average })
-      .from(evaluationResults)
-      .where(eq(evaluationResults.playerId, playerId));
+    // Already hidden?
+    if (evaluation.review_status === 0) {
+      return NextResponse.json(
+        { error: "Rating is already hidden" },
+        { status: 400 }
+      );
+    }
 
-    const numbers = results.map(r => Number(r.avg)).filter(n => !isNaN(n));
+    // Hide the rating (review_status = 0)
+    await db
+      .update(playerEvaluation)
+      .set({ review_status: 0 })
+      .where(eq(playerEvaluation.id, evaluationId));
 
-    const overallAverage = numbers.length
-      ? Number((numbers.reduce((a, b) => a + b, 0) / numbers.length).toFixed(2))
-      : null;
-
-    return NextResponse.json({ overallAverage });
+    return NextResponse.json({
+      success: true,
+      message: "Rating hidden successfully",
+    });
   } catch (error) {
-    console.error("Error fetching evaluation averages:", error);
-    return NextResponse.json({ error: "Failed to fetch overall average" }, { status: 500 });
+    console.error("Error hiding rating:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

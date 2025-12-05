@@ -1,8 +1,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ticket, admin } from "@/lib/schema";
-import { ilike, desc, and, sql, or, eq, gte, ne ,SQL} from "drizzle-orm";
+import { ticket, admin, coaches, users } from "@/lib/schema";
+import { ilike, desc, and, sql, or, eq, gte, ne, SQL } from "drizzle-orm";
 
 
 // Default admin user ID (you can replace this with env config or session auth)
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     }
 
     // ✅ Store extra fields in message JSON
-      const cleanMessage =
+    const cleanMessage =
       typeof message === "string"
         ? message.trim()
         : message?.text?.trim() || "";
@@ -139,7 +139,7 @@ export async function GET(req: NextRequest) {
     // ==============================
     // ✅ WHERE conditions
     // ==============================
-const conditions: (SQL | undefined)[] = [];
+    const conditions: (SQL | undefined)[] = [];
 
     if (search) {
       conditions.push(
@@ -202,6 +202,8 @@ const conditions: (SQL | undefined)[] = [];
       createdAt: ticket.createdAt,
       priority: ticket.priority,
       assign_to_username: admin.username,
+      coachImage: coaches.image,
+      userImage: users.image,
     };
 
     const [ticketList, totalResult] = await Promise.all([
@@ -209,6 +211,8 @@ const conditions: (SQL | undefined)[] = [];
         .select(selectedFields)
         .from(ticket)
         .leftJoin(admin, eq(ticket.assign_to, admin.id))
+        .leftJoin(coaches, eq(ticket.ticket_from, coaches.id)) // 👈 Join coach image
+        .leftJoin(users, eq(ticket.ticket_from, users.id))
         .where(whereClause)
         .orderBy(desc(ticket.id))
         .limit(limit)
