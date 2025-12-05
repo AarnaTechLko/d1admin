@@ -200,7 +200,9 @@ export interface Ticket {
   ticket_from: string;
   role: string;
   escalate: boolean; // ✅ fix type to boolean
-
+priority:string;
+  userImage: string;
+  coachImage: string;
 }
 export interface Team {
   id: number;

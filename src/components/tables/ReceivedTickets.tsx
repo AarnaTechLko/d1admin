@@ -14,7 +14,13 @@ import { UploadCloud } from "lucide-react";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
+import Image from "next/image";
+import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
 
 type TicketNote = {
   id: number;
@@ -24,6 +30,8 @@ type TicketNote = {
 };
 
 interface Ticket {
+  userImage: string;
+  coachImage: string;
   id: number;
   name: string;
   email: string;
@@ -82,8 +90,8 @@ const TicketsPage = () => {
   const [replyMessage, setReplyMessage] = useState<string>("");
   const [replyStatus, setReplyStatus] = useState<string>("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
-    const [userRole, setUserRole] = useState<string | null>(null);
-  
+  const [userRole, setUserRole] = useState<string | null>(null);
+
   const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
   const [ticketReplies, setTicketReplies] = useState<TicketReply[]>([]);
@@ -286,7 +294,7 @@ const TicketsPage = () => {
       router.push("/signin");
     } else {
       setUserId(storedUserId);
-            setUserRole(storedRole);
+      setUserRole(storedRole);
 
     }
   }, [router]);
@@ -317,7 +325,7 @@ const TicketsPage = () => {
     };
 
     fetchTickets();
-  }, [userId, searchQuery,userRole, currentPage, statusQuery, daysQuery, staffQuery]);
+  }, [userId, searchQuery, userRole, currentPage, statusQuery, daysQuery, staffQuery]);
 
 
   // ✅ Fetch tickets when userId, searchQuery, statusQuery, or currentPage changes
@@ -602,7 +610,28 @@ const TicketsPage = () => {
                         key={ticket.id}
                         className={ticket.escalate ? "bg-red-100 dark:bg-red-900/20" : ""}
                       >
-                        <TableCell className="py-3 text-gray-500 dark:text-gray-400">{ticket.name}</TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                          <div className="flex items-center gap-3">
+
+                            <Image
+                              width={40}
+                              height={40}
+                              src={
+                                ticket.coachImage
+                                  ? `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${ticket.coachImage}`
+                                  : ticket.userImage
+                                    ? `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${ticket.userImage}`
+                                    : "/uploads/d1.png" // default icon
+                              }
+                              alt={ticket.name ?? "User"}
+                              className="rounded-full"
+                            />
+
+                            <span className="font-medium text-gray-800 dark:text-white/90">
+                              {ticket.name}
+                            </span>
+                          </div>
+                        </TableCell>
                         <TableCell className="py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
                         <TableCell className="py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
 
@@ -671,8 +700,10 @@ const TicketsPage = () => {
                         </TableCell>
 
                         <TableCell className="py-3 text-gray-500 dark:text-gray-400">
-                          {dayjs(ticket.createdAt).format("D-MM-YYYY, h:mm A")}
-                        </TableCell>
+                          {dayjs(ticket.createdAt)
+                            .tz("Asia/Kolkata")
+                            .format("DD-MM-YYYY, hh:mm A")}                       
+                             </TableCell>
                       </TableRow>
                     );
                   })

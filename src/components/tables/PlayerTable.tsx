@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 // import Badge from "../ui/badge/Badge";
 import Image from "next/image";
-import d1 from "@/public/images/signin/d1.png";
 import Button from "../ui/button/Button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import Badge from "../ui/badge/Badge";
@@ -61,8 +60,8 @@ interface PlayerTableProps {
 
 const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
   currentPage,
-totalPages,
-  setCurrentPage = () => { },
+  totalPages,
+  setCurrentPage
 }) => {
   const MySwal = withReactContent(Swal);
   const router = useRouter();
@@ -268,6 +267,7 @@ totalPages,
 
   return (
     <>
+
       {totalPages > 0 && (
         <div className="flex justify-end items-center gap-2 p-2">
           {[...Array(totalPages)].map((_, index) => {
@@ -380,8 +380,8 @@ totalPages,
 
                       <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Actions
-                      </TableCell>  
-                       <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                      </TableCell>
+                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Timestamp
                       </TableCell>
 
@@ -402,17 +402,21 @@ totalPages,
                       >
                         <TableCell className=" py-4 px-1 text-start">
                           <div className="flex items-center gap-1">
-                            <div className=" overflow-hidden ">
+                          
                               <Image
                                 width={40}
                                 height={40}
                                 className="rounded-full"
-                                src={!player.image || player.image === "null" ? d1 : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${player.image}`}
+                                src={
+                                  !player.image || player.image === "null"
+                                    ? "/uploads/d1.png"
+                                    : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${player.image}`
+                                }
                                 alt={`${player.first_name} ${player.last_name}`}
                                 onError={(e) => (e.currentTarget.src = "/images/default-avatar.png")} // Fallback image
                               />
 
-                            </div>
+                         
                             {/* <div>
                               <span className="block font-medium text-gray-800 dark:text-white/90">
                                 {player.first_name} {player.last_name}
@@ -820,7 +824,7 @@ totalPages,
 
                           </div>
                         </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500"> {dayjs(player.createdAt).format("D-MM-YYYY ,h:mm A")}</TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500"> {dayjs(player.createdAt).format("D-MM-YYYY ,h:mm A")}</TableCell>
 
                       </TableRow>
                     ))}
@@ -828,24 +832,7 @@ totalPages,
                 </Table>
               </>
             )}
-            <div className="flex justify-end items-center gap-2 p-4 border-t border-gray-200 dark:border-white/[0.05]">
 
-              {[...Array(totalPages)].map((_, index) => {
-                const pageNumber = index + 1;
-                return (
-                  <button
-                    key={pageNumber}
-                    onClick={() => setCurrentPage(pageNumber)}
-                    className={`px-3 py-1 rounded-md ${currentPage === pageNumber
-                      ? "bg-blue-500 text-white"
-                      : "text-blue-500 hover:bg-gray-200"
-                      }`}
-                  >
-                    {pageNumber}
-                  </button>
-                );
-              })}
-            </div>
           </div>
           <Dialog open={isPlayerPasswordModalOpen} onOpenChange={setPlayerPasswordModalOpen}>
             <DialogContent className="max-w-sm bg-white p-6 rounded-lg shadow-lg">

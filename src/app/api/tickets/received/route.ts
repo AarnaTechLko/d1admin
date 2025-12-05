@@ -78,7 +78,7 @@
 // }
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ticket, admin } from "@/lib/schema";
+import { ticket, admin, coaches, users } from "@/lib/schema";
 import { eq, SQL, or, ilike, and, gte } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
@@ -107,15 +107,15 @@ export async function GET(req: NextRequest) {
     if (user_id) {
       conditions.push(eq(ticket.assign_to, Number(user_id)));
     }
-     // Staff filter
-        if (staff > 0) {
-          conditions.push(eq(ticket.assign_to, staff));
-        }
+    // Staff filter
+    if (staff > 0) {
+      conditions.push(eq(ticket.assign_to, staff));
+    }
 
     if (status) {
       conditions.push(ilike(ticket.status, `%${status}%`));
     }
- 
+
     if (days > 0) {
       const today = new Date();
       today.setDate(today.getDate() - days);
@@ -137,9 +137,13 @@ export async function GET(req: NextRequest) {
         status: ticket.status,
         createdAt: ticket.createdAt,
         assign_to_username: admin.username,
+        coachImage: coaches.image,
+        userImage: users.image,
       })
       .from(ticket)
       .leftJoin(admin, eq(ticket.assign_to, admin.id))
+      .leftJoin(coaches, eq(ticket.ticket_from, coaches.id)) // 👈 Join coach image
+      .leftJoin(users, eq(ticket.ticket_from, users.id))
       .where(whereClause);
 
     // console.log("tickets_received", tickets_received);

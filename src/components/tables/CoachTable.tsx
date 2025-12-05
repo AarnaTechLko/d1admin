@@ -498,9 +498,15 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                   <TableCell className="px-4 py-3">
                     <div className="flex gap-2">
                       {coach.is_deleted === 0 ? (
-                        <button onClick={() => handleRevertCoach(coach.id)} className="text-red-600 text-sm">🛑</button>
+                        <button onClick={() => handleRevertCoach(coach.id)}
+                         className="text-red-600 text-sm"
+                          title="Revert Coach"
+                         >🛑</button>
                       ) : (
-                        <button onClick={() => handleHideCoach(coach.id)} className="text-green-600 text-sm">👻</button>
+                        <button onClick={() => handleHideCoach(coach.id)}
+                         className="text-green-600 text-sm"
+                          title="Hide Coach"
+                         >👻</button>
                       )}
                       {/* 👁️ View IP Info button */}
                       <Dialog open={ipOpen === Number(coach.id)} onOpenChange={() => setIpOpen(null)}>

@@ -535,7 +535,6 @@ function EvaluationPage() {
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Yes, hide it!',
     });
-
     if (result.isConfirmed) {
       const res = await fetch(`/api/evaluationdetails/${evaluationId}/hide-rating`, {
         method: 'PATCH',

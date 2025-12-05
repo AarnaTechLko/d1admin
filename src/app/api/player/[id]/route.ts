@@ -34,6 +34,7 @@ export async function GET(
         gpa: users.gpa,
         league: users.league,
         team: users.team,
+        number: users.number,
         country: users.country,
         grade_level: users.grade_level,
         location: users.location,

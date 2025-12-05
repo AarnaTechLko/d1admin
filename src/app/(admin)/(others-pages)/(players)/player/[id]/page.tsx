@@ -22,6 +22,7 @@ interface Player {
     first_name: string;
     email: string;
     last_name: string;
+    number: string;
     image: string | null;
     position: string;
     grade_level: string | null;
@@ -616,6 +617,9 @@ export default function PlayerDetailPage() {
                     </div>
                     <div>
                         <strong className="text-gray-700">Sport(s):</strong> {player.sportName || 'N/A'}
+                    </div>
+                    <div>
+                        <strong className="text-gray-700">Phone:</strong> {player.number || 'N/A'}
                     </div>
                     <div>
                         <strong className="text-gray-700">Height:</strong> {player.height || 'N/A'}
