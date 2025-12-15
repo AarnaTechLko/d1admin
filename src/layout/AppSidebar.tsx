@@ -118,6 +118,7 @@ const AppSidebar: React.FC = () => {
             subItems: [
               { name: "Incomplete Players", path: "/incompleteplayer", pro: false },
               { name: "Active Player", path: "/player", pro: false },
+              { name: "InActive Player", path: "/inactiveplayer", pro: false },
               { name: "Suspended Player", path: "/suspendplayer", pro: false },
               { name: "Disable Player", path: "/disableplayer", pro: false },
 

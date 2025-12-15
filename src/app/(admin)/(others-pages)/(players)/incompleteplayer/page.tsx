@@ -29,7 +29,7 @@ const CoachesPage = () => {
 
         const data = await response.json();
         console.log("coach", data)
-        setPlayers(data.players);
+        setPlayers(data.users);
         setTotalPages(data.totalPages);
         } catch (err) {
         setError((err as Error).message);

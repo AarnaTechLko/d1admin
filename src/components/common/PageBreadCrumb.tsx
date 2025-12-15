@@ -82,10 +82,11 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
       }
     };
 
+
     // ✅ Fetch Subadmin Staff List
     const fetchStaff = async () => {
       try {
-        const response = await fetch(`/api/subadmin`);
+    const response = await fetch(`/api/subadmin?limit=1000`);
         const data = await response.json();
         console.log("data6776", data);
 

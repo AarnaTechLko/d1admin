@@ -893,7 +893,7 @@ export default function PlayerDetailPage() {
                                                                 fontSize: '1.2rem',
                                                             }}
                                                         >
-                                                            ⏎
+                                                             👻
                                                         </button>
                                                     )}
                                                 </td>

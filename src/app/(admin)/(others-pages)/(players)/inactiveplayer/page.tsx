@@ -7,6 +7,7 @@ import { Player } from "@/app/types/types";
 // import Loading from "@/components/Loading";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 
+
 const PlayersPage = () => {
         useRoleGuard();
   
@@ -17,34 +18,32 @@ const PlayersPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchplayers = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(
-          `/api/suspendplayer?search=${searchQuery}&page=${currentPage}&limit=10`
-        );
+useEffect(() => {
+  const fetchPlayers = async () => {
+    setLoading(true);
+    setError(null);
 
-        if (!response.ok) throw new Error("Failed to fetch data");
+    try {
+      const response = await fetch(
+        `/api/inactiveplayer?search=${searchQuery}&page=${currentPage}&limit=10`
+      );
 
-        const data = await response.json();
-                console.log('responsedaa',data)
+      if (!response.ok) throw new Error("Failed to fetch data");
 
-        setplayers(data.player);
-        setTotalPages(data.totalPages);
-      } catch (err) {
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
-      }
-    };
+      const data = await response.json();
+      console.log("response data", data);
 
-    fetchplayers();
-  }, [searchQuery, currentPage]);
-//  if (loading) {
-//         return <Loading />;
-//     }
+      setplayers(data.player);   // ✅ FIXED
+      setTotalPages(data.totalPages);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchPlayers();
+}, [searchQuery, currentPage]);
 
   return (
     <div>
