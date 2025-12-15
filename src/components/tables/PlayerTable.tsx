@@ -400,42 +400,40 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                         key={`${player.id}-${player.is_deleted}`} // include is_deleted to force re-render
                         className={player.is_deleted === 0 ? "bg-red-100" : "bg-white"}
                       >
-                        <TableCell className=" py-4 px-1 text-start">
-                          <div className="flex items-center gap-1">
-                          
-                              <Image
-                                width={40}
-                                height={40}
-                                className="rounded-full"
-                                src={
-                                  !player.image || player.image === "null"
-                                    ? "/uploads/d1.png"
-                                    : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${player.image}`
-                                }
-                                alt={`${player.first_name} ${player.last_name}`}
-                                onError={(e) => (e.currentTarget.src = "/images/default-avatar.png")} // Fallback image
-                              />
+                        <TableCell className="py-4 px-2 text-start">
+                          <div className="flex items-center gap-3 min-w-0">
 
-                         
-                            {/* <div>
-                              <span className="block font-medium text-gray-800 dark:text-white/90">
-                                {player.first_name} {player.last_name}
-                              </span>
-                            </div> */}
-                            <div className="flex items-center">
-                              {player.diamond === 1 && (
-                                <Image
-                                  src="/uploads/diamond.jpg"
-                                  alt="Player Diamond"
-                                  width={25}
-                                  height={12}
-                                  className="inline-block"
-                                />
-                              )}
-                              <span className="font-medium text-gray-800 dark:text-white/90">
-                                {player.first_name} {player.last_name}
-                              </span>
+                            {/* Avatar */}
+                            <Image
+                              width={40}
+                              height={40}
+                              className="rounded-full flex-shrink-0"
+                              src={
+                                !player.image || player.image === "null"
+                                  ? "/uploads/d1.png"
+                                  : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${player.image}`
+                              }
+                              alt={`${player.first_name} ${player.last_name}`}
+                            />
+
+                            {/* Name + Badge */}
+                            <div className="flex flex-col min-w-0">
+                              <div className="flex items-center gap-2">
+                                {player.diamond === 1 && (
+                                  <Image
+                                    src="/uploads/diamond.jpg"
+                                    alt="Player Diamond"
+                                    width={20}
+                                    height={12}
+                                    className="flex-shrink-0"
+                                  />
+                                )}
+                                <span className="font-medium text-gray-800 dark:text-white/90 truncate">
+                                  {player.first_name} {player.last_name}
+                                </span>
+                              </div>
                             </div>
+
                           </div>
                         </TableCell>
                         <TableCell className="py-3  text-gray-700 rounded">
@@ -443,14 +441,17 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                             {player.rank || 0}
                           </span>
                         </TableCell>
-                        <TableCell className=" py-3 text-gray-500 dark:text-gray-400">{player.position}</TableCell>
+                        <TableCell className="py-3 text-gray-500 dark:text-gray-400 
+                      whitespace-normal break-words">
+                          {player.position}
+                        </TableCell>
                         <TableCell className=" py-3 text-gray-500 dark:text-gray-400">{player.league}</TableCell>
-                        <TableCell className=" py-3 text-gray-500 dark:text-gray-400">{player.grade_level}</TableCell>
+                        <TableCell className=" py-3 text-gray-500 dark:text-gray-400 whitespace-normal break-words">{player.grade_level}</TableCell>
                         <TableCell className=" py-3 text-gray-500 dark:text-gray-400">{player.age_group}</TableCell>
                         <TableCell className="py-3 text-gray-500 dark:text-gray-400">{player.gender}</TableCell>
                         <TableCell className="py-3 text-gray-500 dark:text-gray-400">{player.height}</TableCell>
                         <TableCell className=" py-3 text-gray-500 dark:text-gray-400">{player.weight}</TableCell>
-                        <TableCell className=" py-3 text-gray-500 dark:text-gray-400">
+                        <TableCell className=" py-3 text-gray-500 dark:text-gray-400 whitespace-normal break-words">
                           {[player.countryName, player.state, player.city].filter(Boolean).join(", ")}
                         </TableCell>
 

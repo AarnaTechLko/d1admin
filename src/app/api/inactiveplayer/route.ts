@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, countries } from '@/lib/schema';
-import { eq, and, not, ilike, sql, count, or, gte, desc } from 'drizzle-orm';
+import { eq, and, ilike, sql, count, or, gte, desc } from 'drizzle-orm';
 
 type TimeRange = '24h' | '1w' | '1m' | '1y';
 
@@ -40,10 +40,8 @@ export async function GET(req: NextRequest) {
     const offset = (page - 1) * limit;
 
     const conditions = [
-      eq(users.status, 'Active'),
-      eq(users.suspend, 0), // Only fetch users that are not suspended
-      not(eq(users.first_name, '')),
-      eq(users.visibility, 'on'),
+      eq(users.status, 'Inactive'),
+     
     ];
 
     if (country) conditions.push(eq(users.country, country));

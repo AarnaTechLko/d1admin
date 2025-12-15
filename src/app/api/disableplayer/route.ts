@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
     const conditions = [
       eq(users.status, 'Active'),
-      eq(users.is_deleted, 0), // Only fetch users that are not suspended
+      eq(users.is_deleted, 0),
       not(eq(users.first_name, '')),
       eq(users.visibility, 'on'),
     ];
@@ -57,15 +57,12 @@ export async function GET(req: NextRequest) {
       ? or(
           ilike(users.first_name, `%${search}%`),
           ilike(users.last_name, `%${search}%`),
-          ilike(users.last_name, `%${search}%`),          
-          ilike(users.grade_level, `%${search}%`),          
-          ilike(users.position, `%${search}%`),          
-          ilike(users.state, `%${search}%`),          
-          ilike(users.city, `%${search}%`),          
-          ilike(users.league, `%${search}%`),          
-          ilike(users.gender, `%${search}%`),          
-
-          
+          ilike(users.grade_level, `%${search}%`),
+          ilike(users.position, `%${search}%`),
+          ilike(users.state, `%${search}%`),
+          ilike(users.city, `%${search}%`),
+          ilike(users.league, `%${search}%`),
+          ilike(users.gender, `%${search}%`),
         )
       : undefined;
 
@@ -74,6 +71,8 @@ export async function GET(req: NextRequest) {
     if (searchCondition) conditions.push(searchCondition);
 
     const whereClause = and(...conditions);
+
+    console.log('WHERE CONDITIONS:', whereClause);
 
     const result = await db
       .select({
@@ -101,18 +100,15 @@ export async function GET(req: NextRequest) {
         gender: users.gender,
         createdAt: users.createdAt,
         is_deleted: users.is_deleted,
-        coachName: sql`coa."firstName"`.as("coachName"),
-        coachLastName: sql`coa."lastName"`.as("coachLastName"),
-        enterpriseName: sql`ent."organizationName"`.as("enterpriseName"),
       })
       .from(users)
-      .leftJoin(sql`enterprises AS ent`, sql`NULLIF(${users.enterprise_id}, '')::integer = ent.id`)
-      .leftJoin(sql`coaches AS coa`, sql`NULLIF(${users.coach_id}, '')::integer = coa.id`)
-      .leftJoin(countries, sql`${users.country}::int = ${countries.id}`)
+      .leftJoin(countries, eq(countries.id, sql<number>`CAST(${users.country} AS INTEGER)`))
       .where(whereClause)
       .orderBy(desc(users.createdAt))
       .limit(limit)
       .offset(offset);
+
+    console.log('FETCHED PLAYERS:', result);
 
     const totalCount = await db
       .select({ count: count() })
@@ -122,7 +118,7 @@ export async function GET(req: NextRequest) {
       .then((res) => res[0]?.count || 0);
 
     return NextResponse.json({
-      coaches: result,
+      player: result,
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),
       hasNextPage: page * limit < totalCount,
@@ -139,3 +135,4 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+

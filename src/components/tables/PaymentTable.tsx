@@ -9,6 +9,7 @@ import {
   PaginationState,
 } from "@tanstack/react-table";
 import { Payment } from "@/components/types/types";
+import { getPagination } from "@/utils/pagination";
 
 interface PaymentTableProps {
   data: Payment[];
@@ -63,7 +64,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
           <div className="flex gap-2 justify-center">
             {p.is_deleted === 0 ? (
               <button
-              type="button"
+                type="button"
                 onClick={() => onRevert(p.evaluation_id)}
                 title="Revert"
                 className="text-red-600 hover:underline"
@@ -72,12 +73,12 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
               </button>
             ) : (
               <button
-               type="button"
+                type="button"
                 onClick={() => onHide(p.evaluation_id)}
                 title="Hide"
                 className="text-green-600 hover:underline"
               >
-                👻 
+                👻
               </button>
             )}
           </div>
@@ -102,26 +103,33 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
 
   return (
     <div className="overflow-x-auto bg-white shadow-md rounded-2xl border border-gray-200">
-      
-      {totalPages > 0 && (
-        <div className="flex justify-end items-center gap-2 p-2">
-          {[...Array(totalPages)].map((_, index) => {
-            const pageNumber = index + 1;
-            return (
+
+      {totalPages > 1 && (
+        <div className="flex justify-end items-center gap-1 p-2 flex-wrap">
+          {getPagination(currentPage, totalPages).map((page, index) =>
+            page === "..." ? (
+              <span
+                key={`dots-${index}`}
+                className="px-3 py-2 text-gray-400 select-none"
+              >
+                ...
+              </span>
+            ) : (
               <button
-                key={pageNumber}
-                onClick={() => setCurrentPage?.(pageNumber)}
-                className={`px-3 py-2 rounded-md ${currentPage === pageNumber
-                  ? "bg-blue-500 text-white"
-                  : "text-blue-500 hover:bg-gray-200"
+                key={page}
+                onClick={() => setCurrentPage(page as number)}
+                className={`px-3 py-2 text-sm rounded-md transition ${currentPage === page
+                    ? "bg-blue-600 text-white"
+                    : "text-blue-600 hover:bg-gray-100"
                   }`}
               >
-                {pageNumber}
+                {page}
               </button>
-            );
-          })}
+            )
+          )}
         </div>
       )}
+
       {data.length === 0 ? (
         <p className="p-6 text-gray-600">No payments found.</p>
       ) : (
@@ -142,9 +150,8 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
               {table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
-                  className={`transition-colors duration-300 ${
-                    row.original.is_deleted === 0 ? "bg-red-100" : "bg-white"
-                  } border-b`}
+                  className={`transition-colors duration-300 ${row.original.is_deleted === 0 ? "bg-red-100" : "bg-white"
+                    } border-b`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-4 py-3">
@@ -156,7 +163,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
             </tbody>
           </table>
 
-        
+
         </>
       )}
     </div>

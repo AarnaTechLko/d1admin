@@ -368,7 +368,8 @@ const TicketsPage = () => {
   useEffect(() => {
     const fetchSubAdmins = async () => {
       try {
-        const response = await fetch(`/api/subadmin`, {
+
+        const response = await fetch(`/api/subadmin?limit=1000`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
@@ -641,9 +642,10 @@ const TicketsPage = () => {
 
                   return (
                     <TableRow key={ticket.id} className={ticket.escalate ? "bg-red-100 dark:bg-red-900/20" : ""}>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                        <div className="flex items-center gap-3">
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 min-w-0">
+                        <div className="flex items-center gap-3 min-w-0">
 
+                          {/* Avatar */}
                           <Image
                             width={40}
                             height={40}
@@ -652,19 +654,27 @@ const TicketsPage = () => {
                                 ? `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${ticket.coachImage}`
                                 : ticket.userImage
                                   ? `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${ticket.userImage}`
-                                  : "/uploads/d1.png" // default icon
+                                  : "/uploads/d1.png"
                             }
                             alt={ticket.name ?? "User"}
-                            className="rounded-full"
+                            className="rounded-full flex-shrink-0"
                           />
 
-                          <span className="font-medium text-gray-800 dark:text-white/90">
-                            {ticket.name}
-                          </span>
+                          {/* Name + Gender */}
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-medium text-gray-800 dark:text-white/90 truncate">
+                              {ticket.name}
+                            </span>
+
+                            
+                          </div>
 
                         </div>
-                      </TableCell>                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
+                      </TableCell>
+
+
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 min-w-0">{ticket.email}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 min-w-0">{ticket.subject}</TableCell>
 
                       {/* Message column with View More/Less */}
                       <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs">

@@ -70,10 +70,10 @@ export async function GET(request: NextRequest) {
         reviewComment: review.comment, 
       })
       .from(evaluationResults)
-      .innerJoin(playerEvaluation, eq(playerEvaluation.id, evaluationResults.evaluationId))
-      .innerJoin(users, eq(users.id, evaluationResults.playerId))
-      .innerJoin(coaches, eq(coaches.id, evaluationResults.coachId))
-      .innerJoin(review, eq(review.coach_id, evaluationResults.coachId))
+      .leftJoin(playerEvaluation, eq(playerEvaluation.id, evaluationResults.evaluationId))
+      .leftJoin(users, eq(users.id, evaluationResults.playerId))
+      .leftJoin(coaches, eq(coaches.id, evaluationResults.coachId))
+      .leftJoin(review, eq(review.coach_id, evaluationResults.coachId)) // ✅ FIX
       .where(eq(evaluationResults.evaluationId, evaluationId))
       .limit(1)
       .execute();

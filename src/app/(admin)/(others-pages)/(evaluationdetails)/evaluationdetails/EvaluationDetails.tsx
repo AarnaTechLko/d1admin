@@ -260,143 +260,72 @@ function EvaluationPage() {
   //   }
   // };
 
-  const fetchEvaluationData = async () => {
-    // const session = await getSession();
+const fetchEvaluationData = async () => {
+  if (!evaluationId) {
+    console.warn("evaluationId not available yet");
+    return;
+  }
 
+  try {
+    setLoading(true);
 
+    const response = await fetch(
+      `/api/evaluationdetails?evaluationId=${evaluationId}`
+    );
 
-    try {
-      const response = await fetch(
-        `/api/evaluationdetails?evaluationId=${evaluationId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-      if (!response.ok) {
-        setLoading(false);
-        throw new Error('Failed to fetch evaluation data');
-      }
-
-      const data = await response.json();
-      console.log("data", data);
-      const evalTemplateResponse = await fetch(
-        `/api/evaluationDetailsTemplate?position=${data.result.position}&sport_id=${data.result.sport}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-      const evalTemplate = await evalTemplateResponse.json();
-      console.log("evaluation", evalTemplate);
-
-      setEvaluationTemplateData(evalTemplate[0]);
-      setEvaluationData(data.result as Evaluation); // Type assertion here
-      // setRating(data.result.rating);
-      // setPosition(data.position);
-      // setPhysicalScores(JSON.parse(data.result.physicalScores));
-      // setTacticalScores(JSON.parse(data.result.tacticalScores));
-      // setTechnicalScores(JSON.parse(data.result.technicalScores));
-      // setOrganizationScores(JSON.parse(data.result.organizationScores));
-      // setDistributionScores(JSON.parse(data.result.distributionScores));
-      // setDistributionScores(JSON.parse(data.result.distributionScores));
-
-      setEvaluationAverage(data.result.eval_average);
-      // setTechnicalAverage(data.result.techAverage);
-      // setTacticalAverage(data.result.tactAverage);
-      // setDistributionAverage(data.result.distAverage);
-      // setPhysicalAverage(data.physAverage);
-      // setOrganizationAverage(data.result.orgAverage);
-
-      // setData()
-      // setFormData({
-      //     speed: data.result.speed || '',
-      //     comm_persistence: data.result.comm_persistence || '',
-      //     comm_aggression: data.result.comm_aggression || '',
-      //     comm_alertness: data.result.comm_alertness || '',
-      //     exe_scoring: data.result.exe_scoring || '',
-      //     exe_receiving: data.result.exe_receiving || '',
-      //     exe_passing: data.result.exe_passing || '',
-      //     dec_mobility: data.result.dec_mobility || '',
-      //     dec_anticipation: data.result.dec_anticipation || '',
-      //     dec_pressure: data.result.dec_pressure || '',
-      //     soc_speedEndurance: data.result.soc_speedEndurance || '',
-      //     soc_strength: data.result.soc_strength || '',
-      //     soc_explosiveMovements: data.result.soc_explosiveMovements || '',
-      //     // ratings: data.ratings || "",
-      //     superStrengths: data.result.superStrengths || '',
-      //     developmentAreas: data.result.developmentAreas || '',
-      //     idpGoals: data.result.idpGoals || '',
-      //     keySkills: data.result.keySkills || '',
-      //     attacking: data.result.attacking || '',
-      //     defending: data.result.defending || '',
-      //     transitionDefending: data.result.transitionDefending || '',
-      //     transitionAttacking: data.result.transitionAttacking || '',
-      // });
-      // setHeaderMetrics(
-      //   position === 'Goalkeeper'
-      //     ? [
-      //       'Technical Average',
-      //       'Tactical Average',
-      //       'Distribution Average',
-      //       'Physical Average',
-      //       'Organization Average',
-      //     ]
-      //     : ['Technical Average', 'Tactical Average', 'Physical Average'],
-      // );
-
-      // setRadarSkills(
-      //   position === 'Goalkeeper'
-      //     ? [
-      //         { label: 'Technical Average', key: 'technicalAverage' },
-      //         { label: 'Tactical Average', key: 'tacticalAverage' },
-      //         { label: 'Distribution Average', key: 'distributionAverage' },
-      //         { label: 'Physical Average', key: 'physicalAverage' },
-      //         { label: 'Organization Average', key: 'organizationAverage' },
-      //       ]
-      //     : [
-      //         { label: 'Technical Average', key: 'technicalAverage' },
-      //         { label: 'Tactical Average', key: 'tacticalAverage' },
-      //         { label: 'Physical Average', key: 'physicalAverage' },
-      //       ],
-      // );
-
-      // console.log("Position baby: ", data.result.position);
-
-      // setRadarSkills(
-      //     data.result.position === 'Goalkeeper'
-      //         ? goalkeeperRadarSkills
-      //         : outfieldRadarSkills,
-      // );
-
-      // setHeaderRatings([
-      //     data.result.technicalAverage,
-      //     data.result.tacticalAverage,
-      //     data.result.distributionAverage,
-      //     data.result.physicalAverage,
-      //     data.result.organizationAverage,
-      // ]);
-
-      // setSkillRatings(radarSkills.map(skill => data.result[skill.key] || 0));
-
-      setLoading(false);
-      if (data?.result.videoOneTiming) {
-        const parsed = JSON.parse(data.result.videoOneTiming);
-        setVideoOneTimeStamps(parsed);
-      }
-      if (data?.result.videoTwoTiming) {
-        const parsed = JSON.parse(data.result.videoTwoTiming);
-        setVideoTwoTimeStamps(parsed);
-      }
-      // Set the fetched evaluation data
-    } catch (error) {
-      console.error('Error fetching evaluation data:', error);
+    if (!response.ok) {
+      throw new Error("Failed to fetch evaluation data");
     }
-  };
+
+    const data = await response.json();
+    console.log("Evaluation details response:", data);
+
+    // ✅ HARD GUARD (MOST IMPORTANT)
+    if (!data?.result) {
+      throw new Error("Evaluation result not found");
+    }
+
+    const evaluation = data.result;
+
+    // ✅ SAFE CHECK before using position & sport
+    if (!evaluation.position || !evaluation.sport) {
+      throw new Error("Position or sport missing in evaluation data");
+    }
+
+    // ================= TEMPLATE FETCH =================
+    const evalTemplateResponse = await fetch(
+      `/api/evaluationDetailsTemplate?position=${evaluation.position}&sport_id=${evaluation.sport}`
+    );
+
+    if (!evalTemplateResponse.ok) {
+      throw new Error("Failed to fetch evaluation template");
+    }
+
+    const evalTemplate = await evalTemplateResponse.json();
+    console.log("Evaluation template:", evalTemplate);
+
+    setEvaluationTemplateData(evalTemplate?.[0] ?? null);
+
+    // ================= STATE SETTERS =================
+    setEvaluationData(evaluation);
+    setEvaluationAverage(evaluation.eval_average ?? 0);
+
+    // ================= VIDEO TIMINGS =================
+    if (evaluation.videoOneTiming) {
+      setVideoOneTimeStamps(JSON.parse(evaluation.videoOneTiming));
+    }
+
+    if (evaluation.videoTwoTiming) {
+      setVideoTwoTimeStamps(JSON.parse(evaluation.videoTwoTiming));
+    }
+
+  } catch (error) {
+    console.error("Error fetching evaluation data:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
   // const calculateAverage = (scores: Record<string, string | number>): sectionScoreResults => {
   //   const values = Object.values(scores)
   //     .map(Number)

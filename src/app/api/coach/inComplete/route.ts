@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    console.log("DATA: ", coachesData);
+    // console.log("DATA: ", coachesData);
 
     const totalCountResult = await db
       .select({ count: count() })

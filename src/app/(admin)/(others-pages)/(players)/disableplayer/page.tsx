@@ -6,11 +6,8 @@ import PlayerTable from "@/components/tables/PlayerTable";
 import { Player } from "@/app/types/types";
 // import Loading from "@/components/Loading";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
-
-
 const PlayersPage = () => {
         useRoleGuard();
-  
   const [searchQuery, setSearchQuery] = useState("");
   const [players, setplayers] = useState<Player[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,7 +29,7 @@ const PlayersPage = () => {
         const data = await response.json();
                 console.log('responsedaa',data)
 
-        setplayers(data.coaches);
+        setplayers(data.player);
         setTotalPages(data.totalPages);
       } catch (err) {
         setError((err as Error).message);
@@ -56,7 +53,8 @@ const PlayersPage = () => {
     <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
     Loading...
   </div>
-)}      {error && <p className="text-center py-5 text-red-500">{error}</p>}
+)}     
+ {error && <p className="text-center py-5 text-red-500">{error}</p>}
       
       {!loading && !error && (
         <PlayerTable
