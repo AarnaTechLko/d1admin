@@ -91,6 +91,7 @@ export interface EvaluationData {
 export interface Player {
   id: string;
   createdAt: number;
+  updated_at: number;
   first_name: string;
   last_name: string;
   image: string;
@@ -124,6 +125,7 @@ export interface inCompletePlayer {
   email: string;
 }
 export interface Coach {
+  updated_at:number;
   createdAt: number;
   percentage: number;
   id: string;

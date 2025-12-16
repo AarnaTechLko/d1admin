@@ -13,6 +13,8 @@ import withReactContent from 'sweetalert2-react-content';
 import Loading from "@/components/Loading";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import { FaSpinner } from "react-icons/fa"; // optional: react-icons
+import axios from "axios";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Evaluation {
   id: string;
@@ -118,18 +120,31 @@ interface Coach {
   countrycode: string;
   reviews: Review[];
 }
-
+type RecentMessage = {
+  sender_id: string;
+  from: string;
+  methods: string[];
+  id: number;
+  message: string;
+  created_at: string;
+  position: "left" | "right"; // for UI positioning
+  bgColor: "green" | "blue";  // for background color
+};
 export default function CoachDetailsPage() {
   useRoleGuard();
 
   const [loadingDeclineId, setLoadingDeclineId] = useState<number | null>(null);
 
   const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [selectedCoachid, setSelectedCoachid] = useState<number | null>(null);
 
   const { id } = useParams();
   const [coach, setCoach] = useState<Coach | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
-
+ const [messageText, setMessageText] = useState("");
+  const [sendEmail, setSendEmail] = useState(false);
+  const [sendSMS, setSendSMS] = useState(false);
+  const [sendInternal, setSendInternal] = useState(false);
   const [loading, setLoading] = useState(true);
   // const ITEMSPERPAGE = 10;
   const [evaluationPage, setEvaluationPage] = useState(1);
@@ -180,13 +195,25 @@ export default function CoachDetailsPage() {
   const totalEvaluationPages = Math.ceil(filteredEvaluations.length / evaluationsPerPage);
 
   const totalReviewPages = Math.ceil(filteredReviews.length / reviewsPerPage)
+  const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
 
 
   const MySwal = withReactContent(Swal);
   const isVerified = coach?.verified === 1;
 
   // Handle verify button click
-
+  useEffect(() => {
+    if (selectedCoachid) {
+      (async () => {
+        try {
+          const res = await axios.get(`/api/messages?type=coach&id=${selectedCoachid}`);
+          setRecentMessages(res.data.messages || []);
+        } catch (err) {
+          console.error("Error fetching messages:", err);
+        }
+      })();
+    }
+  }, [selectedCoachid]);
   const handleVerify = async () => {
     if (!coach?.id) return;
 
@@ -878,8 +905,14 @@ export default function CoachDetailsPage() {
                 </a>
               )}
             </div>
+            <button
+              onClick={() => setSelectedCoachid(Number(coach.id))}
+              title="Send Message"
+              className="bg-blue-500 rounded p-2 m-2 text-white text-sm hover:underline"
+            >
+            Send Message
+            </button>
           </div>
-
           {/* Download Buttons */}
           <div className="flex flex-col items-center sm:items-end lg:items-end space-y-2">
 
@@ -1491,6 +1524,180 @@ export default function CoachDetailsPage() {
         </section >
       )}
 
+                      <Dialog
+                        open={selectedCoachid === Number(coach.id)}
+                        onOpenChange={(isOpen) => {
+                          if (!isOpen) {
+                            setSelectedCoachid(null);
+                            setRecentMessages([]);
+                          }
+                        }}
+                      >
+                        <DialogContent className="max-w-md w-full bg-white rounded-2xl shadow-xl p-6 space-y-4">
+                          <DialogHeader className="border-b pb-2">
+                            <DialogTitle className="text-lg font-semibold text-gray-800">
+                              Send Message
+                            </DialogTitle>
+                            <p className="text-sm text-gray-500">
+                              Send a message to{" "}
+                              <span className="font-medium text-black">
+                                {coach.firstName} {coach.lastName}
+                              </span>
+                            </p>
+                          </DialogHeader>
+
+                          {/* Message Type Checkboxes */}
+                          <div className="flex gap-4 text-sm">
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={sendEmail}
+                                onChange={() => setSendEmail(!sendEmail)}
+                              />
+                              Email
+                            </label>
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={sendSMS}
+                                onChange={() => setSendSMS(!sendSMS)}
+                              />
+                              SMS
+                            </label>
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={sendInternal}
+                                onChange={() => setSendInternal(!sendInternal)}
+                              />
+                              Internal Message
+                            </label>
+                          </div>
+
+                          {/* Message Textarea */}
+                          <textarea
+                            rows={5}
+                            value={messageText}
+                            onChange={(e) => setMessageText(e.target.value)}
+                            className="w-full border rounded-lg p-2 text-sm text-gray-800"
+                            placeholder="Enter your message..."
+                          />
+
+                          {/* Recent Messages */}
+                          <div className="border-t pt-3">
+                            <h3 className="text-sm font-medium text-gray-700 mb-2">Recent Messages</h3>
+                            <div className="max-h-40 overflow-y-auto space-y-3">
+                              {recentMessages.length === 0 ? (
+                                <p className="text-xs text-gray-500">No previous messages</p>
+                              ) : (
+                                recentMessages.map((msg, idx) => {
+                                  // Format methods nicely (if you want uppercase labels)
+                                  const methodLabels = msg.methods.length
+                                    ? msg.methods.map((m) => m.toUpperCase()).join(", ")
+                                    : "N/A";
+
+                                  // Set alignment and bg color
+                                  const alignment =
+                                    msg.position === "left" ? "justify-start" : "justify-end";
+                                  const bgColor =
+                                    msg.bgColor === "green" ? "bg-green-100" : "bg-blue-100";
+
+                                  return (
+                                    <div
+                                      key={msg.id ?? idx}
+                                      className={`flex ${alignment}`}
+                                    >
+                                      <div className={`p-3 rounded-xl shadow-sm ${bgColor} w-full`}>
+                                        <div className="flex justify-between items-center mb-1">
+                                          <span className="text-xs font-semibold">
+                                            From: {`${coach.firstName} ${coach.lastName}`}
+                                          </span>
+                                          <span className="text-[10px] text-gray-500">
+                                            {new Date(msg.created_at).toLocaleString()}
+                                          </span>
+                                        </div>
+                                        <div className="text-xs text-gray-700">
+                                          <p>{msg.message}</p>
+                                          <p className="text-gray-500">Methods: {methodLabels}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex justify-end gap-3 pt-2">
+                            <button
+                              onClick={() => setSelectedCoachid(null)}
+                              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!messageText.trim()) {
+                                  Swal.fire("Warning", "Please enter a message before sending.", "warning");
+                                  return;
+                                }
+
+                                if (!sendEmail && !sendSMS && !sendInternal) {
+                                  Swal.fire(
+                                    "Warning",
+                                    "Please select at least one method (Email, SMS, Internal).",
+                                    "warning"
+                                  );
+                                  return;
+                                }
+
+                                try {
+                                  // send message via POST API
+                                  await axios.post(`/api/geolocation/coach`, {
+                                    type: "coach",
+                                    targetIds: [coach.id],
+                                    message: messageText,
+                                    methods: {
+                                      email: sendEmail,
+                                      sms: sendSMS,
+                                      internal: sendInternal,
+                                    },
+                                  });
+
+                                  // ✅ Save methods to sessionStorage (per message id)
+                                  const methodObj = {
+                                    email: sendEmail,
+                                    sms: sendSMS,
+                                    internal: sendInternal,
+                                  };
+                                  sessionStorage.setItem(
+                                    `message-methods-${coach.id}`,
+                                    JSON.stringify(methodObj)
+                                  );
+
+                                  Swal.fire("Success", "Message sent successfully!", "success");
+                                  setSelectedCoachid(null);
+                                  setMessageText("");
+
+
+
+
+                                } catch (err) {
+                                  console.error(err);
+                                  setSelectedCoachid(null);
+                                  Swal.fire("Error", "Failed to send message.", "error");
+
+                                }
+                              }}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                              Send
+                            </button>
+                          </div>
+                        </DialogContent>
+
+                      </Dialog>
 
       {/* Edit Modal */}
       {isDeclineModalOpen && (

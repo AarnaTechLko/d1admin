@@ -324,7 +324,6 @@ const TicketsPage = () => {
     }
   };
 
-
   useEffect(() => {
     const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
     if (!storedUserId) {
@@ -364,11 +363,9 @@ const TicketsPage = () => {
     fetchTickets();
   }, [userId, searchQuery, currentPage, statusQuery, daysQuery, staffQuery]);
 
-
   useEffect(() => {
     const fetchSubAdmins = async () => {
       try {
-
         const response = await fetch(`/api/subadmin?limit=1000`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },

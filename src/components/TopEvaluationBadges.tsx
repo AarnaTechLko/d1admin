@@ -128,12 +128,11 @@ export default function PlayerEvaluationBadges({ playerId }: Props) {
 
   useEffect(() => {
     if (!playerId) return;
-
     const fetchPlayerEvaluations = async () => {
       setLoading(true);
       try {
         const res = await fetch(`/api/evaluations/top-averages/${playerId}`);
-        if (!res.ok) throw new Error("Failed to fetch player evaluations");
+        // if (!res.ok) throw new Error("No evaluations found");
         const data: BadgeData = await res.json();
         setBadge(data);
       } catch (err) {

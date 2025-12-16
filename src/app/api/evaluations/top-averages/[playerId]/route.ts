@@ -77,7 +77,6 @@ export async function GET(
     if (isNaN(playerId)) {
       return NextResponse.json({ error: "Invalid playerId" }, { status: 400 });
     }
-
     // Fetch top 10 evaluations for this player, including coach info
     const topEvals = await db
       .select({

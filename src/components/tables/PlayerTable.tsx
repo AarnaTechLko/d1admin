@@ -25,6 +25,7 @@ type RecentMessage = {
 interface Player {
   id: string;
   createdAt: number;
+  updated_at: number;
   first_name: string;
   rank?: number | null;
   last_name: string;
@@ -825,7 +826,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
                           </div>
                         </TableCell>
-                        <TableCell className="px-4 py-3 text-gray-500"> {dayjs(player.createdAt).format("D-MM-YYYY ,h:mm A")}</TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500"> {dayjs(player.updated_at).format("D-MM-YYYY ,h:mm A")}</TableCell>
 
                       </TableRow>
                     ))}
