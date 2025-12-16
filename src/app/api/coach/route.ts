@@ -172,7 +172,7 @@ export async function GET(req: NextRequest) {
       .orderBy(desc(coaches.createdAt))
       .limit(limit)
       .offset(offset);
-    console.log("coaches",coachesData);
+    // console.log("coaches",coachesData);
 
     // 🔢 total count (for pagination)
     const totalCountResult = await db

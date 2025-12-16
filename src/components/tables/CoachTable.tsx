@@ -14,7 +14,7 @@ import { Coach } from "@/app/types/types";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { FaSpinner } from "react-icons/fa";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, RefreshCcw } from "lucide-react";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
 type RecentMessage = {
@@ -35,7 +35,7 @@ interface CoachTableProps {
 }
 
 const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
-   totalPages, setCurrentPage }) => {
+  totalPages, setCurrentPage }) => {
   const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -251,7 +251,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
 
   return (
     <div>
-   {totalPages > 0 && (
+      {totalPages > 0 && (
         <div className="flex justify-end items-center gap-2 p-2">
           {[...Array(totalPages)].map((_, index) => {
             const pageNumber = index + 1;
@@ -305,7 +305,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                 </TableCell>
                 <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
                   Actions
-                </TableCell>   
+                </TableCell>
                 <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
                   Timestamp
                 </TableCell>
@@ -409,7 +409,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                         setSuspendCoach(coach);
                         setSuspendOpen(true);
                       }}
-                    >
+                    > 
                       <Badge
                         color={
                           (coach.suspend === 1 || coach.suspend_days === null)
@@ -464,7 +464,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                             <Button
                               onClick={() => {
                                 // if (tempPercentage < 0 || tempPercentage > 20) {
-                                      if (tempPercentage < 0 || tempPercentage > 20 || isNaN(tempPercentage)) {
+                                if (tempPercentage < 0 || tempPercentage > 20 || isNaN(tempPercentage)) {
 
                                   toast.error("Please enter a value between 0 and 20", {
                                     duration: 2000,
@@ -499,14 +499,15 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                     <div className="flex gap-2">
                       {coach.is_deleted === 0 ? (
                         <button onClick={() => handleRevertCoach(coach.id)}
-                         className="text-red-600 text-sm"
+                          className="text-red-600 text-sm"
                           title="Revert Coach"
-                         >🛑</button>
+                        ><RefreshCcw className="w-4 h-4 cursor-pointer" />
+                        </button>
                       ) : (
                         <button onClick={() => handleHideCoach(coach.id)}
-                         className="text-green-600 text-sm"
+                          className="text-green-600 text-sm"
                           title="Hide Coach"
-                         >👻</button>
+                        >👻</button>
                       )}
                       {/* 👁️ View IP Info button */}
                       <Dialog open={ipOpen === Number(coach.id)} onOpenChange={() => setIpOpen(null)}>
@@ -778,8 +779,8 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                     </div>
 
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500">  {dayjs(coach.createdAt).format("D-MM-YYYY, h:mm A")}
-</TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500">  {dayjs(coach.updated_at).format("D-MM-YYYY, h:mm A")}
+                  </TableCell>
 
 
                 </TableRow>

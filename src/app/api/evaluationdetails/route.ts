@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid evaluationId' }, { status: 400 });
     }
 
-    const result = await db
+    const result = await db   
       .select({
         finalRemarks: evaluationResults.finalRemarks,
         sport: evaluationResults.sport,

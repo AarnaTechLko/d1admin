@@ -65,6 +65,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
       try {
         const response = await fetch(`/api/sports`);
         const data = await response.json();
+        console.log("data",data);
         setFilteredSports(Array.isArray(data?.sport) ? data.sport : []);
       } catch (err) {
         console.error("Sports error:", err);

@@ -83,6 +83,7 @@ export const users = pgTable(
     suspend_start_date: date("suspend_start_date"),
     suspend_end_date: date("suspend_end_date"),
     diamond: integer("diamond").default(0),
+    updated_at: timestamp("updated_at").defaultNow().notNull(),
 
   },
   (users) => {
@@ -156,6 +157,7 @@ export const coaches = pgTable(
     suspend_end_date: date("suspend_end_date"),
     verified: integer("verified").default(0),
     percentage: numeric("percentage"),
+    updated_at: timestamp("updated_at").defaultNow().notNull(),
 
   },
   (coaches) => {

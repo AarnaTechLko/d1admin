@@ -4,13 +4,31 @@ import { ticket, ticket_messages } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
+/**
+ * ✅ S3 Client
+ * Works with env credentials OR IAM role
+ */
 const s3 = new S3Client({
   region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
+  credentials:
+    process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+      ? {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        }
+      : undefined,
 });
+
+/**
+ * ✅ File validation rules
+ */
+const ALLOWED_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "application/pdf",
+];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export async function POST(req: Request) {
   try {
@@ -20,9 +38,9 @@ export async function POST(req: Request) {
     const repliedBy = formData.get("repliedBy")?.toString();
     const message = formData.get("message")?.toString();
     const status = formData.get("status")?.toString();
-    const priority = formData.get("priority")?.toString(); // ✅ New
+    const priority = formData.get("priority")?.toString() || "medium";
+    const escalate = formData.get("escalate") === "true";
     const file = formData.get("attachment") as File | null;
-    const escalate = formData.get("escalate") === "true"; // ✅ define escalate
 
     if (!ticketId || !repliedBy || !message || !status) {
       return NextResponse.json(
@@ -33,12 +51,28 @@ export async function POST(req: Request) {
 
     let filename = "";
 
-    // ✅ Upload to S3
+    /**
+     * ✅ Upload attachment to S3 (if exists)
+     */
     if (file && file.size > 0) {
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        return NextResponse.json(
+          { error: "Invalid file type" },
+          { status: 400 }
+        );
+      }
 
-      const key = `tickets/${Date.now()}-${file.name}`;
+      if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: "File size must be less than 5MB" },
+          { status: 400 }
+        );
+      }
+
+      const buffer = Buffer.from(await file.arrayBuffer());
+
+      const safeName = file.name.replace(/\s+/g, "_");
+      const key = `tickets/${Date.now()}-${safeName}`;
 
       await s3.send(
         new PutObjectCommand({
@@ -49,13 +83,14 @@ export async function POST(req: Request) {
         })
       );
 
-      // Use CloudFront URL if available, otherwise fallback to S3 URL
       filename = process.env.NEXT_PUBLIC_AWS_S3_BUCKET_LINK
         ? `${process.env.NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${key}`
         : `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
     }
-
-    // ✅ Insert reply with priority
+// console.log('upload  s3 buckte files:',filename);
+    /**
+     * ✅ Insert reply
+     */
     const [insertedReply] = await db
       .insert(ticket_messages)
       .values({
@@ -63,31 +98,40 @@ export async function POST(req: Request) {
         replied_by: repliedBy,
         message,
         status,
-        priority: priority || "medium", // default if not provided
-        createdAt: new Date(),
+        priority,
         filename,
+        createdAt: new Date(),
       })
       .returning();
 
-    // ✅ Update ticket status + last message
+    /**
+     * ✅ Update ticket
+     */
     await db
       .update(ticket)
       .set({
         status,
         message,
-         escalate,
-        priority: priority || "medium", // update ticket priority as well
+        priority,
+        escalate,
       })
       .where(eq(ticket.id, Number(ticketId)));
 
     return NextResponse.json(
-      { success: true, reply: insertedReply },
+      {
+        success: true,
+        reply: insertedReply,
+      },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error uploading file or saving ticket reply:", error);
+    console.error("Ticket reply upload error:", error);
+
     return NextResponse.json(
-      { error: "Internal server error", details: (error as Error).message },
+      {
+        error: "Internal server error",
+        details: (error as Error).message,
+      },
       { status: 500 }
     );
   }

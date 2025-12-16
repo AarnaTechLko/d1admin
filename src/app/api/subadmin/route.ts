@@ -6,6 +6,7 @@ import { SQL, gte } from "drizzle-orm";
 
 import { eq, or, desc, count, ilike, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { generateRandomPassword, sendEmail } from "@/lib/helpers";
 type AdminFromDB = {
   id: number;
   username: string;
@@ -48,16 +49,72 @@ const allPermissions = [
 ];
 
 // --------------------- POST: Add Admin ---------------------
+// export async function POST(req: Request) {
+//   try {
+//     const { username, email, password, role: roleName, country_code, phone_number, birthday } = await req.json();
+
+//     console.log("Fields: ", username, " ", email, " ", country_code, " ", phone_number, " ", birthday)
+
+//     // ✅ Required field validation
+//     if (!username || !email || !password || !roleName || !country_code || !phone_number || !birthday) {
+//       return NextResponse.json(
+//         { error: "All fields (username, email, password, role, country code, phone number, and birthday) are required" },
+//         { status: 400 }
+//       );
+//     }
+
+//     if (!allowedRoles.includes(roleName)) {
+//       return NextResponse.json({ error: "Invalid role selected" }, { status: 400 });
+//     }
+
+//     const existingAdmin = await db
+//       .select()
+//       .from(admin)
+//       .where(and(eq(admin.email, email), eq(admin.is_deleted, 1)));
+
+//     if (existingAdmin.length > 0) {
+//       return NextResponse.json({ error: "Email already in use" }, { status: 400 });
+//     }
+
+//     const hashedPassword = await bcrypt.hash(password, 10);
+
+
+//     const insertedAdmin = await db.insert(admin).values({
+//       username,
+//       email,
+//       password_hash: hashedPassword,
+//       role: roleName,
+//       country_code,
+//       phone_number,
+//       birthdate: birthday,
+//       is_deleted: 1,
+//     }).returning();
+
+//     return NextResponse.json(
+//       { success: "Admin added successfully", user_id: insertedAdmin[0].id },
+//       { status: 201 }
+//     );
+//   } catch (error) {
+//     console.error("POST /api/admin error:", error);
+//     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+//   }
+// }
+
 export async function POST(req: Request) {
   try {
-    const { username, email, password, role: roleName, country_code, phone_number, birthday } = await req.json();
+    const {
+      username,
+      email,
+      role: roleName,
+      country_code,
+      phone_number,
+      birthday,
+    } = await req.json();
 
-    console.log("Fields: ", username, " ", email, " ", country_code, " ", phone_number, " ", birthday)
-
-    // ✅ Required field validation
-    if (!username || !email || !password || !roleName || !country_code || !phone_number || !birthday) {
+    // ✅ Validation
+    if (!username || !email || !roleName || !country_code || !phone_number || !birthday) {
       return NextResponse.json(
-        { error: "All fields (username, email, password, role, country code, phone number, and birthday) are required" },
+        { error: "All fields are required" },
         { status: 400 }
       );
     }
@@ -66,130 +123,76 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid role selected" }, { status: 400 });
     }
 
+    // ✅ Check existing admin
     const existingAdmin = await db
       .select()
       .from(admin)
       .where(and(eq(admin.email, email), eq(admin.is_deleted, 1)));
 
     if (existingAdmin.length > 0) {
-      return NextResponse.json({ error: "Email already in use" }, { status: 400 });
+      return NextResponse.json({ error: "Email already exists" }, { status: 400 });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // ✅ Auto-generate password
+    const plainPassword = generateRandomPassword();
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
+    // ✅ Insert admin
+    const insertedAdmin = await db
+      .insert(admin)
+      .values({
+        username,
+        email,
+        password_hash: hashedPassword,
+        role: roleName,
+        country_code,
+        phone_number,
+        birthdate: birthday,
+        is_deleted: 1,
+      })
+      .returning();
 
-    const insertedAdmin = await db.insert(admin).values({
-      username,
-      email,
-      password_hash: hashedPassword,
-      role: roleName,
-      country_code,
-      phone_number,
-      birthdate: birthday,
-      is_deleted: 1,
-    }).returning();
+    // ✅ Send Email (same format as notification system)
+    await sendEmail({
+      to: email,
+      subject: "Your Admin Account Credentials",
+      html: `
+        <p>Hello <b>${username}</b>,</p>
+
+        <p>Your admin account has been created successfully.</p>
+
+        <p><b>Login Details:</b></p>
+        <ul>
+          <li><b>Email:</b> ${email}</li>
+          <li><b>Password:</b> ${plainPassword}</li>
+        </ul>
+
+        <p>Please login and change your password immediately.</p>
+
+        <br/>
+        <p>Regards,<br/>Admin Team</p>
+      `,
+      text: `Email: ${email}, Password: ${plainPassword}`,
+    });
 
     return NextResponse.json(
-      { success: "Admin added successfully", user_id: insertedAdmin[0].id },
+      {
+        success: "Admin created and credentials emailed successfully",
+        user_id: insertedAdmin[0].id,
+      },
       { status: 201 }
     );
   } catch (error) {
     console.error("POST /api/admin error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
 // --------------------- GET: List Admins ---------------------
-// export async function GET(req: Request) {
-//   try {
-//     const url = new URL(req.url);
-//     const search = url.searchParams.get("search")?.trim() || "";
-//     const page = parseInt(url.searchParams.get("page") || "1", 10);
-//     const limit = parseInt(url.searchParams.get("limit") || "10", 10);
-//     const offset = (page - 1) * limit;
 
-//     const baseCondition = eq(admin.is_deleted, 1);
-
-//     const searchCondition = search
-//       ? or(
-//           ilike(admin.username, `%${search}%`),
-//           ilike(admin.email, `%${search}%`)
-//         )
-//       : undefined;
-
-//     const whereClause = searchCondition
-//       ? and(baseCondition, searchCondition)
-//       : baseCondition;
-
-//     // FIX: Extract both adminData and totalResult
-//     const [adminData, totalResult] = await Promise.all([
-//       db
-//         .select({
-//           id: admin.id,
-//           username: admin.username,
-//           email: admin.email,
-//           role: admin.role,
-//           country_code: admin.country_code,
-//           phone_number: admin.phone_number,
-//           birthdate: admin.birthdate,
-//           image: admin.image,
-//           created_at: admin.created_at,
-//           is_deleted: admin.is_deleted,
-//           change_password: role.change_password,
-//           refund: role.refund,
-//           monitor_activity: role.monitor_activity,
-//           view_finance: role.view_finance,
-//           access_ticket: role.access_ticket,
-//         })
-//         .from(admin)
-//         .leftJoin(role, eq(admin.id, role.user_id))
-//         .where(whereClause)
-//         .orderBy(desc(admin.created_at))
-//         .offset(offset)
-//         .limit(limit),
-
-//       // Count Query
-//       db
-//         .select({ count: count() })
-//         .from(admin)
-//         .where(whereClause)
-//         .then((res) => Number(res[0]?.count || 0)),
-//     ]);
-
-//     // Fix permissions mapping
-//     const adminWithPermissions = (adminData as AdminFromDB[]).map((a) => {
-//       const permissions: Partial<Record<PermissionKey, number>> = {};
-//       allPermissions.forEach((perm) => {
-//         if (a[perm as keyof AdminFromDB] === 1) {
-//           permissions[perm as PermissionKey] = 1;
-//         }
-//       });
-
-//       return {
-//         ...a,
-//         permission: permissions,
-//       };
-//     });
-
-//     return NextResponse.json({
-//       admin: adminWithPermissions,
-//       currentPage: page,
-//       totalPages: Math.ceil(totalResult / limit),
-//       hasNextPage: page * limit < totalResult,
-//       hasPrevPage: page > 1,
-//       totalRecords: totalResult,
-//     });
-//   } catch (error) {
-//     console.error("GET /api/admin error:", error);
-//     return NextResponse.json(
-//       {
-//         message: "Failed to fetch admin",
-//         error: error instanceof Error ? error.message : String(error),
-//       },
-//       { status: 500 }
-//     );
-//   }
-// }
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
