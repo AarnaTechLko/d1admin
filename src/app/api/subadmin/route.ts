@@ -6,7 +6,7 @@ import { SQL, gte } from "drizzle-orm";
 
 import { eq, or, desc, count, ilike, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { generateRandomPassword, sendEmail } from "@/lib/helpers";
+import {  sendEmail } from "@/lib/helpers";
 type AdminFromDB = {
   id: number;
   username: string;
@@ -109,6 +109,7 @@ export async function POST(req: Request) {
       country_code,
       phone_number,
       birthday,
+      password,
     } = await req.json();
 
     // ✅ Validation
@@ -118,6 +119,8 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    console.log('generated password:',password);
 
     if (!allowedRoles.includes(roleName)) {
       return NextResponse.json({ error: "Invalid role selected" }, { status: 400 });
@@ -133,9 +136,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email already exists" }, { status: 400 });
     }
 
-    // ✅ Auto-generate password
-    const plainPassword = generateRandomPassword();
-    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // ✅ Insert admin
     const insertedAdmin = await db
@@ -164,7 +165,7 @@ export async function POST(req: Request) {
         <p><b>Login Details:</b></p>
         <ul>
           <li><b>Email:</b> ${email}</li>
-          <li><b>Password:</b> ${plainPassword}</li>
+          <li><b>Password:</b> ${password}</li>
         </ul>
 
         <p>Please login and change your password immediately.</p>
@@ -172,7 +173,7 @@ export async function POST(req: Request) {
         <br/>
         <p>Regards,<br/>Admin Team</p>
       `,
-      text: `Email: ${email}, Password: ${plainPassword}`,
+      text: `Email: ${email}, Password: ${password}`,
     });
 
     return NextResponse.json(

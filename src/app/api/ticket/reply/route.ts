@@ -100,6 +100,7 @@ export async function POST(req: Request) {
         status,
         priority,
         filename,
+        read: 1,
         createdAt: new Date(),
       })
       .returning();

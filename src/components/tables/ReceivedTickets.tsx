@@ -41,6 +41,7 @@ interface Ticket {
   assign_to: number;
   assign_to_username: string;
   createdAt: string;
+  updated_at: string;
   status: string;
   assignee_name: string;
   priority: string;
@@ -700,10 +701,12 @@ const TicketsPage = () => {
                         </TableCell>
 
                         <TableCell className="py-3 text-gray-500 dark:text-gray-400">
-                          {dayjs(ticket.createdAt)
-                            .tz("Asia/Kolkata")
-                            .format("DD-MM-YYYY, hh:mm A")}                       
-                             </TableCell>
+                          <div className="text-gray-500 dark:text-gray-400">
+                            <div>{dayjs(ticket.updated_at).format("D-MM-YYYY")}</div>
+                            <div>{dayjs(ticket.updated_at).format("h:mm A")}</div>
+                          </div>
+
+                        </TableCell>
                       </TableRow>
                     );
                   })
