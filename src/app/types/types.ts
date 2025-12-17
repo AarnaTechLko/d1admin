@@ -197,6 +197,7 @@ export interface Ticket {
   assign_to: number;
   assign_to_username: string;
   createdAt: string;
+  updated_at: string;
   status: string;
   assignee_name: string;
   ticket_from: string;

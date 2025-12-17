@@ -21,6 +21,7 @@ interface Player {
 
     id: string;
     createdAt: number;
+    updated_at: number;
     first_name: string;
     last_name: string;
     image: string;
@@ -89,7 +90,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
     const [isPlayerPasswordModalOpen, setPlayerPasswordModalOpen] = useState(false);
     const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
     // const userRole = sessionStorage.getItem("role");;
- 
+
 
 
     const handleClosePlayerModal = () => {
@@ -390,7 +391,10 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                 </TableCell>
 
 
-                                                <TableCell className=" py-3 text-gray-500 dark:text-gray-400"> {dayjs(player.createdAt).format("D-MM-YYYY, h:mm A")}</TableCell>
+                                                <TableCell className=" py-3 text-gray-500 dark:text-gray-400">
+                                                    <div>{dayjs(player.updated_at).format("D-MM-YYYY")}</div>
+                                                    <div>{dayjs(player.updated_at).format("h:mm A")}</div>
+                                                </TableCell>
 
                                             </TableRow>
                                         ))}
@@ -475,7 +479,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                 Swal.fire("Success", "Password updated successfully", "success");
                                                 setNewPlayerPassword("");
                                                 setPlayerPasswordModalOpen(false);
-                                                  setPlayer(data.player); // assuming your API returns { player: Player }
+                                                setPlayer(data.player); // assuming your API returns { player: Player }
 
                                             } catch (err) {
                                                 console.error("Password Updation failed", err);

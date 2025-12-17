@@ -27,6 +27,7 @@ type Badge = {
 interface Player {
     id: string;
     createdAt: number;
+    updated_at: number;
     firstName: string;
     lastName: string;
     image: string;
@@ -246,8 +247,8 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
                                             <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                                                 Actions
-                                            </TableCell> 
-                                             <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
+                                            </TableCell>
+                                            <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                                                 Timestamp
                                             </TableCell>
 
@@ -442,7 +443,9 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                                         </>
                                                     )}
                                                 </TableCell>
-                                           <TableCell className=" py-3 text-gray-500 dark:text-gray-400">  {dayjs(player.createdAt).format("D-MM-YYYY, h:mm A")}</TableCell>
+                                                <TableCell className=" py-3 text-gray-500 dark:text-gray-400">
+                                                    <div>{dayjs(player.updated_at).format("D-MM-YYYY")}</div>
+                                                    <div>{dayjs(player.updated_at).format("h:mm A")}</div>                                             </TableCell>
 
                                             </TableRow>
                                         ))}

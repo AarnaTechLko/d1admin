@@ -409,7 +409,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                         setSuspendCoach(coach);
                         setSuspendOpen(true);
                       }}
-                    > 
+                    >
                       <Badge
                         color={
                           (coach.suspend === 1 || coach.suspend_days === null)
@@ -779,8 +779,11 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                     </div>
 
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500">  {dayjs(coach.updated_at).format("D-MM-YYYY, h:mm A")}
-                  </TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500">
+                    <div className="text-gray-500 dark:text-gray-400">
+                      <div>{dayjs(coach.updated_at).format("D-MM-YYYY")}</div>
+                      <div>{dayjs(coach.updated_at).format("h:mm A")}</div>
+                    </div>                  </TableCell>
 
 
                 </TableRow>

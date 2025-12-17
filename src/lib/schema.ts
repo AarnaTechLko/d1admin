@@ -313,6 +313,8 @@ export const payments = pgTable(
     created_at: timestamp("created_at").defaultNow().notNull(),
     description: text("description"),
     is_deleted: integer("is_deleted").default(1).notNull(),
+      updated_at: timestamp("updated_at").defaultNow(),
+
   },
   (payments) => {
     return {
@@ -698,6 +700,8 @@ export const ticket = pgTable("ticket", {
   created_for: integer("created_for").default(0),
   escalate: boolean("escalate").default(false), // ✅ new column
   createdAt: timestamp("created_at").defaultNow(),
+    updated_at: timestamp("updated_at").defaultNow(),
+
 });
 
 export const ticket_messages = pgTable("ticket_messages", {
@@ -709,7 +713,8 @@ export const ticket_messages = pgTable("ticket_messages", {
   createdAt: timestamp("created_at").defaultNow(),
   filename: text('file_name'),
   priority: varchar("priority", { length: 20 }).default("Medium"),
-
+ read: integer("read").default(0),  
+  updated_at: timestamp("updated_at").defaultNow(),
 
 });
 

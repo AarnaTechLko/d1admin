@@ -13,7 +13,7 @@ export async function GET() {
       .from(sports)
       .orderBy(asc(sports.display_order));
 
-    // console.log("SPORT: ", sport);
+    console.log("SPORT: ", sport);
     
 
     return NextResponse.json({

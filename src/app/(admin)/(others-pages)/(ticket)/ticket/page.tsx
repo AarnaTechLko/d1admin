@@ -659,11 +659,11 @@ const TicketsPage = () => {
 
                           {/* Name + Gender */}
                           <div className="flex flex-col min-w-0">
-                            <span className="font-medium text-gray-800 dark:text-white/90 truncate">
+                            <span className="font-medium text-gray-800 dark:text-white/90 truncate whitespace-pre-wrap break-words">
                               {ticket.name}
                             </span>
 
-                            
+
                           </div>
 
                         </div>
@@ -671,7 +671,7 @@ const TicketsPage = () => {
 
 
                       <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 min-w-0">{ticket.email}</TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 min-w-0">{ticket.subject}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 min-w-0 whitespace-pre-wrap break-words">{ticket.subject}</TableCell>
 
                       {/* Message column with View More/Less */}
                       <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs">
@@ -740,7 +740,10 @@ const TicketsPage = () => {
                       </TableCell>
 
                       <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                        {dayjs(ticket.createdAt).format("D-MM-YYYY, h:mm A")}
+                        <div className="text-gray-500 dark:text-gray-400">
+                          <div>{dayjs(ticket.updated_at).format("D-MM-YYYY")}</div>
+                          <div>{dayjs(ticket.updated_at).format("h:mm A")}</div>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

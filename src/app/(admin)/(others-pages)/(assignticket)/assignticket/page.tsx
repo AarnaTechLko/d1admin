@@ -36,6 +36,7 @@ interface Ticket {
   assign_to: number;
   assign_to_username: string;
   createdAt: string;
+  updated_at: string;
   status: string;
   assignee_name: string;
   priority: string;
@@ -723,10 +724,10 @@ const TicketsPage = () => {
                       </TableCell>
 
                       <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.subject}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400  whitespace-normal break-words">{ticket.subject}</TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs">
                         <p className="whitespace-pre-wrap break-words">
-                          {isLong ? ticket.message.slice(0, 100) + "..." : ticket.message}
+                          {isLong ? ticket.message.slice(0, 10) + "..." : ticket.message}
                         </p>
 
                         {isLong && (
@@ -786,7 +787,12 @@ const TicketsPage = () => {
                         </div>
 
                       </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{dayjs(ticket.createdAt).format("D-MM-YYYY, h:mm A")}</TableCell>
+                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <div className="text-gray-500 dark:text-gray-400">
+                          <div>{dayjs(ticket.updated_at).format("D-MM-YYYY")}</div>
+                          <div>{dayjs(ticket.updated_at).format("h:mm A")}</div>
+                        </div>
+                      </TableCell>
 
                     </TableRow>
                   );
