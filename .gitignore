@@ -5,4 +5,4 @@ app/api/auth/[...nextauth]/route.ts
 app/api/auth/[...nextauth]/route.ts.DS_Store.env
 .env*
 !.env.example
-.history
+.historyidea.zip
