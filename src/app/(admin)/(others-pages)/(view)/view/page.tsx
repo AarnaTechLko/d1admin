@@ -28,6 +28,8 @@ type Permission = {
 
 
 interface Admin {
+  phone_number: string;
+  birthdate: string;
   id: number;
   created_at: number;
   username: string;
@@ -58,6 +60,8 @@ const AdminListPage = () => {
     email: "",
     role: "",
     role_name: "",
+    birthday: "",
+    phone_number: "",
     permission: {
       change_password: 0,
       refund: 0,
@@ -91,7 +95,7 @@ const AdminListPage = () => {
       }
     };
     fetchAdmins();
-  }, [searchQuery, currentPage,daysQuery]);
+  }, [searchQuery, currentPage, daysQuery]);
 
   const handleDelete = async (adminID: number) => {
     const result = await MySwal.fire({
@@ -128,7 +132,10 @@ const AdminListPage = () => {
     setEditData({
       username: admin.username,
       email: admin.email,
-      role: admin.role, // 🔹 current role will be selected by default
+      phone_number: admin.phone_number,
+      birthday: admin.birthdate
+        ? dayjs(admin.birthdate).format("YYYY-MM-DD")
+        : "", role: admin.role, // 🔹 current role will be selected by default
       role_name: admin.role, // 🔹 current role will be selected by default
       permission: { ...admin.permission },
     });
@@ -137,25 +144,25 @@ const AdminListPage = () => {
 
   /*   const handleUpdate = async () => {
       if (!selectedAdmin) return;
-  
+   
       try {
         const response = await fetch(`/api/subadmin?id=${selectedAdmin.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(editData),
         });
-  
+   
         if (!response.ok) {
           const text = await response.text();
           throw new Error(text || "Failed to update admin");
         }
-  
+   
         const updatedAdmin = { ...selectedAdmin, ...editData };
-  
+   
         setAdmins((prev) =>
           prev.map((a) => (a.id === selectedAdmin.id ? updatedAdmin : a))
         );
-  
+   
         setIsEditOpen(false);
         await MySwal.fire("Updated!", "Admin details updated successfully.", "success");
       } catch (error) {
@@ -183,7 +190,7 @@ const AdminListPage = () => {
       const payload = {
         ...editData,
         ...mergedPermissions,
-        role_name: editData.role ,
+        role_name: editData.role,
       };
 
       const response = await fetch(`/api/subadmin?id=${selectedAdmin.id}`, {
@@ -252,7 +259,7 @@ const AdminListPage = () => {
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Admin List" onSearch={setSearchQuery} onDays={setDaysQuery}/>
+      <PageBreadcrumb pageTitle="Staff List" onSearch={setSearchQuery} onDays={setDaysQuery} />
       {loading && <p className="text-center py-5">Loading...</p>}
       {error && <p className="text-center py-5 text-red-500">{error}</p>}
 
@@ -275,7 +282,7 @@ const AdminListPage = () => {
 
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
             <div className="p-4 text-gray-700 dark:text-gray-300">
-              Total admins: {admins.length}
+              Total staff: {admins.length}
             </div>
 
             <Table>
@@ -283,7 +290,7 @@ const AdminListPage = () => {
                 <TableRow className="bg-gray-100 dark:bg-gray-800">
                   <TableCell className="px-5 py-3 text-sm font-bold text-gray-500 dark:text-gray-400">
                     <div className="flex items-center gap-2">
-                      <User size={16} /> Username
+                      <User size={16} />Name
                     </div>
                   </TableCell>
                   <TableCell className="px-5 py-3 text-sm font-bold text-gray-500 dark:text-gray-400">
@@ -303,12 +310,12 @@ const AdminListPage = () => {
                   </TableCell>
                   <TableCell className="px-5 py-3 text-sm font-bold text-gray-500 dark:text-gray-400">
                     <div className="flex items-center gap-2">
-                       <Settings size={16} /> Actions
+                      <Settings size={16} /> Actions
                     </div>
-                  </TableCell>  
-                   <TableCell className="px-5 py-3 text-sm font-bold text-gray-500 dark:text-gray-400">
+                  </TableCell>
+                  <TableCell className="px-5 py-3 text-sm font-bold text-gray-500 dark:text-gray-400">
                     <div className="flex items-center gap-2">
-                        <Clock size={16} /> Timestamp
+                      <Clock size={16} />Timestamp
                     </div>
                   </TableCell>
                 </TableRow>
@@ -347,11 +354,11 @@ const AdminListPage = () => {
                         </button>
                       </div>
                     </TableCell>
-                     <TableCell className="px-4 py-3 text-xs text-gray-800 dark:text-white/90">
-                    {dayjs(admin.created_at).format("D-MM-YYYY ,h:mm A")}
+                    <TableCell className="px-4 py-3 text-xs text-gray-800 dark:text-white/90">
+                      {dayjs(admin.created_at).format("D-MM-YYYY, h:mm A")}
                     </TableCell>
                   </TableRow>
-                  
+
                 ))}
               </TableBody>
             </Table>
@@ -363,13 +370,13 @@ const AdminListPage = () => {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Admin</DialogTitle>
+            <DialogTitle>Edit Staff</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             {/* Username */}
             <div>
-              <label className="block text-sm font-medium">Username</label>
+              <label className="block text-sm font-medium">Name</label>
               <Input
                 value={editData.username}
                 onChange={(e) => setEditData({ ...editData, username: e.target.value })}
@@ -384,8 +391,30 @@ const AdminListPage = () => {
                 value={editData.email}
                 onChange={(e) => setEditData({ ...editData, email: e.target.value })}
               />
+
+            </div>
+            <div>
+              <label className="block text-sm font-medium">Phone Number</label>
+              <Input
+                type="tel"
+                value={editData.phone_number || ""}
+                onChange={(e) =>
+                  setEditData({ ...editData, phone_number: e.target.value })
+                }
+              />
             </div>
 
+            {/* Date of Birth */}
+            <div>
+              <label className="block text-sm font-medium">Date of Birth</label>
+              <Input
+                type="date"
+                value={editData.birthday || ""}
+                onChange={(e) =>
+                  setEditData({ ...editData, birthday: e.target.value })
+                }
+              />
+            </div>
             {/* Role */}
             <div>
               <label className="block text-sm font-medium">Role</label>
@@ -395,7 +424,7 @@ const AdminListPage = () => {
                   const selectedRole = e.target.value;
                   setEditData({
                     ...editData,
-                   role: selectedRole,
+                    role: selectedRole,
                     //role_name: selectedRole, // <-- add role_name here
                     permission: rolePermissions[selectedRole] || {}, // load default permissions
                   });

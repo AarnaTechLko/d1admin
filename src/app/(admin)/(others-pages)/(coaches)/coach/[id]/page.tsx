@@ -15,7 +15,8 @@ import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import { FaSpinner } from "react-icons/fa"; // optional: react-icons
 import axios from "axios";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
+import Button from "@/components/ui/button/Button";
+import Input from "@/components/form/input/InputField";
 interface Evaluation {
   id: string;
   evaluationId: number;
@@ -56,7 +57,7 @@ interface Payment {
   playerid: string;
   evaluation_id: number;
   amount: number;
-  status: number;
+  status: "captured" | "authorized" | "canceled" | "failed" | "refunded";
   currency: string;
   created_at: string;
   review_title: string;
@@ -137,11 +138,12 @@ export default function CoachDetailsPage() {
 
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [selectedCoachid, setSelectedCoachid] = useState<number | null>(null);
-
+  const [refundType, setRefundType] = useState<"full" | "partial" | null>(null);
+  const [partialAmount, setPartialAmount] = useState<number>(0);
   const { id } = useParams();
   const [coach, setCoach] = useState<Coach | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
- const [messageText, setMessageText] = useState("");
+  const [messageText, setMessageText] = useState("");
   const [sendEmail, setSendEmail] = useState(false);
   const [sendSMS, setSendSMS] = useState(false);
   const [sendInternal, setSendInternal] = useState(false);
@@ -150,6 +152,7 @@ export default function CoachDetailsPage() {
   const [evaluationPage, setEvaluationPage] = useState(1);
   const [paymentPage, setPaymentPage] = useState(1);
   const [reviewPage, setReviewPage] = useState(1);
+  const [refundDialog, setRefundDialog] = useState(false);
 
   const [evalId, setEvalId] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -161,6 +164,7 @@ export default function CoachDetailsPage() {
   const [submittingDecline, setSubmittingDecline] = useState(false);
   // const [isVerified, setIsVerified] = useState(coach?.verified === 1);
   const [overallAverage, setOverallAverage] = useState<number | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
   const [newRating, setNewRating] = useState(0);
 
@@ -273,6 +277,13 @@ export default function CoachDetailsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefundClick = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setRefundDialog(true);
+    setRefundType(null);
+    setPartialAmount(0);
   };
 
   const handleUnverify = async () => {
@@ -557,70 +568,7 @@ export default function CoachDetailsPage() {
     }
   };
 
-  const handleHidePayment = async (id: number) => {
-    console.log("evaluation:", id)
-    const result = await MySwal.fire({
-      title: 'Are you sure?',
-      text: 'This payment will be marked as hidden.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Yes, hide it!',
-      cancelButtonText: 'Cancel',
-    });
-
-    if (result.isConfirmed) {
-      const res = await fetch(`/api/coach/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (res.ok) {
-        // const { newStatus } = await res.json();
-        MySwal.fire('Updated!', 'Payment status updated.', 'success');
-        window.location.reload();
-
-        setPayments(prev =>
-          prev.map(payment =>
-            payment.evaluation_id === id ? { ...payment, is_deleted: 0 } : payment
-          )
-        );
-
-      } else {
-        MySwal.fire('Error!', 'Failed to update payment.', 'error');
-      }
-    }
-  };
-
-
-  const handleRevertPayment = async (id: number) => {
-    const result = await MySwal.fire({
-      title: 'Are you sure?',
-      text: 'This will revert the payment status.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Yes, revert it!',
-      cancelButtonText: 'Cancel',
-    });
-
-    if (result.isConfirmed) {
-      const res = await fetch(`/api/coach/${id}`, {
-        method: 'PATCH',
-      });
-
-      if (res.ok) {
-        // const { newStatus } = await res.json();
-        MySwal.fire('Updated!', 'Payment status reverted.', 'success');
-        window.location.reload();
-
-        setPayments(prev =>
-          prev.map(payment =>
-            payment.evaluation_id === id ? { ...payment, is_deleted: 1 } : payment
-          )
-        );
-      } else {
-        MySwal.fire('Error!', 'Failed to revert payment.', 'error');
-      }
-    }
-  };
+ 
   useEffect(() => {
     async function fetchCoachData() {
       try {
@@ -910,7 +858,7 @@ export default function CoachDetailsPage() {
               title="Send Message"
               className="bg-blue-500 rounded p-2 m-2 text-white text-sm hover:underline"
             >
-            Send Message
+              Send Message
             </button>
           </div>
           {/* Download Buttons */}
@@ -1445,7 +1393,7 @@ export default function CoachDetailsPage() {
                 <table className="w-full text-sm text-left border-collapse">
                   <thead className="bg-gray-50 border-b text-gray-700 uppercase text-xs">
                     <tr>
-                      <th className="px-4 py-3">coach</th>
+                      <th className="px-4 py-3">Coach</th>
                       <th className="px-4 py-3">Evaluation</th>
                       <th className="px-4 py-3">Amount</th>
                       <th className="px-4 py-3">Status</th>
@@ -1454,45 +1402,40 @@ export default function CoachDetailsPage() {
                       <th className="px-4 py-3">Action</th>
                     </tr>
                   </thead>
+
                   <tbody>
                     {paginatedPayments.map((p: Payment) => (
-                      // <tr key={p.id} className="hover:bg-gray-50 border-b">
                       <tr
                         key={p.evaluation_id}
-                        className={`transition-colors duration-300 ${p.is_deleted === 0 ? 'bg-red-100' : 'bg-white'
-                          }`}>
-
+                        className={`transition-colors duration-300 ${p.is_deleted === 0 ? "bg-red-100" : "bg-white"
+                          }`}
+                      >
                         <td className="px-4 py-3">{p.playerFirstName}</td>
                         <td className="px-4 py-3">{p.review_title}</td>
                         <td className="px-4 py-3">${p.amount}</td>
                         <td className="px-4 py-3">{p.status}</td>
                         <td className="px-4 py-3">{p.description}</td>
-                        <td className="px-4 py-3">{new Date(p.created_at).toLocaleDateString()}</td>
-                        <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
-                          {p.is_deleted === 0 ? (
-                            <button
-                              onClick={() => handleRevertPayment(p.evaluation_id)}
-                              title="Revert Payment"
-
-                              style={{
-                                fontSize: '1.2rem',
-                                marginRight: '8px',
-                              }}
-                            >
-                              🛑
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleHidePayment(p.evaluation_id)}
-                              title="Refund Payment"
-                              style={{
-                                fontSize: '1.2rem',
-                              }}
-                            >
-                              👻
-                            </button>
-                          )}
+                        <td className="px-4 py-3">
+                          {new Date(p.created_at).toLocaleDateString()}
                         </td>
+
+                        {/* ✅ ACTION COLUMN */}
+                          {/* Refund Button */}
+                          <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
+                            <Button
+                              variant="outline"
+                              disabled={p.status === "refunded"}
+                              className={`shadow-sm rounded-lg px-3 py-1 text-xs${p.status === "refunded"
+                                  ? "bg-gray-100 text-green-600 cursor-not-allowed"
+                                  : "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-900"
+                                }
+    `}
+                              onClick={() => handleRefundClick(p)}
+                            >
+                              {p.status === "refunded" ? "Refunded" : "Refund"}
+                            </Button>
+                          </td>
+
                       </tr>
                     ))}
                   </tbody>
@@ -1524,181 +1467,313 @@ export default function CoachDetailsPage() {
         </section >
       )}
 
-                      <Dialog
-                        open={selectedCoachid === Number(coach.id)}
-                        onOpenChange={(isOpen) => {
-                          if (!isOpen) {
-                            setSelectedCoachid(null);
-                            setRecentMessages([]);
-                          }
-                        }}
-                      >
-                        <DialogContent className="max-w-md w-full bg-white rounded-2xl shadow-xl p-6 space-y-4">
-                          <DialogHeader className="border-b pb-2">
-                            <DialogTitle className="text-lg font-semibold text-gray-800">
-                              Send Message
-                            </DialogTitle>
-                            <p className="text-sm text-gray-500">
-                              Send a message to{" "}
-                              <span className="font-medium text-black">
-                                {coach.firstName} {coach.lastName}
-                              </span>
-                            </p>
-                          </DialogHeader>
+      <Dialog
+        open={selectedCoachid === Number(coach.id)}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setSelectedCoachid(null);
+            setRecentMessages([]);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md w-full bg-white rounded-2xl shadow-xl p-6 space-y-4">
+          <DialogHeader className="border-b pb-2">
+            <DialogTitle className="text-lg font-semibold text-gray-800">
+              Send Message
+            </DialogTitle>
+            <p className="text-sm text-gray-500">
+              Send a message to{" "}
+              <span className="font-medium text-black">
+                {coach.firstName} {coach.lastName}
+              </span>
+            </p>
+          </DialogHeader>
 
-                          {/* Message Type Checkboxes */}
-                          <div className="flex gap-4 text-sm">
-                            <label className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={sendEmail}
-                                onChange={() => setSendEmail(!sendEmail)}
-                              />
-                              Email
-                            </label>
-                            <label className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={sendSMS}
-                                onChange={() => setSendSMS(!sendSMS)}
-                              />
-                              SMS
-                            </label>
-                            <label className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={sendInternal}
-                                onChange={() => setSendInternal(!sendInternal)}
-                              />
-                              Internal Message
-                            </label>
-                          </div>
+          {/* Message Type Checkboxes */}
+          <div className="flex gap-4 text-sm">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={sendEmail}
+                onChange={() => setSendEmail(!sendEmail)}
+              />
+              Email
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={sendSMS}
+                onChange={() => setSendSMS(!sendSMS)}
+              />
+              SMS
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={sendInternal}
+                onChange={() => setSendInternal(!sendInternal)}
+              />
+              Internal Message
+            </label>
+          </div>
 
-                          {/* Message Textarea */}
-                          <textarea
-                            rows={5}
-                            value={messageText}
-                            onChange={(e) => setMessageText(e.target.value)}
-                            className="w-full border rounded-lg p-2 text-sm text-gray-800"
-                            placeholder="Enter your message..."
-                          />
+          {/* Message Textarea */}
+          <textarea
+            rows={5}
+            value={messageText}
+            onChange={(e) => setMessageText(e.target.value)}
+            className="w-full border rounded-lg p-2 text-sm text-gray-800"
+            placeholder="Enter your message..."
+          />
 
-                          {/* Recent Messages */}
-                          <div className="border-t pt-3">
-                            <h3 className="text-sm font-medium text-gray-700 mb-2">Recent Messages</h3>
-                            <div className="max-h-40 overflow-y-auto space-y-3">
-                              {recentMessages.length === 0 ? (
-                                <p className="text-xs text-gray-500">No previous messages</p>
-                              ) : (
-                                recentMessages.map((msg, idx) => {
-                                  // Format methods nicely (if you want uppercase labels)
-                                  const methodLabels = msg.methods.length
-                                    ? msg.methods.map((m) => m.toUpperCase()).join(", ")
-                                    : "N/A";
+          {/* Recent Messages */}
+          <div className="border-t pt-3">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Recent Messages</h3>
+            <div className="max-h-40 overflow-y-auto space-y-3">
+              {recentMessages.length === 0 ? (
+                <p className="text-xs text-gray-500">No previous messages</p>
+              ) : (
+                recentMessages.map((msg, idx) => {
+                  // Format methods nicely (if you want uppercase labels)
+                  const methodLabels = msg.methods.length
+                    ? msg.methods.map((m) => m.toUpperCase()).join(", ")
+                    : "N/A";
 
-                                  // Set alignment and bg color
-                                  const alignment =
-                                    msg.position === "left" ? "justify-start" : "justify-end";
-                                  const bgColor =
-                                    msg.bgColor === "green" ? "bg-green-100" : "bg-blue-100";
+                  // Set alignment and bg color
+                  const alignment =
+                    msg.position === "left" ? "justify-start" : "justify-end";
+                  const bgColor =
+                    msg.bgColor === "green" ? "bg-green-100" : "bg-blue-100";
 
-                                  return (
-                                    <div
-                                      key={msg.id ?? idx}
-                                      className={`flex ${alignment}`}
-                                    >
-                                      <div className={`p-3 rounded-xl shadow-sm ${bgColor} w-full`}>
-                                        <div className="flex justify-between items-center mb-1">
-                                          <span className="text-xs font-semibold">
-                                            From: {`${coach.firstName} ${coach.lastName}`}
-                                          </span>
-                                          <span className="text-[10px] text-gray-500">
-                                            {new Date(msg.created_at).toLocaleString()}
-                                          </span>
-                                        </div>
-                                        <div className="text-xs text-gray-700">
-                                          <p>{msg.message}</p>
-                                          <p className="text-gray-500">Methods: {methodLabels}</p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })
-                              )}
-                            </div>
-                          </div>
+                  return (
+                    <div
+                      key={msg.id ?? idx}
+                      className={`flex ${alignment}`}
+                    >
+                      <div className={`p-3 rounded-xl shadow-sm ${bgColor} w-full`}>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs font-semibold">
+                            From: {`${coach.firstName} ${coach.lastName}`}
+                          </span>
+                          <span className="text-[10px] text-gray-500">
+                            {new Date(msg.created_at).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-700">
+                          <p>{msg.message}</p>
+                          <p className="text-gray-500">Methods: {methodLabels}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
 
-                          {/* Actions */}
-                          <div className="flex justify-end gap-3 pt-2">
-                            <button
-                              onClick={() => setSelectedCoachid(null)}
-                              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={async () => {
-                                if (!messageText.trim()) {
-                                  Swal.fire("Warning", "Please enter a message before sending.", "warning");
-                                  return;
-                                }
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              onClick={() => setSelectedCoachid(null)}
+              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                if (!messageText.trim()) {
+                  Swal.fire("Warning", "Please enter a message before sending.", "warning");
+                  return;
+                }
 
-                                if (!sendEmail && !sendSMS && !sendInternal) {
-                                  Swal.fire(
-                                    "Warning",
-                                    "Please select at least one method (Email, SMS, Internal).",
-                                    "warning"
-                                  );
-                                  return;
-                                }
+                if (!sendEmail && !sendSMS && !sendInternal) {
+                  Swal.fire(
+                    "Warning",
+                    "Please select at least one method (Email, SMS, Internal).",
+                    "warning"
+                  );
+                  return;
+                }
 
-                                try {
-                                  // send message via POST API
-                                  await axios.post(`/api/geolocation/coach`, {
-                                    type: "coach",
-                                    targetIds: [coach.id],
-                                    message: messageText,
-                                    methods: {
-                                      email: sendEmail,
-                                      sms: sendSMS,
-                                      internal: sendInternal,
-                                    },
-                                  });
+                try {
+                  // send message via POST API
+                  await axios.post(`/api/geolocation/coach`, {
+                    type: "coach",
+                    targetIds: [coach.id],
+                    message: messageText,
+                    methods: {
+                      email: sendEmail,
+                      sms: sendSMS,
+                      internal: sendInternal,
+                    },
+                  });
 
-                                  // ✅ Save methods to sessionStorage (per message id)
-                                  const methodObj = {
-                                    email: sendEmail,
-                                    sms: sendSMS,
-                                    internal: sendInternal,
-                                  };
-                                  sessionStorage.setItem(
-                                    `message-methods-${coach.id}`,
-                                    JSON.stringify(methodObj)
-                                  );
+                  // ✅ Save methods to sessionStorage (per message id)
+                  const methodObj = {
+                    email: sendEmail,
+                    sms: sendSMS,
+                    internal: sendInternal,
+                  };
+                  sessionStorage.setItem(
+                    `message-methods-${coach.id}`,
+                    JSON.stringify(methodObj)
+                  );
 
-                                  Swal.fire("Success", "Message sent successfully!", "success");
-                                  setSelectedCoachid(null);
-                                  setMessageText("");
-
-
+                  Swal.fire("Success", "Message sent successfully!", "success");
+                  setSelectedCoachid(null);
+                  setMessageText("");
 
 
-                                } catch (err) {
-                                  console.error(err);
-                                  setSelectedCoachid(null);
-                                  Swal.fire("Error", "Failed to send message.", "error");
 
-                                }
-                              }}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                            >
-                              Send
-                            </button>
-                          </div>
-                        </DialogContent>
 
-                      </Dialog>
+                } catch (err) {
+                  console.error(err);
+                  setSelectedCoachid(null);
+                  Swal.fire("Error", "Failed to send message.", "error");
 
+                }
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Send
+            </button>
+          </div>
+        </DialogContent>
+
+      </Dialog>
+      {/* Refund Dialog */}
+      <Dialog open={refundDialog} onOpenChange={setRefundDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Refund Payment</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 mt-2">
+            {/* Refund Type Selection */}
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={refundType === "full"}
+                onChange={() => {
+                  setRefundType("full");
+                  setPartialAmount(Number(selectedPayment?.amount || 0)); // Auto-fill full amount
+                }}
+              />
+              Full Refund
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={refundType === "partial"}
+                onChange={() => {
+                  setRefundType("partial");
+                  setPartialAmount(0); // Reset partial amount
+                }}
+              />
+              Partial Refund
+            </label>
+
+            {/* Amount Input */}
+            {(refundType === "partial" || refundType === "full") && (
+              <Input
+                type="number"
+                placeholder={`Enter refund amount (max $${Number(selectedPayment?.amount || 0).toFixed(2)})`}
+                value={partialAmount ? partialAmount.toString() : ""}
+                onChange={(e) => setPartialAmount(Number(e.target.value))}
+                min={(0).toString()}
+                max={Number(selectedPayment?.amount || 0).toString()}
+              />
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRefundDialog(false);
+                  setRefundType(null);
+                  setPartialAmount(0);
+                  setSelectedPayment(null);
+                }}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                onClick={async () => {
+                  if (!refundType || !selectedPayment) return;
+
+                  const amountToRefund = partialAmount;
+
+                  if (
+                    !amountToRefund ||
+                    amountToRefund <= 0 ||
+                    amountToRefund > Number(selectedPayment.amount)
+                  ) {
+                    Swal.fire({
+                      icon: "error",
+                      title: "Invalid Amount",
+                      text: "Enter a valid refund amount.",
+                    });
+                    return;
+                  }
+
+                  const refundData = {
+                    payment_id: selectedPayment.id,
+                    refund_type: refundType,
+                    amount_refunded: amountToRefund,
+                    remaining_amount: Number(selectedPayment.amount) - amountToRefund,
+                    refund_by: "Admin",
+                  };
+
+                  try {
+                    const res = await fetch("/api/refunds", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(refundData),
+                    });
+
+                    if (!res.ok) throw new Error("Refund failed");
+
+                    Swal.fire({
+                      icon: "success",
+                      title: "Refund Successful",
+                      text: `Refund of $${amountToRefund.toFixed(2)} processed successfully!`,
+                    });
+
+                    // ✅ UPDATE UI (THIS IS THE KEY PART)
+                    setPayments((prev: Payment[]) =>
+                      prev.map((p) =>
+                        p.id === selectedPayment.id
+                          ? { ...p, status: "refunded" }
+                          : p
+                      )
+                    );
+
+                    // Reset dialog state
+                    setRefundDialog(false);
+                    setRefundType(null);
+                    setPartialAmount(0);
+                    setSelectedPayment(null);
+
+                  } catch (error) {
+                   console.error(error);
+                    Swal.fire({
+                      icon: "error",
+                      title: "Error",
+                      text: "Failed to process refund. Please try again.",
+                    });
+                  }
+                }}
+                disabled={!refundType}
+              >
+                Submit
+              </Button>
+
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Edit Modal */}
       {isDeclineModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

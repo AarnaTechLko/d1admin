@@ -313,7 +313,7 @@ export const payments = pgTable(
     created_at: timestamp("created_at").defaultNow().notNull(),
     description: text("description"),
     is_deleted: integer("is_deleted").default(1).notNull(),
-      updated_at: timestamp("updated_at").defaultNow(),
+    updated_at: timestamp("updated_at").defaultNow(),
 
   },
   (payments) => {

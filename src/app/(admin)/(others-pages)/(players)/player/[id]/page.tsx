@@ -16,7 +16,8 @@ import TopEvaluationBadges from '@/components/TopEvaluationBadges';
 import axios from 'axios';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 // import { useRouter } from 'next/navigation';
-
+import Button from '@/components/ui/button/Button';
+import Input from '@/components/form/input/InputField';
 type RecentMessage = {
     id: number;
     message: string;
@@ -139,7 +140,7 @@ interface Payment {
     evaluation_id: number;
     amount: number;
     payment_info: string;
-    status: string;
+    status: "captured" | "authorized" | "canceled" | "failed" | "refunded";
     currency: string;
     description: string;
     created_at: string;
@@ -198,16 +199,22 @@ export default function PlayerDetailPage() {
     const [paymentPage, setPaymentPage] = useState(1);
     const evaluationsPerPage = 10;
     const paymentsPerPage = 10;
+
     // const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
     const MySwal = withReactContent(Swal);
     //   const [payments, setPayments] = useState<Payment[]>([]);
     const [overallAverage, setOverallAverage] = useState<number | null>(null);
     const [selectedPlayerid, setSelectedPlayerid] = useState<number | null>(null);
     const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
-  const [messageText, setMessageText] = useState("");
-  const [sendEmail, setSendEmail] = useState(false);
-  const [sendSMS, setSendSMS] = useState(false);
-  const [sendInternal, setSendInternal] = useState(false);
+    const [messageText, setMessageText] = useState("");
+    const [sendEmail, setSendEmail] = useState(false);
+    const [sendSMS, setSendSMS] = useState(false);
+    const [sendInternal, setSendInternal] = useState(false);
+    const [refundDialog, setRefundDialog] = useState(false);
+    const [refundType, setRefundType] = useState<"full" | "partial" | null>(null);
+    const [partialAmount, setPartialAmount] = useState<number>(0);
+    const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+
     useEffect(() => {
         if (selectedPlayerid) {
             (async () => {
@@ -265,6 +272,12 @@ export default function PlayerDetailPage() {
         : 0;
 
     const totalEvaluationPages = Math.ceil(filteredEvaluations.length / evaluationsPerPage);
+    const handleRefundClick = (payment: Payment) => {
+        setSelectedPayment(payment);
+        setRefundDialog(true);
+        setRefundType(null);
+        setPartialAmount(0);
+    };
 
 
     const handleHide = async (id: number) => {
@@ -320,100 +333,6 @@ export default function PlayerDetailPage() {
         }
     };
 
-    const handleHidePayment = async (id: number) => {
-        console.log("evaluation :", id);
-        const result = await MySwal.fire({
-            title: 'Are you sure?',
-            text: 'This payment will be marked as hidden.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, hide it!',
-            cancelButtonText: 'Cancel',
-        });
-
-        if (result.isConfirmed) {
-            try {
-                const res = await fetch(`/api/player/${id}`, {
-                    method: 'DELETE',
-                });
-
-                if (!res.ok) {
-                    throw new Error('Failed to hide payment.');
-                }
-
-                const { newStatus } = await res.json();
-
-                await MySwal.fire('Hidden!', 'Payment has been hidden.', 'success');
-                // window.location.reload();
-
-                setData(prev =>
-                    prev
-                        ? {
-                            ...prev,
-                            payments: prev.payments.map(payment =>
-                                payment.evaluation_id === id
-                                    ? { ...payment, is_deleted: newStatus }
-                                    : payment
-                            ),
-                        }
-                        : null
-                );
-            } catch (error) {
-                console.error(error);
-                MySwal.fire('Error!', 'Failed to hide payment.', 'error');
-            }
-        }
-    };
-
-
-    const handleRevertPayment = async (id: number) => {
-        console.log("evaluation", id)
-
-        // Ask for confirmation using SweetAlert
-        const result = await MySwal.fire({
-            title: 'Are you sure?',
-            text: 'This will revert the payment status.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, revert it!',
-            cancelButtonText: 'Cancel',
-        });
-
-        // If confirmed, proceed with API call
-        if (result.isConfirmed) {
-            try {
-                const res = await fetch(`/api/player/${id}`, { method: 'PATCH' });
-
-                if (!res.ok) {
-                    throw new Error('Failed to revert payment.');
-                }
-
-                const { newStatus } = await res.json();
-
-                // Notify success
-                await MySwal.fire('Reverted!', 'Payment status has been reverted.', 'success');
-                // window.location.reload();
-
-                // Update local state
-                setData(prev =>
-                    prev
-                        ? {
-                            ...prev,
-                            payments: prev.payments.map(payment =>
-                                payment.evaluation_id === id
-                                    ? { ...payment, is_deleted: newStatus }
-                                    : payment
-                            ),
-                        }
-                        : null
-                );
-            } catch (error) {
-                console.error(error);
-                MySwal.fire('Error!', 'Failed to revert payment.', 'error');
-            }
-        }
-    };
-
 
     // const handleEvaluationDetails = (evaluation: Evaluation) => {
     //     router.push(`/evaluationdetails?evaluationId=${evaluation.evaluationId}`);
@@ -446,7 +365,8 @@ export default function PlayerDetailPage() {
 
     if (loading) {
         return <Loading />;
-    } if (error) return <p className="p-4 text-red-500">{error}</p>;
+    } 
+    if (error) return <p className="p-4 text-red-500">{error}</p>;
     if (!data) return <p className="p-4">Player not found.</p>;
 
     const { player } = data;
@@ -604,7 +524,7 @@ export default function PlayerDetailPage() {
                         title="Send Message"
                         className="text-white bg-blue-500 p-2 m-2 rounded text-sm hover:underline"
                     >
-                      Send Message
+                        Send Message
                     </button>
                 </div>
                 <div className="w-full flex flex-col items-end gap-2">
@@ -1052,35 +972,160 @@ export default function PlayerDetailPage() {
                                                 <td className="px-4 py-3">{p.status}</td>
                                                 <td className="px-4 py-3">{p.description}</td>
                                                 <td className="px-4 py-3">{new Date(p.created_at).toLocaleDateString()}</td>
+                                                {/* Refund Button */}
                                                 <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
-                                                    {p.is_deleted === 0 ? (
-                                                        <button
-                                                            onClick={() => handleRevertPayment(p.evaluation_id)}
-                                                            title="Revert Payment"
-
-                                                            style={{
-                                                                fontSize: '1.2rem',
-                                                                marginRight: '8px',
-                                                            }}
-                                                        >
-                                                            🛑
-                                                        </button>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => handleHidePayment(p.evaluation_id)}
-                                                            title="Refund Payment"
-                                                            style={{
-                                                                fontSize: '1.2rem',
-                                                            }}
-                                                        >
-                                                            👻
-                                                        </button>
-                                                    )}
+                                                    <Button
+                                                        variant="outline"
+                                                        disabled={p.status === "refunded"}
+                                                        className={`shadow-sm rounded-lg px-3 py-1 text-xs${p.status === "refunded"
+                                                            ? "bg-gray-100 text-green-600 cursor-not-allowed"
+                                                            : "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-900"
+                                                            }
+    `}
+                                                        onClick={() => handleRefundClick(p)}
+                                                    >
+                                                        {p.status === "refunded" ? "Refunded" : "Refund"}
+                                                    </Button>
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
+                                <Dialog open={refundDialog} onOpenChange={setRefundDialog}>
+                                    <DialogContent className="max-w-md">
+                                        <DialogHeader>
+                                            <DialogTitle>Refund Payment</DialogTitle>
+                                        </DialogHeader>
+
+                                        <div className="flex flex-col gap-4 mt-2">
+                                            {/* Refund Type Selection */}
+                                            <label className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={refundType === "full"}
+                                                    onChange={() => {
+                                                        setRefundType("full");
+                                                        setPartialAmount(Number(selectedPayment?.amount || 0)); // Auto-fill full amount
+                                                    }}
+                                                />
+                                                Full Refund
+                                            </label>
+                                            <label className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={refundType === "partial"}
+                                                    onChange={() => {
+                                                        setRefundType("partial");
+                                                        setPartialAmount(0); // Reset partial amount
+                                                    }}
+                                                />
+                                                Partial Refund
+                                            </label>
+
+                                            {/* Amount Input */}
+                                            {(refundType === "partial" || refundType === "full") && (
+                                                <Input
+                                                    type="number"
+                                                    placeholder={`Enter refund amount (max $${Number(selectedPayment?.amount || 0).toFixed(2)})`}
+                                                    value={partialAmount ? partialAmount.toString() : ""}
+                                                    onChange={(e) => setPartialAmount(Number(e.target.value))}
+                                                    min={(0).toString()}
+                                                    max={Number(selectedPayment?.amount || 0).toString()}
+                                                />
+                                            )}
+
+                                            {/* Action Buttons */}
+                                            <div className="flex justify-end gap-2 mt-4">
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setRefundDialog(false);
+                                                        setRefundType(null);
+                                                        setPartialAmount(0);
+                                                        setSelectedPayment(null);
+                                                    }}
+                                                >
+                                                    Cancel
+                                                </Button>
+
+                                                <Button
+                                                    onClick={async () => {
+                                                        if (!refundType || !selectedPayment) return;
+
+                                                        const amountToRefund = partialAmount;
+
+                                                        if (
+                                                            !amountToRefund ||
+                                                            amountToRefund <= 0 ||
+                                                            amountToRefund > Number(selectedPayment.amount)
+                                                        ) {
+                                                            Swal.fire({
+                                                                icon: "error",
+                                                                title: "Invalid Amount",
+                                                                text: "Enter a valid refund amount.",
+                                                            });
+                                                            return;
+                                                        }
+
+                                                        const refundData = {
+                                                            payment_id: selectedPayment.id,
+                                                            refund_type: refundType,
+                                                            amount_refunded: amountToRefund,
+                                                            remaining_amount: Number(selectedPayment.amount) - amountToRefund,
+                                                            refund_by: "Admin",
+                                                        };
+
+                                                        try {
+                                                            const res = await fetch("/api/refunds", {
+                                                                method: "POST",
+                                                                headers: { "Content-Type": "application/json" },
+                                                                body: JSON.stringify(refundData),
+                                                            });
+
+                                                            if (!res.ok) throw new Error("Refund failed");
+
+                                                            Swal.fire({
+                                                                icon: "success",
+                                                                title: "Refund Successful",
+                                                                text: `Refund of $${amountToRefund.toFixed(2)} processed successfully!`,
+                                                            });
+
+                                                            setData((prev) => {
+                                                                if (!prev) return prev;
+
+                                                                return {
+                                                                    ...prev,
+                                                                    payments: prev.payments.map((p) =>
+                                                                        p.id === selectedPayment.id
+                                                                            ? { ...p, status: "refunded" }
+                                                                            : p
+                                                                    ),
+                                                                };
+                                                            });
+                                                            // Reset dialog state
+                                                            setRefundDialog(false);
+                                                            setRefundType(null);
+                                                            setPartialAmount(0);
+                                                            setSelectedPayment(null);
+
+                                                        } catch (err) {
+                                                           console.error(err);
+                                                            Swal.fire({
+                                                                icon: "error",
+                                                                title: "Error",
+                                                                text: "Failed to process refund. Please try again.",
+                                                            });
+                                                        }
+                                                    }}
+                                                    disabled={!refundType}
+                                                >
+                                                    Submit
+                                                </Button>
+
+                                            </div>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
                                 {/* Pagination Controls */}
                                 <div className="flex justify-between items-center p-4 border-t">
                                     <button
