@@ -129,6 +129,7 @@ export async function GET(req: NextRequest) {
         status: coaches.status,
         suspend: coaches.suspend,
         createdAt: coaches.createdAt,
+        updated_at: coaches.updated_at,
         suspend_days: coaches.suspend_days,
         approved_or_denied: coaches.approved_or_denied,
         is_deleted: coaches.is_deleted,

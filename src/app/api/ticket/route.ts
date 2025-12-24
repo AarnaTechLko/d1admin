@@ -200,6 +200,7 @@ export async function GET(req: NextRequest) {
       created_for: ticket.created_for,
       status: ticket.status,
       createdAt: ticket.createdAt,
+      updated_at: ticket.updated_at,
       priority: ticket.priority,
       assign_to_username: admin.username,
       coachImage: coaches.image,
