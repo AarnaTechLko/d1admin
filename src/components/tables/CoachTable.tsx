@@ -781,8 +781,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500">
                     <div className="text-gray-500 dark:text-gray-400">
-                      <div>{dayjs(coach.updated_at).format("D-MM-YYYY")}</div>
-                      <div>{dayjs(coach.updated_at).format("h:mm A")}</div>
+                      <div>{dayjs(coach.updated_at).format("DD.MM.YYYY hh:mm A")}</div>
                     </div>
               </TableCell>
 
