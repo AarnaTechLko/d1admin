@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
     if (!type || !message || !Array.isArray(targetIds) || targetIds.length === 0) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
-    const subject = body.subject || "📢 New Admin Message";
+    const subject = body.subject || "New Admin Message";
     const twilioClient = twilio(
       process.env.TWILIO_TEST_ACCOUNT_SID,
       process.env.TWILIO_TEST_AUTH_TOKEN

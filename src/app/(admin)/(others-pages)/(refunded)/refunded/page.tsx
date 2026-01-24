@@ -1,34 +1,36 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import Input from "@/components/form/input/InputField";
+// import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+// import { Button } from "@/components/ui/button";
+// import Input from "@/components/form/input/InputField";
 import PaymentsTable from "@/components/tables/PaymentsTable";
-import Swal from "sweetalert2";
+// import Swal from "sweetalert2";
+import { Payment, PaymentStatus } from '@/app/types/types';
 
-interface Payment {
-  firstName: string;
-  lastName: string;
-  id: number;
-  playerName: string;
-  playerImage: string;
-  coachName: string;
-  coachImage: string;
-  evalId: number;
-  amount: number | string;
-  status: "captured" | "authorized" | "canceled" | "failed" | "refunded";
-  created_at: string;
-  updated_at: string;
-}
+
+// interface Payment {
+//   firstName: string;
+//   lastName: string;
+//   id: number;
+//   playerName: string;
+//   playerImage: string;
+//   coachName: string;
+//   coachImage: string;
+//   evalId: number;
+//   amount: number | string;
+//   status: PaymentStatus;
+//   created_at: string;
+//   updated_at: string;
+// }
 
 const RefundedPaymentsPage = () => {
   const [data, setData] = useState<Payment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [refundDialog, setRefundDialog] = useState(false);
-  const [refundType, setRefundType] = useState<"full" | "partial" | null>(null);
-  const [partialAmount, setPartialAmount] = useState<number>(0);
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  // const [refundDialog, setRefundDialog] = useState(false);
+  // const [refundType, setRefundType] = useState<"full" | "partial" | null>(null);
+  // const [partialAmount, setPartialAmount] = useState<number>(0);
+  // const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
   // Fetch refunded payments
   useEffect(() => {
@@ -49,10 +51,10 @@ const RefundedPaymentsPage = () => {
     fetchData();
   }, []);
 
-  const openRefundDialog = (payment: Payment) => {
-    setSelectedPayment(payment);
-    setRefundDialog(true);
-  };
+  // const openRefundDialog = (payment: Payment) => {
+    // setSelectedPayment(payment);
+    // setRefundDialog(true);
+  // };
 
   return (
     <div className="p-6">
@@ -61,12 +63,13 @@ const RefundedPaymentsPage = () => {
       {/* Payments Table with loading state */}
       <PaymentsTable
         data={data}
-        onRefundClick={openRefundDialog} // optional, can disable if refunded payments are non-refundable
+        // onRefundClick={openRefundDialog} // optional, can disable if refunded payments are non-refundable
         loading={loading}
+        paymentStatus={PaymentStatus.REFUNDED}
       />
 
       {/* Refund Dialog (optional for refunded payments) */}
-      <Dialog open={refundDialog} onOpenChange={setRefundDialog}>
+      {/* <Dialog open={refundDialog} onOpenChange={setRefundDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Refund Payment</DialogTitle>
@@ -178,7 +181,7 @@ const RefundedPaymentsPage = () => {
             </div>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </div>
   );
 };
