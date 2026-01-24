@@ -12,17 +12,30 @@ interface PaymentDetails {
 
 // Properly typed page props for Next.js app router
 interface PaymentDonePageProps {
-  searchParams?: {
+  searchParams?: Promise<{
     success?: string;
     redirect_status?: string;
     payment_intent?: string;
     playerId?: string;
-  };
+  }>;
 }
 
 export default function PaymentDonePage({ searchParams }: PaymentDonePageProps) {
   const router = useRouter();
-  const { success, redirect_status, payment_intent, playerId } = searchParams || {};
+  const [params, setParams] = useState<{
+    success?: string;
+    redirect_status?: string;
+    payment_intent?: string;
+    playerId?: string;
+  }>({});
+  
+  useEffect(() => {
+    if (searchParams) {
+      searchParams.then(setParams);
+    }
+  }, [searchParams]);
+  
+  const { success, redirect_status, payment_intent, playerId } = params;
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
 
