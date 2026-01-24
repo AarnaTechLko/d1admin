@@ -64,7 +64,6 @@ export async function POST(req: NextRequest) {
                 lastName: item.LastName,
                 email: item.Email,
                 country: null,
-
                 enterprise_id,
                 team_id,
                 slug,
@@ -78,25 +77,25 @@ export async function POST(req: NextRequest) {
                 certificate: null,
                 status: 'Pending',
                 password: hashedPassword,
-
+                coach_level: '', // Required field
             };
         }));
         if (insertData.length > 0) {
-            const insertedPlayers = await db.insert(coaches).values(insertData).returning({ id: coaches.id });
+            const insertedCoaches = await db.insert(coaches).values(insertData).returning({ id: coaches.id });
 
 
             if (Number(enterprise_id)) {
-                const teamCoachData = insertedPlayers.map(player => ({
+                const teamCoachData = insertedCoaches.map(coach => ({
                     teamId: Number(teamId || 0),           // Adjusted to match the schema
-                    coachId: player.id,       // Adjusted to match the schema
+                    coachId: coach.id,       // Adjusted to match the schema
                     enterprise_id: Number(enterprise_id), // Adjusted to match the sch ema
                 }));
                 await db.insert(teamCoaches).values(teamCoachData);
             }
             else {
-                const teamCoachData = insertedPlayers.map(player => ({
+                const teamCoachData = insertedCoaches.map(coach => ({
                     teamId: Number(teamId),           // Adjusted to match the schema
-                    coachId: player.id,       // Adjusted to match the schema
+                    coachId: coach.id,       // Adjusted to match the schema
                     enterprise_id: 0, // Adjusted to match the schema
                 }));
                 await db.insert(teamCoaches).values(teamCoachData);
@@ -105,7 +104,7 @@ export async function POST(req: NextRequest) {
 
 
 
-            for (const player of insertedPlayers) {
+            for (const coach of insertedCoaches) {
                 const checkLicense = await db
                     .select()
                     .from(licenses)
@@ -119,14 +118,14 @@ export async function POST(req: NextRequest) {
                 if (checkLicense.length > 0) {
                     const updateLicense = await db.update(licenses).set({
                         status: 'Consumed',
-                        used_by: player.id.toString(),
+                        used_by: coach.id.toString(),
                         used_for: 'Coach',
                     }).where(eq(licenses.licenseKey, checkLicense[0].licenseKey));
 
                     if ((updateLicense.rowCount ?? 0) > 0) {
                         await db.update(coaches).set({
                             status: 'Active'
-                        }).where(eq(coaches.id, player.id));
+                        }).where(eq(coaches.id, coach.id));
                     }
                 }
             }

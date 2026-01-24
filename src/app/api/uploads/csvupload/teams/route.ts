@@ -157,11 +157,11 @@ export async function POST(req: NextRequest) {
                     }
                 } else {
                     const user = await db.insert(coaches).values({
-
                         email: userEmail,
                         password: hashedPassword,
                         status: 'Pending',
-                        enterprise_id: enterprise_id
+                        enterprise_id: enterprise_id,
+                        coach_level: '' // Required field
                     }).returning({ userId: coaches.id });
 
                     coachesToInsert.push({
