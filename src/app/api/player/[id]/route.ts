@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, countries, playerEvaluation, coachearnings, payments, evaluationResults, ip_logs, role, sports, coaches } from '@/lib/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, desc } from 'drizzle-orm';
 
 export async function GET(
   req: NextRequest,
@@ -110,6 +110,7 @@ export async function GET(
       .leftJoin(coaches, eq(coaches.id, playerEvaluation.coach_id))
 
       .where(eq(playerEvaluation.player_id, id))
+      .orderBy(desc(playerEvaluation.created_at))
       .execute();
 
     // Get player's earnings from coachearnings table
@@ -128,6 +129,7 @@ export async function GET(
         evaluation_id: payments.evaluation_id,
         created_at: payments.created_at,
         player_id: payments.player_id,
+        coach_id: payments.coach_id,
         description: payments.description,
         playerFirstName: users.first_name,
         playerLastName: users.last_name,
@@ -139,6 +141,7 @@ export async function GET(
       .leftJoin(users, eq(users.id, payments.player_id))
       .leftJoin(playerEvaluation, eq(playerEvaluation.id, payments.evaluation_id))
       .where(eq(payments.player_id, id))
+      .orderBy(desc(payments.created_at))
       .execute();
 
     // Get player's evaluation results from evaluationResults table

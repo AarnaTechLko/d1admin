@@ -36,7 +36,7 @@ interface Ticket {
   assign_to: number;
   assign_to_username: string;
   createdAt: string;
-  updated_at: string;
+  updated_at?: string;
   status: string;
   assignee_name: string;
   priority: string;
@@ -651,6 +651,53 @@ const TicketsPage = () => {
       <PageBreadcrumb pageTitle="Ticket" onStatus={setStatusQuery} onSearch={setSearchQuery} onDays={setDaysQuery}
         onStaff={setStaffQuery} />
       <div className="flex justify-end items-center gap-2 p-4 dark:border-white/[0.05]">
+
+{/* 
+        {(() => {
+          const windowSize = 10;
+
+          const half = Math.floor(windowSize / 2);
+
+          let startPage =
+            Math.max( 1, currentPage - half);
+
+          const endPage = Math.min(
+            totalPages,
+            startPage + windowSize - 1
+          );
+
+          startPage = Math.max(1, endPage - windowSize + 1);
+
+          const pages =  Array.from(
+            {length: endPage - startPage + 1},
+            (_, idx) => startPage + idx
+          );
+
+          console.log("Pages: ", pages, startPage, endPage);
+
+          return pages.map(
+            page => {
+              console.log("Page: ", page);
+              // const page = startPage + idx;
+              const isActive = page === currentPage;
+
+              return (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                    className={`rounded px-3 py-2 text-sm font-medium ${
+                    isActive
+                      ? 'bg-blue-500 text-white'
+                      : 'text-blue-500 hover:bg-gray-200'
+                  }`}
+                >
+                  {page}
+                </button>
+              );
+            },
+          );
+        })()} */}
+
         {[...Array(totalPages)].map((_, index) => {
           const pageNumber = index + 1;
           console.log("pages", totalPages);
@@ -789,8 +836,8 @@ const TicketsPage = () => {
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                         <div className="text-gray-500 dark:text-gray-400">
-                          <div>{dayjs(ticket.updated_at).format("D-MM-YYYY")}</div>
-                          <div>{dayjs(ticket.updated_at).format("h:mm A")}</div>
+                          <div>{dayjs(ticket.updated_at ? ticket.updated_at : ticket.createdAt).format("D-MM-YYYY")}</div>
+                          <div>{dayjs(ticket.updated_at ? ticket.updated_at : ticket.createdAt).format("h:mm A")}</div>
                         </div>
                       </TableCell>
 

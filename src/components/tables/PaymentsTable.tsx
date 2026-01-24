@@ -9,22 +9,24 @@ import Input from "@/components/form/input/InputField";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
 import { Loader2 } from "lucide-react";
 import dayjs from "dayjs";
+import { Payment, PaymentStatus } from '@/app/types/types';
+
 
 // Payment interface
-export interface Payment {
-  firstName: string;
-  lastName: string;
-  id: number;
-  playerName: string;
-  playerImage: string;
-  coachName: string;
-  coachImage: string;
-  evalId: number;
-  amount: number | string;
-  status: "captured" | "authorized" | "canceled" | "failed" | "refunded";
-  created_at: string;
-  updated_at: string;
-}
+// export interface Payment {
+//   firstName: string;
+//   lastName: string;
+//   id: number;
+//   playerName: string;
+//   playerImage: string;
+//   coachName: string;
+//   coachImage: string;
+//   evalId: number;
+//   amount: number | string;
+//   status: "captured" | "authorized" | "canceled" | "failed" | "refunded";
+//   created_at: string;
+//   updated_at: string;
+// }
 
 // Props for table
 interface PaymentsTableProps {
@@ -32,7 +34,7 @@ interface PaymentsTableProps {
   itemsPerPage?: number;
   onRefundClick?: (payment: Payment) => void;
   loading?: boolean; // ✅ Add this line
-
+  paymentStatus: PaymentStatus;
 }
 
 const PaymentsTable: React.FC<PaymentsTableProps> = ({
@@ -40,6 +42,7 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
   itemsPerPage = 10,
   onRefundClick,
   loading = false, // default false
+  paymentStatus,
 }) => {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -113,8 +116,17 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
               <TableCell className="font-semibold text-gray-700">Eval</TableCell>
               <TableCell className="font-semibold text-gray-700">Amount</TableCell>
               <TableCell className="font-semibold text-gray-700">Status</TableCell>
-              <TableCell className="font-semibold text-gray-700">Refund</TableCell>
+              {(paymentStatus !== PaymentStatus.REFUNDED && paymentStatus !== PaymentStatus.CANCELLED && paymentStatus !== PaymentStatus.FAILED) && (   
+                <TableCell className="font-semibold text-gray-700">
+                  {/* {paymentStatus === PaymentStatus.FAILED ? "Retry" : "Refund"} */}
+                  Refund
+                </TableCell>
+              )}
               <TableCell className="font-semibold text-gray-700">Created At</TableCell>
+              {(paymentStatus === PaymentStatus.REFUNDED || paymentStatus === PaymentStatus.CANCELLED) && (
+                <TableCell className="font-semibold text-gray-700">Comments</TableCell>
+              )}
+
             </TableRow>
           </TableHeader>
 
@@ -189,15 +201,15 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded text-xs  ${
-                        item.status === "captured"
+                        item.status === PaymentStatus.CAPTURED
                           ? "bg-green-100 text-green-700"
-                          : item.status === "canceled"
+                          : item.status === PaymentStatus.CANCELLED
                           ? "bg-red-100 text-red-700"
-                          : item.status === "authorized"
+                          : item.status === PaymentStatus.AUTHORIZED
                           ? "bg-blue-100 text-blue-700"
-                          : item.status === "failed"
+                          : item.status === PaymentStatus.FAILED
                           ? "bg-red-100 text-red-700"
-                          : item.status === "refunded"
+                          : item.status === PaymentStatus.REFUNDED
                           ? "bg-yellow-100 text-yellow-700"
                           : "bg-gray-100 text-gray-700"
                       }`}
@@ -207,25 +219,35 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
                   </TableCell>
 
                   {/* Refund Button */}
-                  <TableCell>
-                    {onRefundClick && (
-                      <Button
-                        variant="secondary"
-                        disabled={item.status === "refunded"}
-                        className={`${
-                          item.status === "refunded"
-                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                            : "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-900"
-                        } shadow-sm rounded-lg px-3 py-1 text-sm text-xs`}
-                        onClick={() => onRefundClick(item)}
-                      >
-                        Refund
-                      </Button>
-                    )}
-                  </TableCell>
+
+                  {(paymentStatus !== PaymentStatus.REFUNDED && paymentStatus !== PaymentStatus.CANCELLED && paymentStatus !== PaymentStatus.FAILED) && (
+                    <TableCell>
+                      {onRefundClick && (
+                        <Button
+                          variant="secondary"
+                          disabled={item.status === PaymentStatus.REFUNDED}
+                          className={`${
+                            item.status === PaymentStatus.REFUNDED
+                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              : item.status === PaymentStatus.FAILED ? "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-900" : "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-900"
+                          } shadow-sm rounded-lg px-3 py-1 text-xs`}
+                          onClick={() => onRefundClick(item)}
+                        >
+                          {/* {item.status === PaymentStatus.FAILED ? 'Retry' : 'Refund'} */}
+                          Refund
+                        </Button>
+                      )}
+                    </TableCell>
+                  )}
 
                   {/* Created At */}
                   <TableCell> {dayjs(item.created_at).format("D-MM-YYYY, h:mm A")}</TableCell>
+
+
+                  {(paymentStatus === PaymentStatus.REFUNDED || paymentStatus === PaymentStatus.CANCELLED) && (
+                    <TableCell> {dayjs(item.created_at).format("D-MM-YYYY, h:mm A")}</TableCell>
+                  )}
+
                 </TableRow>
               ))
             ) : (

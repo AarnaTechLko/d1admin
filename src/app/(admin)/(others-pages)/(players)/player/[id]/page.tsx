@@ -18,6 +18,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 // import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/button/Button';
 import Input from '@/components/form/input/InputField';
+import { PaymentStatus } from '@/app/types/types';
+
 type RecentMessage = {
     id: number;
     message: string;
@@ -137,10 +139,11 @@ interface Payment {
     playerLastName: string;
     review_title: string;
     player_id: string;
+    coach_id: string;
     evaluation_id: number;
     amount: number;
     payment_info: string;
-    status: "captured" | "authorized" | "canceled" | "failed" | "refunded";
+    status: PaymentStatus;
     currency: string;
     description: string;
     created_at: string;
@@ -214,6 +217,10 @@ export default function PlayerDetailPage() {
     const [refundType, setRefundType] = useState<"full" | "partial" | null>(null);
     const [partialAmount, setPartialAmount] = useState<number>(0);
     const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+    const [authorizeDialog, setAuthorizeDialog] = useState<boolean>(false);
+    // const [retryDialog, setRetryDialog] = useState<boolean>(false);
+    const [remark, setRemarks] = useState<string>('');
+
 
     useEffect(() => {
         if (selectedPlayerid) {
@@ -272,11 +279,76 @@ export default function PlayerDetailPage() {
         : 0;
 
     const totalEvaluationPages = Math.ceil(filteredEvaluations.length / evaluationsPerPage);
+
+  const handleRepayment = async (item: Payment) => {
+    // console.log('Made it');
+
+
+    try {
+      const res = await fetch('/api/repayment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          request: {
+            amount: item.amount,
+            playerId: Number(item.player_id),
+            coachId: Number(item.coach_id),
+            paymentId: item.id,
+            evaluationId: item.evaluation_id,
+          },
+        }),
+      });
+      // console.log(res, 'res101>>');
+      if (res.ok) {
+        const data = await res.json();
+
+        if (data.status === 'success') {
+          // Old session was already completed - show success
+          await Swal.fire({
+            title: 'Payment Already Completed!',
+            text: 'Your payment was already processed successfully.',
+            icon: 'success',
+            confirmButtonText: 'OK',
+          });
+          window.location.href = '/dashboard';
+        } else if (data.status === 'pending' && data.redirectUrl) {
+          // New session created - redirect to payment
+          window.location.href = data.redirectUrl;
+        }
+      } else {
+
+        const data = await res.json();
+
+        Swal.fire({
+          title: 'Error!',
+          text: data.error,
+          icon: 'error',
+          confirmButtonText: 'OK',
+        });
+      }
+    } catch (error) {
+      console.log(error, 'Error >>>>');
+    }
+  };
+
+
     const handleRefundClick = (payment: Payment) => {
         setSelectedPayment(payment);
-        setRefundDialog(true);
-        setRefundType(null);
-        setPartialAmount(0);
+
+        if(payment.status === PaymentStatus.AUTHORIZED){
+            setAuthorizeDialog(true);
+        }
+        else if(payment.status === PaymentStatus.CAPTURED){
+            setRefundDialog(true);
+            setRefundType(null);
+            setPartialAmount(0);
+        }
+    };
+
+    const handleRetryClick = (payment: Payment) => {
+        handleRepayment(payment);
     };
 
 
@@ -705,9 +777,9 @@ export default function PlayerDetailPage() {
                                             </td>
                                             <td className="px-4 py-3">{ev.jerseyNumber}</td>
                                             <td className="px-4 py-3">
-                                                <span className={`px-2 py-1 text-xs rounded-full font-medium text-white ${ev.status === 2 ? 'bg-green-500' : 'bg-yellow-500'
+                                                <span className={`px-2 py-1 text-xs rounded-full font-medium text-white ${ev.status === 2 ? 'bg-green-500' : ev.status === 3 ? 'bg-red-500' : 'bg-yellow-500'
                                                     }`}>
-                                                    {ev.status === 2 ? 'Completed' : 'Pending'}
+                                                    {ev.status === 2 ? 'Completed' : ev.status === 3 ? 'Cancelled' : 'Pending'}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3">{ev.turnaroundTime}</td>
@@ -974,23 +1046,134 @@ export default function PlayerDetailPage() {
                                                 <td className="px-4 py-3">{new Date(p.created_at).toLocaleDateString()}</td>
                                                 {/* Refund Button */}
                                                 <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        disabled={p.status === "refunded"}
-                                                        className={`shadow-sm rounded-lg px-3 py-1 text-xs${p.status === "refunded"
-                                                            ? "bg-gray-100 text-green-600 cursor-not-allowed"
-                                                            : "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-900"
+
+
+                                                    {p.status === PaymentStatus.AUTHORIZED || p.status === PaymentStatus.CAPTURED ?
+                                                    
+                                                        <Button
+                                                            variant="outline"
+                                                            className={`shadow-sm rounded-lg px-3 py-1 text-xs "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-900"
+                                                                }`}
+                                                            onClick={() => handleRefundClick(p)}
+                                                        >
+                                                            Refund
+                                                        </Button>              
+                                                    : (p.status === PaymentStatus.PENDING || p.status === PaymentStatus.FAILED) ?
+                                                        <Button
+                                                            variant="outline"
+                                                            className={`shadow-sm rounded-lg px-3 py-1 text-xs bg-gray-50 hover:bg-green-100 text-green-600 hover:text-green-900`}
+                                                            onClick={() => handleRetryClick(p)}
+                                                        >
+                                                            Retry
+                                                        </Button> 
+                                                    :
+
+                                                        <Button
+                                                            variant="outline"
+                                                            disabled
+                                                            className={`shadow-sm rounded-lg px-3 py-1 text-xs bg-gray-100 text-red-600 cursor-not-allowed`}
+                                                        >
+                                                            {
+                                                                p.status === PaymentStatus.REFUNDED ? "Refunded" :
+                                                                p.status === PaymentStatus.CANCELLED ? "Cancelled" : "Released"
                                                             }
-    `}
-                                                        onClick={() => handleRefundClick(p)}
-                                                    >
-                                                        {p.status === "refunded" ? "Refunded" : "Refund"}
-                                                    </Button>
+                                                        </Button> 
+
+                                                    }
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
+
+                                <Dialog open={authorizeDialog} onOpenChange={setAuthorizeDialog}>
+                                    <DialogContent className="max-w-md">
+                                    <DialogHeader>
+                                        <DialogTitle>Add a Comment</DialogTitle>
+                                    </DialogHeader>
+
+                                    <div className="flex flex-col gap-4 mt-2">
+
+                                        <Input
+                                            type="textarea"
+                                            placeholder={`Write your comment here...`}
+                                            value={remark}
+                                            onChange={(e) => setRemarks(e.target.value)}
+                                        />
+
+
+                                        {/* Action Buttons */}
+                                        <div className="flex justify-end gap-2 mt-4">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => {
+                                            setAuthorizeDialog(false);
+                                            setRemarks("");
+                                            }}
+                                        >
+                                            Cancel
+                                        </Button>
+
+                                        <Button
+                                            onClick={async () => {
+
+
+                                            const refundData = {
+                                                remark: remark,
+                                                evaluation_id: selectedPayment?.evaluation_id,
+                                            };
+
+                                            try {
+                                                const res = await fetch("/api/paymentcancel", {
+                                                method: "PATCH",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify(refundData),
+                                                });
+
+                                                const data =  await res.json()
+
+                                                if (!res.ok) {
+                                                    setAuthorizeDialog(false);
+                                                    setRemarks("");
+                                                    throw new Error(data.error || "Failed to cancel payment");
+                                                }
+
+                                                Swal.fire({
+                                                icon: "success",
+                                                title: "Payment Cancelled Successful",
+                                                text: `Payment of $${selectedPayment?.amount} cancelled successfully!`,
+                                                });
+
+                                                // Reset dialog
+                                                setAuthorizeDialog(false);
+                                                setRemarks("");
+
+                                                // Optionally refresh payments list
+                                                setLoading(true);
+                                                const refreshed = await fetch("/api/authorize");
+                                                const jsonRefreshed = await refreshed.json();
+                                                setData(Array.isArray(jsonRefreshed) ? jsonRefreshed : jsonRefreshed.data || []);
+                                                setLoading(false);
+
+                                            } catch (err) {
+                                                console.error(err);
+                                                Swal.fire({
+                                                icon: "error",
+                                                title: "Error",
+                                                text: `Failed to process refund due to this reason ${String(err)}. Please try again.`,
+                                                });
+                                            }
+                                            }}
+                                            disabled={!remark}
+                                        >
+                                            Submit
+                                        </Button>
+                                        </div>
+                                    </div>
+                                    </DialogContent>
+                                </Dialog>
+
+
                                 <Dialog open={refundDialog} onOpenChange={setRefundDialog}>
                                     <DialogContent className="max-w-md">
                                         <DialogHeader>
@@ -1028,11 +1211,29 @@ export default function PlayerDetailPage() {
                                                     type="number"
                                                     placeholder={`Enter refund amount (max $${Number(selectedPayment?.amount || 0).toFixed(2)})`}
                                                     value={partialAmount ? partialAmount.toString() : ""}
-                                                    onChange={(e) => setPartialAmount(Number(e.target.value))}
-                                                    min={(0).toString()}
-                                                    max={Number(selectedPayment?.amount || 0).toString()}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+
+                                                        if (/^\d*$/.test(value) && Math.min(Number(value), Number(selectedPayment?.amount || 0))) {
+                                                        // Allow only whole numbers
+                                                        setPartialAmount(Number(value));
+                                                        }
+                                                    }}
+                                                    disabled={refundType === "full"}
                                                 />
                                             )}
+
+                                            <label className="flex items-center gap-2">
+                                                Write your comment
+                                            </label>
+
+                                            <Input
+                                                type="textarea"
+                                                placeholder={`Write your comment here...`}
+                                                value={remark}
+                                                onChange={(e) => setRemarks(e.target.value)}
+                                            />
+
 
                                             {/* Action Buttons */}
                                             <div className="flex justify-end gap-2 mt-4">
@@ -1043,6 +1244,7 @@ export default function PlayerDetailPage() {
                                                         setRefundType(null);
                                                         setPartialAmount(0);
                                                         setSelectedPayment(null);
+                                                        setRemarks('');
                                                     }}
                                                 >
                                                     Cancel
@@ -1073,6 +1275,8 @@ export default function PlayerDetailPage() {
                                                             amount_refunded: amountToRefund,
                                                             remaining_amount: Number(selectedPayment.amount) - amountToRefund,
                                                             refund_by: "Admin",
+                                                            evaluation_id: selectedPayment?.evaluation_id,
+                                                            remark,
                                                         };
 
                                                         try {
@@ -1082,7 +1286,15 @@ export default function PlayerDetailPage() {
                                                                 body: JSON.stringify(refundData),
                                                             });
 
-                                                            if (!res.ok) throw new Error("Refund failed");
+                                                            const data =  await res.json()
+                                                            if (!res.ok) {
+                                                            setRefundDialog(false);
+                                                            setRefundType(null);
+                                                            setPartialAmount(0);
+                                                            setSelectedPayment(null);
+                                                            setRemarks('');
+                                                            throw new Error(data.error || "Failed to cancel payment");
+                                                            };
 
                                                             Swal.fire({
                                                                 icon: "success",
@@ -1097,7 +1309,7 @@ export default function PlayerDetailPage() {
                                                                     ...prev,
                                                                     payments: prev.payments.map((p) =>
                                                                         p.id === selectedPayment.id
-                                                                            ? { ...p, status: "refunded" }
+                                                                            ? { ...p, status: PaymentStatus.REFUNDED }
                                                                             : p
                                                                     ),
                                                                 };
@@ -1107,6 +1319,7 @@ export default function PlayerDetailPage() {
                                                             setRefundType(null);
                                                             setPartialAmount(0);
                                                             setSelectedPayment(null);
+                                                            setRemarks('');
 
                                                         } catch (err) {
                                                            console.error(err);
@@ -1117,7 +1330,7 @@ export default function PlayerDetailPage() {
                                                             });
                                                         }
                                                     }}
-                                                    disabled={!refundType}
+                                                    disabled={!refundType || !partialAmount || !remark}
                                                 >
                                                     Submit
                                                 </Button>

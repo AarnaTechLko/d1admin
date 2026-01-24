@@ -6,11 +6,18 @@ import MonthlySignupChart from "@/components/ecommerce/MonthlySignupChart"
 import ActivityLog from "@/components/ecommerce/ActivityLog";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import DemographicCard from "@/components/ecommerce/DemographicCard";
+import { useSession } from 'next-auth/react';
+
+
 export default function Ecommerce() {
   useRoleGuard();
 
   const [role, setRole] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false); // flag to prevent server rendering issues
+  const { data: session } = useSession();
+
+  console.log("Session: ", session);
+
 
   useEffect(() => {
     setIsClient(true); // mark that we are on the client
