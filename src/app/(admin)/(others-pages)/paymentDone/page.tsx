@@ -1,6 +1,10 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+
+import paymentSuccess1 from "@/public/images/payment-success/paymentSuccess1.gif"
+import  Image  from 'next/image';
 
 interface PaymentDetails {
   payment_status: string;
@@ -11,35 +15,38 @@ interface PaymentDetails {
 }
 
 // Properly typed page props for Next.js app router
-interface PaymentDonePageProps {
-  searchParams?: Promise<{
-    success?: string;
-    redirect_status?: string;
-    payment_intent?: string;
-    playerId?: string;
-  }>;
-}
+// interface PaymentDonePageProps {
+//   searchParams?: Promise<{
+//     success?: string;
+//     // redirect_status?: string;
+//     payment_intent?: string;
+//     playerId?: string;
+//   }>;
+// }
 
-export default function PaymentDonePage({ searchParams }: PaymentDonePageProps) {
+
+function PaymentDonePage() {
   const router = useRouter();
-  const [params, setParams] = useState<{
-    success?: string;
-    redirect_status?: string;
-    payment_intent?: string;
-    playerId?: string;
-  }>({});
+
   
-  useEffect(() => {
-    if (searchParams) {
-      searchParams.then(setParams);
-    }
-  }, [searchParams]);
-  
-  const { success, redirect_status, payment_intent, playerId } = params;
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [playerId, setPlayerId] = useState<string | null>(null);
+
+    const searchParams = useSearchParams();
+
 
   useEffect(() => {
+
+    const success = searchParams.get('success');
+    const redirect_status = searchParams.get('redirect_status');
+    const payment_intent = searchParams.get('payment_intent');
+    const player_id = searchParams.get('playerId');
+
+    // console.log("Success: ", success);
+    // console.log("Redirect: ", redirect_status);
+    // console.log("Intent: ", payment_intent);
+
     if (success === 'true' || redirect_status === 'succeeded' || payment_intent) {
       setPaymentDetails({
         payment_status: 'succeeded',
@@ -66,11 +73,16 @@ export default function PaymentDonePage({ searchParams }: PaymentDonePageProps) 
           .catch(err => console.error('Fallback API error:', err));
       }
 
+      if(player_id){
+        setPlayerId(player_id)
+      }
+
       return;
     }
-
-    setError('Error: Payment confirmation missing');
-  }, [success, redirect_status, payment_intent]);
+    else{
+      setError('Error: Payment confirmation missing');
+    }
+  }, [searchParams]);
 
   if (error) {
     return (
@@ -91,8 +103,8 @@ export default function PaymentDonePage({ searchParams }: PaymentDonePageProps) 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-100 to-white px-4">
       <div className="w-full max-w-md space-y-6 rounded-2xl border border-green-200 bg-white p-8 text-center shadow-lg sm:p-12">
-        <img
-          src="/images/paymenrSuccess1.gif"
+        <Image
+          src={paymentSuccess1}
           alt="Payment Success"
           className="mx-auto h-40 w-40"
         />
@@ -110,5 +122,13 @@ export default function PaymentDonePage({ searchParams }: PaymentDonePageProps) 
         </button>
       </div>
     </div>
+  );
+}
+
+export default function Wait() {
+  return (
+    <Suspense fallback={<div id="loading">Loading...</div>}>
+      <PaymentDonePage />
+    </Suspense>
   );
 }

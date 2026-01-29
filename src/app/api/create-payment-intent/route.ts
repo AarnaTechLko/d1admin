@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe.server';
 import { db } from '@/lib/db';
-import { payments, coachearnings, discount_coupon } from '@/lib/schema';
+import { payments, coachearnings, discount_coupon, admin_payment_logs } from '@/lib/schema';
 import { eq, sql } from 'drizzle-orm';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/Auth';
+import { PaymentStatus } from '@/app/types/types';
 
 async function getCouponDiscount(couponId: number): Promise<number> {
   const coupon = await db
@@ -15,11 +18,22 @@ async function getCouponDiscount(couponId: number): Promise<number> {
 
 export async function POST(req: NextRequest) {
   try {
-    const { amount, captureMethod, evaluationId, coachId, playerId, paymentId, couponId } = await req.json();
+    const { amount, captureMethod, evaluationId, coachId, playerId, paymentId, couponId, internalRemark } = await req.json();
+
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user.id) {
+      throw new Error('Token To Session User is not authorized');
+    }
+
     const stripe = getStripe();
 
     if (!stripe) {
       return NextResponse.json({ error: 'Stripe not initialized' }, { status: 500 });
+    }
+
+    if (!internalRemark) {
+      return NextResponse.json({ error: 'Internal Remarks are required' }, { status: 400 });
     }
 
     // Check if PaymentIntent already exists for this payment
@@ -89,6 +103,13 @@ export async function POST(req: NextRequest) {
         })
         .where(eq(coachearnings.evaluation_id, evaluationId));
     }
+
+    await db.insert(admin_payment_logs).values({
+      payment_id: paymentId,
+      admin_id: Number(session.user.id),
+      action_reason: internalRemark,
+      action_type: PaymentStatus.AUTHORIZED
+    })
 
     return NextResponse.json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {

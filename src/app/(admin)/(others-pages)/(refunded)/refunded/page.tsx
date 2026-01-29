@@ -7,6 +7,7 @@ import React, { useEffect, useState } from "react";
 import PaymentsTable from "@/components/tables/PaymentsTable";
 // import Swal from "sweetalert2";
 import { Payment, PaymentStatus } from '@/app/types/types';
+import PaymentActionLog from "@/components/PaymentActionLog";
 
 
 // interface Payment {
@@ -32,6 +33,10 @@ const RefundedPaymentsPage = () => {
   // const [partialAmount, setPartialAmount] = useState<number>(0);
   // const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
+  // const [selectedComment, setSelectedComment] = useState<string>("");
+  const [commentModal, setCommentModal] = useState(false);
+  const [paymentId, setPaymentId] = useState<number>(0);
+
   // Fetch refunded payments
   useEffect(() => {
     const fetchData = async () => {
@@ -56,6 +61,16 @@ const RefundedPaymentsPage = () => {
     // setRefundDialog(true);
   // };
 
+    const closeAdminLogs = () => {
+      setCommentModal(false);
+    };
+
+    const openCommentModal = (payment_id: number) => {
+      console.log("payment_id", payment_id);
+      setCommentModal(true);
+      setPaymentId(payment_id);  
+    }
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Refunded Payments</h1>
@@ -64,9 +79,17 @@ const RefundedPaymentsPage = () => {
       <PaymentsTable
         data={data}
         // onRefundClick={openRefundDialog} // optional, can disable if refunded payments are non-refundable
+        onCommentClick={openCommentModal}
         loading={loading}
         paymentStatus={PaymentStatus.REFUNDED}
       />
+
+      <PaymentActionLog
+        payment_id={paymentId}
+        commentModal={commentModal}
+        onClose={closeAdminLogs}
+      />
+
 
       {/* Refund Dialog (optional for refunded payments) */}
       {/* <Dialog open={refundDialog} onOpenChange={setRefundDialog}>

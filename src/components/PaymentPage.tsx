@@ -8,6 +8,9 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
+import Input from "@/components/form/input/InputField";
+
+
 
 import Swal from "sweetalert2";
 
@@ -54,6 +57,8 @@ function CheckoutForm({
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [finalAmount, setFinalAmount] = useState(currentAmount);
+  const [internalRemark, setInternalRemark] = useState<string>('');
+
 
   // Set coupon code if coupon is already applied
   useEffect(() => {
@@ -146,6 +151,7 @@ function CheckoutForm({
           coachId,
           playerId,
           paymentId,
+          internalRemark,
           couponId: couponData?.id || null,
         }),
       });
@@ -153,8 +159,8 @@ function CheckoutForm({
       const { clientSecret } = await response.json();
 
       const returnUrl = couponData
-        ? `${window.location.origin}/paymentDone?success=true&couponId=${couponData.id}&playerId=${playerId}`
-        : `${window.location.origin}/paymentDone?success=true&playerId=${playerId}`;
+        ? `${window.location.origin}/paymentDone?success=true&couponId=${couponData.id}&playerId=${playerId}&redirect_status=succeeded`
+        : `${window.location.origin}/paymentDone?success=true&playerId=${playerId}&redirect_status=succeeded`;
 
       const { error } = await stripe.confirmPayment({
         elements,
@@ -268,12 +274,21 @@ function CheckoutForm({
             },
           }}
         />
+
+        <div className='mt-6'>
+        <Input
+            type="textarea"
+            placeholder={`Write your internal comment here...`}
+            value={internalRemark}
+            onChange={(e) => setInternalRemark(e.target.value)}
+          />
+        </div>
       </div>
 
       {/* Submit Button */}
       <button
         type="submit"
-        disabled={!stripe || isProcessing}
+        disabled={!stripe || isProcessing || !internalRemark}
         className="w-full rounded-lg bg-blue-500 py-3 font-medium text-white hover:bg-blue-600 disabled:opacity-50"
       >
         {isProcessing ? 'Processing...' : 'Submit Payment'}

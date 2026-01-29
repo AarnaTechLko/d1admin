@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
+import { signIn } from 'next-auth/react';
 import Button from "@/components/ui/button/Button";
 import { Eye, EyeOff } from "lucide-react"; // Lucide React icons
 import React, { useState } from "react";
@@ -65,6 +66,18 @@ export default function SignInForm() {
 
       console.log("Username: ", data.username);
       console.log("Image: ", data.image);
+
+      //Starts the authentication flow using nextAuth and creates a session if it succeeds
+      const response = await signIn('credentials', {
+        redirect: false,
+        email: formData.email,
+        password: formData.password,
+      });
+
+
+      if (!response || !response.ok) {
+        throw new Error("Authentication failed. Please try again.");
+      }
 
       if (!data.image){
         router.push("/profileimage");

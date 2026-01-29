@@ -15,18 +15,15 @@ export async function GET() {
         coachImage: coaches.image,
         evalId: payments.evaluation_id,
         amount: payments.amount,
-        // processed_amount: coachearnings.commision_amount,
         status: payments.status,
         created_at: payments.created_at,
       })
       .from(payments)
       .leftJoin(users, eq(payments.player_id, users.id))
       .leftJoin(coaches, eq(payments.coach_id, coaches.id))
-      // .innerJoin(coachearnings, eq(coachearnings.coach_id, coaches.id))
-      .where(eq(payments.status, PaymentStatus.CAPTURED))
+      .where(eq(payments.status, PaymentStatus.RELEASED))
       .orderBy(desc(payments.created_at)); // ✅ fetch only captured payments
 
-    console.log("Captured Payments:", result);
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching payments:", error);

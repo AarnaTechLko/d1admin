@@ -15,6 +15,7 @@ import { PaymentStatus } from '@/app/types/types';
 import { COMMISSIONPERCENTAGE } from '@/lib/constants';
 import { getStripe } from '@/lib/stripe.server';
 import { sendEmail } from '@/lib/email-service';
+// import axios from "axios";
 
 interface update {
     status: string;
@@ -241,6 +242,21 @@ export async function POST(req: NextRequest) {
       if (coachData.length > 0 && playerData.length > 0) {
         const coach = coachData[0];
         const player = playerData[0];
+
+
+        // const mailmessage =  `<p>Dear ${player.first_name}, </p> <p>You have sent an Evaluation Request to ${coach.firstName}.</p><p>${coach.firstName} can view your full profile details and has 24 hours to Accept or Decline the request, or the request will be voided.</p><p>During this time, within the Evaluation Tracker in your Dashboard, you may also cancel the request for a full refund.</p>`
+
+        // await axios.post(`http://localhost:3000/api/geolocation/player`, {
+        //         type: "player",
+        //         targetIds: [player.id],
+        //         message: mailmessage,
+        //         subject: "D1 Notes: Evaluation Request Received from ${player.first_name}",
+        //         methods: {
+        //         email: true,
+        //         sms: false,
+        //         internal: false,
+        //         },
+        //     });
 
         // Create chat and message
         const chatFriend = {

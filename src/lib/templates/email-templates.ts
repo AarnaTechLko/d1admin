@@ -497,7 +497,7 @@ export const BASE_TEMPLATE = `
               <td style="padding: 24px 40px; font-family: Helvetica, Arial, sans-serif; color: #333333; font-size: 16px; line-height: 1.5;">
                 {{content}}
 
-                 <p>Regards,<br/>The D1 Notes Team</p>
+                 <p>Regards,<br/>D1 Notes Team</p>
               </td>
             </tr>
             <tr>
