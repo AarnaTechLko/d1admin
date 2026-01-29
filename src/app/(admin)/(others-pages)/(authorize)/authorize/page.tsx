@@ -7,6 +7,7 @@ import Input from "@/components/form/input/InputField";
 import PaymentsTable from "@/components/tables/PaymentsTable";
 import Swal from "sweetalert2";
 import { Payment, PaymentStatus } from '@/app/types/types';
+import PaymentActionLog from "@/components/PaymentActionLog";
 
 // interface Payment { 
 //   firstName: string; 
@@ -32,7 +33,8 @@ const CapturedPaymentsPage = () => {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [remark, setRemarks] = useState<string>('');
   const [internalRemark, setInternalRemark] = useState<string>('');
-
+  const [paymentId, setPaymentId] = useState<number>(0);
+  const [commentModal, setCommentModal] = useState(false);
   // Fetch payments
   useEffect(() => {
     const fetchData = async () => {
@@ -57,15 +59,31 @@ const CapturedPaymentsPage = () => {
     setRefundDialog(true);
   };
 
+  const openCommentModal = (payment_id: number) => {
+    setCommentModal(true);
+    setPaymentId(payment_id);  
+  }
+
+  const closeAdminLogs = () => {
+    setCommentModal(false);
+  };
+
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Authorize Payments</h1>
+      <h1 className="text-2xl font-bold mb-4">Authorized Payments</h1>
 
       <PaymentsTable
         data={data}
         onRefundClick={openRefundDialog}
+        onCommentClick={openCommentModal}
         loading={loading} // pass loading prop
         paymentStatus={PaymentStatus.AUTHORIZED}
+      />
+
+      <PaymentActionLog
+        payment_id={paymentId}
+        commentModal={commentModal}
+        onClose={closeAdminLogs}
       />
 
       {/* Refund Dialog */}
@@ -134,6 +152,8 @@ const CapturedPaymentsPage = () => {
                   setRefundDialog(false);
                   // setRefundType(null);
                   // setPartialAmount(0);
+                  setRemarks("");
+                  setInternalRemark("");
                   setSelectedPayment(null);
                 }}
               >
@@ -142,20 +162,7 @@ const CapturedPaymentsPage = () => {
 
               <Button
                 onClick={async () => {
-                  // if (!refundType) return;
 
-                  // const amountToRefund = partialAmount;
-
-                  // if (!amountToRefund || amountToRefund <= 0 || amountToRefund > Number(selectedPayment?.amount || 0)) {
-                  //   Swal.fire({
-                  //     icon: "error",
-                  //     title: "Invalid Amount",
-                  //     text: "Enter a valid refund amount.",
-                  //   });
-                  //   return;
-                  // }
-
-  // const { evaluation_id, remark } = await req.json();
 
                   const refundData = {
                     remark: remark,
@@ -178,6 +185,7 @@ const CapturedPaymentsPage = () => {
                       // setPartialAmount(0);
                       setSelectedPayment(null);
                       setRemarks("");
+                      setInternalRemark("");
                       throw new Error(data.error || "Failed to cancel payment");
                     }
 
@@ -193,7 +201,7 @@ const CapturedPaymentsPage = () => {
                     // setPartialAmount(0);
                     setSelectedPayment(null);
                     setRemarks("");
-
+                    setInternalRemark("");
 
                     // Optionally refresh payments list
                     setLoading(true);

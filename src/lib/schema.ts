@@ -388,10 +388,6 @@ export const payments = pgTable(
     waive_off: boolean('waive_off').default(false),
     // funds_available_at: timestamp('funds_available_at'),
     discount: numeric('discount', { precision: 5, scale: 2 }).default('0'),
-    action_type: varchar("action_type"),
-    action_reason: text("action_reason"),
-    action_by_admin_id: integer("action_by_admin_id").references( () => admin.id),
-    date_of_action: timestamp("date_of_action", { withTimezone: true }).defaultNow().notNull(),
     coupon_code_id: integer('coupon_code_id'),
     is_deleted: integer("is_deleted").default(1).notNull(),
   },
@@ -401,6 +397,15 @@ export const payments = pgTable(
     };
   }
 );
+
+export const admin_payment_logs = pgTable('admin_payment_logs', {
+  id: serial('id').primaryKey(),
+  payment_id: integer("payment_id").notNull().references(() => payments.id),
+  admin_id: integer("admin_id").notNull().references(() => admin.id),
+  action_reason: text("action_reason").notNull(),
+  action_type: varchar("action_type", {length: 50}).notNull(),
+  created_at: timestamp("created_at", {withTimezone:true}).defaultNow().notNull(),
+})
 
 export const sessions = pgTable('sessions', {
   id: serial('id').primaryKey(),

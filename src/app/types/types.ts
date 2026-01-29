@@ -265,8 +265,19 @@ export interface Payment {
   updated_at: string;
   coachId?: number;
   playerId?: number;
+  processed_amount?: number;
+  refund_id?: number;
 }
 
+
+export interface AdminLogs{
+  id: number;
+  admin_name: string;
+  comment: string;
+  action_reason: string;
+  action_type: string;
+  created_at: string;
+}
 
 
 export interface Props {
@@ -285,6 +296,7 @@ declare module "@react-jvectormap/core" {
   }
 }
 
+//Used to help us with retrieving and storing different types of data
 export enum PaymentStatus {
   AUTHORIZED = 'Authorized',
   CAPTURED = 'Captured',

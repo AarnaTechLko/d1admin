@@ -215,12 +215,12 @@ export default function PlayerDetailPage() {
     const [sendInternal, setSendInternal] = useState(false);
     const [refundDialog, setRefundDialog] = useState(false);
     const [refundType, setRefundType] = useState<"full" | "partial" | null>(null);
-    const [partialAmount, setPartialAmount] = useState<number>(0);
+    const [partialAmount, setPartialAmount] = useState<string>("");
     const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
     const [authorizeDialog, setAuthorizeDialog] = useState<boolean>(false);
     // const [retryDialog, setRetryDialog] = useState<boolean>(false);
     const [remark, setRemarks] = useState<string>('');
-
+    const [internalRemark, setInternalRemark] = useState<string>('');
 
     useEffect(() => {
         if (selectedPlayerid) {
@@ -343,7 +343,7 @@ export default function PlayerDetailPage() {
         else if(payment.status === PaymentStatus.CAPTURED){
             setRefundDialog(true);
             setRefundType(null);
-            setPartialAmount(0);
+            setPartialAmount("");
         }
     };
 
@@ -1101,6 +1101,13 @@ export default function PlayerDetailPage() {
                                             onChange={(e) => setRemarks(e.target.value)}
                                         />
 
+                                        <Input
+                                            type="textarea"
+                                            placeholder={`Write your internal comment here...`}
+                                            value={internalRemark}
+                                            onChange={(e) => setInternalRemark(e.target.value)}
+                                        />
+
 
                                         {/* Action Buttons */}
                                         <div className="flex justify-end gap-2 mt-4">
@@ -1109,6 +1116,7 @@ export default function PlayerDetailPage() {
                                             onClick={() => {
                                             setAuthorizeDialog(false);
                                             setRemarks("");
+                                            setInternalRemark("");
                                             }}
                                         >
                                             Cancel
@@ -1120,6 +1128,7 @@ export default function PlayerDetailPage() {
 
                                             const refundData = {
                                                 remark: remark,
+                                                internalRemark,
                                                 evaluation_id: selectedPayment?.evaluation_id,
                                             };
 
@@ -1135,6 +1144,7 @@ export default function PlayerDetailPage() {
                                                 if (!res.ok) {
                                                     setAuthorizeDialog(false);
                                                     setRemarks("");
+                                                    setInternalRemark("");
                                                     throw new Error(data.error || "Failed to cancel payment");
                                                 }
 
@@ -1147,7 +1157,7 @@ export default function PlayerDetailPage() {
                                                 // Reset dialog
                                                 setAuthorizeDialog(false);
                                                 setRemarks("");
-
+                                                setInternalRemark("");
                                                 // Optionally refresh payments list
                                                 setLoading(true);
                                                 const refreshed = await fetch("/api/authorize");
@@ -1164,7 +1174,7 @@ export default function PlayerDetailPage() {
                                                 });
                                             }
                                             }}
-                                            disabled={!remark}
+                                            disabled={!remark || !internalRemark}
                                         >
                                             Submit
                                         </Button>
@@ -1188,7 +1198,7 @@ export default function PlayerDetailPage() {
                                                     checked={refundType === "full"}
                                                     onChange={() => {
                                                         setRefundType("full");
-                                                        setPartialAmount(Number(selectedPayment?.amount || 0)); // Auto-fill full amount
+                                                        setPartialAmount(String(selectedPayment?.amount || "")); // Auto-fill full amount
                                                     }}
                                                 />
                                                 Full Refund
@@ -1199,7 +1209,7 @@ export default function PlayerDetailPage() {
                                                     checked={refundType === "partial"}
                                                     onChange={() => {
                                                         setRefundType("partial");
-                                                        setPartialAmount(0); // Reset partial amount
+                                                        setPartialAmount(""); // Reset partial amount
                                                     }}
                                                 />
                                                 Partial Refund
@@ -1208,23 +1218,38 @@ export default function PlayerDetailPage() {
                                             {/* Amount Input */}
                                             {(refundType === "partial" || refundType === "full") && (
                                                 <Input
-                                                    type="number"
+                                                    type="text"
+                                                    inputMode="numeric"
                                                     placeholder={`Enter refund amount (max $${Number(selectedPayment?.amount || 0).toFixed(2)})`}
-                                                    value={partialAmount ? partialAmount.toString() : ""}
+                                                    value={partialAmount ? partialAmount : ""}
                                                     onChange={(e) => {
-                                                        const value = e.target.value;
+                                                    const value = e.target.value;
 
-                                                        if (/^\d*$/.test(value) && Math.min(Number(value), Number(selectedPayment?.amount || 0))) {
+                                                    if (value === ""){
+                                                        setPartialAmount("");
+                                                        return;
+                                                    }
+
+                                                    if (!/^\d*(\.\d{0,2})?$/.test(value)){
+                                                        return;
+                                                    }
+
+                                                    const userInput = Number(value);
+                                                    const maxAmount = Number(selectedPayment?.amount || 0);
+
+                                                    if (userInput <= maxAmount) {
                                                         // Allow only whole numbers
-                                                        setPartialAmount(Number(value));
-                                                        }
+                                                        setPartialAmount(value);
+                                                    }
                                                     }}
+                                                    // min="0"
+                                                    // max={Number(selectedPayment?.amount || 0).toString()}
                                                     disabled={refundType === "full"}
                                                 />
                                             )}
 
                                             <label className="flex items-center gap-2">
-                                                Write your comment
+                                                Write your comments
                                             </label>
 
                                             <Input
@@ -1232,6 +1257,13 @@ export default function PlayerDetailPage() {
                                                 placeholder={`Write your comment here...`}
                                                 value={remark}
                                                 onChange={(e) => setRemarks(e.target.value)}
+                                            />
+
+                                            <Input
+                                                type="textarea"
+                                                placeholder={`Write your internal comment here...`}
+                                                value={internalRemark}
+                                                onChange={(e) => setInternalRemark(e.target.value)}
                                             />
 
 
@@ -1242,9 +1274,10 @@ export default function PlayerDetailPage() {
                                                     onClick={() => {
                                                         setRefundDialog(false);
                                                         setRefundType(null);
-                                                        setPartialAmount(0);
+                                                        setPartialAmount("");
                                                         setSelectedPayment(null);
                                                         setRemarks('');
+                                                        setInternalRemark("");
                                                     }}
                                                 >
                                                     Cancel
@@ -1254,7 +1287,7 @@ export default function PlayerDetailPage() {
                                                     onClick={async () => {
                                                         if (!refundType || !selectedPayment) return;
 
-                                                        const amountToRefund = partialAmount;
+                                                        const amountToRefund = Number(partialAmount);
 
                                                         if (
                                                             !amountToRefund ||
@@ -1277,6 +1310,7 @@ export default function PlayerDetailPage() {
                                                             refund_by: "Admin",
                                                             evaluation_id: selectedPayment?.evaluation_id,
                                                             remark,
+                                                            internalRemark,
                                                         };
 
                                                         try {
@@ -1290,9 +1324,10 @@ export default function PlayerDetailPage() {
                                                             if (!res.ok) {
                                                             setRefundDialog(false);
                                                             setRefundType(null);
-                                                            setPartialAmount(0);
+                                                            setPartialAmount("");
                                                             setSelectedPayment(null);
                                                             setRemarks('');
+                                                            setInternalRemark("");
                                                             throw new Error(data.error || "Failed to cancel payment");
                                                             };
 
@@ -1317,10 +1352,10 @@ export default function PlayerDetailPage() {
                                                             // Reset dialog state
                                                             setRefundDialog(false);
                                                             setRefundType(null);
-                                                            setPartialAmount(0);
+                                                            setPartialAmount("");
                                                             setSelectedPayment(null);
                                                             setRemarks('');
-
+                                                            setInternalRemark("");
                                                         } catch (err) {
                                                            console.error(err);
                                                             Swal.fire({
@@ -1330,7 +1365,7 @@ export default function PlayerDetailPage() {
                                                             });
                                                         }
                                                     }}
-                                                    disabled={!refundType || !partialAmount || !remark}
+                                                    disabled={!refundType || !partialAmount || !remark || !internalRemark}
                                                 >
                                                     Submit
                                                 </Button>

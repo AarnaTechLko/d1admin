@@ -33,6 +33,7 @@ interface PaymentsTableProps {
   data: Payment[];
   itemsPerPage?: number;
   onRefundClick?: (payment: Payment) => void;
+  onCommentClick?: (payment_id: number) => void;
   loading?: boolean; // ✅ Add this line
   paymentStatus: PaymentStatus;
 }
@@ -41,6 +42,7 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
   data,
   itemsPerPage = 10,
   onRefundClick,
+  onCommentClick,
   loading = false, // default false
   paymentStatus,
 }) => {
@@ -64,15 +66,25 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
       const matchesSearch =
         item.playerName?.toLowerCase().includes(searchLower) ||
         item.coachName?.toLowerCase().includes(searchLower) ||
-        item.status?.toLowerCase().includes(searchLower) ||
+        // item.status?.toLowerCase().includes(searchLower) ||
         item.amount.toString().includes(searchLower);
 
       if (!matchesSearch) return false;
 
+      //If the user inputted a date
       if (filterDate) {
-        const createdAt = new Date(item.created_at);
-        const filterDt = new Date(filterDate);
-        return createdAt.toDateString() === filterDt.toDateString();
+
+        //Converts both dates to UTC time since created_at is a timestamp without a timezone
+        const createdAt = dayjs(item.created_at, "YYYY-MM-DD HH:mm:ss.SSSSSS").toDate();
+        const filterDt = dayjs(filterDate, "YYYY-MM-DD HH:mm:ss.SSSSSS").toDate();
+
+        //If both the filtered date and the date of the payments are the same then we return true
+        if(createdAt.getFullYear() === filterDt.getFullYear() && createdAt.getMonth() === filterDt.getMonth() && createdAt.getDate() === filterDt.getDate()){
+          return true;
+        }
+        else{
+          return false;
+        }
       }
 
       return true;
@@ -92,7 +104,7 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
       {/* Search + Date Filter */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <Input
-          placeholder="Search by player, coach, status, amount..."
+          placeholder="Search by player, coach, amount..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="md:w-full border rounded-lg"
@@ -116,16 +128,13 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
               <TableCell className="font-semibold text-gray-700">Eval</TableCell>
               <TableCell className="font-semibold text-gray-700">Amount</TableCell>
               <TableCell className="font-semibold text-gray-700">Status</TableCell>
-              {(paymentStatus !== PaymentStatus.REFUNDED && paymentStatus !== PaymentStatus.CANCELLED && paymentStatus !== PaymentStatus.FAILED) && (   
+              {(paymentStatus !== PaymentStatus.REFUNDED && paymentStatus !== PaymentStatus.CANCELLED && paymentStatus !== PaymentStatus.RELEASED && paymentStatus !== PaymentStatus.FAILED) && (   
                 <TableCell className="font-semibold text-gray-700">
-                  {/* {paymentStatus === PaymentStatus.FAILED ? "Retry" : "Refund"} */}
-                  Refund
+                  {paymentStatus === PaymentStatus.PENDING ? "Retry" : "Refund"}
                 </TableCell>
               )}
+              <TableCell className="font-semibold text-gray-700">Comments</TableCell>
               <TableCell className="font-semibold text-gray-700">Created At</TableCell>
-              {(paymentStatus === PaymentStatus.REFUNDED || paymentStatus === PaymentStatus.CANCELLED) && (
-                <TableCell className="font-semibold text-gray-700">Comments</TableCell>
-              )}
 
             </TableRow>
           </TableHeader>
@@ -142,7 +151,7 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
               </TableRow>
             ) : paginated.length > 0 ? (
               paginated.map((item, index) => (
-                <TableRow key={item.id} className="hover:bg-gray-50 transition-colors duration-200">
+                <TableRow key={item.refund_id ? `${item.id}-${item.refund_id}` : item.id} className="hover:bg-gray-50 transition-colors duration-200">
                   <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
 
                   {/* Player Info */}
@@ -214,13 +223,13 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
                           : "bg-gray-100 text-gray-700"
                       }`}
                     >
-                      {item.status}
+                      {item.status === PaymentStatus.RELEASED ? "Free" : item.status}
                     </span>
                   </TableCell>
 
                   {/* Refund Button */}
 
-                  {(paymentStatus !== PaymentStatus.REFUNDED && paymentStatus !== PaymentStatus.CANCELLED && paymentStatus !== PaymentStatus.FAILED) && (
+                  {(paymentStatus !== PaymentStatus.REFUNDED && paymentStatus !== PaymentStatus.CANCELLED && paymentStatus !== PaymentStatus.FAILED && paymentStatus !== PaymentStatus.RELEASED) && (
                     <TableCell>
                       {onRefundClick && (
                         <Button
@@ -229,25 +238,34 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
                           className={`${
                             item.status === PaymentStatus.REFUNDED
                               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                              : item.status === PaymentStatus.FAILED ? "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-900" : "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-900"
+                              : (item.status === PaymentStatus.FAILED || item.status === PaymentStatus.PENDING) ? "bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-900" : "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-900"
                           } shadow-sm rounded-lg px-3 py-1 text-xs`}
                           onClick={() => onRefundClick(item)}
                         >
-                          {/* {item.status === PaymentStatus.FAILED ? 'Retry' : 'Refund'} */}
-                          Refund
+                          {item.status === PaymentStatus.PENDING ? 'Retry' : 'Refund'}
                         </Button>
                       )}
                     </TableCell>
                   )}
 
+
+                  {/* Admin Logs */}
+
+                  <TableCell> 
+                    {onCommentClick && (
+                      <Button
+                        variant="secondary"
+                        className={`bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-900" shadow-sm rounded-lg px-3 py-1 text-xs`}
+                        onClick={() => onCommentClick(item.id)}
+                      >
+                        {/* {item.status === PaymentStatus.FAILED ? 'Retry' : 'Refund'} */}
+                        See Comment
+                      </Button>
+                    )}
+                  </TableCell>
+
                   {/* Created At */}
                   <TableCell> {dayjs(item.created_at).format("D-MM-YYYY, h:mm A")}</TableCell>
-
-
-                  {(paymentStatus === PaymentStatus.REFUNDED || paymentStatus === PaymentStatus.CANCELLED) && (
-                    <TableCell> {dayjs(item.created_at).format("D-MM-YYYY, h:mm A")}</TableCell>
-                  )}
-
                 </TableRow>
               ))
             ) : (
