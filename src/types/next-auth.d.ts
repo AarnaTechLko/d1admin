@@ -46,7 +46,7 @@ declare module 'next-auth' {
       type: string;
       role: string;
       username: string;
-      email?: string | null;
+      email?: string | null;  
       image?: string | null;
       package_id?: string | null;
       club_id?: string | null;
