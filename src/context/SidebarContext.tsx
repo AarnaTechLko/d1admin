@@ -52,7 +52,7 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!mobile) {
         setIsMobileOpen(false);
       }
-    };
+    }; 
 
     handleResize();
     window.addEventListener("resize", handleResize);
