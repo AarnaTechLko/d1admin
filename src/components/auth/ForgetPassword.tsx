@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }; 
 
   return (
     <div className="flex flex-col flex-1 mt-5 w-full">

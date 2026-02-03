@@ -7,7 +7,7 @@ import Image from "next/image";
 import d1 from "@/public/images/signin/d1.png";
 
 export default function ResetPassword() {
-  const router = useRouter();
+  const router = useRouter();  
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
