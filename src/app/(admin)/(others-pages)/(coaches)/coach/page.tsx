@@ -10,43 +10,42 @@ const CoachesPage = () => {
   useRoleGuard();
 
   const [coaches, setCoaches] = useState<Coach[]>([]);
-  const [crowned, setCrowned] = useState<boolean>(false); // single checkbox
+  const [crowned, setCrowned] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sport, setSport] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [sport, setSport] = useState("");
 
-  // Fetch coaches from API
-  // Fetch coaches from API with crowned filter
-useEffect(() => {
-  const fetchCoaches = async () => {
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    const fetchCoaches = async () => {
+      setLoading(true);
+      setError(null);
 
-    try {
-      const response = await fetch(
-        `/api/coach?search=${searchQuery}&page=${currentPage}&limit=10&sport=${sport}&crowned=${crowned ? 1 : 0}`
-      );
+      try {
+        const response = await fetch(
+          `/api/coach?search=${encodeURIComponent(
+            searchQuery
+          )}&page=${currentPage}&limit=10&sport=${encodeURIComponent(
+            sport
+          )}&crowned=${crowned ? 1 : 0}`
+        );
 
-      if (!response.ok) throw new Error("Failed to fetch data");
+        if (!response.ok) throw new Error("Failed to fetch data");
 
-      const data = await response.json();
-      console.log ("coachdatasdsad",data);
-    setCoaches(data.coaches ?? []);
-      setTotalPages(data.totalPages);
+        const data = await response.json();
+        setCoaches(data.coaches ?? []);
+        setTotalPages(data.totalPages);
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchCoaches();
-}, [searchQuery, currentPage, sport, crowned]);
-
+    fetchCoaches();
+  }, [searchQuery, currentPage, sport, crowned]);
 
 
   return (

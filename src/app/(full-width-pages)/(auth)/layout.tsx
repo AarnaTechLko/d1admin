@@ -5,7 +5,7 @@ import d1 from "@/public/images/signin/d1.png";
 import Image from "next/image";
 // import Link from "next/link";
 import React from "react";
-
+ 
 export default function AuthLayout({
   children,
 }: {
@@ -21,7 +21,6 @@ export default function AuthLayout({
           <Image
             src={d1}
             alt="Background"
-         
             objectFit="cover" // Ensures it covers without distortion
             priority // Optimizes loading
           />

@@ -322,18 +322,18 @@ const TeamsPage = () => {
                     <TableCell className="py-4 sm:px-1 text-start">
                       <div className="flex
                       items-center gap-3 ">
-                          <Image
-                            src={
-                              !team.logo || team.logo === "null"
-                                ? "/images/signin/d1.png"
-                                : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${team.logo}`
-                            }
-                            // src={team.logo}
-                            alt={team.team_name}
-                            className=" rounded-full"
-                            width={40}
-                            height={40}
-                          />
+                        <Image
+                          src={
+                            !team.logo || team.logo === "null"
+                              ? "/images/signin/d1.png"
+                              : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${team.logo}`
+                          }
+                          // src={team.logo}
+                          alt={team.team_name}
+                          className=" rounded-full"
+                          width={40}
+                          height={40}
+                        />
                         <div >
                           <span className="block font-medium text-gray-800 dark:text-white/90">{team.team_name}</span>
                         </div>

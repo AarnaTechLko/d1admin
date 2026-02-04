@@ -10,6 +10,19 @@ console.log('roles data:',role);
   const allowedRoutes = roleBasedAccess[role] || [];
   const path = url.pathname;
 
+   const publicRoutes = [
+    "/signin",
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
+    "/unauthorized",
+  ];
+
+  // Allow public routes
+  if (publicRoutes.some(route => path.startsWith(route))) {
+    return NextResponse.next();
+  }
+
   if (!allowedRoutes.includes(path)) {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
