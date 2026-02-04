@@ -1,3 +1,74 @@
+// "use client";
+// import React, { useState, useEffect } from "react";
+// import PageBreadcrumb from "@/components/common/PageBreadCrumb";
+// import CoachTable from "@/components/tables/CoachTable";
+// import { Coach } from "@/app/types/types";
+// import { useRoleGuard } from "@/hooks/useRoleGaurd";
+
+// const CoachesPage = () => {
+//   useRoleGuard();
+
+//   const [searchQuery, setSearchQuery] = useState("");
+//   const [coaches, setCoaches] = useState<Coach[]>([]);
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const [totalPages, setTotalPages] = useState(1);
+//   const [loading, setLoading] = useState<boolean>(true);
+//   const [error, setError] = useState<string | null>(null);
+
+//   useEffect(() => {
+//     const fetchCoaches = async () => {
+//       setLoading(true);
+//       setError(null);
+//       try {
+//       const response = await fetch(
+//   `/api/coach/declinecoach?search=${encodeURIComponent(searchQuery)}&page=${currentPage}&limit=10`
+// );
+
+
+//         if (!response.ok) throw new Error("Failed to fetch coaches");
+
+//         const data = await response.json();
+//         console.log("all coaches data:", data);
+//         setCoaches(data.coaches);
+//         setTotalPages(data.totalPages);
+//       } catch (err) {
+//         setError((err as Error).message);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchCoaches();
+//   }, [searchQuery, currentPage]);
+
+//   return (
+//     <div>
+//       <PageBreadcrumb pageTitle="Coaches" onSearch={setSearchQuery} />
+
+//       {loading && (
+//         <div className="flex items-center justify-center gap-4 py-5">
+//           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+//           Loading...
+//         </div>
+//       )}
+
+//       {error && <p className="text-center py-5 text-red-500">{error}</p>}
+
+//       {!loading && !error && (
+//         <CoachTable
+//           data={coaches}
+//           currentPage={currentPage}
+//           totalPages={totalPages}
+//           setCurrentPage={setCurrentPage}
+//         />
+//       )}
+//     </div>
+//   );
+// };
+
+// export default CoachesPage;
+
+
 "use client";
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
@@ -15,35 +86,40 @@ const CoachesPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchCoaches = async () => {
-      setLoading(true);
-      setError(null);
-      try {
+  const fetchCoaches = async (page: number, search: string) => {
+    setLoading(true);
+    setError(null);
+    try {
       const response = await fetch(
-  `/api/coach/declinecoach?search=${encodeURIComponent(searchQuery)}&page=${currentPage}&limit=10`
-);
+        `/api/coach/declinecoach?search=${encodeURIComponent(search)}&page=${page}&limit=10`
+      );
 
+      if (!response.ok) throw new Error("Failed to fetch coaches");
 
-        if (!response.ok) throw new Error("Failed to fetch coaches");
+      const data = await response.json();
+      setCoaches(data.coaches);
+      setTotalPages(data.totalPages);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        const data = await response.json();
-        console.log("all coaches data:", data);
-        setCoaches(data.coaches);
-        setTotalPages(data.totalPages);
-      } catch (err) {
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Fetch coaches whenever searchQuery or currentPage changes
+  useEffect(() => {
+    fetchCoaches(currentPage, searchQuery);
+  }, [currentPage, searchQuery]);
 
-    fetchCoaches();
-  }, [searchQuery, currentPage]);
+  // When user types in search
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1); // reset page on new search
+  };
 
   return (
-    <div>
-      <PageBreadcrumb pageTitle="Coaches" onSearch={setSearchQuery} />
+    <div className="p-4">
+      <PageBreadcrumb pageTitle="Coaches" onSearch={handleSearch} />
 
       {loading && (
         <div className="flex items-center justify-center gap-4 py-5">

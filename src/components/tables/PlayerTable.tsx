@@ -26,7 +26,7 @@ interface Player {
   id: string;
   createdAt: number;
   updated_at: number;
-  first_name: string;
+  first_name: string; 
   rank?: number | null;
   last_name: string;
   image: string;
