@@ -76,13 +76,13 @@ export async function sendEmail({
     }
 
     // Build the unsubscribe link
-    const unsubscribeLink = `https://d1notes.com/api/unsubscribe?email=${encodeURIComponent(
-      recipient,
-    )}&token=${token}`;
+    // const unsubscribeLink = `https://d1notes.com/api/unsubscribe?email=${encodeURIComponent(
+    //   recipient,
+    // )}&token=${token}`;
 
     // Inject {{content}} and {{unsubscribe_link}} into BASE_TEMPLATE
-    let fullHtml = BASE_TEMPLATE.replace('{{content}}', html || text || '');
-    fullHtml = fullHtml.replace('{{unsubscribe_link}}', unsubscribeLink);
+    const fullHtml = BASE_TEMPLATE.replace('{{content}}', html || text || '');
+    // fullHtml = fullHtml.replace('{{unsubscribe_link}}', unsubscribeLink);
 
     // Prepare SES params: one ToAddress at a time
     const params = {

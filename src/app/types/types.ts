@@ -197,7 +197,7 @@ export interface Ticket {
   assign_to: number;
   assign_to_username: string;
   createdAt: string;
-  updated_at: string;
+  updated_at?: string;
   status: string;
   assignee_name: string;
   ticket_from: string;
@@ -237,19 +237,47 @@ export interface Category {
   attributes: Attribute[] | null;
 }
 
+// export interface Payment {
+//   id: number;
+//   coach_id: number;
+//   evaluation_id: number;
+//   review_title: string;
+//   playerFirstName: string;
+//   amount: number;
+//   status: string;
+//   description: string;
+//   created_at: string;
+//   is_deleted: number;
+// }
+
 export interface Payment {
+  firstName: string;
+  lastName: string;
   id: number;
-  coach_id: number;
-  evaluation_id: number;
-  review_title: string;
-  playerFirstName: string;
-  amount: number;
-  status: string;
-  description: string;
+  playerName: string;
+  playerImage: string;
+  coachName: string;
+  coachImage: string;
+  evalId: number;
+  amount: number | string;
+  status: PaymentStatus;
   created_at: string;
-  is_deleted: number;
+  updated_at: string;
+  coachId?: number;
+  playerId?: number;
+  processed_amount?: number;
+  refund_id?: number;
 }
 
+
+export interface AdminLogs{
+  id: number;
+  admin_name: string;
+  comment: string;
+  action_reason: string;
+  action_type: string;
+  created_at: string;
+}
 
 
 export interface Props {
@@ -268,3 +296,18 @@ declare module "@react-jvectormap/core" {
   }
 }
 
+//Used to help us with retrieving and storing different types of data
+export enum PaymentStatus {
+  AUTHORIZED = 'Authorized',
+  CAPTURED = 'Captured',
+  REFUNDED = 'Refunded',
+  PENDING = 'Pending',
+  FAILED = 'Failed',
+  CANCELLED = 'Cancelled',
+  FREE = 'Free',
+  RELEASED = 'Released',
+  PAID = 'Paid',
+  PAYOUT_IN_PROGRESS = 'Payout in Progress',
+  EVAL_IN_PROGRESS = 'Evaluation in Progress',
+  EVAL_CREATED = 'Evaluation Created',
+}

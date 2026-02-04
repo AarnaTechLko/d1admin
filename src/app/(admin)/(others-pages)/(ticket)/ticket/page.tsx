@@ -192,6 +192,7 @@ const TicketsPage = () => {
     } catch (error) {
       console.error("Error fetching replies:", error);
       setTicketReplies([]);
+      setIsReplyModalOpen(false);
       Swal.fire("Error", "Could not load ticket messages.", "error");
     }
   };
@@ -315,12 +316,13 @@ const TicketsPage = () => {
       setIsEscalate(false);
       setAdminNotes("");
       setSelectedSubAdmin("");
-      setIsReplyModalOpen(false);
+      // setIsReplyModalOpen(false);
     } catch (error) {
       console.error("Error submitting ticket reply:", error);
       Swal.fire("Error", "An unexpected error occurred while sending reply.", "error");
     } finally {
       setLoading(false);
+      setIsReplyModalOpen(false);
     }
   };
 
@@ -741,8 +743,8 @@ const TicketsPage = () => {
 
                       <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                         <div className="text-gray-500 dark:text-gray-400">
-                          <div>{dayjs(ticket.updated_at).format("D-MM-YYYY")}</div>
-                          <div>{dayjs(ticket.updated_at).format("h:mm A")}</div>
+                          <div>{dayjs(ticket.updated_at ? ticket.updated_at : ticket.createdAt).format("D-MM-YYYY")}</div>
+                          <div>{dayjs(ticket.updated_at ? ticket.updated_at : ticket.createdAt).format("h:mm A")}</div>
                         </div>
                       </TableCell>
                     </TableRow>

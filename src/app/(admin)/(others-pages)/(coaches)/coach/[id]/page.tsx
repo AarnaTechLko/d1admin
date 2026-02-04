@@ -279,12 +279,12 @@ export default function CoachDetailsPage() {
     }
   };
 
-  const handleRefundClick = (payment: Payment) => {
-    setSelectedPayment(payment);
-    setRefundDialog(true);
-    setRefundType(null);
-    setPartialAmount(0);
-  };
+  // const handleRefundClick = (payment: Payment) => {
+  //   setSelectedPayment(payment);
+  //   setRefundDialog(true);
+  //   setRefundType(null);
+  //   setPartialAmount(0);
+  // };
 
   const handleUnverify = async () => {
     if (!coach?.id) return;
@@ -1093,10 +1093,10 @@ export default function CoachDetailsPage() {
 
                     <td className="px-4 py-3">
                       <span
-                        className={`px-2 py-1 text-xs rounded-full font-medium text-white ${ev.status === 2 ? "bg-green-500" : "bg-gray-400"
+                        className={`px-2 py-1 text-xs rounded-full font-medium text-white ${ev.status === 2 ? "bg-green-500" : ev.status === 3 ? "bg-red-500" : "bg-yellow-500"
                           }`}
                       >
-                        {ev.status === 2 ? "Completed" : "Pending"}
+                        {ev.status === 2 ? "Completed" : ev.status === 3 ? "Cancelled" : "Pending"}
                       </span>
                     </td>
 
@@ -1399,7 +1399,7 @@ export default function CoachDetailsPage() {
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Description</th>
                       <th className="px-4 py-3">Created At</th>
-                      <th className="px-4 py-3">Action</th>
+                      {/* <th className="px-4 py-3">Action</th> */}
                     </tr>
                   </thead>
 
@@ -1421,7 +1421,7 @@ export default function CoachDetailsPage() {
 
                         {/* ✅ ACTION COLUMN */}
                           {/* Refund Button */}
-                          <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
+                          {/* <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
                             <Button
                               variant="outline"
                               disabled={p.status === "refunded"}
@@ -1434,7 +1434,7 @@ export default function CoachDetailsPage() {
                             >
                               {p.status === "refunded" ? "Refunded" : "Refund"}
                             </Button>
-                          </td>
+                          </td> */}
 
                       </tr>
                     ))}

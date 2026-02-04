@@ -25,7 +25,7 @@ import {
   UserCheck,
   Users,
 } from "lucide-react";
-import { FaTrophy, FaWallet } from "react-icons/fa";
+import { FaTrophy } from "react-icons/fa";
 // import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
@@ -179,14 +179,14 @@ const AppSidebar: React.FC = () => {
 
             ],
           },
-          {
-            name: "Accounting",
-            icon: <FaWallet />,
-            subItems: [
-              { name: "Add Category", path: "/category", pro: false },
-              { name: "Add Expense", path: "/expense", pro: false },
-            ],
-          },
+          // {
+          //   name: "Accounting",
+          //   icon: <FaWallet />,
+          //   subItems: [
+          //     { name: "Add Category", path: "/category", pro: false },
+          //     { name: "Add Expense", path: "/expense", pro: false },
+          //   ],
+          // },
            {
             name: "Ranking",
             icon: <FaTrophy />,
@@ -201,8 +201,10 @@ const AppSidebar: React.FC = () => {
             subItems: [
               { name: " Refunded", path: "/refunded", pro: false },
               { name: " Captured", path: "/captured", pro: false },
-              { name: "Authorize", path: "/authorize", pro: false },
-              { name: "Canceled", path: "/canceled", pro: false },
+              { name: "Authorized", path: "/authorize", pro: false },
+              { name: "Pending", path: "/pending", pro: false},
+              { name: "Free", path: "/released", pro: false},
+              { name: "Cancelled", path: "/canceled", pro: false },
               { name: "Failed", path: "/failed", pro: false },
             ],
           },
@@ -253,6 +255,20 @@ const AppSidebar: React.FC = () => {
               { name: "View Ticket", path: "/ticket", pro: false },
               { name: "Create Ticket", path: "/createticket", pro: false },
 
+              ],
+            },
+
+            {
+              name: "Payment",
+              icon: <FaTrophy />,
+              subItems: [
+                { name: " Refunded", path: "/refunded", pro: false },
+                { name: " Captured", path: "/captured", pro: false },
+                { name: "Authorized", path: "/authorize", pro: false },
+                { name: "Pending", path: "/pending", pro: false},
+                { name: "Free", path: "/released", pro: false},
+                { name: "Cancelled", path: "/canceled", pro: false },
+                { name: "Failed", path: "/failed", pro: false },
               ],
             },
 
@@ -330,6 +346,19 @@ const AppSidebar: React.FC = () => {
                 { name: "Assign Ticket", path: "/assignticket", pro: false },
                 { name: "View Ticket", path: "/ticket", pro: false },
                 { name: "Create Ticket", path: "/createticket", pro: false },
+                ],
+              },
+              {
+                name: "Payment",
+                icon: <FaTrophy />,
+                subItems: [
+                  { name: " Refunded", path: "/refunded", pro: false },
+                  { name: " Captured", path: "/captured", pro: false },
+                  { name: "Authorized", path: "/authorize", pro: false },
+                  { name: "Pending", path: "/pending", pro: false},
+                  { name: "Free", path: "/released", pro: false},
+                  { name: "Cancelled", path: "/canceled", pro: false },
+                  { name: "Failed", path: "/failed", pro: false },
                 ],
               },
               {

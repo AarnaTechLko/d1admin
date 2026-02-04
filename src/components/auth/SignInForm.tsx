@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
+import { signIn } from 'next-auth/react';
 import Button from "@/components/ui/button/Button";
 import { Eye, EyeOff } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
@@ -62,7 +63,22 @@ export default function SignInForm() {
       sessionStorage.setItem("view_finance", data.view_finance);
       sessionStorage.setItem("access_ticket", data.access_ticket);
 
-      if (!data.image) {
+      console.log("Username: ", data.username);
+      console.log("Image: ", data.image);
+
+      //Starts the authentication flow using nextAuth and creates a session if it succeeds
+      const response = await signIn('credentials', {
+        redirect: false,
+        email: formData.email,
+        password: formData.password,
+      });
+
+
+      if (!response || !response.ok) {
+        throw new Error("Authentication failed. Please try again.");
+      }
+
+      if (!data.image){
         router.push("/profileimage");
         return;
       }
