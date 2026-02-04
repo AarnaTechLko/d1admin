@@ -192,7 +192,7 @@ export async function PATCH(req: NextRequest) {
     <p>Reason: "${remark}"</p> `;
 
 
-    await axios.post(`https://staging-superadmin.d1notes.com/api/geolocation/player`, {
+    await axios.post(`https://superadmin.d1notes.com/api/geolocation/player`, {
             type: "player",
             targetIds: [playerEmail[0].id],
             message: mailmessage,
@@ -204,7 +204,7 @@ export async function PATCH(req: NextRequest) {
             },
         });
 
-    await axios.post(`https://staging-superadmin.d1notes.com/api/geolocation/coach`, {
+    await axios.post(`https://superadmin.d1notes.com/api/geolocation/coach`, {
             type: "coach",
             targetIds: [coachEmail[0].id],
             message: coachmailmessage,

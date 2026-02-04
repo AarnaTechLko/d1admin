@@ -1058,7 +1058,7 @@ export default function PlayerDetailPage() {
                                                         >
                                                             Refund
                                                         </Button>              
-                                                    : (p.status === PaymentStatus.PENDING || p.status === PaymentStatus.FAILED) ?
+                                                    : (p.status === PaymentStatus.PENDING) ?
                                                         <Button
                                                             variant="outline"
                                                             className={`shadow-sm rounded-lg px-3 py-1 text-xs bg-gray-50 hover:bg-green-100 text-green-600 hover:text-green-900`}
@@ -1158,11 +1158,19 @@ export default function PlayerDetailPage() {
                                                 setAuthorizeDialog(false);
                                                 setRemarks("");
                                                 setInternalRemark("");
-                                                // Optionally refresh payments list
                                                 setLoading(true);
-                                                const refreshed = await fetch("/api/authorize");
-                                                const jsonRefreshed = await refreshed.json();
-                                                setData(Array.isArray(jsonRefreshed) ? jsonRefreshed : jsonRefreshed.data || []);
+                                                setData((prev) => {
+                                                    if (!prev) return prev;
+
+                                                    return {
+                                                        ...prev,
+                                                        payments: prev.payments.map((p) =>
+                                                            p.evaluation_id === selectedPayment?.evaluation_id
+                                                                ? { ...p, status: PaymentStatus.CANCELLED }
+                                                                : p
+                                                        ),
+                                                    };
+                                                });
                                                 setLoading(false);
 
                                             } catch (err) {
