@@ -1,5 +1,5 @@
 
-
+import { sql } from 'drizzle-orm';
 import {
   pgTable,
   serial,
@@ -15,7 +15,8 @@ import {
   foreignKey,
   json,
   numeric,
-  bigint
+  bigint,
+  unique
 } from "drizzle-orm/pg-core";
 // 
 // import { number } from "zod";
@@ -26,6 +27,7 @@ export const users = pgTable(
   "users",
   {
     id: serial("id").primaryKey(),
+    blockedCoachIds: text('blockedCoachIds'),
     first_name: varchar("first_name"),
     last_name: varchar("last_name"),
     grade_level: varchar("grade_level"),
@@ -82,7 +84,10 @@ export const users = pgTable(
     suspend_days: integer("suspend_days"),
     suspend_start_date: date("suspend_start_date"),
     suspend_end_date: date("suspend_end_date"),
-
+    diamond: integer('diamond').default(0),
+    foot: text('foot'),
+    sport_attributes: json('sport_attributes'),
+    is_under_16: boolean('is_under_16').default(false),
   },
   (users) => {
     return {
@@ -110,6 +115,7 @@ export const coaches = pgTable(
     location: varchar("location"),
     sport: integer('sport').references(() => sports.id),
     clubName: varchar("clubName"),
+    title: varchar('title'),
     qualifications: text("qualifications"),
     expectedCharge: decimal("expectedCharge", { precision: 10, scale: 2 }), // Decimal type with precision and scale
     image: text("image"),
@@ -147,12 +153,23 @@ export const coaches = pgTable(
     blocked_time: timestamp('blocked_time'),
     no_of_attempts: integer('no_of_attempts').default(0),
     stripe_acount_id: text('stripe_acount_id'),
+    stripe_payouts_enabled: boolean('stripe_payouts_enabled').default(false),
+    stripe_details_submitted: boolean('stripe_details_submitted').default(
+      false,
+    ),
     approved_or_denied: integer('approved_or_denied').default(0),
     tiktok: text('tiktok'),
     suspend: integer("suspend").default(1).notNull(),
     suspend_days: integer("suspend_days"),
     suspend_start_date: date("suspend_start_date"),
     suspend_end_date: date("suspend_end_date"),
+    verified: integer('verified').default(0),
+    percentage: numeric('percentage'),
+    coach_level: text('coach_level').notNull(),
+    highschool_compliance: boolean('highschool_compliance').default(true),
+    eighth_grade_compliance: boolean('eighth_grade_compliance').default(true),
+    feature_in_carousel: boolean('feature_in_carousel').default(false),
+    grade_compliance: integer('grade_compliance').array().notNull().default(sql`'{}'::text[]`)
   },
   (coaches) => {
     return {
@@ -160,6 +177,40 @@ export const coaches = pgTable(
     };
   }
 );
+
+export const player_under_coaches = pgTable('player_under_coaches', {
+  id: serial('id').primaryKey(),
+  player_id: integer('player_id').references(() => users.id),
+  coach_id: integer('coach_id')
+    .notNull()
+    .references(() => coaches.id),
+  email: text('email').notNull(),
+  coach_team_id: integer('coach_team_id').references(() => coach_teams.id),
+  invitation_link: text('invitation_link').notNull(),
+  invitation_status: integer('invitation_status').notNull().default(1), // 1=Sent, 2=Joined, 3=Expired, 4=Removed
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+export const coach_teams = pgTable('coach_teams', {
+  id: serial('id').primaryKey(),
+  sport: integer('sport').references(() => sports.id),
+  coach_id: integer('coach_id').references(() => coaches.id),
+  team_name: text('team_name').notNull(),
+  gender: text('gender').notNull(),
+  age_group: text('age_group'),
+  birth_year: text('birth_year'),
+  league: text('league'),
+  logo: text('logo'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  graduation_year: integer('graduation_year'),
+});
+
+export const players_under_coach_teams = pgTable('players_under_coach_teams', {
+  id: serial('id').primaryKey(),
+  team_id: integer('team_id').references(() => coach_teams.id),
+  player_id: integer('player_id').references(() => users.id),
+});
 
 export const review = pgTable(
   'review',
@@ -250,10 +301,21 @@ export const playerEvaluation = pgTable(
     percentage:text('percentage'),
     rejectremarks: text("rejectremarks"),
     updated_at: timestamp("updated_at").defaultNow().notNull(),
+    last_updated_by_id: integer('last_updated_by_id'),
     is_deleted: integer("is_deleted").default(1).notNull(),
     review_status: integer("review_status").default(1).notNull(),
     pdf_filename: text('pdf_filename'),
-  }
+    is_highlight: boolean('is_highlight').default(false),
+  },
+  table => ({
+    playerStatusUpdatedIdx: uniqueIndex(
+      'player_evaluation_player_status_updated_idx',
+    ).on(table.player_id, table.status, table.updated_at),
+    coachStatusUpdatedIdx: uniqueIndex(
+      'player_evaluation_coach_status_updated_idx',
+    ).on(table.coach_id, table.status, table.updated_at),
+  }),
+
 );
 
 
@@ -276,6 +338,8 @@ export const coachearnings = pgTable(
     created_at: timestamp("created_at").defaultNow().notNull(),
     updated_at: timestamp("updated_at").defaultNow().notNull(),
     is_deleted: integer("is_deleted").default(1).notNull(),
+    stripe_transfer_id: text('stripe_transfer_id'),
+    funds_available_at: timestamp('funds_available_at'),
   }
 );
 
@@ -289,6 +353,17 @@ export const coachaccount=pgTable("coachaccount",
   }
 )
 
+export const discount_coupon = pgTable('discount_coupon', {
+  id: serial('id').primaryKey(),
+  coach_id: integer('coach_id').references(() => coaches.id),
+  name: varchar('name', { length: 255 }).notNull(),
+  discount: numeric('discount', { precision: 5, scale: 2 }).notNull(),
+  count: integer('count').default(0),
+  marked_delete: boolean('marked_delete').default(false),
+  date_created: timestamp('date_created').defaultNow(),
+  isActive: boolean('isActive').default(true),
+});
+
 // Payments table
 export const payments = pgTable(
   "payments",
@@ -298,11 +373,18 @@ export const payments = pgTable(
     coach_id: integer("coach_id").notNull(),
     evaluation_id: integer("evaluation_id").notNull(),
     amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+    original_amount: decimal('original_amount', { precision: 10, scale: 2 }),
     status: varchar("status"),
     currency: varchar("currency"),
     payment_info: text("payment_info"),
     created_at: timestamp("created_at").defaultNow().notNull(),
     description: text("description"),
+    intent_id: text('intent_id'),
+    charge_id: text('charge_id'),
+    waive_off: boolean('waive_off').default(false),
+    // funds_available_at: timestamp('funds_available_at'),
+    discount: numeric('discount', { precision: 5, scale: 2 }).default('0'),
+    coupon_code_id: integer('coupon_code_id'),
     is_deleted: integer("is_deleted").default(1).notNull(),
   },
   (payments) => {
@@ -328,17 +410,6 @@ export const evaluationResults = pgTable('evaluation_results', {
   finalRemarks: text('finalRemarks'),           // Long text for final remarks
   coach_input: json('coach_input'),
   eval_average: numeric('eval_average'),
-  // physicalRemarks: text('physicalRemarks'),     // Long text for physical remarks
-  // tacticalRemarks: text('tacticalRemarks'),     // Long text for tactical remarks
-  // technicalRemarks: text('technicalRemarks'), 
-  // organizationalRemarks: text('organizationalRemarks'), 
-  // distributionRemarks: text('distributionRemarks'), 
-  //     // Long text for tactical remarks
-  // physicalScores: text('physicalScores').notNull(), // JSON field for physical scores
-  // tacticalScores: text('tacticalScores').notNull(), // JSON field for tactical scores
-  // technicalScores: text('technicalScores').notNull(), 
-  // distributionScores: text('distributionScores'), 
-  // organizationScores: text('organizationScores'), 
   document:text('document'),
   position:text('position'),
   sport:text('sport'),
@@ -513,7 +584,7 @@ export const invitations = pgTable("invitations", {
   mobile: text("mobile"),
   invitation_link:text("invitation_link"),
  
-  status: text("status"),
+  status: text('invitation_status').notNull(), // Sent, Joined, Expired, Removed
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
@@ -682,6 +753,7 @@ export const admin_message = pgTable("admin_message", {
 
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
+  type: varchar('type', { length: 50 }),
 });
 
 export const suspendlog = pgTable('suspendlog', {
@@ -693,6 +765,49 @@ export const suspendlog = pgTable('suspendlog', {
   created_at: timestamp('created_at').defaultNow(),
 });
 
+export const player_sports_attributes = pgTable('player_sports_attributes', {
+  id: serial('id').primaryKey(),
+  sport_id: integer('sport_id').references(() => sports.id),
+  name: varchar('name', { length: 50 }).notNull(),
+  marked_false: boolean('marked_false').default(false),
+  display_order: integer('display_order').notNull(),
+});
+
+export const user_positions = pgTable(
+  'user_positions',
+  {
+    id: serial('id').primaryKey(),
+    user_id: integer('user_id').references(() => users.id),
+    position_id: integer('position_id').references(() => player_positions.id),
+  },
+  t => [
+    // unique().on(t.user_id, t.position_id),
+    unique('user_positions_unique').on(t.user_id, t.position_id),
+  ],
+);
+
+export const user_sports = pgTable(
+  'user_sports',
+  {
+    id: serial('id').primaryKey(),
+    user_id: integer('user_id').references(() => users.id),
+    sport_id: integer('sport_id').references(() => sports.id),
+    experience: text('experience'),
+    league: text('league'),
+    team_name: varchar('team_name'),
+    age_group: text('age_group'),
+    birth_year: text('birth_year'),
+    image: text('image'),
+    grade_level: varchar('grade_level'),
+    jersey: varchar('jersey'),
+    dominant: json('dominant'),
+  },
+  t => [
+    // unique().on(t.user_id, t.position_id),
+    unique('user_sport_unique').on(t.user_id, t.sport_id),
+  ],
+);
+
 export const ticket = pgTable("ticket", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -703,7 +818,9 @@ export const ticket = pgTable("ticket", {
   status: varchar("status").default("Pending"),
   role: varchar("role"),
   message: text("message").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  priority: varchar('priority', { length: 20 }).default('Medium'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  escalate: boolean('escalate').default(false),
 });
 
 export const ticket_messages = pgTable("ticket_messages", {
@@ -714,6 +831,7 @@ export const ticket_messages = pgTable("ticket_messages", {
   status: varchar("status").default("Pending"),
   createdAt: timestamp("created_at").defaultNow(),
   filename: text('file_name'),
+  priority: varchar('priority', { length: 20 }).default('Medium'),
 });
 
 
@@ -722,7 +840,7 @@ export const userOrgStatus = pgTable("userOrgStatus",{
 	org_user_id:integer("org_user_id"),
 	enterprise_id:integer("enterprise_id").references(() => enterprises.id),
 	status:text("status").default("Pending").notNull(),
-	role:text("text")
+	role:text("role")
 })
 
 export const emailVerifications = pgTable('email_verifications', {
@@ -822,6 +940,15 @@ export const positions = pgTable('positions', {
   is_removed: boolean('is_removed').default(false),
 });
 
+export const player_positions = pgTable('player_positions', {
+  id: serial('id').primaryKey(),
+  sport_id: integer('sport_id').references(() => sports.id),
+  name: varchar('name', { length: 50 }).notNull(),
+  display_order: integer('display_order').notNull(),
+  is_removed: boolean('is_removed').default(false),
+  type: varchar('type', { length: 50 }).notNull(),
+});
+
 export const categories = pgTable('categories', {
   id: serial('id').primaryKey(),
   position_id: integer('position_id').references(() => positions.id),
@@ -840,6 +967,47 @@ export const categories_attributes = pgTable('categories_attributes', {
   is_removed: boolean('is_removed').default(false),
 });
 
+export const verified = pgTable('verified', {
+  id: serial('id').primaryKey(), // auto-increment ID
+  userId: integer('user_id').notNull(), // the player/coach/user being verified
+  verifiedBy: integer('verified_by').notNull(), // admin who verified
+  isVerified: boolean('is_verified').notNull().default(false), // status
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(), // verification date
+});
+
+export const user_consents = pgTable('user_consents', {
+  id: serial('id').primaryKey(),
+  user_id: integer('user_id').notNull(),
+  user_type: varchar('user_type', { length: 10 }).notNull(), // 'player' or 'coach' - needed to know which table user_id references
+  terms_conditions: boolean('terms_conditions').default(false),
+  marketing_text: boolean('marketing_text').default(false),
+  account_text: boolean('account_text').default(false),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const user_consent_log = pgTable('user_consent_log', {
+  id: serial('id').primaryKey(),
+  user_id: integer('user_id').notNull(),
+  user_type: varchar('user_type', { length: 10 }).notNull(),
+  consent_type: varchar('consent_type', { length: 20 }).notNull(), // 'terms_conditions', 'marketing_text', 'account_text'
+  action: varchar('action', { length: 10 }).notNull(), // 'granted' or 'revoked'
+  ip_address: varchar('ip_address', { length: 45 }),
+  user_agent: text('user_agent'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const ranking = pgTable('ranking', {
+  id: serial('id').primaryKey(),
+  player_id: integer('player_id').notNull(),
+  added_by: integer('added_by').notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+  rank: integer('rank'),
+  count: integer('count').default(1),
+  sport_id: integer('sport_id').references(() => sports.id),
+});
 
 export const ip_logs = pgTable("ip_logs", {
   id: serial("id").primaryKey(),
@@ -887,3 +1055,23 @@ export const role = pgTable("role", {
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
+
+export const tabLastSeen = pgTable(
+  'tab_last_seen',
+  {
+    id: serial('id').primaryKey(),
+    user_id: integer('user_id').notNull(),
+    role: varchar('role', { length: 10 }).notNull(),
+    tab: varchar('tab', { length: 20 }).notNull(),
+    last_seen_at: timestamp('last_seen_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  table => ({
+    uniqueUserRoleTab: uniqueIndex('tab_last_seen_user_role_tab_idx').on(
+      table.user_id,
+      table.role,
+      table.tab,
+    ),
+  }),
+);

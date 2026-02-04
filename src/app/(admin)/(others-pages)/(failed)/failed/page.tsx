@@ -1,34 +1,38 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import Input from "@/components/form/input/InputField";
+// import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+// import { Button } from "@/components/ui/button";
+// import Input from "@/components/form/input/InputField";
 import PaymentsTable from "@/components/tables/PaymentsTable";
-import Swal from "sweetalert2";
+// import Swal from "sweetalert2";
+import { Payment, PaymentStatus } from '@/app/types/types';
+import PaymentActionLog from "@/components/PaymentActionLog";
 
-interface Payment {
-  firstName: string;
-  lastName: string;
-  id: number;
-  playerName: string;
-  playerImage: string;
-  coachName: string;
-  coachImage: string;
-  evalId: number;
-  amount: number | string;
-  status: "captured" | "authorized" | "canceled" | "failed" | "refunded";
-  created_at: string;
-  updated_at: string;
-}
+// interface Payment {
+//   firstName: string;
+//   lastName: string;
+//   id: number;
+//   playerName: string;
+//   playerImage: string;
+//   coachName: string;
+//   coachImage: string;
+//   evalId: number;
+//   amount: number | string;
+//   status: "captured" | "authorized" | "canceled" | "failed" | "refunded";
+//   created_at: string;
+//   updated_at: string;
+// }
 
 const CapturedPaymentsPage = () => {
   const [data, setData] = useState<Payment[]>([]);
   const [loading, setLoading] = useState<boolean>(true); // ✅ loading state
-  const [refundDialog, setRefundDialog] = useState(false);
-  const [refundType, setRefundType] = useState<"full" | "partial" | null>(null);
-  const [partialAmount, setPartialAmount] = useState<number>(0);
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  // const [refundDialog, setRefundDialog] = useState(false);
+  // const [refundType, setRefundType] = useState<"full" | "partial" | null>(null);
+  // const [partialAmount, setPartialAmount] = useState<number>(0);
+  // const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [commentModal, setCommentModal] = useState(false);
+  const [paymentId, setPaymentId] = useState<number>(0);
 
   // Fetch payments
   useEffect(() => {
@@ -49,10 +53,74 @@ const CapturedPaymentsPage = () => {
     fetchData();
   }, []);
 
-  const openRefundDialog = (payment: Payment) => {
-    setSelectedPayment(payment);
-    setRefundDialog(true);
+  const closeAdminLogs = () => {
+    setCommentModal(false);
   };
+
+  const openCommentModal = (payment_id: number) => {
+    console.log("payment_id", payment_id);
+    setCommentModal(true);
+    setPaymentId(payment_id);  
+  }
+
+
+    // const handleRetryClick = (payment: Payment) => {
+    //     handleRepayment(payment);
+    // };
+  
+
+  // const handleRepayment = async (item: Payment) => {
+  //   // console.log('Made it');
+
+  //   try {
+  //     const res = await fetch('/api/repayment', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         request: {
+  //           amount: item.amount,
+  //           playerId: item.playerId,
+  //           coachId: item.coachId,
+  //           paymentId: item.id,
+  //           evaluationId: item.evalId,
+  //         },
+  //       }),
+  //     });
+  //     // console.log(res, 'res101>>');
+  //     if (res.ok) {
+  //       const data = await res.json();
+
+  //       if (data.status === 'success') {
+  //         // Old session was already completed - show success
+  //         await Swal.fire({
+  //           title: 'Payment Already Completed!',
+  //           text: 'Your payment was already processed successfully.',
+  //           icon: 'success',
+  //           confirmButtonText: 'OK',
+  //         });
+  //         window.location.href = '/dashboard';
+  //       } else if (data.status === 'pending' && data.redirectUrl) {
+  //         // New session created - redirect to payment
+  //         window.location.href = data.redirectUrl;
+  //       }
+  //     } else {
+  //       Swal.fire({
+  //         title: 'Error!',
+  //         text: 'Something went wrong during repayment.',
+  //         icon: 'error',
+  //         confirmButtonText: 'OK',
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.log(error, 'Error >>>>');
+  //   }
+  // };
+
+  // const openRefundDialog = (payment: Payment) => {
+  //   handleRepayment(payment);
+  // };
 
   return (
     <div className="p-6">
@@ -61,19 +129,27 @@ const CapturedPaymentsPage = () => {
       {/* Payments Table with loading state */}
       <PaymentsTable
         data={data}
-        onRefundClick={openRefundDialog}
+        // onRefundClick={handleRetryClick}
+        onCommentClick={openCommentModal}
         loading={loading} // pass loading prop
+        paymentStatus={PaymentStatus.FAILED}
+      />
+
+      <PaymentActionLog
+        payment_id={paymentId}
+        commentModal={commentModal}
+        onClose={closeAdminLogs}
       />
 
       {/* Refund Dialog */}
-      <Dialog open={refundDialog} onOpenChange={setRefundDialog}>
+      {/* <Dialog open={refundDialog} onOpenChange={setRefundDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Refund Payment</DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-col gap-4 mt-2">
-            {/* Refund Type Selection */}
+          <div className="flex flex-col gap-4 mt-2"> */}
+            {/* Refund Type Selection
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -98,7 +174,7 @@ const CapturedPaymentsPage = () => {
             </label>
 
             {/* Amount Input */}
-            {(refundType === "partial" || refundType === "full") && (
+            {/* {(refundType === "partial" || refundType === "full") && (
               <Input
                 type="number"
                 placeholder={`Enter refund amount (max $${Number(selectedPayment?.amount || 0).toFixed(2)})`}
@@ -107,10 +183,10 @@ const CapturedPaymentsPage = () => {
                 min={(0).toString()}
                 max={Number(selectedPayment?.amount || 0).toString()}
               />
-            )}
+            )} */}
 
             {/* Action Buttons */}
-            <div className="flex justify-end gap-2 mt-4">
+            {/* <div className="flex justify-end gap-2 mt-4">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -182,7 +258,7 @@ const CapturedPaymentsPage = () => {
             </div>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog>  */}
     </div>
   );
 };

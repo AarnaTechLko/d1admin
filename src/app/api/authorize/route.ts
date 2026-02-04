@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { payments, users, coaches } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
+import { PaymentStatus } from '@/app/types/types';
 
 export async function GET() {
   try {
@@ -20,7 +21,8 @@ export async function GET() {
       .from(payments)
       .leftJoin(users, eq(payments.player_id, users.id))
       .leftJoin(coaches, eq(payments.coach_id, coaches.id))
-      .where(eq(payments.status, "Authorized")); // ✅ fetch only captured payments
+      .where(eq(payments.status, PaymentStatus.AUTHORIZED))
+      .orderBy(desc(payments.created_at)); // ✅ fetch only captured payments
 
     // console.log("Captured Payments:", result);
     return NextResponse.json(result);

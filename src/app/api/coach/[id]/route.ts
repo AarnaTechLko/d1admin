@@ -15,7 +15,7 @@ import {
   review,
   sports,
 } from '@/lib/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, desc } from 'drizzle-orm';
 
 export async function GET(
   req: NextRequest,
@@ -128,6 +128,7 @@ export async function GET(
       .from(playerEvaluation)
       .leftJoin(users, eq(users.id, playerEvaluation.player_id))
       .leftJoin(coaches, eq(coaches.id, playerEvaluation.coach_id))
+      .orderBy(desc(playerEvaluation.created_at))
       .where(
         and(
           eq(playerEvaluation.coach_id, coachId),
@@ -151,6 +152,7 @@ export async function GET(
       .from(review)
       .leftJoin(users, eq(users.id, review.player_id))
       .leftJoin(coaches, eq(coaches.id, coachId))
+      .orderBy(desc(review.createdAt))
       .where(eq(review.coach_id, coachId))
 
 
@@ -176,6 +178,7 @@ export async function GET(
         .from(payments)
         .leftJoin(users, eq(users.id, payments.player_id))
         .leftJoin(playerEvaluation, eq(playerEvaluation.id, payments.evaluation_id))
+        .orderBy(desc(payments.created_at))
         .where(
           and(
             eq(payments.coach_id, coachId),
