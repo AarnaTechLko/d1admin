@@ -217,10 +217,10 @@ export async function POST(req: NextRequest) {
     
     <p>Reason: "${remark}"</p>
 
-    <p>It will take approximately 5-10 buisness days before the amount will return to your bank account and that you will not be refunded any processing fees.</p>`;
+    <p>It will take approximately 5-10 buisness days before the amount will return to your bank account less any processing fees.</p>`;
 
 
-    await axios.post(`https://staging-superadmin.d1notes.com/api/geolocation/player`, {
+    await axios.post(`https://superadmin.d1notes.com/api/geolocation/player`, {
             type: "player",
             targetIds: [playerEmail[0].id],
             message: mailmessage,

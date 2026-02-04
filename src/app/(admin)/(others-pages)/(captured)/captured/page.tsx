@@ -277,7 +277,7 @@ const CapturedPaymentsPage = () => {
                     });
                   }
                 }}
-                disabled={!refundType && !remark && !internalRemark}
+                disabled={!refundType || !remark || !internalRemark}
               >
                 Submit
               </Button>
