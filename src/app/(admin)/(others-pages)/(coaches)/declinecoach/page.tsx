@@ -85,13 +85,18 @@ const CoachesPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [crowned, setCrowned] = useState<boolean>(false);
+  const [sport, setSport] = useState("");
 
   const fetchCoaches = async (page: number, search: string) => {
     setLoading(true);
     setError(null);
+
     try {
       const response = await fetch(
-        `/api/coach/declinecoach?search=${encodeURIComponent(search)}&page=${page}&limit=10`
+        `/api/coach/declinecoach?search=${encodeURIComponent(search)}&sport=${encodeURIComponent(
+          sport
+        )}&page=${page}&limit=10&crowned=${crowned ? 1 : 0}`
       );
 
       if (!response.ok) throw new Error("Failed to fetch coaches");
@@ -106,20 +111,30 @@ const CoachesPage = () => {
     }
   };
 
-  // Fetch coaches whenever searchQuery or currentPage changes
+  // ✅ IMPORTANT FIX
   useEffect(() => {
     fetchCoaches(currentPage, searchQuery);
-  }, [currentPage, searchQuery]);
+  }, [currentPage, searchQuery, sport, crowned]);
 
-  // When user types in search
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setCurrentPage(1); // reset page on new search
+    setCurrentPage(1);
   };
 
   return (
     <div className="p-4">
-      <PageBreadcrumb pageTitle="Coaches" onSearch={handleSearch} />
+      <PageBreadcrumb
+        pageTitle="Coaches"
+        onSearch={handleSearch}
+        onCrowned={(value: string) => {
+          setCrowned(value === "1");
+          setCurrentPage(1);
+        }}
+        onSport={(value: string) => {
+          setSport(value);
+          setCurrentPage(1);
+        }}
+      />
 
       {loading && (
         <div className="flex items-center justify-center gap-4 py-5">

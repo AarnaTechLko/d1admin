@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
-import { signIn } from "next-auth/react";
+import { signIn } from 'next-auth/react';
 import Button from "@/components/ui/button/Button";
 import { Eye, EyeOff } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
@@ -38,35 +38,55 @@ export default function SignInForm() {
     setSuccess(null);
 
     try {
-      // Sign in with NextAuth
-      const res = await signIn("credentials", {
+      const res = await fetch("/api/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Invalid credentials");
+      if (!data.token || !data.user_id) throw new Error("Authentication failed");
+
+      setSuccess("Login successful! Redirecting...");
+
+      // Store session data
+      sessionStorage.setItem("session_token", data.token);
+      sessionStorage.setItem("user_id", data.user_id);
+      sessionStorage.setItem("username", data.username);
+      sessionStorage.setItem("email", data.email);
+      sessionStorage.setItem("role", data.role);
+      sessionStorage.setItem("change_password", data.change_password);
+      sessionStorage.setItem("monitor_activity", data.monitor_activity);
+      sessionStorage.setItem("view_finance", data.view_finance);
+      sessionStorage.setItem("access_ticket", data.access_ticket);
+
+      console.log("Username: ", data.username);
+      console.log("Image: ", data.image);
+
+      //Starts the authentication flow using nextAuth and creates a session if it succeeds
+      const response = await signIn('credentials', {
         redirect: false,
         email: formData.email,
         password: formData.password,
       });
 
-      if (!res || !res.ok) {
-        throw new Error("Invalid email or password");
+
+      if (!response || !response.ok) {
+        throw new Error("Authentication failed. Please try again.");
       }
 
-      // Fetch session after login
-      const sessionRes = await fetch("/api/auth/session");
-      const session = await sessionRes.json();
-
-      if (!session?.user) {
-        throw new Error("Session creation failed");
+      if (!data.image){
+        router.push("/profileimage");
+        return;
       }
 
-      setSuccess("Login successful! Redirecting...");
-
-      // Redirect based on role or profile image
-      // if (!session.user.image) {
-      //   router.push("/profileimage");
-      //   return;
-      // }
+      sessionStorage.setItem("image", data.image);
 
       const redirectPath =
-        session.user.role === "Customer Support" ? "/ticket" : "/dashboard";
+        data.role === "Customer Support" ? "/ticket" : "/dashboard";
 
       router.push(redirectPath);
     } catch (err: unknown) {

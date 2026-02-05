@@ -235,93 +235,208 @@ await db.insert(admin_message).values(messages);
     await db.insert(chats).values(chatData);
 
     // ---------- Send Notifications (Email/SMS) ----------
+    // for (const receiverId of targetIds) {
+    //   const id = Number(receiverId);
+
+    //   if (type === "coach") {
+    //     const coach = await db.query.coaches.findFirst({ where: eq(coaches.id, id) });
+
+    //     // Send Email
+    //     if (methods.email && coach?.email) {
+    //       await sendEmail({
+    //         to: coach.email,
+    //         subject: subject,
+    //         html: `Dear ${coach.firstName},<br/><br/>
+    //                You’ve received a new message from Admin:<br/>
+    //                <blockquote>${message}</blockquote>
+    //                <a href="https://d1notes.com/login">Login</a><br/><br/>`,
+    //         text: message,
+    //       });
+    //     }
+
+    //     // Send SMS
+    //     if (methods.sms && coach?.phoneNumber) {
+    //       const formattedNumber = coach.phoneNumber.startsWith("+")
+    //         ? coach.phoneNumber
+    //         : `+91${coach.phoneNumber.replace(/\D/g, "")}`;
+    //       await twilioClient.messages.create({
+    //         from: TWILIO_PHONE!,
+    //         to: formattedNumber,
+    //         body: `Admin Message: ${message}`,
+    //       });
+    //     }
+    //   }
+
+    //   if (type === "player") {
+    //     const player = await db.query.users.findFirst({ where: eq(users.id, id) });
+
+    //     if (methods.email && player?.email) {
+    //       await sendEmail({
+    //         to: player.email,
+    //         subject: subject,
+    //         html: `Dear ${player.first_name},<br/><br/>
+    //                You’ve received a new message from Admin:<br/>
+    //                <blockquote>${message}</blockquote>
+    //                <a href="https://d1notes.com/login">Login</a><br/><br/>`,
+    //         text: message,
+    //       });
+    //     }
+
+    //     if (methods.sms && player?.number) {
+    //       const formattedNumber = player.number.startsWith("+")
+    //         ? player.number
+    //         : `+91${player.number.replace(/\D/g, "")}`;
+    //       const smsRes = await twilioClient.messages.create({
+    //         from: TWILIO_PHONE!,
+    //         to: formattedNumber,
+    //         body: `Admin Message: ${message}`,
+    //       });
+    //       smsResponses.push(smsRes);
+    //     }
+    //   }
+
+    //   if (type === "organization") {
+    //     const org = await db.query.enterprises.findFirst({ where: eq(enterprises.id, id) });
+
+    //     if (methods.email && org?.email) {
+    //       await sendEmail({
+    //         to: org.email,
+    //         subject: subject,
+    //         html: `Dear ${org.organizationName},<br/><br/>
+    //                You’ve received a new message from Admin:<br/>
+    //                <blockquote>${message}</blockquote>
+    //                <a href="https://d1notes.com/login">Login</a><br/><br/>`,
+    //         text: message,
+    //       });
+    //     }
+
+    //     if (methods.sms && org?.mobileNumber) {
+    //       const formattedNumber = org.mobileNumber.startsWith("+")
+    //         ? org.mobileNumber
+    //         : `+91${org.mobileNumber.replace(/\D/g, "")}`;
+    //       await twilioClient.messages.create({
+    //         from: TWILIO_PHONE!,
+    //         to: formattedNumber,
+    //         body: `Admin Message: ${message}`,
+    //       });
+    //     }
+    //   }
+    // }
+
+
     for (const receiverId of targetIds) {
-      const id = Number(receiverId);
+  try {
+    const id = Number(receiverId);
 
-      if (type === "coach") {
-        const coach = await db.query.coaches.findFirst({ where: eq(coaches.id, id) });
+    /* ================= COACH ================= */
+    if (type === "coach") {
+      const coach = await db.query.coaches.findFirst({
+        where: eq(coaches.id, id),
+      });
 
-        // Send Email
-        if (methods.email && coach?.email) {
-          await sendEmail({
-            to: coach.email,
-            subject: subject,
-            html: `Dear ${coach.firstName},<br/><br/>
-                   You’ve received a new message from Admin:<br/>
-                   <blockquote>${message}</blockquote>
-                   <a href="https://d1notes.com/login">Login</a><br/><br/>`,
-            text: message,
-          });
-        }
-
-        // Send SMS
-        if (methods.sms && coach?.phoneNumber) {
-          const formattedNumber = coach.phoneNumber.startsWith("+")
-            ? coach.phoneNumber
-            : `+91${coach.phoneNumber.replace(/\D/g, "")}`;
-          await twilioClient.messages.create({
-            from: TWILIO_PHONE!,
-            to: formattedNumber,
-            body: `Admin Message: ${message}`,
-          });
-        }
+      // ---- Email ----
+      if (methods.email && coach?.email) {
+        await sendEmail({
+          to: coach.email,
+          subject: subject,
+          html: `Dear ${coach.firstName},<br/><br/>
+                 You’ve received a new message from Admin:<br/>
+                 <blockquote>${message}</blockquote>
+                 <a href="https://d1notes.com/login">Login</a><br/><br/>`,
+          text: message,
+        });
       }
 
-      if (type === "player") {
-        const player = await db.query.users.findFirst({ where: eq(users.id, id) });
+      // ---- SMS ----
+      if (methods.sms && coach?.phoneNumber) {
+        const formattedNumber = coach.phoneNumber.startsWith("+")
+          ? coach.phoneNumber
+          : `+91${coach.phoneNumber.replace(/\D/g, "")}`;
 
-        if (methods.email && player?.email) {
-          await sendEmail({
-            to: player.email,
-            subject: subject,
-            html: `Dear ${player.first_name},<br/><br/>
-                   You’ve received a new message from Admin:<br/>
-                   <blockquote>${message}</blockquote>
-                   <a href="https://d1notes.com/login">Login</a><br/><br/>`,
-            text: message,
-          });
-        }
-
-        if (methods.sms && player?.number) {
-          const formattedNumber = player.number.startsWith("+")
-            ? player.number
-            : `+91${player.number.replace(/\D/g, "")}`;
-          const smsRes = await twilioClient.messages.create({
-            from: TWILIO_PHONE!,
-            to: formattedNumber,
-            body: `Admin Message: ${message}`,
-          });
-          smsResponses.push(smsRes);
-        }
-      }
-
-      if (type === "organization") {
-        const org = await db.query.enterprises.findFirst({ where: eq(enterprises.id, id) });
-
-        if (methods.email && org?.email) {
-          await sendEmail({
-            to: org.email,
-            subject: subject,
-            html: `Dear ${org.organizationName},<br/><br/>
-                   You’ve received a new message from Admin:<br/>
-                   <blockquote>${message}</blockquote>
-                   <a href="https://d1notes.com/login">Login</a><br/><br/>`,
-            text: message,
-          });
-        }
-
-        if (methods.sms && org?.mobileNumber) {
-          const formattedNumber = org.mobileNumber.startsWith("+")
-            ? org.mobileNumber
-            : `+91${org.mobileNumber.replace(/\D/g, "")}`;
-          await twilioClient.messages.create({
-            from: TWILIO_PHONE!,
-            to: formattedNumber,
-            body: `Admin Message: ${message}`,
-          });
-        }
+        await twilioClient.messages.create({
+          from: TWILIO_PHONE!,
+          to: formattedNumber,
+          body: `Admin Message: ${message}`,
+        });
       }
     }
+
+    /* ================= PLAYER ================= */
+    if (type === "player") {
+      const player = await db.query.users.findFirst({
+        where: eq(users.id, id),
+      });
+
+      // ---- Email ----
+      if (methods.email && player?.email) {
+        await sendEmail({
+          to: player.email,
+          subject: subject,
+          html: `Dear ${player.first_name},<br/><br/>
+                 You’ve received a new message from Admin:<br/>
+                 <blockquote>${message}</blockquote>
+                 <a href="https://d1notes.com/login">Login</a><br/><br/>`,
+          text: message,
+        });
+      }
+
+      // ---- SMS ----
+      if (methods.sms && player?.number) {
+        const formattedNumber = player.number.startsWith("+")
+          ? player.number
+          : `+91${player.number.replace(/\D/g, "")}`;
+
+        const smsRes = await twilioClient.messages.create({
+          from: TWILIO_PHONE!,
+          to: formattedNumber,
+          body: `Admin Message: ${message}`,
+        });
+
+        smsResponses.push(smsRes);
+      }
+    }
+
+    /* ================= ORGANIZATION ================= */
+    if (type === "organization") {
+      const org = await db.query.enterprises.findFirst({
+        where: eq(enterprises.id, id),
+      });
+
+      // ---- Email ----
+      if (methods.email && org?.email) {
+        await sendEmail({
+          to: org.email,
+          subject: subject,
+          html: `Dear ${org.organizationName},<br/><br/>
+                 You’ve received a new message from Admin:<br/>
+                 <blockquote>${message}</blockquote>
+                 <a href="https://d1notes.com/login">Login</a><br/><br/>`,
+          text: message,
+        });
+      }
+
+      // ---- SMS ----
+      if (methods.sms && org?.mobileNumber) {
+        const formattedNumber = org.mobileNumber.startsWith("+")
+          ? org.mobileNumber
+          : `+91${org.mobileNumber.replace(/\D/g, "")}`;
+
+        await twilioClient.messages.create({
+          from: TWILIO_PHONE!,
+          to: formattedNumber,
+          body: `Admin Message: ${message}`,
+        });
+      }
+    }
+  } catch (notifyError) {
+    // 🔥 IMPORTANT: do NOT throw
+    console.error(
+      "⚠️ Notification failed for receiver:",
+      receiverId,
+      notifyError
+    );
+  }
+}
 
     return NextResponse.json({
       success: true,

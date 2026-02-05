@@ -5,7 +5,7 @@ import {
   licenses,
   coachaccount,
   countries,
-  playerEvaluation
+  playerEvaluation, sports
 } from '@/lib/schema';
 import {
   eq,
@@ -28,6 +28,9 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(url.searchParams.get('limit') || '10', 10);
   const offset = (page - 1) * limit;
   const timeRange = url.searchParams.get('timeRange') || '';
+  const crowned = req.nextUrl.searchParams.get("crowned");
+  const sportParam = req.nextUrl.searchParams.get("sport");
+  const sport = sportParam ? Number(sportParam) : 0;
 
   const now = new Date();
   let timeFilterCondition;
@@ -49,33 +52,90 @@ export async function GET(req: NextRequest) {
       break;
   }
 
+  const conditions = [
+    isNotNull(coaches.firstName),
+    ne(coaches.firstName, ""),
+    eq(coaches.is_deleted, 0), // active coaches only
+  ];
+
+  /* ---------------- Search ---------------- */
+  if (search) {
+    conditions.push(
+      or(
+        ilike(coaches.firstName, `%${search}%`),
+        ilike(coaches.lastName, `%${search}%`),
+        ilike(coaches.email, `%${search}%`),
+        ilike(coaches.phoneNumber, `%${search}%`),
+        ilike(coaches.status, `%${search}%`),
+        ilike(countries.name, `%${search}%`),
+        ilike(coaches.state, `%${search}%`),
+        ilike(coaches.city, `%${search}%`),
+        ilike(coaches.gender, `%${search}%`)
+      )!
+    );
+  }
+
+  /* ---------------- Crowned Filter ---------------- */
+  if (crowned === "1") {
+    conditions.push(eq(coaches.verified, 1));
+  } else if (crowned === "0") {
+    conditions.push(eq(coaches.verified, 0));
+  }
+
+  /* ---------------- Sport Filter ---------------- */
+  if (sport && !Number.isNaN(sport)) {
+    conditions.push(eq(coaches.sport, sport));
+  }
+
+  /* ---------------- Time Filter ---------------- */
+  if (timeFilterCondition) {
+    conditions.push(timeFilterCondition);
+  }
+
+  const whereClause = and(...conditions);
   try {
-    const baseCondition = and(
-      isNotNull(coaches.firstName),
-      ne(coaches.firstName, ''),
-      eq(coaches.is_deleted, 0) // ✅ Only suspended coaches
-    );
+    //     const baseCondition = and(
+    //       isNotNull(coaches.firstName),
+    //       ne(coaches.firstName, ''),
+    //       eq(coaches.is_deleted, 0) // ✅ Only suspended coaches
+    //     );
 
-    const searchCondition = search
-      ? or(
-          ilike(coaches.firstName, `%${search}%`),
-          ilike(coaches.lastName, `%${search}%`),
-          ilike(coaches.email, `%${search}%`),
-          ilike(coaches.phoneNumber, `%${search}%`),
-          ilike(coaches.sport, `%${search}%`),
-          ilike(coaches.status, `%${search}%`),
-          ilike(countries.name, `%${search}%`),
-          ilike(coaches.state, `%${search}%`),
-          ilike(coaches.city, `%${search}%`),
-          ilike(coaches.gender, `%${search}%`)
-        )
-      : undefined;
+    //     const searchCondition = search
+    //       ? or(
+    //           ilike(coaches.firstName, `%${search}%`),
+    //           ilike(coaches.lastName, `%${search}%`),
+    //           ilike(coaches.email, `%${search}%`),
+    //           ilike(coaches.phoneNumber, `%${search}%`),
+    //           ilike(coaches.sport, `%${search}%`),
+    //           ilike(coaches.status, `%${search}%`),
+    //           ilike(countries.name, `%${search}%`),
+    //           ilike(coaches.state, `%${search}%`),
+    //           ilike(coaches.city, `%${search}%`),
+    //           ilike(coaches.gender, `%${search}%`)
+    //         )
+    //       : undefined;
+    //  // Crowned
+    //     if (crowned === '1') {
+    //       conditions.push(eq(coaches.verified, 1));
+    //     } else if (crowned === '0') {
+    //       conditions.push(eq(coaches.verified, 0));
+    //     }
 
-    const whereClause = and(
-      baseCondition,
-      ...(searchCondition ? [searchCondition] : []),
-      ...(timeFilterCondition ? [timeFilterCondition] : [])
-    );
+    //     // Sport
+    //     if (!Number.isNaN(sport) && sport > 0) {
+    //       conditions.push(eq(coaches.sport, sport));
+    //     }
+
+    //     // Time range
+    //     if (timeFilterCondition) {
+    //       conditions.push(timeFilterCondition);
+    //     }
+
+    //     const whereClause = and(
+    //       baseCondition,
+    //       ...(searchCondition ? [searchCondition] : []),
+    //       ...(timeFilterCondition ? [timeFilterCondition] : [])
+    //     );
 
     const coachesData = await db
       .select({
@@ -90,9 +150,10 @@ export async function GET(req: NextRequest) {
         countryName: countries.name,
         state: coaches.state,
         city: coaches.city,
-        sport: coaches.sport,
+        sport: sports.name,
         qualifications: coaches.qualifications,
         suspend: coaches.suspend,
+        updated_at: coaches.updated_at,
         createdAt: coaches.createdAt,
         suspend_days: coaches.suspend_days,
         status: coaches.status,
@@ -107,6 +168,7 @@ export async function GET(req: NextRequest) {
       .leftJoin(coachaccount, sql`${coachaccount.coach_id} = ${coaches.id}`)
       .leftJoin(playerEvaluation, sql`${playerEvaluation.coach_id} = ${coaches.id}`)
       .leftJoin(countries, eq(countries.id, sql<number>`CAST(${coaches.country} AS INTEGER)`))
+      .leftJoin(sports, eq(sports.id, coaches.sport))
       .where(whereClause)
       .groupBy(
         coaches.id,
@@ -117,7 +179,7 @@ export async function GET(req: NextRequest) {
         coaches.email,
         coaches.phoneNumber,
         coaches.slug,
-        coaches.sport,
+        sports.name,
         coaches.qualifications,
         coaches.status,
         coaches.createdAt,
@@ -135,6 +197,7 @@ export async function GET(req: NextRequest) {
     const totalCountResult = await db
       .select({ count: count() })
       .from(coaches)
+      .leftJoin(sports, eq(sports.id, coaches.sport))
       .leftJoin(countries, eq(countries.id, sql<number>`CAST(${coaches.country} AS INTEGER)`))
       .where(whereClause);
 

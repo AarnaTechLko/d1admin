@@ -5,7 +5,7 @@ import {
   licenses,
   coachaccount,
   countries,
-  playerEvaluation
+  playerEvaluation, sports
 } from '@/lib/schema';
 import {
   eq,
@@ -28,6 +28,9 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(url.searchParams.get('limit') || '10', 10);
   const offset = (page - 1) * limit;
   const timeRange = url.searchParams.get('timeRange') || '';
+  const crowned = req.nextUrl.searchParams.get("crowned");
+  const sportParam = req.nextUrl.searchParams.get("sport");
+  const sport = sportParam ? Number(sportParam) : 0;
 
   const now = new Date();
   let timeFilterCondition;
@@ -50,33 +53,49 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const baseCondition = and(
-      isNotNull(coaches.firstName),
-      ne(coaches.firstName, ''),
-      eq(coaches.suspend, 0) // ✅ Only suspended coaches
+    const conditions = [];
+
+    // Base condition
+    conditions.push(
+      and(
+        isNotNull(coaches.firstName),
+        ne(coaches.firstName, ''),
+        eq(coaches.suspend, 0)
+      )
     );
 
- const searchCondition = search
-  ? or(
- ilike(coaches.firstName, `%${search}%`),
- ilike(coaches.lastName, `%${search}%`),
- ilike(countries.name, `%${search}%`),
- ilike(coaches.gender, `%${search}%`),
- ilike(coaches.state, `%${search}%`),
- ilike(coaches.city, `%${search}%`),
-//  ilike(coaches.slug, `%${search}%`),
-//  ilike(coaches.status, `%${search}%`),
-//  ilike(coaches.sport, `%${search}%`),
-   
-     
-    )
-  : undefined;
+    // Search
+    if (search) {
+      conditions.push(
+        or(
+          ilike(coaches.firstName, `%${search}%`),
+          ilike(coaches.lastName, `%${search}%`),
+          ilike(countries.name, `%${search}%`),
+          ilike(coaches.gender, `%${search}%`),
+          ilike(coaches.state, `%${search}%`),
+          ilike(coaches.city, `%${search}%`)
+        )
+      );
+    }
 
-    const whereClause = and(
-      baseCondition,
-      ...(searchCondition ? [searchCondition] : []),
-      ...(timeFilterCondition ? [timeFilterCondition] : [])
-    );
+    // Crowned
+    if (crowned === '1') {
+      conditions.push(eq(coaches.verified, 1));
+    } else if (crowned === '0') {
+      conditions.push(eq(coaches.verified, 0));
+    }
+
+    // Sport
+    if (!Number.isNaN(sport) && sport > 0) {
+      conditions.push(eq(coaches.sport, sport));
+    }
+
+    // Time range
+    if (timeFilterCondition) {
+      conditions.push(timeFilterCondition);
+    }
+
+    const whereClause = and(...conditions);
 
     const coachesData = await db
       .select({
@@ -91,10 +110,12 @@ export async function GET(req: NextRequest) {
         countryName: countries.name,
         state: coaches.state,
         city: coaches.city,
-        sport: coaches.sport,
+        sport: sports.name,
         qualifications: coaches.qualifications,
         suspend: coaches.suspend,
+        verified: coaches.verified,
         createdAt: coaches.createdAt,
+        updated_at: coaches.updated_at,
         suspend_days: coaches.suspend_days,
         status: coaches.status,
         is_deleted: coaches.is_deleted,
@@ -107,6 +128,7 @@ export async function GET(req: NextRequest) {
       .leftJoin(licenses, sql`${licenses.assigned_to} = ${coaches.id}`)
       .leftJoin(coachaccount, sql`${coachaccount.coach_id} = ${coaches.id}`)
       .leftJoin(playerEvaluation, sql`${playerEvaluation.coach_id} = ${coaches.id}`)
+      .leftJoin(sports, eq(sports.id, coaches.sport))
       .leftJoin(countries, eq(countries.id, sql<number>`CAST(${coaches.country} AS INTEGER)`))
       .where(whereClause)
       .groupBy(
@@ -118,7 +140,8 @@ export async function GET(req: NextRequest) {
         coaches.email,
         coaches.phoneNumber,
         coaches.slug,
-        coaches.sport,
+        sports.name,
+        coaches.verified,
         coaches.createdAt,
         coaches.qualifications,
         coaches.status,
@@ -127,6 +150,7 @@ export async function GET(req: NextRequest) {
         coaches.is_deleted,
         countries.name,
         coaches.state,
+        coaches.updated_at,
         coaches.city
       )
       .orderBy(desc(coaches.createdAt))
@@ -136,6 +160,7 @@ export async function GET(req: NextRequest) {
     const totalCountResult = await db
       .select({ count: count() })
       .from(coaches)
+      .leftJoin(sports, eq(sports.id, coaches.sport))
       .leftJoin(countries, eq(countries.id, sql<number>`CAST(${coaches.country} AS INTEGER)`))
       .where(whereClause);
 

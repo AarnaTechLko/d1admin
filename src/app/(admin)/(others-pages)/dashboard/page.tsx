@@ -1,35 +1,24 @@
 'use client';
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
 import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
-import MonthlySignupChart from "@/components/ecommerce/MonthlySignupChart"
+import MonthlySignupChart from "@/components/ecommerce/MonthlySignupChart";
 import ActivityLog from "@/components/ecommerce/ActivityLog";
-import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import DemographicCard from "@/components/ecommerce/DemographicCard";
+import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import { useSession } from 'next-auth/react';
 
-
 export default function Ecommerce() {
-  useRoleGuard();
+  useRoleGuard(); // ensures only authorized roles can access
 
-  const [role, setRole] = useState<string | null>(null);
-  const [isClient, setIsClient] = useState(false); // flag to prevent server rendering issues
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
-  console.log("Session: ", session);
+  // Wait for session to load before rendering
+  if (status === "loading") return null;
 
+  const role = session?.user?.role;
 
-  useEffect(() => {
-    setIsClient(true); // mark that we are on the client
-    const storedRole = sessionStorage.getItem("role");
-    setRole(storedRole);
-  }, []);
-
-  if (!isClient) {
-    // Prevent rendering anything until client is ready
-    return null;
-  }
-
+  // Special case for Manager
   if (role === "Manager") {
     return (
       <div className="grid grid-cols-12 gap-4 md:gap-6">
@@ -40,6 +29,7 @@ export default function Ecommerce() {
     );
   }
 
+  // Default dashboard for other roles
   return (
     <div className="grid grid-cols-12 gap-4 md:gap-6">
       <div className="col-span-12 space-y-6 xl:col-span-12">
@@ -48,7 +38,6 @@ export default function Ecommerce() {
         <MonthlySalesChart />
         <ActivityLog />
         <DemographicCard />
-
       </div>
     </div>
   );

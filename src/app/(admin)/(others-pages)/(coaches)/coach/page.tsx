@@ -31,10 +31,13 @@ const CoachesPage = () => {
             sport
           )}&crowned=${crowned ? 1 : 0}`
         );
-
+   
         if (!response.ok) throw new Error("Failed to fetch data");
 
         const data = await response.json();
+
+        console.log("Coach Data received:", data);
+        
         setCoaches(data.coaches ?? []);
         setTotalPages(data.totalPages);
       } catch (err) {
