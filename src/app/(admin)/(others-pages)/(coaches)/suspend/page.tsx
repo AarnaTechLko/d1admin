@@ -8,12 +8,14 @@ import { Coach } from "@/app/types/types";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 
 const CoachesPage = () => {
-        useRoleGuard();
-  
+  useRoleGuard();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [crowned, setCrowned] = useState<boolean>(false);
+  const [sport, setSport] = useState("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +25,9 @@ const CoachesPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/suspend?search=${searchQuery}&page=${currentPage}&limit=10`
+          `/api/suspend?search=${searchQuery}&sport=${encodeURIComponent(
+            sport
+          )}&page=${currentPage}&limit=10&crowned=${crowned ? 1 : 0}`
         );
 
         if (!response.ok) throw new Error("Failed to fetch data");
@@ -40,21 +44,28 @@ const CoachesPage = () => {
     };
 
     fetchCoaches();
-  }, [searchQuery, currentPage]);
-//  if (loading) {
-//         return <Loading />;
-//     }
+  }, [searchQuery, currentPage,crowned, sport]);
+  //  if (loading) {
+  //         return <Loading />;
+  //     }
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Coaches" onSearch={setSearchQuery} />
+      <PageBreadcrumb pageTitle="Coaches" onSearch={setSearchQuery} onCrowned={(value: string) => {
+          setCrowned(value === "1");
+          setCurrentPage(1); // ✅ reset page
+        }}
+        onSport={(value: string) => {
+          setSport(value);
+          setCurrentPage(1); // ✅ reset page
+        }}/>
 
-    {loading && (
-  <div className="flex items-center justify-center gap-4 ">
-    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-    Loading...
-  </div>
-)}
+      {loading && (
+        <div className="flex items-center justify-center gap-4 ">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          Loading...
+        </div>
+      )}
 
 
       {error && <p className="text-center py-5 text-red-500">{error}</p>}

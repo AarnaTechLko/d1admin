@@ -109,7 +109,7 @@ export const authOptions: AuthOptions = {
 
 
         //Checks to see if credentials were provided
-        if(!credentials){
+        if (!credentials) {
           return null;
         }
         const { email, password } = credentials;
@@ -139,27 +139,27 @@ export const authOptions: AuthOptions = {
           .from(admin)
           .where(eq(admin.email, email.toLowerCase()));
 
-          //Uses bcrypt to compare the password retrieved from the db with the one inputted by the user
-          if (
-            adminUser.length === 0 ||
-            !(await bcrypt.compare(password, adminUser[0].password))
-          ) {
-            return null; // Invalid credentials
+        //Uses bcrypt to compare the password retrieved from the db with the one inputted by the user
+        if (
+          adminUser.length === 0 ||
+          !(await bcrypt.compare(password, adminUser[0].password))
+        ) {
+          return null; // Invalid credentials
+        }
+        else if (adminUser[0].is_deleted === 0) {
+          throw new Error('Your account has been deleted.'); //Account has been deleted
+        }
+        else {
+          //Returns the users info as an object
+          return {
+            id: adminUser[0].id.toString(),
+            username: adminUser[0].username,
+            email: adminUser[0].email,
+            created_at: adminUser[0].created_at,
+            role: adminUser[0].role,
+            phone_number: adminUser[0].phone_number,
           }
-          else if (adminUser[0].is_deleted === 0) {
-            throw new Error('Your account has been deleted.'); //Account has been deleted
-          }
-          else {
-            //Returns the users info as an object
-            return {
-              id: adminUser[0].id.toString(),
-              username: adminUser[0].username,
-              email: adminUser[0].email,
-              created_at: adminUser[0].created_at,
-              role: adminUser[0].role,
-              phone_number: adminUser[0].phone_number,
-            }
-          }
+        }
 
       },
     }),
@@ -167,24 +167,23 @@ export const authOptions: AuthOptions = {
 
   // Session configuration
   session: {
-    strategy: "jwt", // JWT-based session
-    maxAge: 24 * 60 * 60, // 24 hours
-    updateAge: 12 * 60 * 60, // refresh every 12 hours
+    strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 1 day
+    updateAge: 12 * 60 * 60,
   },
-
-  // Make JWT cookie persistent across browser tabs
   cookies: {
     sessionToken: {
-      name: `next-auth-app.session-token`,
+      name: `next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
-        maxAge: 24 * 60 * 60, // 24 hours cookie lifetime
+        maxAge: 24 * 60 * 60,
       },
     },
   },
+
 
   //JWT configuration
   jwt: {

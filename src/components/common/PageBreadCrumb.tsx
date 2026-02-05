@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 interface BreadcrumbProps {
   pageTitle: string;
@@ -47,6 +48,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
   const [isCrowned, setIsCrowned] = useState(false);
   const [staffId, setStaffId] = useState("");
   const router = useRouter();
+const pathname = usePathname(); // e.g. "/incompletecoach"
 
   const [filteredSports, setFilteredSports] = useState<Sport[]>([]);
   const [crownedOptions, setCrownedOptions] = useState<CrownedOption[]>([]);
@@ -264,7 +266,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({
 
 
           {/* ✅ Coaches Page Filters */}
-          {pageTitle === "Coaches" && (
+          {pageTitle === "Coaches" && pathname !== "/incompletecoach" && (
             <>
               {/* ✅ Sports */}
               <span className="md:ml-5">Sports</span>

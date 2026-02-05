@@ -62,45 +62,94 @@ export async function GET(req: NextRequest) {
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { coaches } from "@/lib/schema";
-import { eq, ilike, and, or } from "drizzle-orm";
+import { coaches, sports, coachaccount } from "@/lib/schema";
+import { eq, ilike, and, or, sql } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
-    const { search, page, limit } = Object.fromEntries(
-      req.nextUrl.searchParams
-    ) as { search?: string; page?: string; limit?: string };
+    // const { search, page, limit } = Object.fromEntries(
+    //   req.nextUrl.searchParams
+    // ) as { search?: string; page?: string; limit?: string };
 
-    const pageNum = parseInt(page || "1", 10);
-    const pageLimit = parseInt(limit || "10", 10);
-    const offset = (pageNum - 1) * pageLimit;
+    // const pageNum = parseInt(page || "1", 10);
+    // const pageLimit = parseInt(limit || "10", 10);
+    // const offset = (pageNum - 1) * pageLimit;
+    // const crowned = req.nextUrl.searchParams.get("crowned");
+    // const sportParam = req.nextUrl.searchParams.get("sport");
+
+    // const sport = sportParam ? Number(sportParam) : 0
+
+    const search = req.nextUrl.searchParams.get("search") || "";
+    const page = Number(req.nextUrl.searchParams.get("page") || 1);
+    const limit = Number(req.nextUrl.searchParams.get("limit") || 10);
+    const crowned = req.nextUrl.searchParams.get("crowned");
+    const sportParam = req.nextUrl.searchParams.get("sport");
+
+    const sport = sportParam ? Number(sportParam) : 0;
+    const offset = (page - 1) * limit;
 
     // Inline condition: search or not
-    const condition = search?.trim()
-      ? and(
-          eq(coaches.approved_or_denied, 0),
-          or(
-            ilike(coaches.firstName, `%${search}%`),
-            ilike(coaches.lastName, `%${search}%`),
-            ilike(coaches.email, `%${search}%`)
-          )
+    const conditions = [];
+
+    // Declined coaches only
+    conditions.push(eq(coaches.approved_or_denied, 2));
+
+    // Search filter
+    if (search.trim()) {
+      conditions.push(
+        or(
+          ilike(coaches.firstName, `%${search}%`),
+          ilike(coaches.lastName, `%${search}%`),
+          ilike(coaches.email, `%${search}%`)
         )
-      : eq(coaches.approved_or_denied, 2);
+      );
+    }
+
+    // Crowned filter
+    if (crowned === "1") {
+      conditions.push(eq(coaches.verified, 1));
+    } else if (crowned === "0") {
+      conditions.push(eq(coaches.verified, 0));
+    }
+
+    // Sport filter (safe)
+    if (!Number.isNaN(sport) && sport !== 0) {
+      conditions.push(eq(coaches.sport, sport));
+    }
+
+    const whereCondition = and(...conditions);
 
     // Fetch total count for pagination
-    const totalCoaches = await db
-      .select()
+    const totalResult = await db
+      .select({ count: sql<number>`COUNT(${coaches.id})` })
       .from(coaches)
-      .where(condition);
+      .where(whereCondition);
 
-    const totalPages = Math.ceil(totalCoaches.length / pageLimit);
+    const totalCount = totalResult[0]?.count || 0;
+    const totalPages = Math.ceil(totalCount / limit);
 
     // Fetch paginated data
     const paginatedCoaches = await db
-      .select()
+      .select({
+        id: coaches.id,
+        image: coaches.image,
+        firstName: coaches.firstName,
+        lastName: coaches.lastName,
+        email: coaches.email,
+        verified: coaches.verified,
+        gender: coaches.gender,
+        updated_at: coaches.updated_at,
+        status: coaches.status,
+        state: coaches.state,
+        city: coaches.city,
+        sport: sports.name,
+      })
       .from(coaches)
-      .where(condition)
-      .limit(pageLimit)
+      .leftJoin(sports, eq(sports.id, coaches.sport))
+      .leftJoin(coachaccount, eq(coachaccount.coach_id, coaches.id))
+
+      .where(whereCondition)
+      .limit(limit)
       .offset(offset);
 
     return NextResponse.json({

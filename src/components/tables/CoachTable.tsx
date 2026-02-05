@@ -74,6 +74,8 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
   const [sendSMS, setSendSMS] = useState(false);
   const [sendInternal, setSendInternal] = useState(false);
   const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
+  const [sending, setSending] = useState(false);
+
 
   // const userRole = sessionStorage.getItem("role");
   const router = useRouter();
@@ -88,6 +90,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
         try {
           const res = await axios.get(`/api/messages?type=coach&id=${selectedCoachid}`);
           setRecentMessages(res.data.messages || []);
+          console.log('Recent messages:', res.data.messages);
         } catch (err) {
           console.error("Error fetching messages:", err);
         }
@@ -191,6 +194,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ coachId: selectedCoach.id, newStatus: status }),
       });
+      console.log('coach  data:', response);
       if (!response.ok) throw new Error("Failed to update status");
       setOpen(false);
       window.location.reload();
@@ -272,9 +276,9 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
       )}
 
 
-      <div className=" mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-        <div className="w-full overflow-x-auto">
-          <Table className="text-xs  min-w-[800px] sm:min-w-full">
+      <div className="mt-4 rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="w-full overflow-x-auto max-h-[70vh] overflow-y-auto">
+          <Table className="text-xs min-w-[800px] sm:min-w-full">
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
                 <TableCell className="px-10 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400 w-48">
@@ -300,7 +304,8 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                 </TableCell>
                 <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
                   Suspend
-                </TableCell>  <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
+                </TableCell>
+                <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
                   %
                 </TableCell>
                 <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
@@ -349,7 +354,13 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                   <TableCell className="px-4 py-3 text-gray-500">{coach.gender}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500">{coach.sport}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500">{coach.totalEvaluations || 0}</TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500">{[coach.countryName, coach.state, coach.city].filter(Boolean).join(", ")}</TableCell>
+                  {/* <TableCell className="px-4 py-3 text-gray-500">{[coach.countryName, coach.state, coach.city].filter(Boolean).join(", ")}</TableCell> */}
+                  <TableCell className="px-4 py-3 text-gray-500 max-w-[220px] break-words whitespace-normal">
+                    <div className="leading-5">
+                      {[coach.countryName, coach.state, coach.city].filter(Boolean).join(", ")}
+                    </div>
+                  </TableCell>
+
                   <TableCell className="px-4 py-3">
                     <Dialog open={open} onOpenChange={setOpen}>
                       <DialogTrigger asChild>
@@ -711,7 +722,10 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                               Cancel
                             </button>
                             <button
+                              disabled={sending}
                               onClick={async () => {
+                                if (sending) return; // 🛑 extra safety
+
                                 if (!messageText.trim()) {
                                   Swal.fire("Warning", "Please enter a message before sending.", "warning");
                                   return;
@@ -727,7 +741,8 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                                 }
 
                                 try {
-                                  // send message via POST API
+                                  setSending(true); // ✅ START LOADING
+
                                   await axios.post(`/api/geolocation/coach`, {
                                     type: "coach",
                                     targetIds: [coach.id],
@@ -739,35 +754,28 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                                     },
                                   });
 
-                                  // ✅ Save methods to sessionStorage (per message id)
-                                  const methodObj = {
-                                    email: sendEmail,
-                                    sms: sendSMS,
-                                    internal: sendInternal,
-                                  };
-                                  sessionStorage.setItem(
-                                    `message-methods-${coach.id}`,
-                                    JSON.stringify(methodObj)
-                                  );
-
                                   Swal.fire("Success", "Message sent successfully!", "success");
+
                                   setSelectedCoachid(null);
                                   setMessageText("");
-
-
-
+                                  setSendEmail(false);
+                                  setSendSMS(false);
+                                  setSendInternal(false);
 
                                 } catch (err) {
                                   console.error(err);
-                                  setSelectedCoachid(null);
                                   Swal.fire("Error", "Failed to send message.", "error");
-
+                                } finally {
+                                  setSending(false); // ✅ STOP LOADING
                                 }
                               }}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                              className={`px-4 py-2 rounded-lg text-white
+    ${sending ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}
+  `}
                             >
-                              Send
+                              {sending ? "Sending..." : "Send"}
                             </button>
+
                           </div>
                         </DialogContent>
 
@@ -783,7 +791,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                     <div className="text-gray-500 dark:text-gray-400">
                       <div>{dayjs(coach.updated_at).format("DD.MM.YYYY hh:mm A")}</div>
                     </div>
-              </TableCell>
+                  </TableCell>
 
 
                 </TableRow>

@@ -1,5 +1,5 @@
 "use client";
-import React, {useState} from "react";
+import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 import { Dialog, DialogTitle, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import axios from "axios";
@@ -15,6 +15,14 @@ interface CoachTableProps {
   currentPage: number;
   totalPages: number;
   setCurrentPage: (page: number) => void;
+}
+interface ApiMessage {
+  id: number;
+  message: string;
+  methods?: string[];
+  created_at: string;
+  sender_id?: string;
+  from?: string;
 }
 
 type RecentMessage = {
@@ -45,13 +53,50 @@ const IncompleteCoachTable: React.FC<CoachTableProps> = ({ data = [], currentPag
 
   // const [isCoachPasswordModalOpen, setCoachPasswordModalOpen] = useState(false);
   const [selectedCoachid, setSelectedCoachid] = useState<number | null>(null);
-
+  const [isMessagesLoading, setIsMessagesLoading] = useState(false);
   // const [newCoachPassword, setNewCoachPassword] = useState("");
   const [messageText, setMessageText] = useState("");
   const [sendEmail, setSendEmail] = useState(false);
   const [sendSMS, setSendSMS] = useState(false);
   const [sendInternal, setSendInternal] = useState(false);
   const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
+  const [isSending, setIsSending] = useState(false);
+
+  const fetchRecentMessages = async (coachId: number) => {
+  try {
+    setIsMessagesLoading(true); // 🔄 START LOADING
+    setRecentMessages([]);      // old messages clear
+
+    const res = await axios.get("/api/messages", {
+      params: { type: "coach", id: coachId },
+    });
+
+    const messages: ApiMessage[] = Array.isArray(res.data)
+      ? res.data
+      : res.data.messages || [];
+
+    const formatted: RecentMessage[] = messages.map((msg) => ({
+      id: msg.id,
+      message: msg.message,
+      methods: msg.methods ?? [],
+      created_at: msg.created_at,
+      position: "left",
+      bgColor: "blue",
+      sender_id: msg.sender_id ?? "",
+      from: msg.from ?? "admin",
+    }));
+
+    setRecentMessages(formatted);
+  } catch (error) {
+    console.error("Failed to fetch messages", error);
+    setRecentMessages([]);
+  } finally {
+    setIsMessagesLoading(false); // ✅ STOP LOADING
+  }
+};
+
+
+ 
 
   return (
     <div>
@@ -68,6 +113,7 @@ const IncompleteCoachTable: React.FC<CoachTableProps> = ({ data = [], currentPag
                 <TableCell className="px-5 py-3 font-medium text-gray-500 text-start dark:text-gray-400">Actions</TableCell>
               </TableRow>
             </TableHeader>
+             
 
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {data.map((coach) => (
@@ -166,10 +212,20 @@ const IncompleteCoachTable: React.FC<CoachTableProps> = ({ data = [], currentPag
                       >
                         🔒
                       </button> */}
-                      <button
+                      {/* <button
                         onClick={() => setSelectedCoachid(Number(coach.id))}
                         title="Send Message"
                         className="text-purple-600 text-sm hover:underline"
+                      >
+                        💬
+                      </button> */}
+
+                      <button
+                        className="text-purple-600"
+                        onClick={() => {
+                          setSelectedCoachid(Number(coach.id));
+                          fetchRecentMessages(Number(coach.id));
+                        }}
                       >
                         💬
                       </button>
@@ -235,49 +291,30 @@ const IncompleteCoachTable: React.FC<CoachTableProps> = ({ data = [], currentPag
                           />
 
                           {/* Recent Messages */}
-                          <div className="border-t pt-3">
-                            <h3 className="text-sm font-medium text-gray-700 mb-2">Recent Messages</h3>
-                            <div className="max-h-40 overflow-y-auto space-y-3">
-                              {recentMessages.length === 0 ? (
-                                <p className="text-xs text-gray-500">No previous messages</p>
-                              ) : (
-                                recentMessages.map((msg, idx) => {
-                                  // Format methods nicely (if you want uppercase labels)
-                                  const methodLabels = msg.methods.length
-                                    ? msg.methods.map((m) => m.toUpperCase()).join(", ")
-                                    : "N/A";
-
-                                  // Set alignment and bg color
-                                  const alignment =
-                                    msg.position === "left" ? "justify-start" : "justify-end";
-                                  const bgColor =
-                                    msg.bgColor === "green" ? "bg-green-100" : "bg-blue-100";
-
-                                  return (
-                                    <div
-                                      key={msg.id ?? idx}
-                                      className={`flex ${alignment}`}
-                                    >
-                                      <div className={`p-3 rounded-xl shadow-sm ${bgColor} w-full`}>
-                                        <div className="flex justify-between items-center mb-1">
-                                          <span className="text-xs font-semibold">
-                                            From: {`${coach.email}`}
-                                          </span>
-                                          <span className="text-[10px] text-gray-500">
-                                            {new Date(msg.created_at).toLocaleString()}
-                                          </span>
-                                        </div>
-                                        <div className="text-xs text-gray-700">
-                                          <p>{msg.message}</p>
-                                          <p className="text-gray-500">Methods: {methodLabels}</p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })
-                              )}
-                            </div>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {isMessagesLoading ? (
+                              <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <span className="animate-spin h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full"></span>
+                                Loading messages...
+                              </div>
+                            ) : recentMessages.length === 0 ? (
+                              <p className="text-xs text-gray-500">No previous messages</p>
+                            ) : (
+                              recentMessages.map((msg) => (
+                                <div
+                                  key={msg.id}
+                                  className={`p-2 rounded ${msg.bgColor === "green" ? "bg-green-100" : "bg-blue-100"
+                                    }`}
+                                >
+                                  <p className="text-xs">{msg.message}</p>
+                                  <p className="text-[10px] text-gray-500">
+                                    {new Date(msg.created_at).toLocaleString()}
+                                  </p>
+                                </div>
+                              ))
+                            )}
                           </div>
+
 
                           {/* Actions */}
                           <div className="flex justify-end gap-3 pt-2">
@@ -288,7 +325,10 @@ const IncompleteCoachTable: React.FC<CoachTableProps> = ({ data = [], currentPag
                               Cancel
                             </button>
                             <button
+                              disabled={isSending}
                               onClick={async () => {
+                                if (isSending) return; // 🛑 double click guard
+
                                 if (!messageText.trim()) {
                                   Swal.fire("Warning", "Please enter a message before sending.", "warning");
                                   return;
@@ -304,7 +344,8 @@ const IncompleteCoachTable: React.FC<CoachTableProps> = ({ data = [], currentPag
                                 }
 
                                 try {
-                                  // send message via POST API
+                                  setIsSending(true); // 🔒 LOCK BUTTON
+
                                   await axios.post(`/api/geolocation/coach`, {
                                     type: "coach",
                                     targetIds: [coach.id],
@@ -316,34 +357,27 @@ const IncompleteCoachTable: React.FC<CoachTableProps> = ({ data = [], currentPag
                                     },
                                   });
 
-                                  // ✅ Save methods to sessionStorage (per message id)
-                                  const methodObj = {
-                                    email: sendEmail,
-                                    sms: sendSMS,
-                                    internal: sendInternal,
-                                  };
-                                  sessionStorage.setItem(
-                                    `message-methods-${coach.id}`,
-                                    JSON.stringify(methodObj)
-                                  );
-
                                   Swal.fire("Success", "Message sent successfully!", "success");
+
                                   setSelectedCoachid(null);
                                   setMessageText("");
-
-
-
-
+                                  setSendEmail(false);
+                                  setSendSMS(false);
+                                  setSendInternal(false);
                                 } catch (err) {
                                   console.error(err);
-                                  setSelectedCoachid(null);
                                   Swal.fire("Error", "Failed to send message.", "error");
-
+                                } finally {
+                                  setIsSending(false); // 🔓 UNLOCK
                                 }
                               }}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                              className={`px-4 py-2 rounded-lg text-white transition
+    ${isSending
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-blue-600 hover:bg-blue-700"
+                                }`}
                             >
-                              Send
+                              {isSending ? "Sending..." : "Send"}
                             </button>
                           </div>
                         </DialogContent>
@@ -362,12 +396,29 @@ const IncompleteCoachTable: React.FC<CoachTableProps> = ({ data = [], currentPag
             </TableBody>
           </Table>
         </div>
-
-        <div className="flex justify-end items-center gap-2 p-4 flex-wrap border-t border-gray-200 dark:border-white/[0.05]">
+        <div className="flex justify-end items-center gap-2 p-4 flex-wrap border-t">
+          {[...Array(totalPages)].map((_, index) => {
+            const page = index + 1;
+            return (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                disabled={page === currentPage}
+                className={`px-3 py-1 rounded-md transition ${currentPage === page
+                  ? "bg-blue-500 text-white cursor-not-allowed"
+                  : "text-blue-500 hover:bg-gray-200"
+                  }`}
+              >
+                {page}
+              </button>
+            );
+          })}
+        </div>
+        {/* <div className="flex justify-end items-center gap-2 p-4 flex-wrap border-t border-gray-200 dark:border-white/[0.05]">
           {[...Array(totalPages)].map((_, index) => (
             <button key={index + 1} onClick={() => setCurrentPage(index + 1)} className={`px-3 py-1 rounded-md ${currentPage === index + 1 ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"}`}>{index + 1}</button>
           ))}
-        </div>
+        </div> */}
       </div>
     </div >
   );

@@ -26,7 +26,7 @@ interface Player {
   id: string;
   createdAt: number;
   updated_at: number;
-  first_name: string; 
+  first_name: string;
   rank?: number | null;
   last_name: string;
   image: string;
@@ -106,6 +106,8 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
   // const userRole = sessionStorage.getItem("role");;
   const [selectedPlayerid, setSelectedPlayerid] = useState<number | null>(null);
+  const [sendingMessage, setSendingMessage] = useState(false);
+
 
   useEffect(() => {
     if (selectedPlayerid) {
@@ -764,7 +766,10 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                     Cancel
                                   </button>
                                   <button
+                                    disabled={sendingMessage}
                                     onClick={async () => {
+                                      if (sendingMessage) return;
+
                                       if (!messageText.trim()) {
                                         Swal.fire("Warning", "Please enter a message before sending.", "warning");
                                         return;
@@ -780,7 +785,9 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                       }
 
                                       try {
-                                        const response = await axios.post(`/api/geolocation/player`, {
+                                        setSendingMessage(true); // 🔒 lock button
+
+                                        await axios.post(`/api/geolocation/player`, {
                                           type: "player",
                                           targetIds: [player.id],
                                           message: messageText,
@@ -793,27 +800,24 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
                                         Swal.fire("Success", "Message sent successfully!", "success");
 
-                                        // API response body is inside res.data
-                                        console.log("message", response.data);
-
-                                        setSelectedPlayerid(null);
-
                                         setMessageText("");
-
-                                        // ✅ Refresh messages list after sending
-                                        const res = await axios.get(`/api/messages?type=player&id=${player.id}`);
-                                        setRecentMessages(res.data || []);
-                                      } catch (err) {
-                                        console.error(err);
                                         setSelectedPlayerid(null);
 
+                                      } catch (err: unknown) {
+                                        console.error("Failed to send message:", err); 
                                         Swal.fire("Error", "Failed to send message.", "error");
+                                      } finally {
+                                        setSendingMessage(false); // 🔓 unlock button
                                       }
                                     }}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                    className={`px-4 py-2 rounded-lg text-white flex items-center gap-2
+    ${sendingMessage ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}
+  `}
                                   >
-                                    Send
+                                    {sendingMessage && <FaSpinner className="animate-spin" />}
+                                    {sendingMessage ? "Sending..." : "Send"}
                                   </button>
+
                                 </div>
 
 
@@ -1039,12 +1043,12 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                               setSuspendPlayer(null);
                               setSuspendDays(null);
                               window.location.reload(); // Optional
-                            } catch (err) {
-                              console.error("Unsuspension failed", err);
+                            } catch (err: unknown) {
+                              console.error("Suspension failed:", err); // now it's used
                               Swal.fire({
                                 icon: 'error',
                                 title: 'Error',
-                                text: 'Could not unsuspend player. Please try again.',
+                                text: 'Could not suspend player. Please try again.',
                               });
                             }
                           }}
@@ -1060,7 +1064,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
           </Dialog>
 
         </div>
-      </div>
+      </div >
     </>
   );
 };

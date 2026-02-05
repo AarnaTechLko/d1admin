@@ -11,6 +11,8 @@ const CoachesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [crowned, setCrowned] = useState<boolean>(false);
+  const [sport, setSport] = useState("");
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,15 +22,15 @@ const CoachesPage = () => {
       setLoading(true);
       setError(null);
       try {
-      const response = await fetch(
-        `/api/coach/newcoach?search=${encodeURIComponent(searchQuery)}&page=${currentPage}&limit=10`
-      );
-
+        const response = await fetch(
+          `/api/coach/newcoach?search=${encodeURIComponent(searchQuery)}&sport=${encodeURIComponent(
+            sport
+          )}&page=${currentPage}&limit=10&crowned=${crowned ? 1 : 0}`
+        );
 
         if (!response.ok) throw new Error("Failed to fetch coaches");
 
         const data = await response.json();
-        console.log("all coaches data:", data);
         setCoaches(data.coaches);
         setTotalPages(data.totalPages);
       } catch (err) {
@@ -39,11 +41,25 @@ const CoachesPage = () => {
     };
 
     fetchCoaches();
-  }, [searchQuery, currentPage]);
+  }, [searchQuery, currentPage, crowned, sport]); // ✅ FIX
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Coaches" onSearch={setSearchQuery} />
+      <PageBreadcrumb
+        pageTitle="Coaches"
+        onSearch={(value) => {
+          setSearchQuery(value);
+          setCurrentPage(1); // ✅ reset page
+        }}
+        onCrowned={(value: string) => {
+          setCrowned(value === "1");
+          setCurrentPage(1); // ✅ reset page
+        }}
+        onSport={(value: string) => {
+          setSport(value);
+          setCurrentPage(1); // ✅ reset page
+        }}
+      />
 
       {loading && (
         <div className="flex items-center justify-center gap-4 py-5">

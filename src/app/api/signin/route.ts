@@ -11,7 +11,7 @@ type GeoLocation = {
   region?: string;
   country?: string;
   postal?: string;
-  org?: string;
+  org?: string; 
   loc?: string;
   timezone?: string;
 };

@@ -1,39 +1,31 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Swal from 'sweetalert2';
+import { useSession } from 'next-auth/react';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function ChangePasswordForm() {
-  const [userId, setUserId] = useState<number | null>(null);
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load user_id from sessionStorage on mount
-  useEffect(() => {
-    const raw = sessionStorage.getItem('user_id');
-
-    if (raw) {
-      const parsed = parseInt(raw, 10);
-      if (!isNaN(parsed)) {
-        setUserId(parsed);
-      } else {
-        Swal.fire('Error', 'Invalid user ID in session storage.', 'error');
-      }
-    } else {
-      Swal.fire('Error', 'User not logged in.', 'error');
-    }
-  }, []);
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (userId === null) {
-      return Swal.fire('Error', 'No User ID—please log in first.', 'error');
+    if (!userId) {
+      return Swal.fire('Error', 'User not logged in.', 'error');
     }
 
-    if (!currentPassword || currentPassword.trim().length === 0) {
+    if (!currentPassword.trim()) {
       return Swal.fire('Warning', 'Please enter your current password.', 'warning');
     }
 
@@ -51,7 +43,11 @@ export default function ChangePasswordForm() {
       const res = await fetch('/api/changepassword', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, currentPassword, newPassword }),
+        body: JSON.stringify({
+          userId,
+          currentPassword: currentPassword.trim(),
+          newPassword: newPassword.trim(),
+        }),
       });
 
       const data = await res.json();
@@ -64,16 +60,15 @@ export default function ChangePasswordForm() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err: unknown) {
-  if (err instanceof Error) {
-    Swal.fire('Error', err.message, 'error');
-  } else {
-    Swal.fire('Error', 'Unexpected error occurred.', 'error');
-  }
-} finally {
-  setIsSubmitting(false);
-}
-
+    } catch (err) {
+      Swal.fire(
+        'Error',
+        err instanceof Error ? err.message : 'Unexpected error occurred.',
+        'error'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -81,53 +76,66 @@ export default function ChangePasswordForm() {
       onSubmit={handleSubmit}
       className="max-w-md mx-auto mt-8 p-6 bg-white rounded-xl shadow-md space-y-6"
     >
-      <h2 className="text-2xl font-bold text-center text-gray-800">
-        Change Password
-      </h2>
+      <h2 className="text-2xl font-bold text-center">Change Password</h2>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Current Password
-        </label>
+      {/* Current Password */}
+      <div className="relative">
+        <label className="block mb-1">Current Password</label>
         <input
-          type="password"
+          type={showCurrent ? 'text' : 'password'}
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
+          className="w-full border px-4 py-2 rounded"
           required
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        <span
+          onClick={() => setShowCurrent(!showCurrent)}
+          className="absolute right-3 top-9 cursor-pointer"
+        >
+          {showCurrent ? <EyeOff /> : <Eye />}
+        </span>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          New Password
-        </label>
+      {/* New Password */}
+      <div className="relative">
+        <label className="block mb-1">New Password</label>
         <input
-          type="password"
+          type={showNew ? 'text' : 'password'}
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
+          className="w-full border px-4 py-2 rounded"
           required
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        <span
+          onClick={() => setShowNew(!showNew)}
+          className="absolute right-3 top-9 cursor-pointer"
+        >
+          {showNew ? <EyeOff /> : <Eye />}
+        </span>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Confirm New Password
-        </label>
+      {/* Confirm Password */}
+      <div className="relative">
+        <label className="block mb-1">Confirm New Password</label>
         <input
-          type="password"
+          type={showConfirm ? 'text' : 'password'}
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          className="w-full border px-4 py-2 rounded"
           required
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        <span
+          onClick={() => setShowConfirm(!showConfirm)}
+          className="absolute right-3 top-9 cursor-pointer"
+        >
+          {showConfirm ? <EyeOff /> : <Eye />}
+        </span>
       </div>
 
       <button
         type="submit"
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-md transition duration-200 disabled:opacity-50"
-        disabled={userId === null || isSubmitting}
+        disabled={isSubmitting}
+        className="w-full bg-blue-600 text-white py-2 rounded"
       >
         {isSubmitting ? 'Updating...' : 'Update Password'}
       </button>

@@ -20,6 +20,7 @@ import {
   sql,
   gte,
 } from "drizzle-orm";
+import { sports } from "schema";
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
    const crownedParam = url.searchParams.get("crowned");
 // console.log("crowned data:",crowned);
   // 🕒 time filter
-  const now = new Date();
+  const now = new Date(); 
   let timeFilterCondition;
   switch (timeRange) {
     case "24h":
@@ -124,7 +125,7 @@ export async function GET(req: NextRequest) {
         countryName: countries.name,
         state: coaches.state,
         city: coaches.city,
-        sport: coaches.sport,
+        sport: sports.name,
         qualifications: coaches.qualifications,
         status: coaches.status,
         suspend: coaches.suspend,
@@ -142,6 +143,7 @@ export async function GET(req: NextRequest) {
       .leftJoin(licenses, eq(licenses.assigned_to, coaches.id))
       .leftJoin(coachaccount, eq(coachaccount.coach_id, coaches.id))
       .leftJoin(playerEvaluation, eq(playerEvaluation.coach_id, coaches.id))
+      .leftJoin(sports, eq(sports.id, coaches.sport))
       .leftJoin(
         countries,
         eq(countries.id, sql<number>`CAST(${coaches.country} AS INTEGER)`)
@@ -157,6 +159,7 @@ export async function GET(req: NextRequest) {
         coaches.gender,
         coaches.image,
         coaches.sport,
+        sports.name,
         coaches.verified,
         coaches.qualifications,
         coaches.status,
@@ -167,6 +170,7 @@ export async function GET(req: NextRequest) {
         coaches.state,
         coaches.city,
         coaches.createdAt,
+        coaches.updated_at,
         coaches.percentage,
         coaches.approved_or_denied
       )
