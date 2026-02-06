@@ -8,8 +8,8 @@ import { useRouter } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
 import { Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
-// import Loading from "@/components/Loading";
-// import { useSession } from 'next-auth/react';
+
+import { useSession } from 'next-auth/react';
 import { UploadCloud } from "lucide-react";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 // import toast from "react-hot-toast";
@@ -25,22 +25,6 @@ type TicketNote = {
   createdAt: string;
 };
 
-// interface Ticket {
-//   id: number;
-//   name: string;
-//   email: string;
-//   subject: string;
-//   message: string;
-//   escalate: boolean;
-//   assign_to: number;
-//   assign_to_username: string;
-//   createdAt: string;
-//   status: string;
-//   assignee_name: string;
-//   priority: string;
-//   ticket_from: string;
-//   role: string;
-// }
 interface Admin {
   id: number;
   username: string;
@@ -62,7 +46,7 @@ interface TicketReply {
 
 const TicketsPage = () => {
   useRoleGuard();
-
+  const { data: session, status } = useSession();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusQuery, setStatusQuery] = useState<string>("");
   const [daysQuery, setDaysQuery] = useState<string>("");
@@ -82,7 +66,10 @@ const TicketsPage = () => {
   const [replyMessage, setReplyMessage] = useState<string>("");
   const [replyStatus, setReplyStatus] = useState<string>("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+  //const [userId, setUserId] = useState<string | null>(null);
+  // const userId = session?.user?.id;
+  // const userRole = session?.user?.role;
+
   const router = useRouter();
   const [ticketReplies, setTicketReplies] = useState<TicketReply[]>([]);
   const [isEscalate, setIsEscalate] = useState(false);
@@ -90,11 +77,7 @@ const TicketsPage = () => {
   const [selectedSubAdmin, setSelectedSubAdmin] = useState("");
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [notes, setNotes] = useState<TicketNote[]>([]);
-  // const [popupMessage, setPopupMessage] = useState("");
-  // const [showPopup, setShowPopup] = useState(false);
 
-  // Fetch all sub-admins when modal opens
-  // const [expandedMessages, setExpandedMessages] = useState<Record<number, boolean>>({});
   const [metrics, setMetrics] = useState({
     pending: 0,
     open: 0,
@@ -222,7 +205,8 @@ const TicketsPage = () => {
       // 1️⃣ Prepare form data for reply API
       const formData = new FormData();
       formData.append("ticketId", String(selectedTicket.id));
-      formData.append("repliedBy", userId ?? "");
+      // formData.append("repliedBy", userId ?? "");
+      formData.append("repliedBy", String(session?.user?.id ?? ""));
       formData.append("message", replyMessage.trim());
       formData.append("status", replyStatus);
       formData.append("priority", replyPriority);
@@ -290,7 +274,8 @@ const TicketsPage = () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               ticketId: selectedTicket.id,
-              fromId: userId,
+              // fromId: userId,
+              fromId: session?.user?.id,
               toId: selectedSubAdmin,
               escalate: true,
             }),
@@ -316,6 +301,7 @@ const TicketsPage = () => {
       setIsEscalate(false);
       setAdminNotes("");
       setSelectedSubAdmin("");
+      await fetchTickets();
       // setIsReplyModalOpen(false);
     } catch (error) {
       console.error("Error submitting ticket reply:", error);
@@ -326,44 +312,85 @@ const TicketsPage = () => {
     }
   };
 
+
   useEffect(() => {
-    const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
-    if (!storedUserId) {
+    if (status === "unauthenticated") {
       router.push("/signin");
-    } else {
-      setUserId(storedUserId);
     }
-  }, [router]);
+  }, [status, router]);
 
-  // ✅ Fetch tickets when userId, searchQuery, statusQuery, or currentPage changes
+
+  // useEffect(() => {
+  //   if (!session?.user?.id) return;
+
+  //   const fetchTickets = async () => {
+  //     setLoading(true);
+  //     setError(null);
+
+  //     try {
+  //       const response = await fetch(
+  //         `/api/ticket?search=${searchQuery}&page=${currentPage}&limit=10&userId=${session.user.id}&staff=${staffQuery}&status=${statusQuery}&days=${daysQuery}`
+  //       );
+
+  //       if (!response.ok) throw new Error("Failed to fetch tickets");
+
+  //       const data = await response.json();
+  //       setTickets(data.ticket ?? []);
+  //       setTotalPages(data.totalPages);
+  //       setMetrics(data.metrics);
+  //     } catch (err) {
+  //       setError((err as Error).message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchTickets();
+  // }, [
+  //   session?.user?.id,
+  //   searchQuery,
+  //   currentPage,
+  //   statusQuery,
+  //   daysQuery,
+  //   staffQuery,
+  // ]);
+
+  const fetchTickets = async () => {
+    if (!session?.user?.id) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `/api/ticket?search=${searchQuery}&page=${currentPage}&limit=10&userId=${session.user.id}&staff=${staffQuery}&status=${statusQuery}&days=${daysQuery}`
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch tickets");
+
+      const data = await response.json();
+
+      setTickets(data.ticket ?? []);
+      setTotalPages(data.totalPages);
+      setMetrics(data.metrics); // 🔥 IMPORTANT
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    if (!userId) return;
-
-    const fetchTickets = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(
-          `/api/ticket?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}&staff=${staffQuery}&status=${statusQuery}&days=${daysQuery}`
-        );
-
-        if (!response.ok) throw new Error("Failed to fetch tickets");
-
-        const data = await response.json();
-        console.log("daatasdf", data);
-        setTickets(data.ticket ?? []);
-        setTotalPages(data.totalPages);
-        setMetrics(data.metrics);  // ✅ Save metrics
-
-      } catch (err) {
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTickets();
-  }, [userId, searchQuery, currentPage, statusQuery, daysQuery, staffQuery]);
+  }, [
+    session?.user?.id,
+    searchQuery,
+    currentPage,
+    statusQuery,
+    daysQuery,
+    staffQuery,
+  ]);
+
+
 
   useEffect(() => {
     const fetchSubAdmins = async () => {
@@ -392,11 +419,6 @@ const TicketsPage = () => {
   }, []);
 
   const handleAssignToClick = (ticket: Ticket) => {
-    // If already assigned, don't open the modal
-    // if (ticket.assign_to) {
-    //   Swal.fire('Already Assigned', 'This ticket has already been assigned to a sub-admin.', 'info');
-    //   return;
-    // }
 
     setSelectedTicket(ticket);
     setIsModalOpen(true);
@@ -443,6 +465,7 @@ const TicketsPage = () => {
 
 
       setIsModalOpen(false); // Close modal after assigning sub-admin
+      await fetchTickets(); 
     } catch (err) {
       console.error("Error assigning sub-admin:", err);
       setError((err as Error).message); // Set the error state
@@ -538,6 +561,7 @@ const TicketsPage = () => {
         if (res.ok) {
           Swal.fire("Deleted!", "The reply has been removed.", "success");
           setTicketReplies((prev) => prev.filter((r) => r.id !== replyId));
+          await fetchTickets();
         } else {
           Swal.fire("Error", "Failed to delete reply.", "error");
         }
@@ -547,9 +571,7 @@ const TicketsPage = () => {
       }
     }
   };
-  // if (loading) {
-  //   return <Loading />;
-  // }
+
 
   return (
     <div>
@@ -582,11 +604,7 @@ const TicketsPage = () => {
 
       </div>
 
-      {/* <div className="p-4">
-        {userId && (
-          <p className="mt-2 text-gray-600">Logged in as Admin ID: <strong>{userId}</strong></p>
-        )}
-      </div> */}
+
 
       <PageBreadcrumb pageTitle="View Ticket" onStatus={setStatusQuery} onSearch={setSearchQuery}
         onDays={setDaysQuery}
@@ -811,7 +829,7 @@ const TicketsPage = () => {
             <DialogContent className="p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
               <DialogTitle>Reply to Ticket</DialogTitle>
 
-              <input type="hidden" value={userId ?? ""} name="userId" />
+              {/* <input type="hidden" value={userId ?? ""} name="userId" /> */}
               <input type="hidden" value={selectedTicket?.id ?? ""} name="ticketId" />
 
               {/* Previous Messages */}
@@ -975,20 +993,7 @@ const TicketsPage = () => {
                   </div>
                 </div>
               )}
-              {/* Status Dropdown */}
-              {/* <label className="block text-sm font-medium text-gray-700 mt-4">Status</label>
-              <select
-                className="w-full p-2 border rounded"
-                value={replyStatus}
-                onChange={(e) => setReplyStatus(e.target.value)}
-              >
-                <option value="Pending">Pending</option>
-                <option value="Open">Open</option>
-                <option value="Fixed">Fixed</option>
-                <option value="Closed">Closed</option>
-                <option value="Escalate">Escalate</option>
-              </select> */}
-              {/* Status Dropdown */}
+
               <div className="flex gap-4 mt-4">
                 {/* Status */}
                 <div className="w-1/2">
@@ -1111,12 +1116,3 @@ const TicketsPage = () => {
 };
 
 export default TicketsPage;
-
-
-
-
-
-
-
-
-

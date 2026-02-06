@@ -175,7 +175,7 @@ export default function NotificationPage() {
         );
         if (!response.ok) throw new Error("Failed to fetch data");
         const data = await response.json();
-        console.log("DATA: ", data.sport)
+        //console.log("DATA: ", data.sport)
         setFilteredSports(data.sport)
       }
       catch (error) {

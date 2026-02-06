@@ -7,7 +7,7 @@ import Button from "../ui/button/Button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import Badge from "../ui/badge/Badge";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
-
+import { useSession } from "next-auth/react";
 import Swal from "sweetalert2";
 import withReactContent from 'sweetalert2-react-content';
 import { useRouter } from "next/navigation";
@@ -15,6 +15,7 @@ import axios from "axios";
 import { FaSpinner } from "react-icons/fa";
 import { Eye, EyeOff } from "lucide-react";
 import dayjs from "dayjs";
+
 
 type RecentMessage = {
   id: number;
@@ -89,6 +90,9 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
   const [loadingPlayerId, setLoadingPlayerId] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [newPlayerPassword, setNewPlayerPassword] = useState("");
+  const { data: session } = useSession();
+  const [isPlayerSubmitting, setIsPlayerSubmitting] = useState(false);
+
 
   const getBadgeColor = (status: string) => {
     switch (status) {
@@ -130,6 +134,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
     setSelectedPlayerId(null);
     setNewPlayerPassword("");
     setPlayerPasswordModalOpen(false);
+    setIsPlayerSubmitting(false);
   };
   const handleFetchIpInfo = async (userId: number, type: 'player' | 'player' | 'enterprise') => {
     try {
@@ -648,10 +653,10 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
                             <button
                               onClick={() => {
-                                const changePassword = sessionStorage.getItem("change_password");
+                                console.log("SESSION USER:", session?.user);
 
-                                console.log("changepassword", changePassword);
-                                if (changePassword === "1") {
+                                // ✅ ONLY admin can change password
+                                if (session?.user?.role?.toLowerCase() === "admin") {
                                   handleOpenPlayerModal(Number(player.id));
                                 } else {
                                   Swal.fire({
@@ -666,6 +671,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                             >
                               🔒
                             </button>
+
                             <button
                               onClick={() => setSelectedPlayerid(Number(player.id))}
                               title="Send Message"
@@ -804,7 +810,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                                         setSelectedPlayerid(null);
 
                                       } catch (err: unknown) {
-                                        console.error("Failed to send message:", err); 
+                                        console.error("Failed to send message:", err);
                                         Swal.fire("Error", "Failed to send message.", "error");
                                       } finally {
                                         setSendingMessage(false); // 🔓 unlock button
@@ -865,50 +871,65 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
                 <div className="flex justify-end gap-2">
                   <button
+                    disabled={isPlayerSubmitting}
                     onClick={handleClosePlayerModal}
-                    className="text-gray-600 hover:text-black"
+                    className="text-gray-600 hover:text-black disabled:opacity-50"
                   >
                     Cancel
                   </button>
 
+
                   <button
-                    className="bg-blue-600 text-white px-4 py-2 rounded"
+                    disabled={isPlayerSubmitting}
+                    className={`px-4 py-2 rounded text-white transition
+    ${isPlayerSubmitting
+                        ? "bg-blue-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700"}
+  `}
                     onClick={async () => {
+                      if (isPlayerSubmitting) return; // ⛔ double click stop
+
                       if (!newPlayerPassword) {
                         Swal.fire("Warning", "Password is required", "warning");
                         return;
                       }
+
                       if (newPlayerPassword.length < 6) {
                         Swal.fire("Warning", "Password must be at least 6 characters", "warning");
                         return;
                       }
 
                       try {
-                        const res = await fetch(`/api/player/${selectedPlayerId}/change-password`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ newPassword: newPlayerPassword }),
-                        });
+                        setIsPlayerSubmitting(true); // 🔄 loading ON
+
+                        const res = await fetch(
+                          `/api/player/${selectedPlayerId}/change-password`,
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ newPassword: newPlayerPassword }),
+                          }
+                        );
 
                         const data = await res.json();
 
-                        if (!res.ok) throw new Error(data.error || "Failed to update password");
+                        if (!res.ok) throw new Error(data.error || "Failed");
 
                         Swal.fire("Success", "Password updated successfully", "success");
+
                         setNewPlayerPassword("");
                         setPlayerPasswordModalOpen(false);
                       } catch (err) {
-                        console.error("Password Updation failed", err);
-                        Swal.fire({
-                          icon: 'error',
-                          title: 'Error',
-                          text: 'Could not update Password. Please try again.',
-                        });
+                        console.error("Password updation failed", err);
+                        Swal.fire("Error", "Failed to update Password. Try again.", "error");
+                      } finally {
+                        setIsPlayerSubmitting(false); // ✅ loading OFF
                       }
                     }}
                   >
-                    Assign Password
+                    {isPlayerSubmitting ? "Assigning..." : "Assign Password"}
                   </button>
+
                 </div>
               </div>
             </DialogContent>

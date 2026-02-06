@@ -6,7 +6,8 @@ import Swal from "sweetalert2";
 import { Loader2, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-// import { useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
+
 interface Admin {
   id: number;
   username: string;
@@ -47,14 +48,15 @@ const NewTicketPage = () => {
   const assignDropdownRef = useRef<HTMLDivElement>(null);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
+  //const [userId, setUserId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
   const [loadingRecipients, setLoadingRecipients] = useState(false);
   const [loadingSubadmin, setLoadingSubadmin] = useState(false);
+  const { data: session, status } = useSession();
 
   const filteredRecipients = recipients.filter((r) =>
-    r.name.toLowerCase().includes(searchTerm.toLowerCase())||
+    r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
   const filteredStaff = subAdmins.filter((s) => {
@@ -87,12 +89,19 @@ const NewTicketPage = () => {
   }, []);
 
 
+  // useEffect(() => {
+  //   const storedUserId =
+  //     localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
+  //   if (!storedUserId) router.push("/signin");
+  //   else setUserId(storedUserId);
+  // }, [router]);
+
   useEffect(() => {
-    const storedUserId =
-      localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
-    if (!storedUserId) router.push("/signin");
-    else setUserId(storedUserId);
-  }, [router]);
+  if (status === "unauthenticated") {
+    router.push("/signin");
+  }
+}, [status, router]);
+
 
   // Fetch recipients whenever recipientType changes
   useEffect(() => {
@@ -126,68 +135,27 @@ const NewTicketPage = () => {
     }));
   };
 
-const handleRecipientTypeChange = (
-  e: React.ChangeEvent<HTMLInputElement>
-) => {
+  const handleRecipientTypeChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
 
-  const selectedType = e.target.value;
+    const selectedType = e.target.value;
 
-  setFormData((prev) => ({
-    ...prev,
-    recipientType: selectedType,
-    role: selectedType,
-    name: "",            // ✅ Clear recipient name
-    email: "",           // ✅ Clear recipient email
-    ticket_from: "",     // ✅ Clear selected user ID
-  }));
+    setFormData((prev) => ({
+      ...prev,
+      recipientType: selectedType,
+      role: selectedType,
+      name: "",            // ✅ Clear recipient name
+      email: "",           // ✅ Clear recipient email
+      ticket_from: "",     // ✅ Clear selected user ID
+    }));
 
-  setSearchTerm("");      // ✅ Clear search text
-  setAssignSearch("");    // ✅ Clear assign search
-  setIsOpen(false);       // ✅ Close recipient dropdown
-  setRecipients([]);      // ✅ Clear old list before fetching new one
-};
+    setSearchTerm("");      // ✅ Clear search text
+    setAssignSearch("");    // ✅ Clear assign search
+    setIsOpen(false);       // ✅ Close recipient dropdown
+    setRecipients([]);      // ✅ Clear old list before fetching new one
+  };
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setIsSubmitting(true);
-
-  //   try {
-  //     const response = await fetch("/api/ticket", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify(formData), // ✅ includes role now
-  //     });
-
-  //     const result = await response.json();
-  //     if (response.ok) {
-  //       Swal.fire({
-  //         title: "Success!",
-  //         text: result.message,
-  //         icon: "success",
-  //         confirmButtonText: "OK",
-  //       });
-  //     } else {
-  //       Swal.fire({
-  //         title: "Error!",
-  //         text: result.error || "Failed to create ticket",
-  //         icon: "error",
-  //         confirmButtonText: "Try Again",
-  //       });
-  //     }
-  //   } catch (err) {
-  //     console.error("❌ Ticket submit error:", err);
-  //     Swal.fire({
-  //       title: "Error!",
-  //       text: "An error occurred while submitting the ticket.",
-  //       icon: "error",
-  //       confirmButtonText: "Try Again",
-  //     });
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
   useEffect(() => {
     const fetchSubAdmins = async () => {
       setLoadingSubadmin(true);
@@ -222,7 +190,8 @@ const handleRecipientTypeChange = (
     try {
       const payload = {
         ...formData,
-        user_id: userId, // ✅ include user id
+        // user_id: userId, // ✅ include user id
+         user_id: session?.user?.id, 
       };
       console.log('posted data:', payload);
       const response = await fetch("/api/ticket", {

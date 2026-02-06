@@ -1,18 +1,19 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FacebookIcon, Instagram, Youtube, Linkedin } from "lucide-react";
+import { FacebookIcon, Instagram, Youtube, Linkedin, Eye, EyeOff } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 import Badge from "../ui/badge/Badge";
 import d1 from "@/public/images/signin/d1.png";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import Button from "../ui/button/Button";
-// import { enterprises } from "@/lib/schema";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { FaSpinner } from "react-icons/fa";
+
 type RecentMessage = {
   id: number;
   message: string;
@@ -20,7 +21,6 @@ type RecentMessage = {
 };
 
 interface Organization {
-
   id: string;
   organizationName: string;
   contactPerson: string;
@@ -47,9 +47,7 @@ interface Organization {
   xlink: string;
   youtube: string;
   is_deleted: number;
-
 }
-
 
 interface OrganizationTableProps {
   data: Organization[];
@@ -57,6 +55,7 @@ interface OrganizationTableProps {
   totalPages: number;
   setCurrentPage: (page: number) => void;
 }
+
 
 const OrganizationTable: React.FC<OrganizationTableProps> = ({
   data = [] }) => {
@@ -81,25 +80,33 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
   const [sendSMS, setSendSMS] = useState(false);
   const [sendInternal, setSendInternal] = useState(false);
   const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
-  const userRole = sessionStorage.getItem("role");;
+  // const userRole = sessionStorage.getItem("role");;
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const userRole = session?.user?.role;
   console.log("User role from session:", userRole);
   const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedUserid, setSelectedUserid] = useState<number | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [loadingOrganizationId, setLoadingOrganizationId] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
 
   const handleOpenModal = (userId: number) => {
     setSelectedUserId(userId);
     setPasswordModalOpen(true);
   };
-  const router = useRouter();
 
   const handleCloseModal = () => {
-    setSelectedUserId(null);
-    setNewPassword("");
     setPasswordModalOpen(false);
+    setNewPassword("");
+    setShowPassword(false);
+    setIsSubmitting(false);
   };
+
   const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'enterprises') => {
     try {
       const res = await fetch(`/api/ip_logstab?userId=${userId}&type=${type}`);
@@ -129,49 +136,51 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
     }
   }, [selectedUserid]);
   const handleChangePassword = async () => {
+    if (isSubmitting) return;
+
     if (!newPassword) {
-      Swal.fire({
-        icon: "warning",
-        title: "Missing Password",
-        text: "Please enter a new password.",
-      });
+      Swal.fire("Warning", "Please enter a new password.", "warning");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      Swal.fire("Warning", "Password must be at least 6 characters.", "warning");
       return;
     }
 
     try {
-      const res = await fetch(`/api/organization/${selectedUserId}/change-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newPassword }),
-      });
+      setIsSubmitting(true);
+
+      const res = await fetch(
+        `/api/organization/${selectedUserId}/change-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newPassword }),
+        }
+      );
 
       const data = await res.json();
 
-      if (res.ok) {
-        Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: "Password changed successfully!",
-          timer: 2000,
-          showConfirmButton: false,
-        });
-        handleCloseModal();
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Failed",
-          text: data.error || "Failed to change password.",
-        });
-      }
+      if (!res.ok) throw new Error(data.error);
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Password changed successfully!",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      handleCloseModal();
     } catch (err) {
       console.error("Change password error:", err);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Something went wrong. Please try again.",
-      });
+      Swal.fire("Error", "Failed to change password. Try again.", "error");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
 
 
   const getBadgeColor = (status: string) => {
@@ -637,10 +646,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
 
                             <button
                               onClick={() => {
-                                const changePassword = sessionStorage.getItem("change_password");
-
-                                console.log("changepassword", changePassword);
-                                if (changePassword === "1") {
+                                if (!session?.user || session.user.role !== "admin") {
                                   handleOpenModal(Number(organization.id));
                                 } else {
                                   Swal.fire({
@@ -649,6 +655,7 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                                     text: "You are not allowed to change the password.",
                                   });
                                 }
+
                               }} title="Change Password"
                               className="hover:text-blue-600 "
                             >
@@ -752,6 +759,8 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                                   </button>
                                   <button
                                     onClick={async () => {
+                                      if (sending) return; // prevent multiple clicks
+
                                       if (!messageText.trim()) {
                                         Swal.fire("Warning", "Please enter a message before sending.", "warning");
                                         return;
@@ -767,6 +776,8 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
                                       }
 
                                       try {
+                                        setSending(true); // ✅ start loading
+
                                         await axios.post(`/api/geolocation/organization`, {
                                           type: "organization",
                                           targetIds: [organization.id],
@@ -780,23 +791,25 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
 
                                         Swal.fire("Success", "Message sent successfully!", "success");
                                         setSelectedUserid(null);
-
                                         setMessageText("");
 
-                                        // ✅ Refresh messages list after sending
+                                        // Refresh messages list
                                         const res = await axios.get(`/api/messages?type=organization&id=${organization.id}`);
                                         setRecentMessages(res.data || []);
                                       } catch (err) {
                                         console.error(err);
-                                        setSelectedUserid(null);
-
                                         Swal.fire("Error", "Failed to send message.", "error");
+                                      } finally {
+                                        setSending(false); // ✅ stop loading
                                       }
                                     }}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 flex items-center justify-center gap-2"
+                                    disabled={sending} // ✅ disable while sending
                                   >
+                                    {sending && <FaSpinner className="animate-spin" />}
                                     Send
                                   </button>
+
                                 </div>
 
 
@@ -841,27 +854,57 @@ const OrganizationTable: React.FC<OrganizationTableProps> = ({
           <Dialog open={isPasswordModalOpen} onOpenChange={setPasswordModalOpen}>
             <DialogContent className="max-w-sm bg-white p-6 rounded-lg shadow-lg">
               <DialogHeader>
-                <DialogTitle className="text-lg font-semibold">Change Password</DialogTitle>
+                <DialogTitle className="text-lg font-semibold">
+                  Change Password
+                </DialogTitle>
               </DialogHeader>
 
               <div className="mt-4 space-y-4">
-                <input
-                  type="password"
-                  className="w-full border px-4 py-2 rounded"
-                  placeholder="New Password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
+                {/* Password input with show/hide */}
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter new password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full border px-4 py-2 rounded pr-10"
+                  />
 
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+
+                {/* Action buttons */}
                 <div className="flex justify-end gap-2">
-                  <button onClick={handleCloseModal} className="text-gray-600 hover:text-black">Cancel</button>
-                  <button onClick={handleChangePassword} className="bg-blue-600 text-white px-4 py-2 rounded">
-                    Update
+                  <button
+                    disabled={isSubmitting}
+                    onClick={handleCloseModal}
+                    className="text-gray-600 hover:text-black disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    disabled={isSubmitting}
+                    onClick={handleChangePassword}
+                    className={`px-4 py-2 rounded text-white transition
+            ${isSubmitting
+                        ? "bg-blue-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700"}
+          `}
+                  >
+                    {isSubmitting ? "Updating..." : "Update Password"}
                   </button>
                 </div>
               </div>
             </DialogContent>
           </Dialog>
+
 
           <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
             <DialogContent className="max-w-sm p-6 bg-white rounded-lg shadow-lg">

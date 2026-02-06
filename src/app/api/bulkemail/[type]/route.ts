@@ -187,7 +187,7 @@ export async function GET(
         sport: c.sport,
       }));
 
-      console.log("DATA: ", data);
+     // console.log("DATA: ", data);
 
     } else if (type === 'organization') {
       const orgs = await db

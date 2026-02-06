@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
             .from(admin)
             .where(eq(admin.id, Number(user_id)))
 
-        console.log("Data: ", user)
+        //console.log("Data: ", user)
 
         return NextResponse.json(
             {user},

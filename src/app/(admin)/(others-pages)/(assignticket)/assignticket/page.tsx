@@ -8,14 +8,13 @@ import { useRouter } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
 import { Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
-// import Loading from "@/components/Loading";
-// import { useSession } from 'next-auth/react';
 import { UploadCloud } from "lucide-react";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
 import Image from "next/image";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
+import { useSession } from "next-auth/react";
 
 type TicketNote = {
   id: number;
@@ -82,8 +81,10 @@ const TicketsPage = () => {
   const [replyMessage, setReplyMessage] = useState<string>("");
   const [replyStatus, setReplyStatus] = useState<string>("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [role, setRole] = useState("");
+  const { data: session, status } = useSession();
+  const userId = session?.user?.id;
+  const role = session?.user?.role;
+  const [totalTickets, setTotalTickets] = useState(0);
 
   const router = useRouter();
   const [ticketReplies, setTicketReplies] = useState<TicketReply[]>([]);
@@ -92,12 +93,12 @@ const TicketsPage = () => {
   const [selectedSubAdmin, setSelectedSubAdmin] = useState("");
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [notes, setNotes] = useState<TicketNote[]>([]);
-  // Fetch all sub-admins when modal opens
-  // React state for popup
   const [popupMessage, setPopupMessage] = useState<string>("");
   const [showPopup, setShowPopup] = useState<boolean>(false);
-  // Helper function to check valid JSON
-  // Extract JSON safely from mixed message
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(totalTickets / itemsPerPage);
+
+
   const extractJson = (str: string) => {
     const jsonStart = str.indexOf("{");
     const jsonEnd = str.lastIndexOf("}");
@@ -153,14 +154,6 @@ const TicketsPage = () => {
     escalated: 0,
   });
 
-  const itemsPerPage = 10;
-
-  const totalPages = Math.ceil(tickets.length / itemsPerPage);
-
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-
-  const paginatedTickets = tickets.slice(startIndex, endIndex);
   const handleReplyClick = async (ticket: Ticket) => {
     setSelectedTicket(ticket);
     setReplyStatus(ticket.status);
@@ -354,6 +347,7 @@ const TicketsPage = () => {
       setIsEscalate(false);
       setAdminNotes("");
       setSelectedSubAdmin("");
+      await fetchTickets();
       setIsReplyModalOpen(false);
     } catch (error) {
       console.error("Error submitting ticket reply:", error);
@@ -369,61 +363,85 @@ const TicketsPage = () => {
     }
   };
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedUserId = sessionStorage.getItem("user_id");
-      const storedRole = sessionStorage.getItem("role") || "";
-
-      if (!storedUserId) {
-        router.push("/signin");
-      } else {
-        setUserId(storedUserId);
-        setRole(storedRole);
-      }
+    if (status === "unauthenticated") {
+      router.push("/signin");
     }
-  }, []);
-  // const storedUserId = sessionStorage.getItem("user_id");
-  // const storedRole =  sessionStorage.getItem("role") || "";
+  }, [status, router]);
 
-  // useEffect(() => {
-  //   if (!storedUserId) {
-  //     router.push("/signin");
-  //   } else {
-  //     setUserId(storedUserId);
-  //     setRole(storedRole); // 👈 Add this
-  //   }
-  // }, []);
-
-
-
-  // ✅ Fetch tickets when userId, searchQuery, statusQuery, or currentPage changes
-  useEffect(() => {
+  const fetchTickets = async () => {
     if (!userId) return;
 
-    const fetchTickets = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(
-          `/api/ticket/assign?search=${searchQuery}&page=${currentPage}&limit=10&userId=${userId}&role=${role}&status=${statusQuery}&days=${daysQuery}&staff=${staffQuery}`
-        );
+    setLoading(true);
+    setError(null);
 
-        if (!response.ok) throw new Error("Failed to fetch tickets");
+    try {
+      const res = await fetch(
+        `/api/ticket/assign?search=${searchQuery}&status=${statusQuery}&days=${daysQuery}&staff=${staffQuery}&page=${currentPage}&limit=${itemsPerPage}&userId=${userId}&role=${role}`
+      );
 
-        const data = await response.json();
-        // console.log("daata", data);
-        setTickets(data.tickets ?? []);
-        setMetrics(data.metrics);  // ✅ Save metrics
+      if (!res.ok) throw new Error("Failed to fetch tickets");
 
-        // setTotalPages(data.totalPages);
-      } catch (err) {
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
-      }
-    };
+      const data = await res.json();
 
+      setTickets(data.tickets);        // table
+      setTotalTickets(data.total);    // pagination
+      setMetrics(data.metrics);        // 🔥 COUNTS
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
     fetchTickets();
-  }, [userId, searchQuery, currentPage, statusQuery, daysQuery, staffQuery]);
+  }, [
+    userId,
+    role,
+    searchQuery,
+    statusQuery,
+    daysQuery,
+    staffQuery,
+    currentPage,
+  ]);
+
+
+
+
+  // useEffect(() => {
+  //   if (!userId) return;
+
+  //   const fetchTickets = async () => {
+  //     setLoading(true);
+  //     setError(null);
+
+  //     try {
+  //       const res = await fetch(
+  //         `/api/ticket/assign?search=${searchQuery}&status=${statusQuery}&days=${daysQuery}&staff=${staffQuery}&page=${currentPage}&limit=${itemsPerPage}&userId=${userId}&role=${role}`
+  //       );
+
+  //       if (!res.ok) throw new Error("Failed to fetch tickets");
+
+  //       const data = await res.json();
+
+  //       setTickets(data.tickets);      // ✅ only 10 records
+  //       setTotalTickets(data.total);  // ✅ total count from DB
+  //       if (data.metrics) {
+  //         setMetrics(data.metrics);
+  //       }
+
+  //       console.log("tickets data", data);
+
+  //     } catch (err) {
+  //       setError((err as Error).message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchTickets();
+  // }, [userId, role, searchQuery, statusQuery, daysQuery, staffQuery, currentPage]);
 
 
   useEffect(() => {
@@ -453,11 +471,6 @@ const TicketsPage = () => {
   }, []);
 
   const handleAssignToClick = (ticket: Ticket) => {
-    // If already assigned, don't open the modal
-    // if (ticket.assign_to) {
-    //   Swal.fire('Already Assigned', 'This ticket has already been assigned to a sub-admin.', 'info');
-    //   return;
-    // }
 
     setSelectedTicket(ticket);
     setIsModalOpen(true);
@@ -502,7 +515,7 @@ const TicketsPage = () => {
       );
 
 
-
+      await fetchTickets();
       setIsModalOpen(false); // Close modal after assigning sub-admin
     } catch (err) {
       console.error("Error assigning sub-admin:", err);
@@ -598,6 +611,7 @@ const TicketsPage = () => {
         if (res.ok) {
           Swal.fire("Deleted!", "The reply has been removed.", "success");
           setTicketReplies((prev) => prev.filter((r) => r.id !== replyId));
+          await fetchTickets();
         } else {
           Swal.fire("Error", "Failed to delete reply.", "error");
         }
@@ -607,9 +621,7 @@ const TicketsPage = () => {
       }
     }
   };
-  // if (loading) {
-  //   return <Loading />;
-  // }
+
 
   return (
     <div>
@@ -642,76 +654,45 @@ const TicketsPage = () => {
 
       </div>
 
-      {/* <div className="p-4">
-        {userId && (
-          <p className="mt-2 text-gray-600">Logged in as Admin ID: <strong>{userId}</strong></p>
-        )}
-      </div> */}
 
       <PageBreadcrumb pageTitle="Ticket" onStatus={setStatusQuery} onSearch={setSearchQuery} onDays={setDaysQuery}
         onStaff={setStaffQuery} />
       <div className="flex justify-end items-center gap-2 p-4 dark:border-white/[0.05]">
 
-{/* 
-        {(() => {
-          const windowSize = 10;
 
-          const half = Math.floor(windowSize / 2);
-
-          let startPage =
-            Math.max( 1, currentPage - half);
-
-          const endPage = Math.min(
-            totalPages,
-            startPage + windowSize - 1
-          );
-
-          startPage = Math.max(1, endPage - windowSize + 1);
-
-          const pages =  Array.from(
-            {length: endPage - startPage + 1},
-            (_, idx) => startPage + idx
-          );
-
-          console.log("Pages: ", pages, startPage, endPage);
-
-          return pages.map(
-            page => {
-              console.log("Page: ", page);
-              // const page = startPage + idx;
-              const isActive = page === currentPage;
-
-              return (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                    className={`rounded px-3 py-2 text-sm font-medium ${
-                    isActive
-                      ? 'bg-blue-500 text-white'
-                      : 'text-blue-500 hover:bg-gray-200'
-                  }`}
-                >
-                  {page}
-                </button>
-              );
-            },
-          );
-        })()} */}
+        <button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage(p => p - 1)}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          Prev
+        </button>
 
         {[...Array(totalPages)].map((_, index) => {
           const pageNumber = index + 1;
-          console.log("pages", totalPages);
+
           return (
             <button
               key={pageNumber}
               onClick={() => setCurrentPage(pageNumber)}
-              className={`px-3 py-1 rounded-md ${currentPage === pageNumber ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"
+              className={`px-3 py-1 rounded-md ${currentPage === pageNumber
+                ? "bg-blue-500 text-white"
+                : "text-blue-500 hover:bg-gray-200"
                 }`}
             >
               {pageNumber}
             </button>
           );
         })}
+
+        {/* NEXT */}
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage(p => p + 1)}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
 
 
@@ -719,425 +700,413 @@ const TicketsPage = () => {
       {error && <p className="text-center py-5 text-red-500">{error}</p>}
 
       {!loading && !error && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-          {/* <div className="p-4 text-gray-700 dark:text-gray-300">Total Tickets: {tickets.length}</div> */}
-          <Table className="text-xs">
-            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
-              <TableRow className="bg-gray-100">
-                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Name</TableCell>
-                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Email</TableCell>
-                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Subject</TableCell>
-                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Message</TableCell>
-                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Priority</TableCell>
-                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Assign To</TableCell>
-                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Status</TableCell>
-                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Actions</TableCell>
-                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Timestamp</TableCell>
+        <div className="rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+          <div className="max-h-[65vh] overflow-y-auto custom-scrollbar">
 
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {Array.isArray(paginatedTickets) && paginatedTickets.length > 0 ? (
-                paginatedTickets.map((ticket) => {
+            {/* <div className="p-4 text-gray-700 dark:text-gray-300">Total Tickets: {tickets.length}</div> */}
+            <Table className="text-xs">
+              <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+                <TableRow className="bg-gray-100">
+                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Name</TableCell>
+                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Email</TableCell>
+                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Subject</TableCell>
+                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Message</TableCell>
+                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Priority</TableCell>
+                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Assign To</TableCell>
+                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Status</TableCell>
+                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Actions</TableCell>
+                  <TableCell className="px-5 py-3 font-medium text-gray-500 text-start">Timestamp</TableCell>
 
-                  // <TableRow key={ticket.id}>
-                  const isLong = ticket.message?.length > 50;
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                {Array.isArray(tickets) && tickets.length > 0 ? (
+                  tickets.map((ticket) => {
+                    // <TableRow key={ticket.id}>
+                    const isLong = ticket.message?.length > 50;
 
-                  return (
-                    <TableRow
-                      key={ticket.id}
-                      className={ticket.escalate ? "bg-red-100 dark:bg-red-900/20" : ""}
-                    >
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                        <div className="flex items-center gap-2">
-                          <Image
-                            width={40}
-                            height={40}
-                            src={
-                              ticket.coachImage
-                                ? `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${ticket.coachImage}`
-                                : ticket.userImage
-                                  ? `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${ticket.userImage}`
-                                  : "/uploads/d1.png"
-                            }
-                            alt={ticket.name ?? "User"}
-                            className="rounded-full flex-shrink-0"
-                          />
+                    return (
+                      <TableRow
+                        key={ticket.id}
+                        className={ticket.escalate ? "bg-red-100 dark:bg-red-900/20" : ""}
+                      >
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                          <div className="flex items-center gap-2">
+                            <Image
+                              width={40}
+                              height={40}
+                              src={
+                                ticket.coachImage
+                                  ? `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${ticket.coachImage}`
+                                  : ticket.userImage
+                                    ? `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${ticket.userImage}`
+                                    : "/uploads/d1.png"
+                              }
+                              alt={ticket.name ?? "User"}
+                              className="rounded-full flex-shrink-0"
+                            />
 
-                          <span className="font-medium text-gray-800 dark:text-white/90 whitespace-normal break-words">
-                            {ticket.name}
-                          </span>
-                        </div>
-                      </TableCell>
+                            <span className="font-medium text-gray-800 dark:text-white/90 whitespace-normal break-words">
+                              {ticket.name}
+                            </span>
+                          </div>
+                        </TableCell>
 
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400  whitespace-normal break-words">{ticket.subject}</TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs">
-                        <p className="whitespace-pre-wrap break-words">
-                          {isLong ? ticket.message.slice(0, 10) + "..." : ticket.message}
-                        </p>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">{ticket.email}</TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400  whitespace-normal break-words">{ticket.subject}</TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs">
+                          <p className="whitespace-pre-wrap break-words">
+                            {isLong ? ticket.message.slice(0, 10) + "..." : ticket.message}
+                          </p>
 
-                        {isLong && (
-                          <button
-                            className="text-blue-500 text-sm mt-1 hover:underline"
-                            onClick={() => openPopupMessage(ticket.message)}
-                          >
-                            View More
-                          </button>
-                        )}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                        <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full
+                          {isLong && (
+                            <button
+                              className="text-blue-500 text-sm mt-1 hover:underline"
+                              onClick={() => openPopupMessage(ticket.message)}
+                            >
+                              View More
+                            </button>
+                          )}
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                          <span
+                            className={`px-2 py-1 text-xs font-semibold rounded-full
                           ${ticket.priority === "High" ? "bg-red-100 text-red-700" : ""}
                           ${ticket.priority === "Medium" ? "bg-yellow-100 text-yellow-700" : ""}
                           ${ticket.priority === "Low" ? "bg-green-100 text-green-700" : ""}`}
-                        >
-                          {ticket.priority}
-                        </span>
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                        <button
-                          className="text-blue-500 hover:underline"
-                          onClick={() => handleAssignToClick(ticket)}
-                        >
-
-                          {ticket.assign_to_username || 'Assign To'}
-                        </button>
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-yellow-500">
-                        <Badge
-                          color={
-                            ticket.status.toLowerCase() === "closed" ? "error" :
-                              ticket.status.toLowerCase() === "open" ? "info" :
-                                ticket.status.toLowerCase() === "fixed" ? "success" :
-                                  ticket.status.toLowerCase() === "pending" ? "warning" :
-                                    "light" // Default color
-                          }
-                        >
-                          {ticket.status || "Pending"}
-                        </Badge>
-                      </TableCell>
-
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                        <div className="flex gap-3">
-                          <button className="text-green-500" onClick={() => handleReplyClick(ticket)}>
-                            <MessageSquare size={18} />
-                          </button>
-                          <button
-                            className="text-blue-500 hover:text-blue-600"
-                            onClick={() => handleViewNotesClick(ticket)}
-                            title="View Notes"
                           >
-                            <StickyNote size={18} />
-                          </button>
-                        </div>
-
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                        <div className="text-gray-500 dark:text-gray-400">
-                          <div>{dayjs(ticket.updated_at ? ticket.updated_at : ticket.createdAt).format("D-MM-YYYY")}</div>
-                          <div>{dayjs(ticket.updated_at ? ticket.updated_at : ticket.createdAt).format("h:mm A")}</div>
-                        </div>
-                      </TableCell>
-
-                    </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell className="text-center text-gray-500 py-4">
-                    No tickets found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-          {showPopup && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-md shadow-lg max-w-lg w-full max-h-[80vh] overflow-y-auto">
-                <h2 className="text-lg font-semibold mb-3 text-gray-800">Full Message</h2>
-                <p className="whitespace-pre-wrap break-words text-gray-700">
-                  {popupMessage}
-                </p>
-                <div className="text-right mt-4">
-                  <button
-                    onClick={() => setShowPopup(false)}
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Ticket Notes</DialogTitle>
-              </DialogHeader>
-
-              {!Array.isArray(notes) || notes.length === 0 ? (
-                <p className="text-gray-500">No notes found for this ticket.</p>
-              ) : (
-                <ul className="space-y-3 max-h-64 overflow-y-auto">
-                  {notes.map((note) => (
-                    <li
-                      key={note.id}
-                      className="p-3 rounded-lg border bg-gray-50 dark:bg-gray-800 dark:text-gray-200"
-                    >
-                      <p>{note.notes}</p>
-                      <span className="text-xs text-gray-400">
-                        {new Date(note.createdAt).toLocaleString()}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </DialogContent>
-          </Dialog>
-
-
-          <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
-            <DialogContent className="p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
-              <DialogTitle>Reply to Ticket</DialogTitle>
-
-              <input type="hidden" value={userId ?? ""} name="userId" />
-              <input type="hidden" value={role ?? ""} name="role" />
-              <input type="hidden" value={selectedTicket?.id ?? ""} name="ticketId" />
-
-              {/* Previous Messages */}
-              <div className="mt-4">
-                <h3 className="text-sm font-medium mb-2 text-blue-600">Previous Messages</h3>
-                <div className="border border-blue-300 rounded-md p-3 max-h-60 overflow-y-auto bg-gray-50 space-y-4 custom-scrollbar">
-                  {ticketReplies.length === 0 ? (
-                    <p className="text-gray-400 text-sm">No messages yet.</p>
-                  ) : (
-                    ticketReplies.map((reply) => (
-                      <div key={reply.id} className="border-b pb-3">
-
-                        <div className="flex justify-between items-start mb-1">
-                          <p className="text-sm text-gray-700">
-                            <span className="font-semibold">Message:</span> {reply.message}
-                          </p>
+                            {ticket.priority}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
                           <button
-                            onClick={() => handleDeleteReply(reply.id)}
-                            className="text-red-500 hover:text-red-700"
-                            title="Delete reply"
+                            className="text-blue-500 hover:underline"
+                            onClick={() => handleAssignToClick(ticket)}
                           >
-                            <Trash className="w-4 h-4" />
+
+                            {ticket.assign_to_username || 'Assign To'}
                           </button>
-                        </div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-sm">Status:</span>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-yellow-500">
                           <Badge
                             color={
-                              reply.status.toLowerCase() === "closed"
-                                ? "error"
-                                : reply.status.toLowerCase() === "open"
-                                  ? "info"
-                                  : reply.status.toLowerCase() === "fixed"
-                                    ? "success"
-                                    : reply.status.toLowerCase() === "pending"
-                                      ? "warning"
-                                      : "light"
+                              ticket.status.toLowerCase() === "closed" ? "error" :
+                                ticket.status.toLowerCase() === "open" ? "info" :
+                                  ticket.status.toLowerCase() === "fixed" ? "success" :
+                                    ticket.status.toLowerCase() === "pending" ? "warning" :
+                                      "light" // Default color
                             }
                           >
-                            {reply.status}
+                            {ticket.status || "Pending"}
                           </Badge>
-                        </div>
-                        {/* Attachment from reply.filename */}
-                        {reply.filename && (
-                          <div className="flex items-center gap-2 text-sm mb-1">
-                            <span className="font-semibold text-sm">Attachment:</span>
+                        </TableCell>
 
-                            <a
-                              href={reply.filename}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center hover:underline text-blue-500"
+                        <TableCell className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                          <div className="flex gap-3">
+                            <button className="text-green-500" onClick={() => handleReplyClick(ticket)}>
+                              <MessageSquare size={18} />
+                            </button>
+                            <button
+                              className="text-blue-500 hover:text-blue-600"
+                              onClick={() => handleViewNotesClick(ticket)}
+                              title="View Notes"
                             >
-                              <Download className="w-4 h-4 mr-1" />
-                              Download
-                            </a>
+                              <StickyNote size={18} />
+                            </button>
                           </div>
-                        )}
+
+                        </TableCell>
+
+                        <TableCell>
+                          {dayjs(ticket.createdAt).format("D-MM-YYYY, hh:mm A")}
+                        </TableCell>
+
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell className="text-center text-gray-500 py-4">
+                      No tickets found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+            {showPopup && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-white p-6 rounded-md shadow-lg max-w-lg w-full max-h-[80vh] overflow-y-auto">
+                  <h2 className="text-lg font-semibold mb-3 text-gray-800">Full Message</h2>
+                  <p className="whitespace-pre-wrap break-words text-gray-700">
+                    {popupMessage}
+                  </p>
+                  <div className="text-right mt-4">
+                    <button
+                      onClick={() => setShowPopup(false)}
+                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Ticket Notes</DialogTitle>
+                </DialogHeader>
+
+                {!Array.isArray(notes) || notes.length === 0 ? (
+                  <p className="text-gray-500">No notes found for this ticket.</p>
+                ) : (
+                  <ul className="space-y-3 max-h-64 overflow-y-auto">
+                    {notes.map((note) => (
+                      <li
+                        key={note.id}
+                        className="p-3 rounded-lg border bg-gray-50 dark:bg-gray-800 dark:text-gray-200"
+                      >
+                        <p>{note.notes}</p>
+                        <span className="text-xs text-gray-400">
+                          {new Date(note.createdAt).toLocaleString()}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </DialogContent>
+            </Dialog>
 
 
-                        <div className="text-sm text-gray-700">
-                          <span className="font-semibold">Date:</span> {reply.repliedBy} —{" "}
-                          {new Date(reply.createdAt).toLocaleString()}
-                        </div>
-                        <div className="text-sm text-gray-700">
-                          <span className="font-semibold">Prority:</span>  <span
-                            className={`px-2 py-1 text-xs font-semibold rounded-full
+            <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
+              <DialogContent className="p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                <DialogTitle>Reply to Ticket</DialogTitle>
+
+                <input type="hidden" value={userId ?? ""} name="userId" />
+                <input type="hidden" value={role ?? ""} name="role" />
+                <input type="hidden" value={selectedTicket?.id ?? ""} name="ticketId" />
+
+                {/* Previous Messages */}
+                <div className="mt-4">
+                  <h3 className="text-sm font-medium mb-2 text-blue-600">Previous Messages</h3>
+                  <div className="border border-blue-300 rounded-md p-3 max-h-60 overflow-y-auto bg-gray-50 space-y-4 custom-scrollbar">
+                    {ticketReplies.length === 0 ? (
+                      <p className="text-gray-400 text-sm">No messages yet.</p>
+                    ) : (
+                      ticketReplies.map((reply) => (
+                        <div key={reply.id} className="border-b pb-3">
+
+                          <div className="flex justify-between items-start mb-1">
+                            <p className="text-sm text-gray-700">
+                              <span className="font-semibold">Message:</span> {reply.message}
+                            </p>
+                            <button
+                              onClick={() => handleDeleteReply(reply.id)}
+                              className="text-red-500 hover:text-red-700"
+                              title="Delete reply"
+                            >
+                              <Trash className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-sm">Status:</span>
+                            <Badge
+                              color={
+                                reply.status.toLowerCase() === "closed"
+                                  ? "error"
+                                  : reply.status.toLowerCase() === "open"
+                                    ? "info"
+                                    : reply.status.toLowerCase() === "fixed"
+                                      ? "success"
+                                      : reply.status.toLowerCase() === "pending"
+                                        ? "warning"
+                                        : "light"
+                              }
+                            >
+                              {reply.status}
+                            </Badge>
+                          </div>
+                          {/* Attachment from reply.filename */}
+                          {reply.filename && (
+                            <div className="flex items-center gap-2 text-sm mb-1">
+                              <span className="font-semibold text-sm">Attachment:</span>
+
+                              <a
+                                href={reply.filename}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center hover:underline text-blue-500"
+                              >
+                                <Download className="w-4 h-4 mr-1" />
+                                Download
+                              </a>
+                            </div>
+                          )}
+
+
+                          <div className="text-sm text-gray-700">
+                            <span className="font-semibold">Date:</span> {reply.repliedBy} —{" "}
+                            {new Date(reply.createdAt).toLocaleString()}
+                          </div>
+                          <div className="text-sm text-gray-700">
+                            <span className="font-semibold">Prority:</span>  <span
+                              className={`px-2 py-1 text-xs font-semibold rounded-full
                           ${reply.priority === "High" ? "bg-red-100 text-red-700" : ""}
                           ${reply.priority === "Medium" ? "bg-yellow-100 text-yellow-700" : ""}
                           ${reply.priority === "Low" ? "bg-green-100 text-green-700" : ""}`}
-                          >
-                            {reply.priority}
-                          </span>
+                            >
+                              {reply.priority}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Message Box */}
-              <label className="block text-sm font-medium text-gray-700 mt-4">Message</label>
-              <textarea
-                className="w-full p-2 border rounded-md resize-none"
-                placeholder="Write your message..."
-                rows={2}
-                value={replyMessage}
-                onChange={(e) => setReplyMessage(e.target.value)}
-              />
-
-              {/* Attachment Upload */}
-              <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
-                Attachment (Image or PDF)
-              </label>
-              <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 hover:border-blue-400 transition">
-                <input
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <div className="flex flex-col items-center justify-center space-y-2">
-                  <UploadCloud className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm text-gray-600">
-                    Click or drag to upload file
-                  </span>
-                  {attachmentFile && (
-                    <p className="text-xs text-green-600 font-medium">
-                      Selected: {attachmentFile.name}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="mt-4 flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="escalate"
-                  checked={isEscalate}
-                  onChange={(e) => setIsEscalate(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-                />
-                <label htmlFor="escalate" className="text-sm font-medium text-gray-700">
-                  Escalate
-                </label>
-              </div>
-
-              {/* Show Notes + SubAdmin dropdown only if Escalate checked */}
-              {isEscalate && (
-                <div className="mt-4 space-y-4">
-                  {/* Admin Notes */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Admin Notes
-                    </label>
-                    <textarea
-                      className="w-full p-2 border rounded-md resize-none"
-                      rows={2}
-                      placeholder="Enter notes for escalation..."
-                      value={adminNotes}
-                      onChange={(e) => setAdminNotes(e.target.value)}
-                    />
+                      ))
+                    )}
                   </div>
+                </div>
 
-                  {/* SubAdmin Dropdown */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Escalate To
-                    </label>
+                {/* Message Box */}
+                <label className="block text-sm font-medium text-gray-700 mt-4">Message</label>
+                <textarea
+                  className="w-full p-2 border rounded-md resize-none"
+                  placeholder="Write your message..."
+                  rows={2}
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                />
+
+                {/* Attachment Upload */}
+                <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
+                  Attachment (Image or PDF)
+                </label>
+                <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 hover:border-blue-400 transition">
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <UploadCloud className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm text-gray-600">
+                      Click or drag to upload file
+                    </span>
+                    {attachmentFile && (
+                      <p className="text-xs text-green-600 font-medium">
+                        Selected: {attachmentFile.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="escalate"
+                    checked={isEscalate}
+                    onChange={(e) => setIsEscalate(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                  />
+                  <label htmlFor="escalate" className="text-sm font-medium text-gray-700">
+                    Escalate
+                  </label>
+                </div>
+
+                {/* Show Notes + SubAdmin dropdown only if Escalate checked */}
+                {isEscalate && (
+                  <div className="mt-4 space-y-4">
+                    {/* Admin Notes */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Admin Notes
+                      </label>
+                      <textarea
+                        className="w-full p-2 border rounded-md resize-none"
+                        rows={2}
+                        placeholder="Enter notes for escalation..."
+                        value={adminNotes}
+                        onChange={(e) => setAdminNotes(e.target.value)}
+                      />
+                    </div>
+
+                    {/* SubAdmin Dropdown */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Escalate To
+                      </label>
+                      <select
+                        className="w-full p-2 border rounded"
+                        value={selectedSubAdmin}
+                        onChange={(e) => setSelectedSubAdmin(e.target.value)}
+                      >
+                        <option value="">-- Select SubAdmin --</option>
+                        {subAdmins.map((sub) => (
+                          <option key={sub.id} value={sub.id}>
+                            {sub.username}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Status Dropdown */}
+                <div className="flex gap-4 mt-4">
+                  {/* Status */}
+                  <div className="w-1/2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                     <select
                       className="w-full p-2 border rounded"
-                      value={selectedSubAdmin}
-                      onChange={(e) => setSelectedSubAdmin(e.target.value)}
+                      value={replyStatus}
+                      onChange={(e) => setReplyStatus(e.target.value)}
                     >
-                      <option value="">-- Select SubAdmin --</option>
-                      {subAdmins.map((sub) => (
-                        <option key={sub.id} value={sub.id}>
-                          {sub.username}
-                        </option>
-                      ))}
+                      <option value="Pending">Pending</option>
+                      <option value="Open">Open</option>
+                      <option value="Fixed">Fixed</option>
+                      <option value="Closed">Closed</option>
+                      <option value="Escalate">Escalate</option>
+                    </select>
+                  </div>
+
+                  {/* Priority */}
+                  <div className="w-1/2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                    <select
+                      className="w-full p-2 border rounded"
+                      value={replyPriority}
+                      onChange={(e) => setReplyPriority(e.target.value)}
+                    >
+                      <option value="High">High</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Low">Low</option>
                     </select>
                   </div>
                 </div>
-              )}
-              {/* Status Dropdown */}
-              {/* <label className="block text-sm font-medium text-gray-700 mt-4">Status</label>
-              <select
-                className="w-full p-2 border rounded"
-                value={replyStatus}
-                onChange={(e) => setReplyStatus(e.target.value)}
-              >
-                <option value="Pending">Pending</option>
-                <option value="Open">Open</option>
-                <option value="Fixed">Fixed</option>
-                <option value="Closed">Closed</option>
-                <option value="Escalate">Escalate</option>
-              </select> */}
-              {/* Status Dropdown */}
-              <div className="flex gap-4 mt-4">
-                {/* Status */}
-                <div className="w-1/2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <select
-                    className="w-full p-2 border rounded"
-                    value={replyStatus}
-                    onChange={(e) => setReplyStatus(e.target.value)}
+                {/* Buttons */}
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    className="px-4 py-2 bg-red-500 text-white rounded-md"
+                    onClick={() => setIsReplyModalOpen(false)}
                   >
-                    <option value="Pending">Pending</option>
-                    <option value="Open">Open</option>
-                    <option value="Fixed">Fixed</option>
-                    <option value="Closed">Closed</option>
-                    <option value="Escalate">Escalate</option>
-                  </select>
-                </div>
-
-                {/* Priority */}
-                <div className="w-1/2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                  <select
-                    className="w-full p-2 border rounded"
-                    value={replyPriority}
-                    onChange={(e) => setReplyPriority(e.target.value)}
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md flex items-center justify-center"
+                    onClick={handleReplySubmit}
+                    disabled={loading}
                   >
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
-                  </select>
+                    {loading ? (
+                      <>
+                        <Loader2 className="animate-spin text-blue-300 mr-2" size={16} />
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit"
+                    )}
+                  </button>
                 </div>
-              </div>
-              {/* Buttons */}
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  className="px-4 py-2 bg-red-500 text-white rounded-md"
-                  onClick={() => setIsReplyModalOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="px-4 py-2 bg-blue-500 text-white rounded-md flex items-center justify-center"
-                  onClick={handleReplySubmit}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="animate-spin text-blue-300 mr-2" size={16} />
-                      Submitting...
-                    </>
-                  ) : (
-                    "Submit"
-                  )}
-                </button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
 
+          </div>
         </div>
       )}
 
@@ -1203,12 +1172,3 @@ const TicketsPage = () => {
 };
 
 export default TicketsPage;
-
-
-
-
-
-
-
-
-
