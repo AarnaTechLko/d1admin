@@ -6,7 +6,7 @@ import Image from "next/image";
 import Button from "../ui/button/Button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
-
+import { useSession } from "next-auth/react";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { Coach } from "@/app/types/types";
@@ -39,8 +39,6 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
   const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
-  // const [showConfirmation, setShowConfirmation] = useState(false);
-  // const [confirmationCallback, setConfirmationCallback] = useState<() => void>(() => () => { });
   const MySwal = withReactContent(Swal);
   const [suspendCoach, setSuspendCoach] = useState<Coach | null>(null);
   const [suspendDays, setSuspendDays] = useState<number | null>(null);
@@ -52,22 +50,10 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
   const [coaches, setCoaches] = useState<Coach[]>(data);
   const [percentageOpen, setPercentageOpen] = useState(false);
   const [tempPercentage, setTempPercentage] = useState<number>(0);
-  // const [inputValue, setInputValue] = useState<number>(0);
   const [loading, setLoading] = useState(false);
-  // const itemsPerPage = 10;
-  // const numberOfPages = Math.ceil(totalPages / itemsPerPage);
-
-  // console.log("Total: ", numberOfPages);
-  // console.log("Data: ", data)
-
-  // const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  // console.log("Paginated: ", paginatedData);
-
   const [isCoachPasswordModalOpen, setCoachPasswordModalOpen] = useState(false);
   const [selectedCoachId, setSelectedCoachId] = useState<number | null>(null);
   const [selectedCoachid, setSelectedCoachid] = useState<number | null>(null);
-
   const [newCoachPassword, setNewCoachPassword] = useState("");
   const [messageText, setMessageText] = useState("");
   const [sendEmail, setSendEmail] = useState(false);
@@ -75,9 +61,9 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
   const [sendInternal, setSendInternal] = useState(false);
   const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
   const [sending, setSending] = useState(false);
+  const { data: session } = useSession();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-
-  // const userRole = sessionStorage.getItem("role");
   const router = useRouter();
   const handleOpenCoachModal = (coachId: number) => {
     setSelectedCoachId(coachId);
@@ -98,7 +84,6 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
     }
   }, [selectedCoachid]);
 
-  // Keep it in sync when data prop changes
   useEffect(() => {
     setCoaches(data);
   }, [data]);
@@ -151,6 +136,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
     setSelectedCoachId(null);
     setNewCoachPassword("");
     setCoachPasswordModalOpen(false);
+    setIsSubmitting(false);
   };
 
   const handleFetchIpInfo = async (userId: number, type: 'player' | 'coach' | 'enterprise') => {
@@ -580,26 +566,30 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                         </DialogContent>
                       </Dialog>
 
+
+
                       <button
                         onClick={() => {
-                          const changePassword = sessionStorage.getItem("change_password");
-
-                          console.log("changepassword", changePassword);
-                          if (changePassword === "1") {
-                            handleOpenCoachModal(Number(coach.id));
-                          } else {
+                          console.log("SESSION USER:", session?.user);
+                          if (session?.user?.role?.toLowerCase() !== "admin") {
                             Swal.fire({
                               icon: "warning",
                               title: "Access Denied",
                               text: "You are not allowed to change the password.",
                             });
+                            return;
                           }
+
+                          handleOpenCoachModal(Number(coach.id));
                         }}
                         title="Change Password"
                         className="hover:text-blue-600"
                       >
                         🔒
                       </button>
+
+
+
                       <button
                         onClick={() => setSelectedCoachid(Number(coach.id))}
                         title="Send Message"
@@ -831,50 +821,63 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
 
               <div className="flex justify-end gap-2">
                 <button
+                  disabled={isSubmitting}
                   onClick={handleCloseCoachModal}
-                  className="text-gray-600 hover:text-black"
+                  className="text-gray-600 hover:text-black disabled:opacity-50"
                 >
                   Cancel
                 </button>
 
+
                 <button
-                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                  disabled={isSubmitting}
+                  className={`px-4 py-2 rounded text-white transition
+    ${isSubmitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}
+  `}
                   onClick={async () => {
+                    if (isSubmitting) return; // ⛔ double click stop
+
                     if (!newCoachPassword) {
                       Swal.fire("Warning", "Password is required", "warning");
                       return;
                     }
+
                     if (newCoachPassword.length < 6) {
                       Swal.fire("Warning", "Password must be at least 6 characters", "warning");
                       return;
                     }
 
                     try {
-                      const res = await fetch(`/api/coach/${selectedCoachId}/change-password`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ newPassword: newCoachPassword }),
-                      });
+                      setIsSubmitting(true); // 🔄 START loading
+
+                      const res = await fetch(
+                        `/api/coach/${selectedCoachId}/change-password`,
+                        {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ newPassword: newCoachPassword }),
+                        }
+                      );
 
                       const data = await res.json();
 
-                      if (!res.ok) throw new Error(data.error || "Failed to update password");
+                      if (!res.ok) throw new Error(data.error || "Failed");
 
                       Swal.fire("Success", "Password updated successfully", "success");
+
                       setNewCoachPassword("");
                       setCoachPasswordModalOpen(false);
                     } catch (err) {
                       console.error("Password updation failed", err);
-                      Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Failed to update Password. Please try again.',
-                      });
+                      Swal.fire("Error", "Failed to update Password. Try again.", "error");
+                    } finally {
+                      setIsSubmitting(false); // ✅ END loading
                     }
                   }}
                 >
-                  Assign Password
+                  {isSubmitting ? "Assigning..." : "Assign Password"}
                 </button>
+
               </div>
             </div>
           </DialogContent>

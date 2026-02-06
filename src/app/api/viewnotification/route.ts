@@ -1,12 +1,16 @@
 import { db } from "@/lib/db";
 import { admin_message, users, coaches } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { eq ,desc} from "drizzle-orm";
 
 const S3_BUCKET = process.env.NEXT_PUBLIC_AWS_S3_BUCKET_LINK || "";
 
 export async function GET() {
   try {
-    const messages = await db.select().from(admin_message);
+    // const messages = await db.select().from(admin_message);
+    const messages = await db
+      .select()
+      .from(admin_message)
+      .orderBy(desc(admin_message.created_at));
 
     const enrichedMessages = await Promise.all(
       messages.map(async (msg) => {
@@ -88,10 +92,10 @@ export async function GET() {
           formattedDate = isNaN(date.getTime())
             ? "—"
             : date.toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              });
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            });
         }
 
         // ✅ Parse methods safely
@@ -101,8 +105,8 @@ export async function GET() {
             typeof msg.methods === "string"
               ? JSON.parse(msg.methods)
               : Array.isArray(msg.methods)
-              ? msg.methods
-              : [];
+                ? msg.methods
+                : [];
         } catch {
           parsedMethods = [];
         }

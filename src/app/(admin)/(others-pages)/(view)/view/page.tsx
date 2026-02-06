@@ -18,6 +18,7 @@ import {
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import dayjs from "dayjs";
+import { FaSpinner } from "react-icons/fa";
 type Permission = {
   change_password: number;
   refund: number;
@@ -51,6 +52,7 @@ const AdminListPage = () => {
   const [error, setError] = useState<string | null>(null);
   const MySwal = withReactContent(Swal);
   const [daysQuery, setDaysQuery] = useState<string>("");
+  const [saving, setSaving] = useState(false);
 
   // 🔹 Edit Modal State
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -173,10 +175,61 @@ const AdminListPage = () => {
    */
 
   // --------------------- handleUpdate ---------------------
+  // const handleUpdate = async () => {
+  //   if (!selectedAdmin) return;
+
+  //   try {
+  //     // Merge permissions ensuring all keys exist
+  //     const mergedPermissions: Permission = {
+  //       change_password: editData.permission?.change_password ?? 0,
+  //       refund: editData.permission?.refund ?? 0,
+  //       monitor_activity: editData.permission?.monitor_activity ?? 0,
+  //       view_finance: editData.permission?.view_finance ?? 0,
+  //       access_ticket: editData.permission?.access_ticket ?? 0,
+
+  //     };
+
+  //     const payload = {
+  //       ...editData,
+  //       ...mergedPermissions,
+  //       role_name: editData.role,
+  //     };
+
+  //     const response = await fetch(`/api/subadmin?id=${selectedAdmin.id}`, {
+  //       method: "PATCH",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(payload),
+  //     });
+
+  //     if (!response.ok) {
+  //       const text = await response.text();
+  //       throw new Error(text || "Failed to update admin");
+  //     }
+
+  //     const updatedAdmin: Admin = {
+  //       ...selectedAdmin,
+  //       ...editData,
+  //       permission: mergedPermissions,
+  //     };
+
+  //     setAdmins((prev) =>
+  //       prev.map((a) => (a.id === selectedAdmin.id ? updatedAdmin : a))
+  //     );
+
+  //     setIsEditOpen(false);
+  //     await MySwal.fire("Updated!", "Admin details updated successfully.", "success");
+  //   } catch (error) {
+  //     console.error("Error updating admin:", error);
+  //     await MySwal.fire("Error!", `Failed to update admin: ${error}`, "error");
+  //   }
+  // };
+
   const handleUpdate = async () => {
     if (!selectedAdmin) return;
 
     try {
+      setSaving(true); // ✅ start loading
+
       // Merge permissions ensuring all keys exist
       const mergedPermissions: Permission = {
         change_password: editData.permission?.change_password ?? 0,
@@ -184,7 +237,6 @@ const AdminListPage = () => {
         monitor_activity: editData.permission?.monitor_activity ?? 0,
         view_finance: editData.permission?.view_finance ?? 0,
         access_ticket: editData.permission?.access_ticket ?? 0,
-
       };
 
       const payload = {
@@ -219,6 +271,8 @@ const AdminListPage = () => {
     } catch (error) {
       console.error("Error updating admin:", error);
       await MySwal.fire("Error!", `Failed to update admin: ${error}`, "error");
+    } finally {
+      setSaving(false); // ✅ stop loading
     }
   };
 
@@ -467,10 +521,13 @@ const AdminListPage = () => {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={saving}>
               Cancel
             </Button>
-            <Button onClick={handleUpdate}>Save</Button>
+            <Button onClick={handleUpdate} disabled={saving} className="flex items-center gap-2">
+              {saving && <FaSpinner className="animate-spin" />}
+              Save
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

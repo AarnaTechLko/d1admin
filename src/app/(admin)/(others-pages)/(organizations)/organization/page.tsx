@@ -74,7 +74,7 @@ const OrganizationsPage = () => {
 //  if (loading) {
 //         return <Loading />;
 //     }
-  return (
+  return ( 
     <div>
       <PageBreadcrumb pageTitle="Organization" onSearch={setSearchQuery} />
       

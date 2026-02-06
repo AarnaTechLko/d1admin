@@ -147,8 +147,11 @@ export default function AdminMessagesTable() {
                   </td>
 
                   {/* Message */}
+                  {/* Message */}
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-300 break-words max-w-xs">
-                    {displayText}
+                    {displayText
+                      ? displayText.replace(/<[^>]+>/g, "") // ✅ Remove HTML tags
+                      : ""}
                     {isLong && (
                       <button
                         onClick={() => handleToggleExpand(msg.id)}
@@ -158,6 +161,7 @@ export default function AdminMessagesTable() {
                       </button>
                     )}
                   </td>
+
 
                   {/* Methods */}
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
