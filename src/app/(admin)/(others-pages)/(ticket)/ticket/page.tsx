@@ -51,7 +51,6 @@ const TicketsPage = () => {
   const [statusQuery, setStatusQuery] = useState<string>("");
   const [daysQuery, setDaysQuery] = useState<string>("");
   const [staffQuery, setStaffQuery] = useState("");
-
   const [replyPriority, setReplyPriority] = useState<string>("Medium");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -66,10 +65,6 @@ const TicketsPage = () => {
   const [replyMessage, setReplyMessage] = useState<string>("");
   const [replyStatus, setReplyStatus] = useState<string>("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
-  //const [userId, setUserId] = useState<string | null>(null);
-  // const userId = session?.user?.id;
-  // const userRole = session?.user?.role;
-
   const router = useRouter();
   const [ticketReplies, setTicketReplies] = useState<TicketReply[]>([]);
   const [isEscalate, setIsEscalate] = useState(false);
@@ -88,8 +83,6 @@ const TicketsPage = () => {
   // React state for popup
   const [popupMessage, setPopupMessage] = useState<string>("");
   const [showPopup, setShowPopup] = useState<boolean>(false);
-  // Helper function to check valid JSON
-  // Extract JSON safely from mixed message
   const extractJson = (str: string) => {
     const jsonStart = str.indexOf("{");
     const jsonEnd = str.lastIndexOf("}");
@@ -319,41 +312,6 @@ const TicketsPage = () => {
     }
   }, [status, router]);
 
-
-  // useEffect(() => {
-  //   if (!session?.user?.id) return;
-
-  //   const fetchTickets = async () => {
-  //     setLoading(true);
-  //     setError(null);
-
-  //     try {
-  //       const response = await fetch(
-  //         `/api/ticket?search=${searchQuery}&page=${currentPage}&limit=10&userId=${session.user.id}&staff=${staffQuery}&status=${statusQuery}&days=${daysQuery}`
-  //       );
-
-  //       if (!response.ok) throw new Error("Failed to fetch tickets");
-
-  //       const data = await response.json();
-  //       setTickets(data.ticket ?? []);
-  //       setTotalPages(data.totalPages);
-  //       setMetrics(data.metrics);
-  //     } catch (err) {
-  //       setError((err as Error).message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchTickets();
-  // }, [
-  //   session?.user?.id,
-  //   searchQuery,
-  //   currentPage,
-  //   statusQuery,
-  //   daysQuery,
-  //   staffQuery,
-  // ]);
 
   const fetchTickets = async () => {
     if (!session?.user?.id) return;

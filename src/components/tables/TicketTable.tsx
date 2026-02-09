@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import Image from "next/image"; // ✅ MUST BE HERE
-
+import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
 type TicketNote = {
@@ -84,7 +84,9 @@ const TicketTable: React.FC<Props> = ({
 }) => {
 
   const [tickets, setTickets] = useState<Ticket[]>(data ?? []);
-  const [userId, setUserId] = useState<string | null>(null);
+  // const [userId, setUserId] = useState<string | null>(null);
+  // const router = useRouter();
+  const { data: session, status } = useSession();
   const router = useRouter();
 
   const [loading, setLoading] = useState<boolean>(!data);
@@ -124,14 +126,21 @@ const TicketTable: React.FC<Props> = ({
     }
     return null;
   };
+  // useEffect(() => {
+  //   const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
+  //   if (!storedUserId) {
+  //     router.push("/signin");
+  //   } else {
+  //     setUserId(storedUserId);
+  //   }
+  // }, [router]);
+
   useEffect(() => {
-    const storedUserId = localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
-    if (!storedUserId) {
+    if (status === "unauthenticated") {
       router.push("/signin");
-    } else {
-      setUserId(storedUserId);
     }
-  }, [router]);
+  }, [status, router]);
+
   useEffect(() => {
     const fetchSubAdmins = async () => {
       try {
@@ -146,47 +155,6 @@ const TicketTable: React.FC<Props> = ({
     fetchSubAdmins();
   }, []);
 
-  // const fetchTickets = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const response = await fetch(`/api/tickets?search=${searchQuery}&page=${page}&limit=10`);
-  //     if (!response.ok) throw new Error("Failed to fetch tickets");
-  //     const data = await response.json();
-  //     setTickets(data);
-  //     setLoading(false);
-
-  //   } catch (err) {
-  //     setError((err as Error).message);
-  //     setTickets([]);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // useEffect(() => {
-
-  // const fetchTickets = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const response = await fetch(`/api/tickets?search=${searchQuery}&page=${page}&limit=10`);
-  //     if (!response.ok) throw new Error("Failed to fetch tickets");
-  //     const data = await response.json();
-  //     setTickets(data.ticket ?? []);
-  //   } catch (err) {
-  //     setError((err as Error).message);
-  //     setTickets([]);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  //   if (data === undefined) {
-  //     fetchTickets();
-  //   } else {
-  //     setTickets(data);
-  //     setLoading(false);
-  //   }
-  // }, [searchQuery, page, data, currentPage,]);
 
   useEffect(() => {
     const fetchSubAdmins = async () => {
@@ -462,7 +430,9 @@ const TicketTable: React.FC<Props> = ({
       // 1️⃣ Prepare form data for reply API
       const formData = new FormData();
       formData.append("ticketId", String(selectedTicket.id));
-      formData.append("repliedBy", userId ?? "");
+      // formData.append("repliedBy", userId ?? "");
+      formData.append("repliedBy", String(session?.user?.id ?? ""));
+
       formData.append("message", replyMessage.trim());
       formData.append("status", replyStatus);
       formData.append("priority", replyPriority);
@@ -530,7 +500,7 @@ const TicketTable: React.FC<Props> = ({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               ticketId: selectedTicket.id,
-              fromId: userId,
+              fromId: session?.user?.id,
               toId: selectedSubAdmin,
               escalate: true,
             }),

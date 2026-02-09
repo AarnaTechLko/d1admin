@@ -92,16 +92,38 @@ export interface EvaluationData {
   organizationScores?: number[]; // Optional array for organization scores (for Goalkeeper)
   position?: string; 
 }
+// export interface Payment {
+//   id: number;
+//   coach_id: number;
+//   evaluation_id: number;
+//   review_title: string;
+//   playerFirstName: string;
+//   amount: number;
+//   status: string;
+//   description: string;
+//   created_at: string;
+//   is_deleted: number;
+// }
+
+
 export interface Payment {
   id: number;
-  coach_id: number;
   evaluation_id: number;
-  review_title: string;
-  playerFirstName: string;
+  player_id: number;
+  coach_id: number;
+
   amount: number;
   status: string;
-  description: string;
+  currency: string;
+  payment_info: string | null;
+  description: string | null;
   created_at: string;
   is_deleted: number;
-}
 
+  review_title?: string;
+
+  playerFirstName?: string | null;
+  playerLastName?: string | null;
+  coachFirstName?: string | null;
+  coachesLastName?: string | null;
+}

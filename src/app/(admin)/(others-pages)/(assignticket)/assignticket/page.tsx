@@ -408,42 +408,6 @@ const TicketsPage = () => {
 
 
 
-
-  // useEffect(() => {
-  //   if (!userId) return;
-
-  //   const fetchTickets = async () => {
-  //     setLoading(true);
-  //     setError(null);
-
-  //     try {
-  //       const res = await fetch(
-  //         `/api/ticket/assign?search=${searchQuery}&status=${statusQuery}&days=${daysQuery}&staff=${staffQuery}&page=${currentPage}&limit=${itemsPerPage}&userId=${userId}&role=${role}`
-  //       );
-
-  //       if (!res.ok) throw new Error("Failed to fetch tickets");
-
-  //       const data = await res.json();
-
-  //       setTickets(data.tickets);      // ✅ only 10 records
-  //       setTotalTickets(data.total);  // ✅ total count from DB
-  //       if (data.metrics) {
-  //         setMetrics(data.metrics);
-  //       }
-
-  //       console.log("tickets data", data);
-
-  //     } catch (err) {
-  //       setError((err as Error).message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchTickets();
-  // }, [userId, role, searchQuery, statusQuery, daysQuery, staffQuery, currentPage]);
-
-
   useEffect(() => {
     const fetchSubAdmins = async () => {
       try {
@@ -622,6 +586,25 @@ const TicketsPage = () => {
     }
   };
 
+  const getPageNumbers = () => {
+    const pages: number[] = [];
+    const maxVisible = 5;
+
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    const end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start < maxVisible - 1) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    return pages;
+  };
+
+
 
   return (
     <div>
@@ -657,43 +640,43 @@ const TicketsPage = () => {
 
       <PageBreadcrumb pageTitle="Ticket" onStatus={setStatusQuery} onSearch={setSearchQuery} onDays={setDaysQuery}
         onStaff={setStaffQuery} />
-      <div className="flex justify-end items-center gap-2 p-4 dark:border-white/[0.05]">
 
 
+      <div className="flex justify-end items-center gap-2 p-4">
+
+        {/* PREV */}
         <button
           disabled={currentPage === 1}
-          onClick={() => setCurrentPage(p => p - 1)}
+          onClick={() => setCurrentPage((p) => p - 1)}
           className="px-3 py-1 border rounded disabled:opacity-50"
         >
           Prev
         </button>
 
-        {[...Array(totalPages)].map((_, index) => {
-          const pageNumber = index + 1;
-
-          return (
-            <button
-              key={pageNumber}
-              onClick={() => setCurrentPage(pageNumber)}
-              className={`px-3 py-1 rounded-md ${currentPage === pageNumber
-                ? "bg-blue-500 text-white"
-                : "text-blue-500 hover:bg-gray-200"
-                }`}
-            >
-              {pageNumber}
-            </button>
-          );
-        })}
+        {/* PAGE NUMBERS */}
+        {getPageNumbers().map((page) => (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            className={`px-3 py-1 rounded-md ${currentPage === page
+              ? "bg-blue-500 text-white"
+              : "text-blue-500 hover:bg-gray-200"
+              }`}
+          >
+            {page}
+          </button>
+        ))}
 
         {/* NEXT */}
         <button
           disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage(p => p + 1)}
+          onClick={() => setCurrentPage((p) => p + 1)}
           className="px-3 py-1 border rounded disabled:opacity-50"
         >
           Next
         </button>
       </div>
+
 
 
       {loading && <p className="text-center py-5">Loading...</p>}

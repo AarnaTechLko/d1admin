@@ -40,60 +40,127 @@ export default function TabbedDataView() {
   // ----------------------------------------------------
   // FETCH DATA FIXED VERSION
   // ----------------------------------------------------
+  // const fetchData = async (tab: TabType, page: number, range: TimeRange) => {
+  //   setLoading(true);
+
+  //   try {
+  //     const endpointMap: Record<TabType, string> = {
+  //       Player: "player",
+  //       Coach: "coach",
+  //       Organization: "organization",
+  //       Team: "teams",
+  //       Ticket: "tickets",
+  //       Payment: "payments",
+  //       Evaluation: "evaluations",
+  //     };
+
+  //     const endpoint = endpointMap[tab];
+
+  //     const res = await fetch(
+  //       `/api/${endpoint}?page=${page}&limit=10&timeRange=${range}`
+  //     );
+
+  //     const json = await res.json();
+  //     console.log("Fetched:", json);
+
+  //     if (tab === "Payment") {
+  //       setPayments(json.data || []);
+  //     } else if (tab === "Evaluation") {
+  //       setEvaluations(json.data || []);
+  //     } else {
+  //       const payload =
+  //         json.data ||
+  //         json.coaches ||
+  //         json.enterprises ||
+  //         json.payments ||
+  //         json.tickets ||
+  //         json.teams ||
+  //         json.evaluations ||
+  //         json[tab.toLowerCase()] ||
+  //         [];
+
+  //       setData(payload);
+
+  //     }
+
+  //     // setTotalPages(json.totalPages || 1);
+  //     setTotalPages(json.pagination?.totalPages || 1);
+
+  //   } catch (err) {
+  //     console.error(`Failed to fetch ${tab} data:`, err);
+
+  //     if (tab === "Payment") setPayments([]);
+  //     else if (tab === "Evaluation") setEvaluations([]);
+  //     else setData([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchData = async (tab: TabType, page: number, range: TimeRange) => {
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const endpointMap: Record<TabType, string> = {
-        Player: "player",
-        Coach: "coach",
-        Organization: "organization",
-        Team: "teams",
-        Ticket: "tickets",
-        Payment: "payments",
-        Evaluation: "evaluations",
-      };
+  try {
+    const endpointMap: Record<TabType, string> = {
+      Player: "player",
+      Coach: "coach",
+      Organization: "organization",
+      Team: "teams",
+      Ticket: "tickets",
+      Payment: "payments",
+      Evaluation: "evaluations",
+    };
 
-      const endpoint = endpointMap[tab];
+    const endpoint = endpointMap[tab];
 
-      const res = await fetch(
-        `/api/${endpoint}?page=${page}&limit=10&timeRange=${range}`
-      );
+    const res = await fetch(
+      `/api/${endpoint}?page=${page}&limit=10&timeRange=${range}`
+    );
 
-      const json = await res.json();
-      console.log("Fetched:", json);
+    const json = await res.json();
+    console.log("Fetched:", json);
 
- if (tab === "Payment") {
-        setPayments(json.data || []);
-      } else if (tab === "Evaluation") {
-        setEvaluations(json.data || []);
-      } else {
-        const payload =
-          json.data ||
-          json.coaches ||
-          json.enterprises ||
-          json.payments ||
-          json.tickets ||
-          json.teams ||
-          json.evaluations ||
-          json[tab.toLowerCase()] ||
-          [];
-
-        setData(payload);
-
-      }
-
-      setTotalPages(json.totalPages || 1);
-    } catch (err) {
-      console.error(`Failed to fetch ${tab} data:`, err);
-
-      if (tab === "Payment") setPayments([]);
-      else if (tab === "Evaluation") setEvaluations([]);
-      else setData([]);
-    } finally {
-      setLoading(false);
+    // ---------------- PAYMENT ----------------
+    if (tab === "Payment") {
+      setPayments(json.data ?? []);
+      setTotalPages(json.pagination?.totalPages ?? 1);
+      return;
     }
-  };
+
+    // ---------------- EVALUATION ----------------
+    if (tab === "Evaluation") {
+      setEvaluations(json.data ?? []);
+      setTotalPages(json.pagination?.totalPages ?? 1);
+      return;
+    }
+
+    // ---------------- OTHERS ----------------
+    const payload =
+      json.data ||
+      json.coaches ||
+      json.enterprises ||
+      json.tickets ||
+      json.teams ||
+      json.evaluations ||
+      json[tab.toLowerCase()] ||
+      [];
+
+    setData(payload);
+    setTotalPages(json.pagination?.totalPages ?? 1);
+
+  } catch (err) {
+    console.error(`Failed to fetch ${tab} data:`, err);
+
+    if (tab === "Payment") setPayments([]);
+    else if (tab === "Evaluation") setEvaluations([]);
+    else setData([]);
+
+    setTotalPages(1);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // Auto fetch on tab/page change
   useEffect(() => {
@@ -207,11 +274,10 @@ export default function TabbedDataView() {
               setActiveTab(tab);
               setCurrentPage(1);
             }}
-            className={`flex-1 min-w-[120px] text-center px-6 py-3 rounded-md font-medium text-sm transition-all duration-200 ${
-              activeTab === tab
+            className={`flex-1 min-w-[120px] text-center px-6 py-3 rounded-md font-medium text-sm transition-all duration-200 ${activeTab === tab
                 ? "bg-blue-600 text-white"
                 : "bg-gray-200 text-gray-800"
-            }`}
+              }`}
           >
             {tab}
           </button>
@@ -235,8 +301,8 @@ export default function TabbedDataView() {
             currentPage={currentPage}
             totalPages={totalPages}
             setCurrentPage={setCurrentPage}
-           /// onAssignClick={handleAssignClick}
-            //onReplyClick={handleReplyClick}
+          /// onAssignClick={handleAssignClick}
+          //onReplyClick={handleReplyClick}
           />
         ) : activeTab === "Player" ? (
           <PlayerTable
