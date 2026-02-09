@@ -1,7 +1,7 @@
 
 
 import { db } from "@/lib/db";
-import { playerEvaluation } from "@/lib/schema";
+import { playerEvaluation, users, coaches } from "@/lib/schema";
 import { eq, and, gte, desc } from "drizzle-orm";
 
 // Define type for time range
@@ -75,9 +75,15 @@ export async function GET(req: Request) {
         payment_status: playerEvaluation.payment_status,
         created_at: playerEvaluation.created_at,
         is_deleted: playerEvaluation.is_deleted,
+        playerFirstName: users.first_name,
+        playerLastName: users.last_name,
+        coachFirstName: users.first_name,
+        coachLastName: users.last_name,
       })
       .from(playerEvaluation)
       .where(whereClause)
+      .leftJoin(users, eq(playerEvaluation.player_id, users.id))
+      .leftJoin(coaches, eq(playerEvaluation.coach_id, coaches.id))
       .orderBy(desc(playerEvaluation.created_at))
       .limit(limit)
       .offset(offset);

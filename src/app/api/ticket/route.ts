@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 
     // ✅ Store extra fields in message JSON
     const cleanMessage =
-      typeof message === "string"
+      typeof message === "string" 
         ? message.trim()
         : message?.text?.trim() || "";
 

@@ -79,9 +79,14 @@ export async function GET(req: NextRequest) {
     const days = Number(url.searchParams.get("days")) || 0;
     const staff = Number(url.searchParams.get("staff")) || 0;
 
+    // ✅ PAGINATION PARAMS (MERGED)
+    const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+    const limit = Math.min(50, Number(url.searchParams.get("limit")) || 10);
+    const offset = (page - 1) * limit;
+
     const conditions: (SQL | undefined)[] = [];
 
-    // SEARCH
+    // 🔍 SEARCH
     if (search) {
       conditions.push(
         or(
@@ -93,7 +98,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // ROLE BASE
+    // 👤 ROLE BASE
     let baseCondition: SQL | undefined;
 
     if (role === "Admin") {
@@ -111,17 +116,17 @@ export async function GET(req: NextRequest) {
 
     conditions.push(baseCondition);
 
-    // STATUS
+    // 📌 STATUS
     if (status) {
       conditions.push(eq(ticket.status, status));
     }
 
-    // STAFF
+    // 👨‍💼 STAFF
     if (staff > 0) {
       conditions.push(eq(ticket.assign_to, staff));
     }
 
-    // DAYS
+    // 📅 DAYS FILTER
     if (days > 0) {
       const fromDate = new Date();
       fromDate.setDate(fromDate.getDate() - days);
@@ -131,7 +136,7 @@ export async function GET(req: NextRequest) {
     const whereClause =
       conditions.length > 0 ? and(...conditions) : undefined;
 
-    // TOTAL COUNT
+    // ✅ TOTAL COUNT (FOR PAGINATION)
     const totalResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(ticket)
@@ -139,7 +144,7 @@ export async function GET(req: NextRequest) {
 
     const total = totalResult[0]?.count ?? 0;
 
-    // 🔥 LATEST TICKETS FIRST
+    // ✅ PAGINATED TICKETS (FIXED)
     const tickets = await db
       .select({
         id: ticket.id,
@@ -158,9 +163,11 @@ export async function GET(req: NextRequest) {
       .leftJoin(coaches, eq(ticket.ticket_from, coaches.id))
       .leftJoin(users, eq(ticket.ticket_from, users.id))
       .where(whereClause)
-      .orderBy(desc(ticket.createdAt)); // ✅ latest on top
+      .orderBy(desc(ticket.createdAt)) // latest first
+      .limit(limit)                    // ✅ REQUIRED
+      .offset(offset);                 // ✅ REQUIRED
 
-    // METRICS
+    // 📊 METRICS (UNCHANGED)
     const metricCondition = baseCondition;
 
     const [
@@ -211,13 +218,167 @@ export async function GET(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch {
+  } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { error: "Failed to fetch tickets" },
       { status: 500 }
     );
   }
 }
+
+
+
+// export async function GET(req: NextRequest) {
+//   try {
+//     const url = new URL(req.url);
+
+//     const role = url.searchParams.get("role")?.trim() || "";
+//     const user_id = Number(url.searchParams.get("userId")) || 0;
+//     const search = url.searchParams.get("search")?.trim() || "";
+//     const status = url.searchParams.get("status")?.trim() || "";
+//     const days = Number(url.searchParams.get("days")) || 0;
+//     const staff = Number(url.searchParams.get("staff")) || 0;
+
+//     const conditions: (SQL | undefined)[] = [];
+
+//     // SEARCH
+//     if (search) {
+//       conditions.push(
+//         or(
+//           ilike(ticket.name, `%${search}%`),
+//           ilike(ticket.email, `%${search}%`),
+//           ilike(ticket.subject, `%${search}%`),
+//           ilike(ticket.message, `%${search}%`)
+//         )
+//       );
+//     }
+
+//     // ROLE BASE
+//     let baseCondition: SQL | undefined;
+
+//     if (role === "Admin") {
+//       baseCondition = eq(ticket.assign_to, 0);
+//     } else if (
+//       role === "Customer Support" ||
+//       role === "Executive Level" ||
+//       role === "Manager" ||
+//       role === "Tech"
+//     ) {
+//       baseCondition = eq(ticket.ticket_from, user_id);
+//     } else {
+//       baseCondition = eq(ticket.ticket_from, user_id);
+//     }
+
+//     conditions.push(baseCondition);
+
+//     // STATUS
+//     if (status) {
+//       conditions.push(eq(ticket.status, status));
+//     }
+
+//     // STAFF
+//     if (staff > 0) {
+//       conditions.push(eq(ticket.assign_to, staff));
+//     }
+
+//     // DAYS
+//     if (days > 0) {
+//       const fromDate = new Date();
+//       fromDate.setDate(fromDate.getDate() - days);
+//       conditions.push(gte(ticket.createdAt, fromDate));
+//     }
+
+//     const whereClause =
+//       conditions.length > 0 ? and(...conditions) : undefined;
+
+//     // TOTAL COUNT
+//     const totalResult = await db
+//       .select({ count: sql<number>`count(*)` })
+//       .from(ticket)
+//       .where(whereClause);
+
+//     const total = totalResult[0]?.count ?? 0;
+
+//     // 🔥 LATEST TICKETS FIRST
+//     const tickets = await db
+//       .select({
+//         id: ticket.id,
+//         name: ticket.name,
+//         email: ticket.email,
+//         subject: ticket.subject,
+//         createdAt: ticket.createdAt,
+//         status: ticket.status,
+//         message: ticket.message,
+//         priority: ticket.priority,
+//         assign_to: ticket.assign_to,
+//         coachImage: coaches.image,
+//         userImage: users.image,
+//       })
+//       .from(ticket)
+//       .leftJoin(coaches, eq(ticket.ticket_from, coaches.id))
+//       .leftJoin(users, eq(ticket.ticket_from, users.id))
+//       .where(whereClause)
+//       .orderBy(desc(ticket.createdAt)); // ✅ latest on top
+
+//     // METRICS
+//     const metricCondition = baseCondition;
+
+//     const [
+//       pending,
+//       open,
+//       fixed,
+//       inprogress,
+//       closed,
+//       escalated,
+//     ] = await Promise.all([
+//       db.select({ count: sql<number>`count(*)` })
+//         .from(ticket)
+//         .where(and(metricCondition, eq(ticket.status, "Pending"))),
+
+//       db.select({ count: sql<number>`count(*)` })
+//         .from(ticket)
+//         .where(and(metricCondition, eq(ticket.status, "Open"))),
+
+//       db.select({ count: sql<number>`count(*)` })
+//         .from(ticket)
+//         .where(and(metricCondition, eq(ticket.status, "Fixed"))),
+
+//       db.select({ count: sql<number>`count(*)` })
+//         .from(ticket)
+//         .where(and(metricCondition, eq(ticket.status, "Inprogress"))),
+
+//       db.select({ count: sql<number>`count(*)` })
+//         .from(ticket)
+//         .where(and(metricCondition, eq(ticket.status, "Closed"))),
+
+//       db.select({ count: sql<number>`count(*)` })
+//         .from(ticket)
+//         .where(and(metricCondition, eq(ticket.escalate, true))),
+//     ]);
+
+//     return NextResponse.json(
+//       {
+//         tickets,
+//         total,
+//         metrics: {
+//           pending: pending[0]?.count ?? 0,
+//           open: open[0]?.count ?? 0,
+//           fixed: fixed[0]?.count ?? 0,
+//           inprogress: inprogress[0]?.count ?? 0,
+//           closed: closed[0]?.count ?? 0,
+//           escalated: escalated[0]?.count ?? 0,
+//         },
+//       },
+//       { status: 200 }
+//     );
+//   } catch {
+//     return NextResponse.json(
+//       { error: "Failed to fetch tickets" },
+//       { status: 500 }
+//     );
+//   }
+// }
 
 
 // export async function GET(req: NextRequest) {

@@ -26,7 +26,6 @@ interface Recipient {
 
 const NewTicketPage = () => {
   const router = useRouter();
-  // const { data: session } = useSession();
 
   const [formData, setFormData] = useState({
     recipient_name: "",
@@ -87,14 +86,6 @@ const NewTicketPage = () => {
     return () =>
       document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-
-  // useEffect(() => {
-  //   const storedUserId =
-  //     localStorage.getItem("user_id") || sessionStorage.getItem("user_id");
-  //   if (!storedUserId) router.push("/signin");
-  //   else setUserId(storedUserId);
-  // }, [router]);
 
   useEffect(() => {
   if (status === "unauthenticated") {

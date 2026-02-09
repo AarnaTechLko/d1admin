@@ -11,6 +11,7 @@ import Button from "@/components/ui/button/Button";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
 interface Team {
   id: string;
   team_name: string;
@@ -30,8 +31,8 @@ interface Team {
 }
 
 const TeamsPage = () => {
-        useRoleGuard();
-  
+  useRoleGuard();
+
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [teams, setTeams] = useState<Team[]>([]);
 
@@ -210,9 +211,9 @@ const TeamsPage = () => {
     }
   }
 
-//  if (loading) {
-//         return <Loading />;
-//     }
+  //  if (loading) {
+  //         return <Loading />;
+  //     }
 
 
   return (
@@ -320,16 +321,19 @@ const TeamsPage = () => {
                   >
                     <TableCell className="py-4 sm:px-1 text-start">
                       <div className="flex
-                      items-center ">
-                        <div className="px-5">
-                          <Image
-                            src={team.logo}
-                            alt={team.team_name}
-                            className=" rounded-full"
-                            width={40}
-                            height={40}
-                          />
-                        </div>
+                                          items-center gap-3 ">
+                        <Image
+                          src={
+                            !team.logo || team.logo === "null"
+                              ? "/images/signin/d1.png"
+                              : `${NEXT_PUBLIC_AWS_S3_BUCKET_LINK}/${team.logo}`
+                          }
+                          // src={team.logo}
+                          alt={team.team_name}
+                          className=" rounded-full"
+                          width={40}
+                          height={40}
+                        />
                         <div >
                           <span className="block font-medium text-gray-800 dark:text-white/90">{team.team_name}</span>
                         </div>
@@ -516,7 +520,7 @@ const TeamsPage = () => {
 
                                   const result = await res.json();
                                   if (!res.ok) throw new Error('Failed to suspend team');
-                            console.log(result);
+                                  console.log(result);
 
                                   Swal.fire({
                                     icon: 'success',
@@ -555,7 +559,7 @@ const TeamsPage = () => {
                             <Button
                               className="bg-green-600 text-white"
                               onClick={async () => {
-                               setSuspendOpen(false);
+                                setSuspendOpen(false);
 
                                 const confirm = await Swal.fire({
                                   icon: 'question',
@@ -577,7 +581,7 @@ const TeamsPage = () => {
 
                                   const result = await res.json();
                                   if (!res.ok) throw new Error('Failed to unsuspend team');
-                            console.log(result);
+                                  console.log(result);
 
                                   Swal.fire({
                                     icon: 'success',

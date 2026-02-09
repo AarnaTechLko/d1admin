@@ -16,6 +16,8 @@ export interface Evaluation {
   payment_status?: string;
   created_at: string;
   is_deleted: number;
+  playerFirstName: string;
+  playerLastName: string;
 }
 
 interface EvaluationTableProps {
@@ -64,7 +66,7 @@ const EvaluationTable: React.FC<EvaluationTableProps> = ({
         <table className="w-full text-xs text-left border-collapse">
           <thead className="bg-gray-200 border-b text-gray-500 font medium text-sm">
             <tr>
-              <th className="px-4 py-3">Player ID</th>
+              <th className="px-4 py-3">Player Name</th>
               <th className="px-4 py-3">Title</th>
               <th className="px-4 py-3">Video</th>
               <th className="px-4 py-3">Jersey</th>
@@ -81,7 +83,7 @@ const EvaluationTable: React.FC<EvaluationTableProps> = ({
                 className={`${ev.is_deleted === 0 ? "bg-red-100" : "bg-white"
                   } border-b`}
               >
-                <td className="px-4 py-3">{ev.player_id}</td>
+                <td className="px-4 py-3">{ev.playerFirstName} {ev.playerLastName}</td>
                 <td className="px-4 py-3 text-blue-600">
                   <Link href={`/evaluationdetails?evaluationId=${ev.id}`}>
                     {ev.review_title}
