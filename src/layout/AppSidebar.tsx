@@ -132,10 +132,10 @@ const AppSidebar: React.FC = () => {
             name: "Coaches",
             icon: <UserCheck />,
             subItems: [
-              { name: "Unapproved Coach", path: "/newcoach" },
+              { name: "Pending Approvals", path: "/newcoach" },
               { name: "Incomplete Coaches", path: "/incompletecoach" },
-              { name: "Active Coach", path: "/coach" },
-              { name: "Decline Coach", path: "/declinecoach" },
+              { name: " Active/Approved Coaches", path: "/coach" },
+              { name: "Unapproved Coaches", path: "/declinecoach" },
               { name: "Suspended Coach", path: "/suspend" },
               { name: "Disable Coach", path: "/disablecoach" },
             ],
@@ -146,9 +146,9 @@ const AppSidebar: React.FC = () => {
             subItems: [
               { name: "Incomplete Players", path: "/incompleteplayer" },
               { name: "Active Player", path: "/player" },
-              { name: "InActive Player", path: "/inactiveplayer" },
+              { name: "Inactive Players", path: "/inactiveplayer" },
               { name: "Suspended Player", path: "/suspendplayer" },
-              { name: "Disable Player", path: "/disableplayer" },
+              { name: "Disabled Players", path: "/disableplayer" },
             ],
           },
           {

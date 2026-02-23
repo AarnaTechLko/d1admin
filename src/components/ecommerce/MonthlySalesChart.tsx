@@ -212,15 +212,25 @@ export default function DashboardCharts() {
               options={{
                 ...chartOptions,
                 colors: [
-                  "#60a5fa","#34d399","#f87171","#facc15",
-                  "#a78bfa","#fb7185","#2dd4bf","#38bdf8",
-                  "#e879f9","#fbbf24","#cbd5e1","#f59e0b"
+                  "#60a5fa", "#34d399", "#f87171", "#facc15",
+                  "#a78bfa", "#fb7185", "#2dd4bf", "#38bdf8",
+                  "#e879f9", "#fbbf24", "#cbd5e1", "#f59e0b"
                 ],
-                xaxis: { ...chartOptions.xaxis, categories: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"] },
+                xaxis: { ...chartOptions.xaxis, categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] },
+                // 👇 ADD THIS
+                yaxis: {
+                  labels: {
+                    formatter: function (val: number) {
+                      return Number(val).toFixed(2); // removes decimals
+                    }
+                  }
+                }
+
+        
               }}
-              series={[{ name: "Sales", data: salesData }]}
-              type="bar"
-              height={180}
+          series={[{ name: "Sales", data: salesData }]}
+          type="bar"
+          height={180}
             />
           )}
         </div>

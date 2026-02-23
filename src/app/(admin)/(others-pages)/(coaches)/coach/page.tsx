@@ -5,7 +5,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import CoachTable from "@/components/tables/CoachTable";
 import { Coach } from "@/app/types/types";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
-
+import { useDebounce } from "@/hooks/useDebounce";
 const CoachesPage = () => {
   useRoleGuard();
 
@@ -17,6 +17,7 @@ const CoachesPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   useEffect(() => {
     const fetchCoaches = async () => {
@@ -26,7 +27,7 @@ const CoachesPage = () => {
       try {
         const response = await fetch(
           `/api/coach?search=${encodeURIComponent(
-            searchQuery
+            debouncedSearch
           )}&page=${currentPage}&limit=10&sport=${encodeURIComponent(
             sport
           )}&crowned=${crowned ? 1 : 0}`
@@ -48,7 +49,7 @@ const CoachesPage = () => {
     };
 
     fetchCoaches();
-  }, [searchQuery, currentPage, sport, crowned]);
+  }, [debouncedSearch, currentPage, sport, crowned]);
 
 
   return (

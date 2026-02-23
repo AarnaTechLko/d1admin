@@ -100,6 +100,24 @@ const IncompleteCoachTable: React.FC<CoachTableProps> = ({ data = [], currentPag
 
   return (
     <div>
+       <div className="flex justify-end items-center gap-2 p-4 flex-wrap">
+          {[...Array(totalPages)].map((_, index) => {
+            const page = index + 1;
+            return (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                disabled={page === currentPage}
+                className={`px-3 py-1 rounded-md transition ${currentPage === page
+                  ? "bg-blue-500 text-white cursor-not-allowed"
+                  : "text-blue-500 hover:bg-gray-200"
+                  }`}
+              >
+                {page}
+              </button>
+            );
+          })}
+        </div>
       <div className=" mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="w-full overflow-x-auto">
           <Table className="text-xs  min-w-[800px] sm:min-w-full">
@@ -396,24 +414,7 @@ const IncompleteCoachTable: React.FC<CoachTableProps> = ({ data = [], currentPag
             </TableBody>
           </Table>
         </div>
-        <div className="flex justify-end items-center gap-2 p-4 flex-wrap border-t">
-          {[...Array(totalPages)].map((_, index) => {
-            const page = index + 1;
-            return (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                disabled={page === currentPage}
-                className={`px-3 py-1 rounded-md transition ${currentPage === page
-                  ? "bg-blue-500 text-white cursor-not-allowed"
-                  : "text-blue-500 hover:bg-gray-200"
-                  }`}
-              >
-                {page}
-              </button>
-            );
-          })}
-        </div>
+       
         {/* <div className="flex justify-end items-center gap-2 p-4 flex-wrap border-t border-gray-200 dark:border-white/[0.05]">
           {[...Array(totalPages)].map((_, index) => (
             <button key={index + 1} onClick={() => setCurrentPage(index + 1)} className={`px-3 py-1 rounded-md ${currentPage === index + 1 ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"}`}>{index + 1}</button>

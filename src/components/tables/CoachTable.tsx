@@ -288,9 +288,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                 <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
                   History
                 </TableCell>
-                <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
-                  Suspend
-                </TableCell>
+             
                 <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
                   %
                 </TableCell>
@@ -374,6 +372,25 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                         </DialogContent>
                       )}
                     </Dialog>
+                     <button
+                      className="underline text-sm"
+                      onClick={() => {
+                        setSuspendCoach(coach);
+                        setSuspendOpen(true);
+                      }}
+                    >
+                      <Badge
+                        color={
+                          (coach.suspend === 1 || coach.suspend_days === null)
+                            ? "primary"
+                            : "error"
+                        }
+                      >
+                        {(coach.suspend === 1 || coach.suspend_days === null)
+                          ? "Suspend"
+                          : "Unsuspend"}
+                      </Badge>
+                    </button>
                   </TableCell>
                   {/* <TableCell className="px-2 py-3">
                     <Link href={`/coach/${coach.id}`}><Button className="text-xs">Open</Button></Link>
@@ -399,28 +416,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
 
 
 
-                  <TableCell className="px-2 py-3">
-                    <button
-                      className="underline text-sm"
-                      onClick={() => {
-                        setSuspendCoach(coach);
-                        setSuspendOpen(true);
-                      }}
-                    >
-                      <Badge
-                        color={
-                          (coach.suspend === 1 || coach.suspend_days === null)
-                            ? "success"
-                            : "error"
-                        }
-                      >
-                        {(coach.suspend === 1 || coach.suspend_days === null)
-                          ? "Suspend"
-                          : "Unsuspend"}
-                      </Badge>
-                    </button>
-                  </TableCell>
-
+              
 
                   <TableCell className="px-4 py-3 text-center">
                     <button
@@ -790,11 +786,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
           </Table>
         </div>
 
-        <div className="flex justify-end items-center gap-2 p-4 flex-wrap border-t border-gray-200 dark:border-white/[0.05]">
-          {[...Array(totalPages)].map((_, index) => (
-            <button key={index + 1} onClick={() => setCurrentPage(index + 1)} className={`px-3 py-1 rounded-md ${currentPage === index + 1 ? "bg-blue-500 text-white" : "text-blue-500 hover:bg-gray-200"}`}>{index + 1}</button>
-          ))}
-        </div>
+      
         <Dialog open={isCoachPasswordModalOpen} onOpenChange={setCoachPasswordModalOpen}>
           <DialogContent className="max-w-sm bg-white p-6 rounded-lg shadow-lg">
             <DialogHeader>

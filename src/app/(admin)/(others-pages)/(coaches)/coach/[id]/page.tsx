@@ -1214,7 +1214,7 @@ export default function CoachDetailsPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3">{new Date(r.created_at).toLocaleDateString()}</td>
-                        <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
+                        <td className="px-4 py-3  gap-2">
                           <button
                             onClick={() => handleEdit(r)}
                             title="Edit Review"
