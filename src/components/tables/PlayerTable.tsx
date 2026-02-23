@@ -379,9 +379,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                       </TableCell>
 
 
-                      <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
-                        Suspend
-                      </TableCell>
+                     
                       <TableCell className="px-2 py-3 font-medium text-gray-500 text-start dark:text-gray-400">
                         Badges
                       </TableCell>
@@ -510,6 +508,25 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                               </DialogContent>
                             )}
                           </Dialog>
+                            <button
+                            className="underline text-xs"
+                            onClick={() => {
+                              setSuspendPlayer(player);
+                              setSuspendOpen(true);
+                            }}
+                          >
+                            <Badge
+                              color={
+                                (player.suspend === 1 || player.suspend_days === null)
+                                  ? "primary"
+                                  : "error"
+                              }
+                            >
+                              {(player.suspend === 1 || player.suspend_days === null)
+                                ? "Suspend"
+                                : "Unsuspend"}
+                            </Badge>
+                          </button>
                         </TableCell>
 
 
@@ -539,25 +556,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
 
 
                         <TableCell className="px-2 py-3">
-                          <button
-                            className="underline text-xs"
-                            onClick={() => {
-                              setSuspendPlayer(player);
-                              setSuspendOpen(true);
-                            }}
-                          >
-                            <Badge
-                              color={
-                                (player.suspend === 1 || player.suspend_days === null)
-                                  ? "success"
-                                  : "error"
-                              }
-                            >
-                              {(player.suspend === 1 || player.suspend_days === null)
-                                ? "Suspend"
-                                : "Unsuspend"}
-                            </Badge>
-                          </button>
+                        
                         </TableCell>
                         <TableCell className="px-2 py-3">
                           <button
@@ -567,10 +566,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                             View Badges
                           </button>
 
-                        </TableCell>
-
-
-                        <TableCell>
+                       
                           <div>
                             {player.is_deleted === 0 ? (
                               <button
@@ -835,7 +831,8 @@ const PlayerTable: React.FC<PlayerTableProps> = ({ data = [],
                           <div className="text-gray-500 dark:text-gray-400">
                             <div>{dayjs(player.updated_at).format("D-MM-YYYY")}</div>
                             <div>{dayjs(player.updated_at).format("h:mm A")}</div>
-                          </div>                          </TableCell>
+                          </div>                         
+                           </TableCell>
 
                       </TableRow>
                     ))}
