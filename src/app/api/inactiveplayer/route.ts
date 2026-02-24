@@ -34,7 +34,6 @@ export async function GET(req: NextRequest) {
     const birthyear = searchParams.get('birthyear') || '';
     const position = searchParams.get('position') || '';
     const timeRange = searchParams.get('timeRange') || '';
-
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const offset = (page - 1) * limit;

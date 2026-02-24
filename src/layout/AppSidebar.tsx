@@ -135,6 +135,7 @@ const AppSidebar: React.FC = () => {
               { name: "Pending Approvals", path: "/newcoach" },
               { name: "Incomplete Coaches", path: "/incompletecoach" },
               { name: " Active/Approved Coaches", path: "/coach" },
+              { name: "Inactive Coaches", path: "/inactivecoach" },
               { name: "Unapproved Coaches", path: "/declinecoach" },
               { name: "Suspended Coach", path: "/suspend" },
               { name: "Disable Coach", path: "/disablecoach" },

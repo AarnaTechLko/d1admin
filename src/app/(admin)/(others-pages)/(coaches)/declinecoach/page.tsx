@@ -75,6 +75,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import CoachTable from "@/components/tables/CoachTable";
 import { Coach } from "@/app/types/types";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const CoachesPage = () => {
   useRoleGuard();
@@ -85,24 +86,26 @@ const CoachesPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [crowned, setCrowned] = useState<boolean>(false);
+const [crowned, setCrowned] = useState<boolean | null>(null);
   const [sport, setSport] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
-  const fetchCoaches = async (page: number, search: string) => {
+    useEffect(() => {
+  const fetchCoaches = async () => {
     setLoading(true);
     setError(null);
 
     try {
       const response = await fetch(
-        `/api/coach/declinecoach?search=${encodeURIComponent(search)}&sport=${encodeURIComponent(
-          sport
-        )}&page=${page}&limit=10&crowned=${crowned ? 1 : 0}`
+        `/api/coach/declinecoach?search=${encodeURIComponent(
+          debouncedSearch
+        )}&page=${currentPage}&limit=10&sport=${sport}&crowned=${crowned ? 1 : null}`
       );
 
       if (!response.ok) throw new Error("Failed to fetch coaches");
 
       const data = await response.json();
-      setCoaches(data.coaches);
+        setCoaches(data.coaches ?? []);
       setTotalPages(data.totalPages);
     } catch (err) {
       setError((err as Error).message);
@@ -112,28 +115,18 @@ const CoachesPage = () => {
   };
 
   // ✅ IMPORTANT FIX
-  useEffect(() => {
-    fetchCoaches(currentPage, searchQuery);
-  }, [currentPage, searchQuery, sport, crowned]);
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    setCurrentPage(1);
-  };
+    fetchCoaches();
+  }, [currentPage, debouncedSearch, sport, crowned]);
 
+ 
   return (
     <div className="p-4">
       <PageBreadcrumb
-        pageTitle="Coaches"
-        onSearch={handleSearch}
-        onCrowned={(value: string) => {
-          setCrowned(value === "1");
-          setCurrentPage(1);
-        }}
-        onSport={(value: string) => {
-          setSport(value);
-          setCurrentPage(1);
-        }}
+        pageTitle=" Unapproved Coaches"
+        onSearch={setSearchQuery}
+        onSport={setSport}
+        onCrowned={(value: string) => setCrowned(value === "1")}
       />
 
       {loading && (

@@ -5,6 +5,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import OrganizationTable from "@/components/tables/OrganizationTable";
 import Loading from "@/components/Loading";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface Organization {
   id: string;
@@ -46,6 +47,7 @@ const OrganizationsPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -53,7 +55,7 @@ const OrganizationsPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/disableorg?search=${searchQuery}&page=${currentPage}&limit=10`
+          `/api/disableorg?search=${debouncedSearch}&page=${currentPage}&limit=10`
         );
 
         if (!response.ok) throw new Error("Failed to fetch data");
@@ -70,7 +72,7 @@ const OrganizationsPage = () => {
     };
 
     fetchOrganizations();
-  }, [searchQuery, currentPage]);
+  }, [debouncedSearch, currentPage]);
  if (loading) {
         return <Loading />;
     }

@@ -4,6 +4,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import CoachTable from "@/components/tables/CoachTable";
 import { Coach } from "@/app/types/types";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const CoachesPage = () => {
   useRoleGuard();
@@ -11,11 +12,12 @@ const CoachesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [crowned, setCrowned] = useState<boolean>(false);
+const [crowned, setCrowned] = useState<boolean | null>(null);
   const [sport, setSport] = useState("");
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   useEffect(() => {
     const fetchCoaches = async () => {
@@ -23,10 +25,10 @@ const CoachesPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/coach/newcoach?search=${encodeURIComponent(searchQuery)}&sport=${encodeURIComponent(
-            sport
-          )}&page=${currentPage}&limit=10&crowned=${crowned ? 1 : 0}`
-        );
+          `/api/coach/newcoach?search=${encodeURIComponent(
+            debouncedSearch
+                )}&page=${currentPage}&limit=10&sport=${sport}&crowned=${crowned ? 1 : null}`
+    );
 
         if (!response.ok) throw new Error("Failed to fetch coaches");
 
@@ -46,7 +48,7 @@ const CoachesPage = () => {
   return (
     <div>
       <PageBreadcrumb
-        pageTitle="Coaches"
+        pageTitle=" Pending Coaches"
         onSearch={(value) => {
           setSearchQuery(value);
           setCurrentPage(1); // ✅ reset page

@@ -15,6 +15,7 @@ import dayjs from "dayjs";
 import Image from "next/image";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
 import { useSession } from "next-auth/react";
+import { useDebounce } from "@/hooks/useDebounce";
 
 type TicketNote = {
   id: number;
@@ -97,6 +98,7 @@ const TicketsPage = () => {
   const [showPopup, setShowPopup] = useState<boolean>(false);
   const itemsPerPage = 10;
   const totalPages = Math.ceil(totalTickets / itemsPerPage);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
 
   const extractJson = (str: string) => {
@@ -376,7 +378,7 @@ const TicketsPage = () => {
 
     try {
       const res = await fetch(
-        `/api/ticket/assign?search=${searchQuery}&status=${statusQuery}&days=${daysQuery}&staff=${staffQuery}&page=${currentPage}&limit=${itemsPerPage}&userId=${userId}&role=${role}`
+        `/api/ticket/assign?search=${debouncedSearch}&status=${statusQuery}&days=${daysQuery}&staff=${staffQuery}&page=${currentPage}&limit=${itemsPerPage}&userId=${userId}&role=${role}`
       );
 
       if (!res.ok) throw new Error("Failed to fetch tickets");
@@ -399,7 +401,7 @@ const TicketsPage = () => {
   }, [
     userId,
     role,
-    searchQuery,
+    debouncedSearch,
     statusQuery,
     daysQuery,
     staffQuery,

@@ -19,6 +19,7 @@ import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import dayjs from "dayjs";
 import { FaSpinner } from "react-icons/fa";
+import { useDebounce } from "@/hooks/useDebounce";
 type Permission = {
   change_password: number;
   refund: number;
@@ -72,6 +73,7 @@ const AdminListPage = () => {
       access_ticket: 0,
     } as Permission,
   });
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   // Fetch Admins
   useEffect(() => {
@@ -80,7 +82,7 @@ const AdminListPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/subadmin?search=${searchQuery}&page=${currentPage}&limit=10&days=${daysQuery}`
+          `/api/subadmin?search=${debouncedSearch}&page=${currentPage}&limit=10&days=${daysQuery}`
         );
         if (!response.ok) throw new Error("Failed to fetch admin data");
 
@@ -97,7 +99,7 @@ const AdminListPage = () => {
       }
     };
     fetchAdmins();
-  }, [searchQuery, currentPage, daysQuery]);
+  }, [debouncedSearch, currentPage, daysQuery]);
 
   const handleDelete = async (adminID: number) => {
     const result = await MySwal.fire({

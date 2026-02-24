@@ -192,6 +192,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import PlayerTable from "@/components/tables/PlayerTable";
 import { Player } from "@/app/types/types";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface Ranking {
   playerId: string;
@@ -207,6 +208,7 @@ const PlayersPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   useEffect(() => {
     const fetchPlayersAndRanking = async () => {
@@ -215,7 +217,7 @@ const PlayersPage = () => {
       try {
         // Fetch players
         const response = await fetch(
-          `/api/player?search=${searchQuery}&page=${currentPage}&limit=10`
+          `/api/player?search=${debouncedSearch}&page=${currentPage}&limit=10`
         );
         if (!response.ok) throw new Error("Failed to fetch players");
         const playerData = await response.json();
@@ -248,11 +250,11 @@ const PlayersPage = () => {
     };
 
     fetchPlayersAndRanking();
-  }, [searchQuery, currentPage]);
+  }, [debouncedSearch, currentPage]);
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Players" onSearch={setSearchQuery} />
+      <PageBreadcrumb pageTitle="Active Players" onSearch={setSearchQuery} />
 
       {loading && (
         <div className="flex items-center justify-center gap-4 py-10">

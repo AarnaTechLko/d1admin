@@ -77,6 +77,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import IncompleteCoachTable from "@/components/tables/IncompleteCoachTable";
 import { inCompleteCoach } from "@/app/types/types";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const CoachesPage = () => {
   useRoleGuard();
@@ -87,6 +88,7 @@ const CoachesPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   // Fetch coaches from API
   useEffect(() => {
@@ -97,7 +99,7 @@ const CoachesPage = () => {
       try {
         const response = await fetch(
           `/api/coach/inComplete?search=${encodeURIComponent(
-            searchQuery
+            debouncedSearch
           )}&page=${currentPage}&limit=10`
         );
 
@@ -114,12 +116,12 @@ const CoachesPage = () => {
     };
 
     fetchCoaches();
-  }, [searchQuery, currentPage]);
+  }, [debouncedSearch, currentPage]);
 
   return (
     <div>
       {/* Breadcrumb + Search */}
-      <PageBreadcrumb pageTitle="Coaches" onSearch={setSearchQuery} />
+      <PageBreadcrumb pageTitle="Incomplete Coaches" onSearch={setSearchQuery} />
 
       {/* Loading Spinner */}
       {loading && (

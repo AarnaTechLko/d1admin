@@ -382,8 +382,8 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                       <Badge
                         color={
                           (coach.suspend === 1 || coach.suspend_days === null)
-                            ? "primary"
-                            : "error"
+                            ? "info"
+                            : "warning"
                         }
                       >
                         {(coach.suspend === 1 || coach.suspend_days === null)

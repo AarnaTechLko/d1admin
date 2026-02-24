@@ -6,6 +6,7 @@ import CoachTable from "@/components/tables/CoachTable";
 import { Coach } from "@/app/types/types";
 // import Loading from "@/components/Loading";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const CoachesPage = () => {
   useRoleGuard();
@@ -14,10 +15,11 @@ const CoachesPage = () => {
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [crowned, setCrowned] = useState<boolean>(false);
+const [crowned, setCrowned] = useState<boolean | null>(null);
   const [sport, setSport] = useState("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   useEffect(() => {
     const fetchCoaches = async () => {
@@ -25,9 +27,9 @@ const CoachesPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/suspend?search=${searchQuery}&sport=${encodeURIComponent(
+          `/api/suspend?search=${debouncedSearch}&sport=${encodeURIComponent(
             sport
-          )}&page=${currentPage}&limit=10&crowned=${crowned ? 1 : 0}`
+          )}&page=${currentPage}&limit=10&crowned=${crowned ? 1 : null}`
         );
 
         if (!response.ok) throw new Error("Failed to fetch data");
@@ -44,14 +46,14 @@ const CoachesPage = () => {
     };
 
     fetchCoaches();
-  }, [searchQuery, currentPage,crowned, sport]);
+  }, [debouncedSearch, currentPage,crowned, sport]);
   //  if (loading) {
   //         return <Loading />;
   //     }
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Coaches" onSearch={setSearchQuery} onCrowned={(value: string) => {
+      <PageBreadcrumb pageTitle=" Suspended Coaches" onSearch={setSearchQuery} onCrowned={(value: string) => {
           setCrowned(value === "1");
           setCurrentPage(1); // ✅ reset page
         }}
