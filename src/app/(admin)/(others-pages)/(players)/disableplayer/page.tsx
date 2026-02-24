@@ -6,6 +6,7 @@ import PlayerTable from "@/components/tables/PlayerTable";
 import { Player } from "@/app/types/types";
 // import Loading from "@/components/Loading";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import { useDebounce } from "@/hooks/useDebounce";
 const PlayersPage = () => {
         useRoleGuard();
   const [searchQuery, setSearchQuery] = useState("");
@@ -14,6 +15,7 @@ const PlayersPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   useEffect(() => {
     const fetchplayers = async () => {
@@ -21,7 +23,7 @@ const PlayersPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/disableplayer?search=${searchQuery}&page=${currentPage}&limit=10`
+          `/api/disableplayer?search=${debouncedSearch}&page=${currentPage}&limit=10`
         );
 
         if (!response.ok) throw new Error("Failed to fetch data");
@@ -39,14 +41,14 @@ const PlayersPage = () => {
     };
 
     fetchplayers();
-  }, [searchQuery, currentPage]);
+  }, [debouncedSearch, currentPage]);
 //  if (loading) {
 //         return <Loading />;
 //     }
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Players" onSearch={setSearchQuery} />
+      <PageBreadcrumb pageTitle="Disabled Players" onSearch={setSearchQuery} />
       
    {loading && (
   <div className="flex items-center justify-center gap-4 ">

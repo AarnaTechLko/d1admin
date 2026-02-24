@@ -18,6 +18,7 @@ import dayjs from "dayjs";
 import { Ticket } from "@/app/types/types";
 import Image from "next/image";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
+import { useDebounce } from "@/hooks/useDebounce";
 type TicketNote = {
   id: number;
   ticketId: number;
@@ -72,6 +73,7 @@ const TicketsPage = () => {
   const [selectedSubAdmin, setSelectedSubAdmin] = useState("");
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [notes, setNotes] = useState<TicketNote[]>([]);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   const [metrics, setMetrics] = useState({
     pending: 0,
@@ -321,7 +323,7 @@ const TicketsPage = () => {
 
     try {
       const response = await fetch(
-        `/api/ticket?search=${searchQuery}&page=${currentPage}&limit=10&userId=${session.user.id}&staff=${staffQuery}&status=${statusQuery}&days=${daysQuery}`
+        `/api/ticket?search=${debouncedSearch}&page=${currentPage}&limit=10&userId=${session.user.id}&staff=${staffQuery}&status=${statusQuery}&days=${daysQuery}`
       );
 
       if (!response.ok) throw new Error("Failed to fetch tickets");
@@ -341,7 +343,7 @@ const TicketsPage = () => {
     fetchTickets();
   }, [
     session?.user?.id,
-    searchQuery,
+    debouncedSearch,
     currentPage,
     statusQuery,
     daysQuery,

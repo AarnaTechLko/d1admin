@@ -125,7 +125,7 @@ const IncompletePlayersPage = () => {
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Players" onSearch={setSearchQuery} />
+      <PageBreadcrumb pageTitle="Incomplete Players" onSearch={setSearchQuery} />
 
       {loading && (
         <div className="flex items-center justify-center gap-4 py-5">

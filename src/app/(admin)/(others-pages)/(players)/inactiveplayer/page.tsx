@@ -78,6 +78,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import PlayerTable from "@/components/tables/PlayerTable";
 import { Player } from "@/app/types/types";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const PlayersPage = () => {
   useRoleGuard();
@@ -88,6 +89,7 @@ const PlayersPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   const ITEMS_PER_PAGE = 10; // Number of players per page
 
@@ -99,7 +101,7 @@ const PlayersPage = () => {
 
       try {
         const response = await fetch(
-          `/api/inactiveplayer?search=${encodeURIComponent(searchQuery)}&page=${currentPage}&limit=${ITEMS_PER_PAGE}`
+          `/api/inactiveplayer?search=${encodeURIComponent(debouncedSearch)}&page=${currentPage}&limit=${ITEMS_PER_PAGE}`
         );
 
         if (!response.ok) throw new Error("Failed to fetch players");
@@ -116,11 +118,11 @@ const PlayersPage = () => {
     };
 
     fetchPlayers();
-  }, [searchQuery, currentPage]);
+  }, [debouncedSearch, currentPage]);
 
   return (
     <div className="p-4">
-      <PageBreadcrumb pageTitle="Players" onSearch={setSearchQuery} />
+      <PageBreadcrumb pageTitle="Inactive Players" onSearch={setSearchQuery} />
 
       {loading && (
         <div className="flex items-center justify-center gap-4 py-10">

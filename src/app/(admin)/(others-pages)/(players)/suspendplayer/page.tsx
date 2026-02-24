@@ -5,6 +5,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import PlayerTable from "@/components/tables/PlayerTable";
 import { Player } from "@/app/types/types";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const PlayersPage = () => {
   useRoleGuard();
@@ -15,6 +16,7 @@ const PlayersPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   // Fetch players from API
   useEffect(() => {
@@ -25,7 +27,7 @@ const PlayersPage = () => {
       try {
         const response = await fetch(
           `/api/suspendplayer?search=${encodeURIComponent(
-            searchQuery
+            debouncedSearch
           )}&page=${currentPage}&limit=10`
         );
 
@@ -42,12 +44,12 @@ const PlayersPage = () => {
     };
 
     fetchPlayers();
-  }, [searchQuery, currentPage]);
+  }, [debouncedSearch, currentPage]);
 
   return (
     <div>
       {/* Breadcrumb + Search */}
-      <PageBreadcrumb pageTitle="Players" onSearch={setSearchQuery} />
+      <PageBreadcrumb pageTitle="Suspended Players" onSearch={setSearchQuery} />
 
       {/* Loading Spinner */}
       {loading && (

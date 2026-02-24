@@ -62,104 +62,198 @@ export async function GET(req: NextRequest) {
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { coaches, sports, coachaccount } from "@/lib/schema";
-import { eq, ilike, and, or, sql } from "drizzle-orm";
+import {
+  coaches,
+  sports,
+  coachaccount,
+  countries,
+  licenses,
+  playerEvaluation,
+} from "@/lib/schema";
+import {
+  eq,
+  ilike,
+  and,
+  or,
+  gte,
+  desc,
+  sql,
+  count,
+} from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
+  const url = new URL(req.url);
+
+  const search = url.searchParams.get("search")?.trim() || "";
+  const page = parseInt(url.searchParams.get("page") || "1", 10);
+  const limit = parseInt(url.searchParams.get("limit") || "10", 10);
+  const offset = (page - 1) * limit;
+
+  const timeRange = url.searchParams.get("timeRange") || "";
+  const sport = parseInt(url.searchParams.get("sport") || "0", 10);
+  const crownedParam = url.searchParams.get("crowned");
+
+  const now = new Date();
+  let timeFilterCondition;
+
+  // 🕒 Time filter
+  switch (timeRange) {
+    case "24h":
+      timeFilterCondition = gte(
+        coaches.createdAt,
+        new Date(now.getTime() - 24 * 60 * 60 * 1000)
+      );
+      break;
+    case "1w":
+      timeFilterCondition = gte(
+        coaches.createdAt,
+        new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      );
+      break;
+    case "1m":
+      timeFilterCondition = gte(
+        coaches.createdAt,
+        new Date(new Date().setMonth(now.getMonth() - 1))
+      );
+      break;
+    case "1y":
+      timeFilterCondition = gte(
+        coaches.createdAt,
+        new Date(new Date().setFullYear(now.getFullYear() - 1))
+      );
+      break;
+  }
+
   try {
-    // const { search, page, limit } = Object.fromEntries(
-    //   req.nextUrl.searchParams
-    // ) as { search?: string; page?: string; limit?: string };
-
-    // const pageNum = parseInt(page || "1", 10);
-    // const pageLimit = parseInt(limit || "10", 10);
-    // const offset = (pageNum - 1) * pageLimit;
-    // const crowned = req.nextUrl.searchParams.get("crowned");
-    // const sportParam = req.nextUrl.searchParams.get("sport");
-
-    // const sport = sportParam ? Number(sportParam) : 0
-
-    const search = req.nextUrl.searchParams.get("search") || "";
-    const page = Number(req.nextUrl.searchParams.get("page") || 1);
-    const limit = Number(req.nextUrl.searchParams.get("limit") || 10);
-    const crowned = req.nextUrl.searchParams.get("crowned");
-    const sportParam = req.nextUrl.searchParams.get("sport");
-
-    const sport = sportParam ? Number(sportParam) : 0;
-    const offset = (page - 1) * limit;
-
-    // Inline condition: search or not
+    // 🔹 Build dynamic conditions array
     const conditions = [];
 
-    // Declined coaches only
+    // ✅ Base condition (change 2 → 1 if needed in your DB)
     conditions.push(eq(coaches.approved_or_denied, 2));
 
-    // Search filter
-    if (search.trim()) {
+    // 🔍 Search filter
+    if (search) {
       conditions.push(
         or(
           ilike(coaches.firstName, `%${search}%`),
           ilike(coaches.lastName, `%${search}%`),
-          ilike(coaches.email, `%${search}%`)
+          ilike(countries.name, `%${search}%`),
+          ilike(coaches.gender, `%${search}%`),
+          ilike(coaches.state, `%${search}%`),
+          ilike(coaches.city, `%${search}%`),
+          ilike(coaches.slug, `%${search}%`),
+          ilike(coaches.status, `%${search}%`)
         )
       );
     }
 
-    // Crowned filter
-    if (crowned === "1") {
-      conditions.push(eq(coaches.verified, 1));
-    } else if (crowned === "0") {
-      conditions.push(eq(coaches.verified, 0));
+    // 🏅 Crowned filter
+    // 👉 If verified column is BOOLEAN use true/false
+    if (crownedParam === "1") {
+      conditions.push(eq(coaches.verified, 1)); // use true if boolean
+    } else if (crownedParam === "0") {
+      conditions.push(eq(coaches.verified, 0)); // use false if boolean
     }
 
-    // Sport filter (safe)
-    if (!Number.isNaN(sport) && sport !== 0) {
+    // 🏀 Sport filter
+    if (sport !== 0) {
       conditions.push(eq(coaches.sport, sport));
     }
 
-    const whereCondition = and(...conditions);
+    // 🕒 Time filter
+    if (timeFilterCondition) {
+      conditions.push(timeFilterCondition);
+    }
 
-    // Fetch total count for pagination
-    const totalResult = await db
-      .select({ count: sql<number>`COUNT(${coaches.id})` })
-      .from(coaches)
-      .where(whereCondition);
+    const whereClause = and(...conditions);
 
-    const totalCount = totalResult[0]?.count || 0;
-    const totalPages = Math.ceil(totalCount / limit);
-
-    // Fetch paginated data
-    const paginatedCoaches = await db
+    // ===============================
+    // 📊 MAIN QUERY
+    // ===============================
+    const coachesData = await db
       .select({
         id: coaches.id,
-        image: coaches.image,
+        percentage: coaches.percentage,
         firstName: coaches.firstName,
         lastName: coaches.lastName,
         email: coaches.email,
         verified: coaches.verified,
+        phoneNumber: coaches.phoneNumber,
+        slug: coaches.slug,
         gender: coaches.gender,
-        updated_at: coaches.updated_at,
-        status: coaches.status,
+        image: coaches.image,
+        countryName: countries.name,
         state: coaches.state,
         city: coaches.city,
         sport: sports.name,
+        qualifications: coaches.qualifications,
+        status: coaches.status,
+        suspend: coaches.suspend,
+        createdAt: coaches.createdAt,
+        updated_at: coaches.updated_at,
+        suspend_days: coaches.suspend_days,
+        approved_or_denied: coaches.approved_or_denied,
+        is_deleted: coaches.is_deleted,
+
+        consumeLicenseCount:
+          sql<number>`COUNT(CASE WHEN ${licenses.status} = 'Consumed' THEN 1 END)`,
+
+        assignedLicenseCount:
+          sql<number>`COUNT(CASE WHEN ${licenses.status} = 'Assigned' THEN 1 END)`,
+
+        earnings:
+          sql<number>`COALESCE(SUM(${coachaccount.amount}),0)`,
+
+        totalEvaluations:
+          sql<number>`COUNT(CASE WHEN ${playerEvaluation.status} = 2 THEN ${playerEvaluation.id} END)`,
       })
       .from(coaches)
-      .leftJoin(sports, eq(sports.id, coaches.sport))
+      .leftJoin(licenses, eq(licenses.assigned_to, coaches.id))
       .leftJoin(coachaccount, eq(coachaccount.coach_id, coaches.id))
-
-      .where(whereCondition)
+      .leftJoin(playerEvaluation, eq(playerEvaluation.coach_id, coaches.id))
+      .leftJoin(sports, eq(sports.id, coaches.sport))
+      .leftJoin(
+        countries,
+        eq(countries.id, sql<number>`CAST(${coaches.country} AS INTEGER)`)
+      )
+      .where(whereClause)
+      .groupBy(
+        coaches.id,
+        sports.name,
+        countries.name
+      )
+      .orderBy(desc(coaches.createdAt))
       .limit(limit)
       .offset(offset);
 
+    // ===============================
+    // 🔢 TOTAL COUNT FOR PAGINATION
+    // ===============================
+    const totalCountResult = await db
+      .select({ count: count() })
+      .from(coaches)
+      .leftJoin(
+        countries,
+        eq(countries.id, sql<number>`CAST(${coaches.country} AS INTEGER)`)
+      )
+      .where(whereClause);
+
+    const totalCount = Number(totalCountResult[0]?.count || 0);
+    const totalPages = Math.ceil(totalCount / limit);
+
     return NextResponse.json({
-      coaches: paginatedCoaches,
+      coaches: coachesData,
+      currentPage: page,
       totalPages,
+      hasNextPage: page * limit < totalCount,
+      hasPrevPage: page > 1,
     });
   } catch (error) {
-    console.error("Fetch coaches error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch coaches" },
+      {
+        message: "Failed to fetch coaches",
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }

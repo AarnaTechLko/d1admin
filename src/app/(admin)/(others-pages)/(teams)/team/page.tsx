@@ -12,6 +12,7 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from "@/lib/constants";
+import { useDebounce } from "@/hooks/useDebounce";
 interface Team {
   id: string;
   team_name: string;
@@ -53,6 +54,7 @@ const TeamsPage = () => {
   const [suspendTeam, setSuspendTeam] = useState<Team | null>(null);
   const [suspendDays, setSuspendDays] = useState<number | null>(null);
   const [suspendOpen, setSuspendOpen] = useState(false);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   const getBadgeColor = (status: string) => {
     switch (status) {
@@ -104,7 +106,7 @@ const TeamsPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/teams?search=${searchQuery}&page=${currentPage}&limit=10`
+          `/api/teams?search=${debouncedSearch}&page=${currentPage}&limit=10`
         );
 
         if (!response.ok) throw new Error("Failed to fetch teams");
@@ -123,7 +125,7 @@ const TeamsPage = () => {
     };
 
     fetchTeams();
-  }, [searchQuery, currentPage]);
+  }, [debouncedSearch, currentPage]);
 
   async function handleHideTeam(teamId: string) {
     const confirmResult = await MySwal.fire({

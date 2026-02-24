@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
     const baseCondition = and(
       isNotNull(coaches.firstName),
       ne(coaches.firstName, ""),
-       eq(coaches.status, 'Active'),
+       eq(coaches.status, 'Inactive'),
       eq(coaches.suspend, 1),
       eq(coaches.is_deleted, 1),
       eq(coaches.approved_or_denied, 1) // ✅ NEW condition
@@ -103,13 +103,13 @@ export async function GET(req: NextRequest) {
       : undefined;
 
     // 📌 final where clause
-   const whereClause = and(
-  baseCondition,
-  ...(searchCondition ? [searchCondition] : []),
-  ...(timeFilterCondition ? [timeFilterCondition] : []),
-  ...(sportCondition ? [sportCondition] : []),
-  ...(crownedCondition ? [crownedCondition] : [])
-);
+    const whereClause = and(
+      baseCondition,
+      ...(searchCondition ? [searchCondition] : []),
+      ...(timeFilterCondition ? [timeFilterCondition] : []),
+      sportCondition,crownedCondition,
+    );
+
     // 📊 main query with aggregations
     const coachesData = await db
       .select({

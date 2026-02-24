@@ -568,7 +568,7 @@ export default function CoachDetailsPage() {
     }
   };
 
- 
+
   useEffect(() => {
     async function fetchCoachData() {
       try {
@@ -631,7 +631,7 @@ export default function CoachDetailsPage() {
   //   );
   // }
   if (!coach) return <div className="p-6 text-center text-red-500">Coach not found.</div>;
-  const view_finance = Number(sessionStorage.getItem("view_finance") || 0);
+  // const view_finance = Number(sessionStorage.getItem("view_finance") || 0);
 
 
   const handleCoachDecline = async (
@@ -967,7 +967,8 @@ export default function CoachDetailsPage() {
 
 
       {/* Coach Info Card */}
-      <div className="bg-white shadow-md rounded-2xl p-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border border-gray-200">
+      <div className="bg-white shadow-md rounded-2xl p-6 border border-gray-200">
+      <div className=" grid grid-cols-1 md:grid-cols-3 gap-4 text-sm ">
         {/* <div><strong className="text-gray-500">Name:</strong> {coach.firstName} {coach.lastName}</div> */}
         <div><strong className="text-gray-700">Email:</strong> {coach.email}</div>
         <div><strong className="text-gray-700">Phone:</strong> {coach.countrycode}{coach.phoneNumber}</div>
@@ -990,20 +991,23 @@ export default function CoachDetailsPage() {
             ${(coach?.payments ?? []).filter((p: Payment) => p.is_deleted !== 0)
               .reduce((sum, p) => sum + Number(p.amount), 0)
               .toFixed(2)}</span></div>
-        <div><strong className="text-gray-700">Qualifications:</strong> {coach.qualifications}</div>
         {coach?.latestLoginIp && (
           <div className="mb-2">
             <strong className="text-gray-700">Latest Login IP:</strong>{" "}
             <span className="text-black">{coach.latestLoginIp}</span>
           </div>
         )}
+        </div>
+       <div><strong className="text-gray-700 gap-4 text-sm">Qualifications:</strong> {coach.qualifications}</div>
+
       </div>
+
       <div>  <h2 className="text-lg font-semibold mt-5  bg-customBlue text-black p-4 rounded-lg">
         Background
       </h2>
         <section className="bg-white p-6 border mb-4 rounded-lg shadow-md transform transition-all duration-300 hover:shadow-lg animate-fadeInDelay">
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
 
             {/* First Column: Qualifications */}
             <div>
@@ -1368,8 +1372,8 @@ export default function CoachDetailsPage() {
       </section>
 
       {/* Payments */}
-      {view_finance === 1 && payments.length > 0 && (
-
+      {/* {view_finance === 1 && payments.length > 0 && ( */}
+{payments.length>0 &&(
         < section className="p-6 max-w-7xl mx-auto space-y-8" >
 
           <h2 className="text-2xl font-semibold mb-4">Payments</h2>
@@ -1420,8 +1424,8 @@ export default function CoachDetailsPage() {
                         </td>
 
                         {/* ✅ ACTION COLUMN */}
-                          {/* Refund Button */}
-                          {/* <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
+                        {/* Refund Button */}
+                        {/* <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
                             <Button
                               variant="outline"
                               disabled={p.status === "refunded"}
@@ -1465,7 +1469,8 @@ export default function CoachDetailsPage() {
             )}
           </div>
         </section >
-      )}
+  )}
+      {/* // )} */}
 
       <Dialog
         open={selectedCoachid === Number(coach.id)}
@@ -1757,7 +1762,7 @@ export default function CoachDetailsPage() {
                     setSelectedPayment(null);
 
                   } catch (error) {
-                   console.error(error);
+                    console.error(error);
                     Swal.fire({
                       icon: "error",
                       title: "Error",

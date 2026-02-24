@@ -6,6 +6,7 @@ import { Player } from "@/app/types/types";
 // import Loading from "@/components/Loading";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import useSWR from "swr";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface Ranking {
   rankId: number;
@@ -25,6 +26,7 @@ const PlayersPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   useEffect(() => {
 
@@ -33,7 +35,7 @@ const PlayersPage = () => {
       setError(null);
       try {
         const response = await fetch(
-          `/api/player?search=${searchQuery}&page=${currentPage}&limit=10`
+          `/api/player?search=${debouncedSearch}&page=${currentPage}&limit=10`
         );
 
         if (!response.ok) throw new Error("Failed to fetch data");
@@ -51,7 +53,7 @@ const PlayersPage = () => {
     };
 
     fetchplayers();
-  }, [searchQuery, currentPage]);
+  }, [debouncedSearch, currentPage]);
   if (isLoading || loading) return <div>Loading...</div>;
 
   const rankedIds = new Set(rankingData?.data.map((r: Ranking) => String(r.playerId)));
