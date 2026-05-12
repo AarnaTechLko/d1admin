@@ -473,11 +473,11 @@ export async function POST(req: NextRequest) {
           await sendEmailWithAttachments({
             to: coachEmails,
             subject: subject,
-            html: `<blockquote>${message}</blockquote>`,
-            attachments: [
-              'https://d2gpzaycuwue25.cloudfront.net/meta/sample_profile_1.png',
-              'https://d2gpzaycuwue25.cloudfront.net/meta/sample_profile_2.png'
-            ]
+            html: message,
+            // attachments: [
+            //   'https://d2gpzaycuwue25.cloudfront.net/meta/sample_profile_1.png',
+            //   'https://d2gpzaycuwue25.cloudfront.net/meta/sample_profile_2.png'
+            // ]
           });
         }
       }
@@ -509,7 +509,7 @@ export async function POST(req: NextRequest) {
           await sendEmail({
             to: playerEmails,
             subject: subject,
-            html: `<blockquote>${message}</blockquote>`,
+            html: message,
             text: message,
           });
         }
@@ -543,7 +543,7 @@ export async function POST(req: NextRequest) {
           await sendEmail({
             to: orgEmails,
             subject: subject,
-            html: `<blockquote>${message}</blockquote>`,
+            html: message,
             text: message,
           });
         }
