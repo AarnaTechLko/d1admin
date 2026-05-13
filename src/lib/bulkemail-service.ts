@@ -2,7 +2,7 @@ import { CreateEmailTemplateCommand, DeleteEmailTemplateCommand, SESv2Client, Se
 import { db } from '@/lib/db';
 import { unsubscribes } from './schema';
 import { and, eq, inArray, isNotNull } from 'drizzle-orm';
-import { BASE_TEMPLATE } from './templates/email-templates';
+import { BULK_BASE_TEMPLATE, BASE_TEMPLATE } from './templates/email-templates';
 import axios from 'axios';
 import { randomBytes } from 'crypto';
 
@@ -73,6 +73,47 @@ const unsubscribedRows = await db
 
   console.log("Emails: ", validEmails);
 
+  // const emailsWithTokens = await Promise.all(
+  //   validEmails.map(async (email) => {
+  //     const existingUnsubscribe = await db
+  //       .select({ unsubscribeToken: unsubscribes.unsubscribeToken })
+  //       .from(unsubscribes)
+  //       .where(eq(unsubscribes.email, email))
+  //       .limit(1);
+
+  //     let token: string;
+  //     if (existingUnsubscribe.length > 0) {
+  //       token = existingUnsubscribe[0].unsubscribeToken;
+  //     } else {
+  //       token = randomBytes(32).toString('hex');
+  //       await db.insert(unsubscribes).values({ email, unsubscribeToken: token, unsubscribedAt: null });
+  //     }
+  //     return { email, token };
+  //   })
+  // );
+
+  // const params: SendBulkEmailCommandInput = {
+  //   FromEmailAddress: 'info@d1notes.com',
+  //   DefaultContent: {
+  //     Template: {
+  //       TemplateName: "Dynamic_Email_Template",
+  //       TemplateData: JSON.stringify({ content: html || text, subject }),
+  //     }
+  //   },
+  //   BulkEmailEntries: emailsWithTokens.map(({ email, token }) => ({
+  //     Destination: { ToAddresses: [email] },
+  //     ReplacementEmailContent: {
+  //       ReplacementTemplate: {
+  //         ReplacementTemplateData: JSON.stringify({
+  //           content: html || text,
+  //           subject,
+  //           unsubscribe_link: `https://d1notes.com/api/unsubscribe?email=${encodeURIComponent(email)}&token=${token}`,
+  //         }),
+  //       },
+  //     },
+  //   })),
+  // };
+
   const params: SendBulkEmailCommandInput = {
     FromEmailAddress: 'info@d1notes.com',
     DefaultContent: {
@@ -88,6 +129,7 @@ const unsubscribedRows = await db
       Destination: { ToAddresses: [email] },
     })),
   };
+
 
   try {
     const command = new SendBulkEmailCommand(params);
@@ -146,8 +188,8 @@ const unsubscribedRows = await db
 
 //   // Send individual emails with attachments
 //   for (const email of validEmails) {
-//     // Merge content into BASE_TEMPLATE
-//     // const finalHtml = BASE_TEMPLATE.replace('{{content}}', html);
+//     // Merge content into BULK_BASE_TEMPLATE
+//     // const finalHtml = BULK_BASE_TEMPLATE.replace('{{content}}', html);
 //     let token: string;
 // const existingUnsubscribe = await db
 //   .select({ unsubscribeToken: unsubscribes.unsubscribeToken })
@@ -168,7 +210,7 @@ const unsubscribedRows = await db
 
 // const unsubscribeLink = `https://d1notes.com/api/unsubscribe?email=${encodeURIComponent(email)}&token=${token}`;
 
-// const finalHtml = BASE_TEMPLATE
+// const finalHtml = BULK_BASE_TEMPLATE
 //   .replace('{{content}}', html)
 //   .replace('{{unsubscribe_link}}', unsubscribeLink);
 
@@ -274,7 +316,7 @@ const results: {
       }
 
       const unsubscribeLink = `https://d1notes.com/api/unsubscribe?email=${encodeURIComponent(email)}&token=${token}`;
-      const finalHtml = BASE_TEMPLATE
+      const finalHtml = BULK_BASE_TEMPLATE
         .replace('{{content}}', html)
         .replace('{{unsubscribe_link}}', unsubscribeLink);
 
