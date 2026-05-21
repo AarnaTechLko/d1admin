@@ -7,6 +7,7 @@ import ActivityLog from "@/components/ecommerce/ActivityLog";
 import DemographicCard from "@/components/ecommerce/DemographicCard";
 import { useRoleGuard } from "@/hooks/useRoleGaurd";
 import { useSession } from 'next-auth/react';
+import VideoPaymentsDashboard from "@/components/ecommerce/Videopaymentsdashboard";
 
 export default function Ecommerce() {
   useRoleGuard(); // ensures only authorized roles can access
@@ -35,6 +36,7 @@ export default function Ecommerce() {
       <div className="col-span-12 space-y-6 xl:col-span-12">
         <EcommerceMetrics />
         <MonthlySignupChart />
+        <VideoPaymentsDashboard />
         <MonthlySalesChart />
         <ActivityLog />
         <DemographicCard />

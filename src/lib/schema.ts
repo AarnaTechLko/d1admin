@@ -1168,3 +1168,53 @@ export const tabLastSeen = pgTable(
     ),
   }),
 );
+
+export const video_payments = pgTable(
+  "video_payments",
+  {
+    id: serial("id").primaryKey(),
+    player_id: integer("player_id"),
+    coach_id: integer("coach_id"),
+    booking_id: integer("booking_id"),
+    amount: decimal("amount"),
+    original_amount: decimal("original_amount"), // stores the video payment amount
+    status: varchar("status"),
+    currency: varchar("currency"),
+    payment_info: text("payment_info"),
+    description: text("description"),
+    intent_id: text("intent_id"),
+    charge_id: text("charge_id"),
+    is_deleted: boolean("is_deleted").default(false),
+    company_amount: decimal("company_amount"),
+    commission_rate: decimal("commission_rate"),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+  }
+);
+
+export const bookings = pgTable(
+  "bookings",
+  {
+    id: serial("id").primaryKey(),
+    coach_id: integer("coach_id"),
+    player_id: integer("player_id"),
+    evaluation_id: integer("evaluation_id"),
+    start_time: timestamp("start_time", {
+      withTimezone: true,
+    }),
+    end_time: timestamp("end_time", {
+      withTimezone: true,
+    }),
+    status: varchar("status", { length: 20 }),
+    meeting_id: text("meeting_id"),
+    created_at: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+  }
+);

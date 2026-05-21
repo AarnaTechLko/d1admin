@@ -117,6 +117,8 @@ export const coaches = pgTable(
     license_type: text("license_type"),
     license: text("license"),
     status: varchar("status").default("Pending"),
+    evaluation_status: integer("evaluation_status").default(0),
+    video_status: integer("video_status").default(0),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     isCompletedProfile: boolean("isCompletedProfile").default(false)
   },
@@ -588,3 +590,6 @@ export const userOrgStatus = pgTable("userOrgStatus", {
   status: text("status").default("Pending").notNull(),
   role: text("text")
 })
+
+
+

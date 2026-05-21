@@ -11,7 +11,6 @@ import {
   Building2,
   ChevronDownIcon,
   ClipboardList,
-  GridIcon,
   LayoutDashboard,
   MessageCircle,
   Ticket,
@@ -19,7 +18,7 @@ import {
   UserCheck,
   Users,
 } from "lucide-react";
-import { FaTrophy } from "react-icons/fa";
+import { FaTrophy, FaVideo } from "react-icons/fa";
 
 type NavItem = {
   name: string;
@@ -34,7 +33,7 @@ const AppSidebar: React.FC = () => {
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedRole = sessionStorage.getItem("role") || "Admin"; // fallback
+    const storedRole = sessionStorage.getItem("role") || "Admin";
     setRole(storedRole);
   }, []);
 
@@ -72,9 +71,6 @@ const AppSidebar: React.FC = () => {
     }
   }, [openSubmenu]);
 
-  // ==========================
-  // Define all navItems per role
-  // ==========================
   const navItems: NavItem[] =
     role === "Customer Support"
       ? [
@@ -134,7 +130,7 @@ const AppSidebar: React.FC = () => {
             subItems: [
               { name: "Pending Approvals", path: "/newcoach" },
               { name: "Incomplete Coaches", path: "/incompletecoach" },
-              { name: " Active/Approved Coaches", path: "/coach" },
+              { name: "Active/Approved Coaches", path: "/coach" },
               { name: "Inactive Coaches", path: "/inactivecoach" },
               { name: "Unapproved Coaches", path: "/declinecoach" },
               { name: "Suspended Coach", path: "/suspend" },
@@ -209,6 +205,16 @@ const AppSidebar: React.FC = () => {
             ],
           },
           {
+            name: "Videos",
+            icon: <FaVideo />,
+            subItems: [
+              { name: "Video Payments", path: "/videos" },
+              { name: "View Videos", path: "/viewvideos" },
+              // ── NEW: manage per-coach video access & fees
+              { name: "Coach Video Settings", path: "/coachvideosettings" },
+            ],
+          },
+          {
             name: "Payment",
             icon: <FaTrophy />,
             subItems: [
@@ -221,13 +227,19 @@ const AppSidebar: React.FC = () => {
               { name: "Failed", path: "/failed" },
             ],
           },
-          {
-            name: "Block List",
-            icon: <GridIcon />,
-            path: "/blocks",
+          // ── CHANGED: was a single "Block List" → now two separate top-level items
+          /* {
+            name: "Block Coaches",
+            icon: <Shield />,
+            path: "/blockcoaches",
           },
+          {
+            name: "Block Players",
+            icon: <Shield />,
+            path: "/blockplayers",
+          }, */
         ]
-      : []; // Add other roles (Manager, Executive, Tech) as you already have
+      : [];
 
   const renderMenuItems = (navItems: NavItem[], menuType: "main" | "others") => (
     <ul className="flex flex-col gap-4">

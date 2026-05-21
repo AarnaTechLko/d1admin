@@ -17,6 +17,8 @@ import axios from "axios";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
+import { PaymentStatus } from "@/app/types/types";
+import VideoPayments from "@/components/videos/VideoPayments";
 interface Evaluation {
   id: string;
   evaluationId: number;
@@ -131,6 +133,28 @@ type RecentMessage = {
   position: "left" | "right"; // for UI positioning
   bgColor: "green" | "blue";  // for background color
 };
+
+interface VideoPaymentRecord {
+  id: number;
+  player_id: number;
+  coach_id: number;
+  booking_id: number;
+  amount: string;
+  original_amount: string;
+  status: PaymentStatus;
+  currency: string;
+  payment_info: string;
+  created_at: string;
+  description: string;
+  intent_id: string;
+  charge_id: string;
+  is_deleted: boolean;
+  company_amount: string;
+  commission_rate: string;
+  player_name: string | null;
+  coach_name: string | null;
+}
+
 export default function CoachDetailsPage() {
   useRoleGuard();
 
@@ -167,6 +191,8 @@ export default function CoachDetailsPage() {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
   const [newRating, setNewRating] = useState(0);
+  const [videoPaymentRecords, setVideoPaymentRecords] = useState<VideoPaymentRecord[]>([]);
+  const [videoPaymentsLoading, setVideoPaymentsLoading] = useState(false);
 
   const evaluationsPerPage = 10;
   const paymentsPerPage = 10;
@@ -218,6 +244,28 @@ export default function CoachDetailsPage() {
       })();
     }
   }, [selectedCoachid]);
+
+  useEffect(() => {
+  const coachId = coach?.id;
+
+  if (!coachId) return;
+
+  setVideoPaymentsLoading(true);
+
+  fetch(`/api/video-payments/coach/${coachId}`)
+    .then((r) => r.json())
+    .then((d) => {
+      console.log("VIDEO PAYMENTS:", d);
+      setVideoPaymentRecords(d.payments ?? []);
+    })
+    .catch((err) => {
+      console.error("VIDEO PAYMENT ERROR:", err);
+    })
+    .finally(() => {
+      setVideoPaymentsLoading(false);
+    });
+}, [coach?.id]);
+
   const handleVerify = async () => {
     if (!coach?.id) return;
 
@@ -759,9 +807,8 @@ export default function CoachDetailsPage() {
 
   };
 
-
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 ">
+    <div className="max-w-7xl mx-auto p-2 sm:p-6 lg:p-8 bg-gray-50 ">
       {/* Header */} <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow p-6 mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 p-4 bg-white rounded-2xl shadow">
 
@@ -968,37 +1015,37 @@ export default function CoachDetailsPage() {
 
       {/* Coach Info Card */}
       <div className="bg-white shadow-md rounded-2xl p-6 border border-gray-200">
-      <div className=" grid grid-cols-1 md:grid-cols-3 gap-4 text-sm ">
-        {/* <div><strong className="text-gray-500">Name:</strong> {coach.firstName} {coach.lastName}</div> */}
-        <div><strong className="text-gray-700">Email:</strong> {coach.email}</div>
-        <div><strong className="text-gray-700">Phone:</strong> {coach.countrycode}{coach.phoneNumber}</div>
-        <div><strong className="text-gray-700">Gender:</strong> {coach.gender}</div>
-        <div><strong className="text-gray-700">Sport:</strong> {coach.sportName}</div>
-        <div><strong className="text-gray-700">City:</strong> {coach.city}</div>
-        <div><strong className="text-gray-700">State:</strong> {coach.state}</div>
-        <div><strong className="text-gray-700">Country:</strong> {coach.countryName}</div>
-        <div><strong className="text-gray-700">Status:</strong>
-          <span className={`ml-2 px-2 py-1 rounded-full text-white text-xs ${coach.status === 'active' ? 'bg-green-500' : 'bg-yellow-500'}`}>
-            {coach.status}
-          </span>
-        </div>
-        <div><strong className="text-gray-700">Coaching License Type:</strong> {coach.license_type}</div>
-        {/* <div><strong className="text-gray-500">Consumed Licenses:</strong> {coach.consumeLicenseCount}</div> */}
-        {/* <div><strong className="text-gray-500">Assigned Licenses:</strong> {coach.assignedLicenseCount}</div> */}
-        <div>
-          <strong className="text-gray-700">Total Earnings:</strong>
-          <span className='ml-2 px-2 py-1 rounded-full  text-xs bg-blue-200 '>
-            ${(coach?.payments ?? []).filter((p: Payment) => p.is_deleted !== 0)
-              .reduce((sum, p) => sum + Number(p.amount), 0)
-              .toFixed(2)}</span></div>
-        {coach?.latestLoginIp && (
-          <div className="mb-2">
-            <strong className="text-gray-700">Latest Login IP:</strong>{" "}
-            <span className="text-black">{coach.latestLoginIp}</span>
+        <div className=" grid grid-cols-1 md:grid-cols-3 gap-4 text-sm ">
+          {/* <div><strong className="text-gray-500">Name:</strong> {coach.firstName} {coach.lastName}</div> */}
+          <div><strong className="text-gray-700">Email:</strong> {coach.email}</div>
+          <div><strong className="text-gray-700">Phone:</strong> {coach.countrycode}{coach.phoneNumber}</div>
+          <div><strong className="text-gray-700">Gender:</strong> {coach.gender}</div>
+          <div><strong className="text-gray-700">Sport:</strong> {coach.sportName}</div>
+          <div><strong className="text-gray-700">City:</strong> {coach.city}</div>
+          <div><strong className="text-gray-700">State:</strong> {coach.state}</div>
+          <div><strong className="text-gray-700">Country:</strong> {coach.countryName}</div>
+          <div><strong className="text-gray-700">Status:</strong>
+            <span className={`ml-2 px-2 py-1 rounded-full text-white text-xs ${coach.status === 'active' ? 'bg-green-500' : 'bg-yellow-500'}`}>
+              {coach.status}
+            </span>
           </div>
-        )}
+          <div><strong className="text-gray-700">Coaching License Type:</strong> {coach.license_type}</div>
+          {/* <div><strong className="text-gray-500">Consumed Licenses:</strong> {coach.consumeLicenseCount}</div> */}
+          {/* <div><strong className="text-gray-500">Assigned Licenses:</strong> {coach.assignedLicenseCount}</div> */}
+          <div>
+            <strong className="text-gray-700">Total Earnings:</strong>
+            <span className='ml-2 px-2 py-1 rounded-full  text-xs bg-blue-200 '>
+              ${(coach?.payments ?? []).filter((p: Payment) => p.is_deleted !== 0)
+                .reduce((sum, p) => sum + Number(p.amount), 0)
+                .toFixed(2)}</span></div>
+          {coach?.latestLoginIp && (
+            <div className="mb-2">
+              <strong className="text-gray-700">Latest Login IP:</strong>{" "}
+              <span className="text-black">{coach.latestLoginIp}</span>
+            </div>
+          )}
         </div>
-       <div><strong className="text-gray-700 gap-4 text-sm">Qualifications:</strong> {coach.qualifications}</div>
+        <div><strong className="text-gray-700 gap-4 text-sm">Qualifications:</strong> {coach.qualifications}</div>
 
       </div>
 
@@ -1164,6 +1211,20 @@ export default function CoachDetailsPage() {
         </div>
       </section >
 
+      {/* ── Video Payment Records ── */}
+      <section className="p-2 max-w-7xl mx-auto">
+        <h2 className="text-2xl font-semibold mb-4">
+          Video  Records
+        </h2>
+
+        {videoPaymentsLoading ? (
+          <div className="flex items-center justify-center py-10">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-black" />
+          </div>
+        ) : (
+          <VideoPayments payments={videoPaymentRecords} viewAs="coach" />
+        )}
+      </section>
 
 
       < section className="p-6 max-w-7xl mx-auto space-y-8 ">
@@ -1367,13 +1428,11 @@ export default function CoachDetailsPage() {
 
           </div>
         </div>
-
-
       </section>
 
       {/* Payments */}
       {/* {view_finance === 1 && payments.length > 0 && ( */}
-{payments.length>0 &&(
+      {payments.length > 0 && (
         < section className="p-6 max-w-7xl mx-auto space-y-8" >
 
           <h2 className="text-2xl font-semibold mb-4">Payments</h2>
@@ -1469,7 +1528,7 @@ export default function CoachDetailsPage() {
             )}
           </div>
         </section >
-  )}
+      )}
       {/* // )} */}
 
       <Dialog

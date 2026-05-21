@@ -19,12 +19,34 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import Button from '@/components/ui/button/Button';
 import Input from '@/components/form/input/InputField';
 import { PaymentStatus } from '@/app/types/types';
+import VideoPayments from '@/components/videos/VideoPayments';
 
 type RecentMessage = {
     id: number;
     message: string;
     created_at: string;
 };
+
+interface VideoPaymentRecord {
+    id: number;
+    player_id: number;
+    coach_id: number;
+    booking_id: number;
+    amount: string;
+    original_amount: string;
+    status: PaymentStatus;
+    currency: string;
+    payment_info: string;
+    created_at: string;
+    description: string;
+    intent_id: string;
+    charge_id: string;
+    is_deleted: boolean;
+    company_amount: string;
+    commission_rate: string;
+    player_name: string | null;
+    coach_name: string | null;
+}
 interface Player {
     sportName: string;
     overallAverage: number;
@@ -199,6 +221,8 @@ export default function PlayerDetailPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [evaluationPage, setEvaluationPage] = useState(1);
+    const [videoPaymentRecords, setVideoPaymentRecords] = useState<VideoPaymentRecord[]>([]);
+    const [videoPaymentsLoading, setVideoPaymentsLoading] = useState(false);
     const [paymentPage, setPaymentPage] = useState(1);
     const evaluationsPerPage = 10;
     const paymentsPerPage = 10;
@@ -234,6 +258,27 @@ export default function PlayerDetailPage() {
             })();
         }
     }, [selectedPlayerid]);
+
+    useEffect(() => {
+        const playerId = data?.player?.id;
+        if (!playerId) return;
+
+        setVideoPaymentsLoading(true);
+
+        fetch(`/api/video-payments/player/${playerId}`)
+            .then(r => r.json())
+            .then(d => {
+                setVideoPaymentRecords(d.payments ?? []);
+            })
+            .catch(err => {
+                console.error("VIDEO PAYMENT ERROR:", err);
+            })
+            .finally(() => {
+                setVideoPaymentsLoading(false);
+            });
+
+    }, [data?.player?.id]);
+
     useEffect(() => {
         const playerId = data?.player?.id;
         console.log("playerId:", playerId);
@@ -280,67 +325,67 @@ export default function PlayerDetailPage() {
 
     const totalEvaluationPages = Math.ceil(filteredEvaluations.length / evaluationsPerPage);
 
-  const handleRepayment = async (item: Payment) => {
-    // console.log('Made it');
+    const handleRepayment = async (item: Payment) => {
+        // console.log('Made it');
 
 
-    try {
-      const res = await fetch('/api/repayment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          request: {
-            amount: item.amount,
-            playerId: Number(item.player_id),
-            coachId: Number(item.coach_id),
-            paymentId: item.id,
-            evaluationId: item.evaluation_id,
-          },
-        }),
-      });
-      // console.log(res, 'res101>>');
-      if (res.ok) {
-        const data = await res.json();
+        try {
+            const res = await fetch('/api/repayment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    request: {
+                        amount: item.amount,
+                        playerId: Number(item.player_id),
+                        coachId: Number(item.coach_id),
+                        paymentId: item.id,
+                        evaluationId: item.evaluation_id,
+                    },
+                }),
+            });
+            // console.log(res, 'res101>>');
+            if (res.ok) {
+                const data = await res.json();
 
-        if (data.status === 'success') {
-          // Old session was already completed - show success
-          await Swal.fire({
-            title: 'Payment Already Completed!',
-            text: 'Your payment was already processed successfully.',
-            icon: 'success',
-            confirmButtonText: 'OK',
-          });
-          window.location.href = '/dashboard';
-        } else if (data.status === 'pending' && data.redirectUrl) {
-          // New session created - redirect to payment
-          window.location.href = data.redirectUrl;
+                if (data.status === 'success') {
+                    // Old session was already completed - show success
+                    await Swal.fire({
+                        title: 'Payment Already Completed!',
+                        text: 'Your payment was already processed successfully.',
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                    });
+                    window.location.href = '/dashboard';
+                } else if (data.status === 'pending' && data.redirectUrl) {
+                    // New session created - redirect to payment
+                    window.location.href = data.redirectUrl;
+                }
+            } else {
+
+                const data = await res.json();
+
+                Swal.fire({
+                    title: 'Error!',
+                    text: data.error,
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                });
+            }
+        } catch (error) {
+            console.log(error, 'Error >>>>');
         }
-      } else {
-
-        const data = await res.json();
-
-        Swal.fire({
-          title: 'Error!',
-          text: data.error,
-          icon: 'error',
-          confirmButtonText: 'OK',
-        });
-      }
-    } catch (error) {
-      console.log(error, 'Error >>>>');
-    }
-  };
+    };
 
 
     const handleRefundClick = (payment: Payment) => {
         setSelectedPayment(payment);
 
-        if(payment.status === PaymentStatus.AUTHORIZED){
+        if (payment.status === PaymentStatus.AUTHORIZED) {
             setAuthorizeDialog(true);
         }
-        else if(payment.status === PaymentStatus.CAPTURED){
+        else if (payment.status === PaymentStatus.CAPTURED) {
             setRefundDialog(true);
             setRefundType(null);
             setPartialAmount("");
@@ -437,7 +482,7 @@ export default function PlayerDetailPage() {
 
     if (loading) {
         return <Loading />;
-    } 
+    }
     if (error) return <p className="p-4 text-red-500">{error}</p>;
     if (!data) return <p className="p-4">Player not found.</p>;
 
@@ -511,7 +556,7 @@ export default function PlayerDetailPage() {
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-8">
+        <div className="p-2 max-w-7xl mx-auto space-y-8">
             <div className="flex flex-col sm:flex-row items-start gap-6 p-4 bg-white rounded-2xl shadow mb-6">
                 {player.image && (
                     <Image
@@ -996,6 +1041,26 @@ export default function PlayerDetailPage() {
 
                 </div>
             </section>
+
+            {/* ── Video Payment Records ── */}
+            <section className="p-6 max-w-7xl mx-auto">
+                <h2 className="text-2xl font-semibold mb-4">
+                    Video  Records
+                </h2>
+
+                {videoPaymentsLoading ? (
+                    <div className="flex items-center justify-center py-10">
+                        <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-black" />
+                    </div>
+                ) : videoPaymentRecords.length === 0 ? (
+                    <div className="text-gray-500 text-center py-10">
+                        No payment records found.
+                    </div>
+                ) : (
+                    <VideoPayments payments={videoPaymentRecords}  viewAs="player"/>
+                )}
+            </section>
+
             {/* Payments */}
 
             {view_finance === 1 && (
@@ -1049,7 +1114,7 @@ export default function PlayerDetailPage() {
 
 
                                                     {p.status === PaymentStatus.AUTHORIZED || p.status === PaymentStatus.CAPTURED ?
-                                                    
+
                                                         <Button
                                                             variant="outline"
                                                             className={`shadow-sm rounded-lg px-3 py-1 text-xs "bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-900"
@@ -1057,27 +1122,27 @@ export default function PlayerDetailPage() {
                                                             onClick={() => handleRefundClick(p)}
                                                         >
                                                             Refund
-                                                        </Button>              
-                                                    : (p.status === PaymentStatus.PENDING) ?
-                                                        <Button
-                                                            variant="outline"
-                                                            className={`shadow-sm rounded-lg px-3 py-1 text-xs bg-gray-50 hover:bg-green-100 text-green-600 hover:text-green-900`}
-                                                            onClick={() => handleRetryClick(p)}
-                                                        >
-                                                            Retry
-                                                        </Button> 
-                                                    :
+                                                        </Button>
+                                                        : (p.status === PaymentStatus.PENDING) ?
+                                                            <Button
+                                                                variant="outline"
+                                                                className={`shadow-sm rounded-lg px-3 py-1 text-xs bg-gray-50 hover:bg-green-100 text-green-600 hover:text-green-900`}
+                                                                onClick={() => handleRetryClick(p)}
+                                                            >
+                                                                Retry
+                                                            </Button>
+                                                            :
 
-                                                        <Button
-                                                            variant="outline"
-                                                            disabled
-                                                            className={`shadow-sm rounded-lg px-3 py-1 text-xs bg-gray-100 text-red-600 cursor-not-allowed`}
-                                                        >
-                                                            {
-                                                                p.status === PaymentStatus.REFUNDED ? "Refunded" :
-                                                                p.status === PaymentStatus.CANCELLED ? "Cancelled" : "Released"
-                                                            }
-                                                        </Button> 
+                                                            <Button
+                                                                variant="outline"
+                                                                disabled
+                                                                className={`shadow-sm rounded-lg px-3 py-1 text-xs bg-gray-100 text-red-600 cursor-not-allowed`}
+                                                            >
+                                                                {
+                                                                    p.status === PaymentStatus.REFUNDED ? "Refunded" :
+                                                                        p.status === PaymentStatus.CANCELLED ? "Cancelled" : "Released"
+                                                                }
+                                                            </Button>
 
                                                     }
                                                 </td>
@@ -1088,106 +1153,106 @@ export default function PlayerDetailPage() {
 
                                 <Dialog open={authorizeDialog} onOpenChange={setAuthorizeDialog}>
                                     <DialogContent className="max-w-md">
-                                    <DialogHeader>
-                                        <DialogTitle>Add a Comment</DialogTitle>
-                                    </DialogHeader>
+                                        <DialogHeader>
+                                            <DialogTitle>Add a Comment</DialogTitle>
+                                        </DialogHeader>
 
-                                    <div className="flex flex-col gap-4 mt-2">
+                                        <div className="flex flex-col gap-4 mt-2">
 
-                                        <Input
-                                            type="textarea"
-                                            placeholder={`Write your comment here...`}
-                                            value={remark}
-                                            onChange={(e) => setRemarks(e.target.value)}
-                                        />
+                                            <Input
+                                                type="textarea"
+                                                placeholder={`Write your comment here...`}
+                                                value={remark}
+                                                onChange={(e) => setRemarks(e.target.value)}
+                                            />
 
-                                        <Input
-                                            type="textarea"
-                                            placeholder={`Write your internal comment here...`}
-                                            value={internalRemark}
-                                            onChange={(e) => setInternalRemark(e.target.value)}
-                                        />
-
-
-                                        {/* Action Buttons */}
-                                        <div className="flex justify-end gap-2 mt-4">
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => {
-                                            setAuthorizeDialog(false);
-                                            setRemarks("");
-                                            setInternalRemark("");
-                                            }}
-                                        >
-                                            Cancel
-                                        </Button>
-
-                                        <Button
-                                            onClick={async () => {
+                                            <Input
+                                                type="textarea"
+                                                placeholder={`Write your internal comment here...`}
+                                                value={internalRemark}
+                                                onChange={(e) => setInternalRemark(e.target.value)}
+                                            />
 
 
-                                            const refundData = {
-                                                remark: remark,
-                                                internalRemark,
-                                                evaluation_id: selectedPayment?.evaluation_id,
-                                            };
+                                            {/* Action Buttons */}
+                                            <div className="flex justify-end gap-2 mt-4">
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setAuthorizeDialog(false);
+                                                        setRemarks("");
+                                                        setInternalRemark("");
+                                                    }}
+                                                >
+                                                    Cancel
+                                                </Button>
 
-                                            try {
-                                                const res = await fetch("/api/paymentcancel", {
-                                                method: "PATCH",
-                                                headers: { "Content-Type": "application/json" },
-                                                body: JSON.stringify(refundData),
-                                                });
+                                                <Button
+                                                    onClick={async () => {
 
-                                                const data =  await res.json()
 
-                                                if (!res.ok) {
-                                                    setAuthorizeDialog(false);
-                                                    setRemarks("");
-                                                    setInternalRemark("");
-                                                    throw new Error(data.error || "Failed to cancel payment");
-                                                }
+                                                        const refundData = {
+                                                            remark: remark,
+                                                            internalRemark,
+                                                            evaluation_id: selectedPayment?.evaluation_id,
+                                                        };
 
-                                                Swal.fire({
-                                                icon: "success",
-                                                title: "Payment Cancelled Successful",
-                                                text: `Payment of $${selectedPayment?.amount} cancelled successfully!`,
-                                                });
+                                                        try {
+                                                            const res = await fetch("/api/paymentcancel", {
+                                                                method: "PATCH",
+                                                                headers: { "Content-Type": "application/json" },
+                                                                body: JSON.stringify(refundData),
+                                                            });
 
-                                                // Reset dialog
-                                                setAuthorizeDialog(false);
-                                                setRemarks("");
-                                                setInternalRemark("");
-                                                setLoading(true);
-                                                setData((prev) => {
-                                                    if (!prev) return prev;
+                                                            const data = await res.json()
 
-                                                    return {
-                                                        ...prev,
-                                                        payments: prev.payments.map((p) =>
-                                                            p.evaluation_id === selectedPayment?.evaluation_id
-                                                                ? { ...p, status: PaymentStatus.CANCELLED }
-                                                                : p
-                                                        ),
-                                                    };
-                                                });
-                                                setLoading(false);
+                                                            if (!res.ok) {
+                                                                setAuthorizeDialog(false);
+                                                                setRemarks("");
+                                                                setInternalRemark("");
+                                                                throw new Error(data.error || "Failed to cancel payment");
+                                                            }
 
-                                            } catch (err) {
-                                                console.error(err);
-                                                Swal.fire({
-                                                icon: "error",
-                                                title: "Error",
-                                                text: `Failed to process refund due to this reason ${String(err)}. Please try again.`,
-                                                });
-                                            }
-                                            }}
-                                            disabled={!remark || !internalRemark}
-                                        >
-                                            Submit
-                                        </Button>
+                                                            Swal.fire({
+                                                                icon: "success",
+                                                                title: "Payment Cancelled Successful",
+                                                                text: `Payment of $${selectedPayment?.amount} cancelled successfully!`,
+                                                            });
+
+                                                            // Reset dialog
+                                                            setAuthorizeDialog(false);
+                                                            setRemarks("");
+                                                            setInternalRemark("");
+                                                            setLoading(true);
+                                                            setData((prev) => {
+                                                                if (!prev) return prev;
+
+                                                                return {
+                                                                    ...prev,
+                                                                    payments: prev.payments.map((p) =>
+                                                                        p.evaluation_id === selectedPayment?.evaluation_id
+                                                                            ? { ...p, status: PaymentStatus.CANCELLED }
+                                                                            : p
+                                                                    ),
+                                                                };
+                                                            });
+                                                            setLoading(false);
+
+                                                        } catch (err) {
+                                                            console.error(err);
+                                                            Swal.fire({
+                                                                icon: "error",
+                                                                title: "Error",
+                                                                text: `Failed to process refund due to this reason ${String(err)}. Please try again.`,
+                                                            });
+                                                        }
+                                                    }}
+                                                    disabled={!remark || !internalRemark}
+                                                >
+                                                    Submit
+                                                </Button>
+                                            </div>
                                         </div>
-                                    </div>
                                     </DialogContent>
                                 </Dialog>
 
@@ -1231,24 +1296,24 @@ export default function PlayerDetailPage() {
                                                     placeholder={`Enter refund amount (max $${Number(selectedPayment?.amount || 0).toFixed(2)})`}
                                                     value={partialAmount ? partialAmount : ""}
                                                     onChange={(e) => {
-                                                    const value = e.target.value;
+                                                        const value = e.target.value;
 
-                                                    if (value === ""){
-                                                        setPartialAmount("");
-                                                        return;
-                                                    }
+                                                        if (value === "") {
+                                                            setPartialAmount("");
+                                                            return;
+                                                        }
 
-                                                    if (!/^\d*(\.\d{0,2})?$/.test(value)){
-                                                        return;
-                                                    }
+                                                        if (!/^\d*(\.\d{0,2})?$/.test(value)) {
+                                                            return;
+                                                        }
 
-                                                    const userInput = Number(value);
-                                                    const maxAmount = Number(selectedPayment?.amount || 0);
+                                                        const userInput = Number(value);
+                                                        const maxAmount = Number(selectedPayment?.amount || 0);
 
-                                                    if (userInput <= maxAmount) {
-                                                        // Allow only whole numbers
-                                                        setPartialAmount(value);
-                                                    }
+                                                        if (userInput <= maxAmount) {
+                                                            // Allow only whole numbers
+                                                            setPartialAmount(value);
+                                                        }
                                                     }}
                                                     // min="0"
                                                     // max={Number(selectedPayment?.amount || 0).toString()}
@@ -1328,15 +1393,15 @@ export default function PlayerDetailPage() {
                                                                 body: JSON.stringify(refundData),
                                                             });
 
-                                                            const data =  await res.json()
+                                                            const data = await res.json()
                                                             if (!res.ok) {
-                                                            setRefundDialog(false);
-                                                            setRefundType(null);
-                                                            setPartialAmount("");
-                                                            setSelectedPayment(null);
-                                                            setRemarks('');
-                                                            setInternalRemark("");
-                                                            throw new Error(data.error || "Failed to cancel payment");
+                                                                setRefundDialog(false);
+                                                                setRefundType(null);
+                                                                setPartialAmount("");
+                                                                setSelectedPayment(null);
+                                                                setRemarks('');
+                                                                setInternalRemark("");
+                                                                throw new Error(data.error || "Failed to cancel payment");
                                                             };
 
                                                             Swal.fire({
@@ -1365,7 +1430,7 @@ export default function PlayerDetailPage() {
                                                             setRemarks('');
                                                             setInternalRemark("");
                                                         } catch (err) {
-                                                           console.error(err);
+                                                            console.error(err);
                                                             Swal.fire({
                                                                 icon: "error",
                                                                 title: "Error",
