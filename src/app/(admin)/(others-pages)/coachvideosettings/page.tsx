@@ -1,7 +1,12 @@
 "use client";
-import React, { useState, useMemo, useRef } from "react";
-import { Video, Search, Filter, IndianRupee, CheckCircle2, XCircle, RotateCcw, TrendingUp } from "lucide-react";
+import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import {
+  Video, Search, Filter, IndianRupee, CheckCircle2, XCircle,
+  RotateCcw, TrendingUp, RefreshCw, Loader2, AlertCircle,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+} from "lucide-react";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
 type VideoCoach = {
   id: number;
   name: string;
@@ -12,10 +17,14 @@ type VideoCoach = {
   feePerSession: number;
   totalSessions: number;
   totalEarnings: number;
-  joinedDate: string;
+  joinedDate: string | null;
   lastSessionDate: string | null;
 };
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+const PAGE_SIZE = 10;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const AVATAR_COLORS = [
   { bg: "bg-blue-100 dark:bg-blue-900", text: "text-blue-700 dark:text-blue-300" },
   { bg: "bg-teal-100 dark:bg-teal-900", text: "text-teal-700 dark:text-teal-300" },
@@ -25,33 +34,59 @@ const AVATAR_COLORS = [
   { bg: "bg-pink-100 dark:bg-pink-900", text: "text-pink-700 dark:text-pink-300" },
 ];
 
-const INITIAL_COACHES: VideoCoach[] = [
-  { id: 1, name: "Rahul Sharma", email: "rahul.sharma@sport.in", sport: "Cricket", phone: "+91 98765 43210", videoEnabled: true, feePerSession: 1500, totalSessions: 48, totalEarnings: 72000, joinedDate: "12 Jan 2024", lastSessionDate: "19 May 2025" },
-  { id: 2, name: "Priya Mehta", email: "priya.mehta@sport.in", sport: "Tennis", phone: "+91 91234 56789", videoEnabled: false, feePerSession: 1800, totalSessions: 0, totalEarnings: 0, joinedDate: "03 Mar 2024", lastSessionDate: null },
-  { id: 3, name: "Amit Verma", email: "amit.verma@sport.in", sport: "Football", phone: "+91 99887 76655", videoEnabled: true, feePerSession: 2500, totalSessions: 57, totalEarnings: 142500, joinedDate: "18 Feb 2024", lastSessionDate: "20 May 2025" },
-  { id: 4, name: "Sunita Rao", email: "sunita.rao@sport.in", sport: "Badminton", phone: "+91 88776 65544", videoEnabled: false, feePerSession: 1000, totalSessions: 0, totalEarnings: 0, joinedDate: "25 Apr 2024", lastSessionDate: null },
-  { id: 5, name: "Karan Patel", email: "karan.patel@sport.in", sport: "Basketball", phone: "+91 77665 54433", videoEnabled: true, feePerSession: 2000, totalSessions: 31, totalEarnings: 62000, joinedDate: "09 May 2024", lastSessionDate: "18 May 2025" },
-  { id: 6, name: "Deepa Nair", email: "deepa.nair@sport.in", sport: "Swimming", phone: "+91 66554 43322", videoEnabled: true, feePerSession: 1200, totalSessions: 22, totalEarnings: 26400, joinedDate: "21 Jun 2024", lastSessionDate: "15 May 2025" },
-  { id: 7, name: "Vikram Singh", email: "vikram.singh@sport.in", sport: "Hockey", phone: "+91 55443 32211", videoEnabled: true, feePerSession: 1750, totalSessions: 40, totalEarnings: 70000, joinedDate: "14 Jul 2024", lastSessionDate: "21 May 2025" },
-  { id: 8, name: "Anjali Gupta", email: "anjali.gupta@sport.in", sport: "Athletics", phone: "+91 44332 21100", videoEnabled: false, feePerSession: 900, totalSessions: 0, totalEarnings: 0, joinedDate: "30 Aug 2024", lastSessionDate: null },
-];
-
 function getInitials(name: string) {
   return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 }
 
 function formatINR(amount: number) {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency", currency: "INR", maximumFractionDigits: 0,
+  }).format(amount);
 }
 
-// Toggle Switch Component
-function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+// ─── API helpers ──────────────────────────────────────────────────────────────
+async function fetchCoaches(search: string, video: string): Promise<VideoCoach[]> {
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  if (video !== "all") params.set("video", video);
+  const res = await fetch(`/api/coach/video-settings?${params.toString()}`);
+  if (!res.ok) throw new Error(`Failed to load coaches (${res.status})`);
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error ?? "Unknown error");
+  return json.data;
+}
+
+async function patchCoach(id: number, payload: Partial<{ videoEnabled: boolean; feePerSession: number }>) {
+  const res = await fetch(`/api/coach/video-settings/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const j = await res.json().catch(() => ({}));
+    throw new Error(j.error ?? `Request failed (${res.status})`);
+  }
+}
+
+async function resetCoach(id: number) {
+  const res = await fetch(`/api/coach/video-settings/${id}/reset`, { method: "POST" });
+  if (!res.ok) {
+    const j = await res.json().catch(() => ({}));
+    throw new Error(j.error ?? `Request failed (${res.status})`);
+  }
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+function ToggleSwitch({
+  checked, onChange, disabled,
+}: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
     <button
       role="switch"
       aria-checked={checked}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed ${
         checked ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"
       }`}
     >
@@ -64,21 +99,27 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
   );
 }
 
-// Editable Fee Cell
-function FeeCell({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+function FeeCell({
+  value, onChange, disabled,
+}: { value: number; onChange: (v: number) => Promise<void>; disabled?: boolean }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
+  const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function startEdit() {
+    if (disabled) return;
     setDraft(String(value));
     setEditing(true);
     setTimeout(() => inputRef.current?.select(), 10);
   }
 
-  function commit() {
+  async function commit() {
     const parsed = parseInt(draft, 10);
-    if (!isNaN(parsed) && parsed >= 0) onChange(parsed);
+    if (!isNaN(parsed) && parsed >= 0 && parsed !== value) {
+      setSaving(true);
+      await onChange(parsed).finally(() => setSaving(false));
+    }
     setEditing(false);
   }
 
@@ -96,7 +137,9 @@ function FeeCell({ value, onChange }: { value: number; onChange: (v: number) => 
           className="w-20 px-2 py-1 text-sm border border-blue-400 rounded focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           min={0}
           step={50}
+          disabled={saving}
         />
+        {saving && <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />}
       </div>
     );
   }
@@ -104,7 +147,8 @@ function FeeCell({ value, onChange }: { value: number; onChange: (v: number) => 
   return (
     <button
       onClick={startEdit}
-      className="flex items-center gap-1 text-sm text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors group"
+      disabled={disabled}
+      className="flex items-center gap-1 text-sm text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors group disabled:opacity-40 disabled:cursor-not-allowed"
       title="Click to edit fee"
     >
       <IndianRupee className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-500" />
@@ -114,86 +158,298 @@ function FeeCell({ value, onChange }: { value: number; onChange: (v: number) => 
   );
 }
 
+// ─── Skeleton row ─────────────────────────────────────────────────────────────
+function SkeletonRow() {
+  return (
+    <tr className="border-b border-gray-100 dark:border-gray-700">
+      {Array.from({ length: 7 }).map((_, i) => (
+        <td key={i} className="px-4 py-3">
+          <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" style={{ width: `${[140, 70, 80, 50, 90, 80, 100][i]}px` }} />
+        </td>
+      ))}
+    </tr>
+  );
+}
+
+// ─── Pagination component ─────────────────────────────────────────────────────
+function Pagination({
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+}) {
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+
+  // Build page number array with ellipsis logic
+  const pages = useMemo(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const result: (number | "...")[] = [];
+    if (currentPage <= 4) {
+      result.push(1, 2, 3, 4, 5, "...", totalPages);
+    } else if (currentPage >= totalPages - 3) {
+      result.push(1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+    } else {
+      result.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages);
+    }
+    return result;
+  }, [currentPage, totalPages]);
+
+  if (totalPages <= 1) return null;
+
+  const btnBase =
+    "inline-flex items-center justify-center h-8 min-w-[2rem] px-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed";
+
+  return (
+    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-3">
+      {/* Record range */}
+      <p className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
+        Showing <span className="font-medium text-gray-700 dark:text-gray-200">{startItem}–{endItem}</span> of{" "}
+        <span className="font-medium text-gray-700 dark:text-gray-200">{totalItems}</span> coaches
+      </p>
+
+      {/* Page buttons */}
+      <div className="flex items-center gap-1">
+        {/* First */}
+        <button
+          onClick={() => onPageChange(1)}
+          disabled={currentPage === 1}
+          className={`${btnBase} text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700`}
+          title="First page"
+        >
+          <ChevronsLeft className="w-4 h-4" />
+        </button>
+
+        {/* Prev */}
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={`${btnBase} text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700`}
+          title="Previous page"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+
+        {/* Page numbers */}
+        {pages.map((page, idx) =>
+          page === "..." ? (
+            <span
+              key={`ellipsis-${idx}`}
+              className="inline-flex items-center justify-center h-8 w-8 text-sm text-gray-400"
+            >
+              …
+            </span>
+          ) : (
+            <button
+              key={page}
+              onClick={() => onPageChange(page as number)}
+              className={`${btnBase} ${
+                page === currentPage
+                  ? "bg-blue-500 text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}
+            >
+              {page}
+            </button>
+          )
+        )}
+
+        {/* Next */}
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={`${btnBase} text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700`}
+          title="Next page"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+
+        {/* Last */}
+        <button
+          onClick={() => onPageChange(totalPages)}
+          disabled={currentPage === totalPages}
+          className={`${btnBase} text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700`}
+          title="Last page"
+        >
+          <ChevronsRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function CoachVideoSettingsPage() {
-  const [coaches, setCoaches] = useState<VideoCoach[]>(INITIAL_COACHES);
+  const [coaches, setCoaches] = useState<VideoCoach[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [videoFilter, setVideoFilter] = useState("all");
-  const [toast, setToast] = useState<string | null>(null);
+
+  // ── Pagination state ──
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [pendingIds, setPendingIds] = useState<Set<number>>(new Set());
+  const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null);
   const [confirmReset, setConfirmReset] = useState<number | null>(null);
 
-  function showToast(msg: string) {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2500);
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, videoFilter]);
+
+  // ── Fetch ──
+  const load = useCallback(async (showSpinner = false) => {
+    if (showSpinner) setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchCoaches(debouncedSearch, videoFilter);
+      setCoaches(data);
+    } catch (e: unknown) {
+      setError((e as Error).message ?? "Failed to load");
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedSearch, videoFilter]);
+
+  useEffect(() => { load(true); }, [load]);
+
+  // ── Pagination derived values ──
+  const totalPages = Math.max(1, Math.ceil(coaches.length / PAGE_SIZE));
+
+  // Clamp currentPage if coaches shrink (e.g. after filter change)
+  const safePage = Math.min(currentPage, totalPages);
+
+  const pagedCoaches = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE;
+    return coaches.slice(start, start + PAGE_SIZE);
+  }, [coaches, safePage]);
+
+  function handlePageChange(page: number) {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+    // Scroll table into view smoothly
+    document.getElementById("coaches-table")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function toggleVideo(id: number, enabled: boolean) {
-    setCoaches((prev) =>
-      prev.map((c) => {
-        if (c.id !== id) return c;
-        showToast(`${c.name} video ${enabled ? "enabled" : "disabled"}`);
-        return { ...c, videoEnabled: enabled };
-      })
-    );
+  // ── Toast ──
+  function showToast(msg: string, type: "ok" | "err" = "ok") {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 2800);
   }
 
-  function updateFee(id: number, fee: number) {
-    setCoaches((prev) =>
-      prev.map((c) => {
-        if (c.id !== id) return c;
-        showToast(`${c.name} fee updated to ₹${fee.toLocaleString("en-IN")}`);
-        return { ...c, feePerSession: fee };
-      })
-    );
+function setPending(id: number, on: boolean) {
+  setPendingIds((prev) => {
+    const next = new Set(prev);
+
+    if (on) {
+      next.add(id);
+    } else {
+      next.delete(id);
+    }
+
+    return next;
+  });
+}
+  // ── Toggle video ──
+  async function toggleVideo(id: number, enabled: boolean) {
+    const coach = coaches.find((c) => c.id === id);
+    setPending(id, true);
+    setCoaches((prev) => prev.map((c) => c.id === id ? { ...c, videoEnabled: enabled } : c));
+    try {
+      await patchCoach(id, { videoEnabled: enabled });
+      showToast(`${coach?.name} video ${enabled ? "enabled" : "disabled"}`);
+    } catch (e: unknown) {
+      setCoaches((prev) => prev.map((c) => c.id === id ? { ...c, videoEnabled: !enabled } : c));
+      showToast((e as Error).message, "err");
+    } finally {
+      setPending(id, false);
+    }
   }
 
-  function disableAndReset(id: number) {
-    setCoaches((prev) =>
-      prev.map((c) => {
-        if (c.id !== id) return c;
-        showToast(`${c.name} disabled & sessions reset`);
-        return { ...c, videoEnabled: false, totalSessions: 0, totalEarnings: 0, lastSessionDate: null };
-      })
-    );
+  // ── Update fee ──
+  async function updateFee(id: number, fee: number) {
+    const coach = coaches.find((c) => c.id === id);
+    const prev_fee = coach?.feePerSession ?? 0;
+    setPending(id, true);
+    setCoaches((prev) => prev.map((c) => c.id === id ? { ...c, feePerSession: fee } : c));
+    try {
+      await patchCoach(id, { feePerSession: fee });
+      showToast(`${coach?.name} fee updated to ₹${fee.toLocaleString("en-IN")}`);
+    } catch (e: unknown) {
+      setCoaches((prev) => prev.map((c) => c.id === id ? { ...c, feePerSession: prev_fee } : c));
+      showToast((e as Error).message, "err");
+    } finally {
+      setPending(id, false);
+    }
+  }
+
+  // ── Disable & reset ──
+  async function disableAndReset(id: number) {
+    const coach = coaches.find((c) => c.id === id);
     setConfirmReset(null);
+    setPending(id, true);
+    try {
+      await resetCoach(id);
+      setCoaches((prev) =>
+        prev.map((c) =>
+          c.id === id
+            ? { ...c, videoEnabled: false, totalSessions: 0, totalEarnings: 0, lastSessionDate: null }
+            : c
+        )
+      );
+      showToast(`${coach?.name} disabled & reset`);
+    } catch (e: unknown) {
+      showToast((e as Error).message, "err");
+    } finally {
+      setPending(id, false);
+    }
   }
 
-  const filtered = useMemo(() => {
-    return coaches.filter((c) => {
-      const q = search.toLowerCase();
-      const matchSearch =
-        c.name.toLowerCase().includes(q) ||
-        c.email.toLowerCase().includes(q) ||
-        c.sport.toLowerCase().includes(q);
-      const matchVideo =
-        videoFilter === "all" ||
-        (videoFilter === "enabled" && c.videoEnabled) ||
-        (videoFilter === "disabled" && !c.videoEnabled);
-      return matchSearch && matchVideo;
-    });
-  }, [coaches, search, videoFilter]);
-
+  // ── Summary (always across all coaches, not just current page) ──
   const summary = useMemo(() => {
     const enabled = coaches.filter((c) => c.videoEnabled);
-    const totalSessions = coaches.reduce((s, c) => s + c.totalSessions, 0);
-    const totalEarnings = coaches.reduce((s, c) => s + c.totalEarnings, 0);
-    const avgFee = enabled.length > 0
-      ? Math.round(enabled.reduce((s, c) => s + c.feePerSession, 0) / enabled.length)
-      : 0;
     return {
       enabledCount: enabled.length,
       total: coaches.length,
-      avgFee,
-      totalSessions,
-      totalEarnings,
+      avgFee: enabled.length > 0
+        ? Math.round(enabled.reduce((s, c) => s + c.feePerSession, 0) / enabled.length)
+        : 0,
+      totalSessions: coaches.reduce((s, c) => s + c.totalSessions, 0),
+      totalEarnings: coaches.reduce((s, c) => s + c.totalEarnings, 0),
     };
   }, [coaches]);
 
+  // ─────────────────────────────────────────────────────────────────────────────
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Toast */}
       {toast && (
-        <div className="fixed top-5 right-5 z-50 bg-gray-900 text-white text-sm px-4 py-2.5 rounded-lg shadow-lg dark:bg-gray-100 dark:text-gray-900 transition-all">
-          {toast}
+        <div
+          className={`fixed top-5 right-5 z-50 text-sm px-4 py-2.5 rounded-lg shadow-lg transition-all flex items-center gap-2 ${
+            toast.type === "err"
+              ? "bg-red-600 text-white"
+              : "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900"
+          }`}
+        >
+          {toast.type === "err" && <AlertCircle className="w-4 h-4 shrink-0" />}
+          {toast.msg}
         </div>
       )}
 
@@ -227,38 +483,69 @@ export default function CoachVideoSettingsPage() {
       )}
 
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <Video className="w-5 h-5 text-blue-500" />
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Coach video settings</h1>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Video className="w-5 h-5 text-blue-500" />
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Coach video settings</h1>
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Manage per-coach video access, session fees, and statistics.
+          </p>
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          View and manage per-coach video access, session fees, and statistics.
-        </p>
+        <button
+          onClick={() => load(true)}
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 transition-colors"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
       </div>
+
+      {/* Error banner */}
+      {error && (
+        <div className="mb-4 flex items-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-xl text-sm text-red-700 dark:text-red-300">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          {error}
+          <button onClick={() => load(true)} className="ml-auto text-xs underline">Retry</button>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <div className="bg-blue-50 dark:bg-blue-900/30 rounded-xl p-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Video enabled</p>
-          <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.enabledCount}</p>
-          <p className="text-xs text-gray-400 mt-0.5">of {summary.total} coaches</p>
-        </div>
-        <div className="bg-green-50 dark:bg-green-900/30 rounded-xl p-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Avg. fee per session</p>
-          <p className="text-2xl font-semibold text-gray-900 dark:text-white">₹{summary.avgFee.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-gray-400 mt-0.5">enabled coaches only</p>
-        </div>
-        <div className="bg-purple-50 dark:bg-purple-900/30 rounded-xl p-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total sessions</p>
-          <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.totalSessions}</p>
-          <p className="text-xs text-gray-400 mt-0.5">across all coaches</p>
-        </div>
-        <div className="bg-amber-50 dark:bg-amber-900/30 rounded-xl p-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total earnings</p>
-          <p className="text-2xl font-semibold text-gray-900 dark:text-white">{formatINR(summary.totalEarnings)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">platform-wide</p>
-        </div>
+        {[
+          {
+            bg: "bg-blue-50 dark:bg-blue-900/30",
+            label: "Video enabled",
+            value: loading ? "…" : summary.enabledCount,
+            sub: loading ? "" : `of ${summary.total} coaches`,
+          },
+          {
+            bg: "bg-green-50 dark:bg-green-900/30",
+            label: "Avg. fee / session",
+            value: loading ? "…" : `₹${summary.avgFee.toLocaleString("en-IN")}`,
+            sub: "enabled coaches only",
+          },
+          {
+            bg: "bg-purple-50 dark:bg-purple-900/30",
+            label: "Total sessions",
+            value: loading ? "…" : summary.totalSessions,
+            sub: "across all coaches",
+          },
+          {
+            bg: "bg-amber-50 dark:bg-amber-900/30",
+            label: "Total earnings",
+            value: loading ? "…" : formatINR(summary.totalEarnings),
+            sub: "platform-wide",
+          },
+        ].map((card) => (
+          <div key={card.label} className={`${card.bg} rounded-xl p-4`}>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{card.label}</p>
+            <p className="text-2xl font-semibold text-gray-900 dark:text-white">{card.value}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{card.sub}</p>
+          </div>
+        ))}
       </div>
 
       {/* Filters */}
@@ -288,32 +575,39 @@ export default function CoachVideoSettingsPage() {
       </div>
 
       {/* Table */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+      <div id="coaches-table" className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Coach</th>
-                <th className="text-left px-4 py-3 font-medium text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Video access</th>
-                <th className="text-left px-4 py-3 font-medium text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Fee / session</th>
-                <th className="text-left px-4 py-3 font-medium text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Sessions</th>
-                <th className="text-left px-4 py-3 font-medium text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total earnings</th>
-                <th className="text-left px-4 py-3 font-medium text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Last session</th>
-                <th className="text-left px-4 py-3 font-medium text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Actions</th>
+                {["Coach", "Video access", "Fee / session", "Sessions", "Total earnings",  "Actions"].map((h) => (
+                  <th key={h} className="text-left px-4 py-3 font-medium text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-900">
-              {filtered.length === 0 ? (
+              {loading ? (
+                Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} />)
+              ) : coaches.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-12 text-gray-400 text-sm">
                     No coaches found matching your filters.
                   </td>
                 </tr>
               ) : (
-                filtered.map((coach, i) => {
-                  const av = AVATAR_COLORS[i % AVATAR_COLORS.length];
+                pagedCoaches.map((coach, i) => {
+                  // Use global index for consistent avatar colors across pages
+                  const globalIdx = (safePage - 1) * PAGE_SIZE + i;
+                  const av = AVATAR_COLORS[globalIdx % AVATAR_COLORS.length];
+                  const busy = pendingIds.has(coach.id);
                   return (
-                    <tr key={coach.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                    <tr
+                      key={coach.id}
+                      className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${busy ? "opacity-70" : ""}`}
+                    >
+                      {/* Coach */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${av.bg} ${av.text}`}>
@@ -325,20 +619,35 @@ export default function CoachVideoSettingsPage() {
                           </div>
                         </div>
                       </td>
+
+                      {/* Toggle */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <ToggleSwitch
-                            checked={coach.videoEnabled}
-                            onChange={(v) => toggleVideo(coach.id, v)}
-                          />
+                          {busy ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                          ) : (
+                            <ToggleSwitch
+                              checked={coach.videoEnabled}
+                              onChange={(v) => toggleVideo(coach.id, v)}
+                              disabled={busy}
+                            />
+                          )}
                           <span className={`text-xs font-medium ${coach.videoEnabled ? "text-green-600 dark:text-green-400" : "text-gray-400"}`}>
                             {coach.videoEnabled ? "Enabled" : "Disabled"}
                           </span>
                         </div>
                       </td>
+
+                      {/* Fee */}
                       <td className="px-4 py-3">
-                        <FeeCell value={coach.feePerSession} onChange={(v) => updateFee(coach.id, v)} />
+                        <FeeCell
+                          value={coach.feePerSession}
+                          onChange={(v) => updateFee(coach.id, v)}
+                          disabled={busy}
+                        />
                       </td>
+
+                      {/* Sessions */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
                           {coach.totalSessions > 0 ? (
@@ -351,6 +660,8 @@ export default function CoachVideoSettingsPage() {
                           </span>
                         </div>
                       </td>
+
+                      {/* Earnings */}
                       <td className="px-4 py-3">
                         {coach.totalEarnings > 0 ? (
                           <span className="text-gray-900 dark:text-white font-medium">
@@ -360,17 +671,21 @@ export default function CoachVideoSettingsPage() {
                           <span className="text-gray-400">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
+
+                      {/* Last session */}
+                      {/* <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                         {coach.lastSessionDate ?? "—"}
-                      </td>
+                      </td> */}
+
+                      {/* Actions */}
                       <td className="px-4 py-3">
                         <button
                           onClick={() => setConfirmReset(coach.id)}
-                          disabled={!coach.videoEnabled && coach.totalSessions === 0}
+                          disabled={busy || (!coach.videoEnabled && coach.totalSessions === 0)}
                           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors"
                           title="Disable video access and reset session count"
                         >
-                          <RotateCcw className="w-3 h-3" />
+                          {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
                           Disable &amp; reset
                         </button>
                       </td>
@@ -381,18 +696,28 @@ export default function CoachVideoSettingsPage() {
             </tbody>
           </table>
         </div>
-        {filtered.length > 0 && (
-          <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 flex items-center justify-between">
-            <span>Showing {filtered.length} of {coaches.length} coaches</span>
-            <span className="flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-              {summary.enabledCount} with video enabled
-            </span>
-          </div>
+
+        {/* Pagination footer — replaces the old simple footer */}
+        {!loading && coaches.length > 0 && (
+          <Pagination
+            currentPage={safePage}
+            totalPages={totalPages}
+            totalItems={coaches.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={handlePageChange}
+          />
         )}
       </div>
 
-      {/* Fee Edit Hint */}
+      {/* Enabled count badge (shown below table when paginated) */}
+      {!loading && coaches.length > 0 && (
+        <div className="mt-2 flex items-center justify-end gap-1 text-xs text-gray-400 dark:text-gray-500">
+          <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+          {summary.enabledCount} of {summary.total} coaches have video enabled
+        </div>
+      )}
+
+      {/* Hint */}
       <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
         <IndianRupee className="inline w-3 h-3 mb-0.5" /> Click on any fee value to edit it inline. Press Enter to save or Escape to cancel.
       </p>

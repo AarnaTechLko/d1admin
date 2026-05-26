@@ -27,7 +27,7 @@ const ViewVideosPage = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await fetch("/api/bookings");
+        const res = await fetch(`/api/bookings`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!data.success) throw new Error("API returned success: false");
@@ -44,8 +44,6 @@ const ViewVideosPage = () => {
 
   return (
     <div>
-      
-
       {loading && (
         <div className="flex items-center justify-center gap-4 py-10">
           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />

@@ -1218,3 +1218,30 @@ export const bookings = pgTable(
       .notNull(),
   }
 );
+
+export const bookingStatusLogs = pgTable("booking_status_logs", {
+  id: serial("id").primaryKey(),
+
+  booking_id: integer("booking_id")
+    .notNull()
+    .references(() => bookings.id, {
+      onDelete: "cascade",
+    }),
+
+  previous_status: varchar("previous_status", { length: 20 })
+    .default("none"),
+
+  new_status: varchar("new_status", { length: 20 })
+    .notNull(),
+
+  changed_by_user_id: integer("changed_by_user_id")
+    .notNull(),
+
+  changed_by_user_type: varchar("changed_by_user_type", { length: 10 })
+    .notNull(),
+
+  reason: text("reason"),
+
+  created_at: timestamp("created_at")
+    .defaultNow(),
+});

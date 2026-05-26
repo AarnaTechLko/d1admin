@@ -368,7 +368,9 @@ export async function GET() {
 
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { video_payments, bookings, users, coaches } from "@/lib/schema";
+import {
+  video_payments, bookings, users, coaches, playerEvaluation,
+} from "@/lib/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
@@ -406,26 +408,39 @@ export async function GET() {
     // ─────────────────────────────────────────
     const payments = await db
       .select({
-        id:              video_payments.id,
-        player_id:       video_payments.player_id,
-        coach_id:        video_payments.coach_id,
-        booking_id:      video_payments.booking_id,
-        amount:          video_payments.amount,
+        id: video_payments.id,
+        player_id: video_payments.player_id,
+        coach_id: video_payments.coach_id,
+        booking_id: video_payments.booking_id,
+        amount: video_payments.amount,
         original_amount: video_payments.original_amount,
-        status:          video_payments.status,
-        currency:        video_payments.currency,
-        payment_info:    video_payments.payment_info,
-        created_at:      video_payments.created_at,
-        description:     video_payments.description,
-        intent_id:       video_payments.intent_id,
-        charge_id:       video_payments.charge_id,
-        is_deleted:      video_payments.is_deleted,
-        company_amount:  video_payments.company_amount,
+        status: video_payments.status,
+        currency: video_payments.currency,
+        payment_info: video_payments.payment_info,
+        created_at: video_payments.created_at,
+        description: video_payments.description,
+        intent_id: video_payments.intent_id,
+        charge_id: video_payments.charge_id,
+        is_deleted: video_payments.is_deleted,
+        review_title: playerEvaluation.review_title,
+        evaluationId: bookings.evaluation_id,
+
+        company_amount: video_payments.company_amount,
         commission_rate: video_payments.commission_rate,
         player_name: sql<string>`concat(${playerUser.first_name}, ' ', ${playerUser.last_name})`,
-        coach_name:  sql<string>`concat(${coaches.firstName}, ' ', ${coaches.lastName})`,
+        coach_name: sql<string>`concat(${coaches.firstName}, ' ', ${coaches.lastName})`,
       })
       .from(video_payments)
+      .leftJoin(
+        bookings,
+        eq(video_payments.booking_id, bookings.id)
+      )
+      // ✅ THEN join evaluation
+      .leftJoin(
+        playerEvaluation,
+        eq(bookings.evaluation_id, playerEvaluation.id)
+      )
+
       .leftJoin(playerUser, eq(video_payments.player_id, playerUser.id))
       .leftJoin(coaches, eq(video_payments.coach_id, coaches.id))
       .where(eq(video_payments.is_deleted, false))
@@ -434,18 +449,18 @@ export async function GET() {
     // ─────────────────────────────────────────
     // 2. Revenue summary
     // ─────────────────────────────────────────
-    let totalVideoPayment      = 0;
+    let totalVideoPayment = 0;
     let totalEvaluationPayment = 0;
-    let totalCompanyRevenue    = 0;
+    let totalCompanyRevenue = 0;
 
     payments.forEach((p) => {
-      totalVideoPayment      += num(p.original_amount);
+      totalVideoPayment += num(p.original_amount);
       totalEvaluationPayment += num(p.amount);
-      totalCompanyRevenue    += num(p.company_amount);
+      totalCompanyRevenue += num(p.company_amount);
     });
 
     const totalCombined = totalVideoPayment + totalEvaluationPayment;
-    const totalRecords  = payments.length;
+    const totalRecords = payments.length;
 
     // ─────────────────────────────────────────
     // 3. All bookings
@@ -461,7 +476,7 @@ export async function GET() {
     const completedBookings = allBookings.filter((b) => b.status === "completed");
     const scheduledBookings = allBookings.filter((b) => b.status === "scheduled");
     const cancelledBookings = allBookings.filter((b) => b.status === "cancelled");
-    const totalBookings     = allBookings.length;
+    const totalBookings = allBookings.length;
 
     const cancellationRate =
       totalBookings > 0
@@ -506,15 +521,15 @@ export async function GET() {
 
       if (!playerMap.has(playerId)) {
         playerMap.set(playerId, {
-          player_id:           playerId,
-          total_bookings:      0,
-          completed_bookings:  0,
-          scheduled_bookings:  0,
-          cancelled_bookings:  0,
-          cancellation_rate:   0,
-          total_video_spent:   0,
+          player_id: playerId,
+          total_bookings: 0,
+          completed_bookings: 0,
+          scheduled_bookings: 0,
+          cancelled_bookings: 0,
+          cancellation_rate: 0,
+          total_video_spent: 0,
           total_eval_received: 0,
-          booking_flow:        [],
+          booking_flow: [],
         });
       }
 
@@ -528,19 +543,19 @@ export async function GET() {
       const payment = paymentByBookingId.get(booking.id);
 
       if (payment) {
-        player.total_video_spent   += num(payment.original_amount);
+        player.total_video_spent += num(payment.original_amount);
         player.total_eval_received += num(payment.amount);
       }
 
       if (booking.status === "scheduled" || booking.status === "completed") {
         player.booking_flow.push({
-          booking_id:         booking.id,
-          status:             booking.status ?? null,
-          created_at:         booking.created_at ? String(booking.created_at) : null,
-          has_evaluation:     !!payment,
-          evaluation_amount:  payment?.amount ?? null,
-          video_amount:       payment?.original_amount ?? null,
-          payment_status:     payment?.status ?? null,
+          booking_id: booking.id,
+          status: booking.status ?? null,
+          created_at: booking.created_at ? String(booking.created_at) : null,
+          has_evaluation: !!payment,
+          evaluation_amount: payment?.amount ?? null,
+          video_amount: payment?.original_amount ?? null,
+          payment_status: payment?.status ?? null,
           payment_created_at: payment?.created_at ? String(payment.created_at) : null,
         });
       }
@@ -573,10 +588,10 @@ export async function GET() {
         totalRecords,
       },
       bookings: {
-        total:                totalBookings,
-        completed:            completedBookings.length,
-        scheduled:            scheduledBookings.length,
-        cancelled:            cancelledBookings.length,
+        total: totalBookings,
+        completed: completedBookings.length,
+        scheduled: scheduledBookings.length,
+        cancelled: cancelledBookings.length,
         cancellationRate,
         videoCancellationRate,  // ✅ from video_payments
         videoCancelledCount,    // ✅ from video_payments

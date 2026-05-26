@@ -1,1 +1,0 @@
-ALTER TABLE "ticket" ADD COLUMN "assign_to" varchar(255) NOT NULL;

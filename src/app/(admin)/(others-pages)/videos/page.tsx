@@ -23,6 +23,8 @@ interface VideoPayment {
   commission_rate: string;
   player_name: string | null;
   coach_name: string | null;
+  review_title: string;
+   evaluationId: number | null;
 }
 
 const VideosPaymentsPage = () => {

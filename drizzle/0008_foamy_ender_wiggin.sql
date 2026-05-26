@@ -1,1 +1,0 @@
-ALTER TABLE "ticket" ADD COLUMN "status" varchar DEFAULT 'Pending';

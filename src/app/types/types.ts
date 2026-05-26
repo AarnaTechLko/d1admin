@@ -125,6 +125,8 @@ export interface inCompletePlayer {
   email: string;
 }
 export interface Coach {
+  video_status: number;
+  evaluation_status: number;
   updated_at:number;
   createdAt: number;
   percentage: number;

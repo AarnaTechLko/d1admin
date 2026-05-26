@@ -17,6 +17,7 @@ import { FaSpinner } from "react-icons/fa";
 import { Eye, EyeOff, RefreshCcw } from "lucide-react";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
+
 type RecentMessage = {
   sender_id: string;
   from: string;
@@ -239,6 +240,56 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
     }
   }
 
+  // const toggleEvaluation = async (coachId: string) => {
+  //   try {
+  //     setCoaches((prev: Coach[]) =>
+  //       prev.map((coach: Coach) =>
+  //         coach.id === coachId
+  //           ? {
+  //             ...coach,
+  //             evaluation_status:
+  //               coach.evaluation_status === 1 ? 0 : 1,
+  //           }
+  //           : coach
+  //       )
+  //     );
+
+  //     await axios.put("/api/coach/evaluation-status", {
+  //       coachId,
+  //     });
+
+  //     toast.success("Evaluation status updated");
+  //   } catch (error) {
+  //     console.error(error);
+  //     toast.error("Failed to update evaluation status");
+  //   }
+  // };
+
+  // const toggleVideoStatus = async (coachId: string) => {
+  //   try {
+  //     setCoaches((prev: Coach[]) =>
+  //       prev.map((coach: Coach) =>
+  //         coach.id === coachId
+  //           ? {
+  //             ...coach,
+  //             video_status:
+  //               coach.video_status === 1 ? 0 : 1,
+  //           }
+  //           : coach
+  //       )
+  //     );
+
+  //     await axios.put("/api/coach/video-status", {
+  //       coachId,
+  //     });
+
+  //     toast.success("Video status updated");
+  //   } catch (error) {
+  //     console.error(error);
+  //     toast.error("Failed to update video status");
+  //   }
+  // };
+
   return (
     <div>
       {totalPages > 0 && (
@@ -288,7 +339,13 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                 <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
                   History
                 </TableCell>
-             
+                {/* <TableCell className="px-4 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
+                  Evaluations status
+                </TableCell>
+                <TableCell className="px-4 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
+                  Video Status
+                </TableCell> */}
+
                 <TableCell className="px-8 py-2 sm:px-5 sm:py-3 text-gray-500 text-sm font-medium bg-gray-200 dark:text-gray-400">
                   %
                 </TableCell>
@@ -346,6 +403,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                   </TableCell>
 
                   <TableCell className="px-4 py-3">
+                    
                     <Dialog open={open} onOpenChange={setOpen}>
                       <DialogTrigger asChild>
                         <button onClick={() => { setSelectedCoach(coach); setStatus(coach.status); }}>
@@ -363,7 +421,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                                 <option value="Active">Active</option>
                                 <option value="Inactive">Inactive</option>
                               </select>
-                              <div className="flex justify-center mt-4">
+                              <div className="flex mt-4">
                                 <Button onClick={handleStatusChange}
                                   className="bg-blue-500 text-white"> {loading ? "Saving..." : "Save"}</Button>
                               </div>
@@ -372,7 +430,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                         </DialogContent>
                       )}
                     </Dialog>
-                     <button
+                    <button
                       className="underline text-sm"
                       onClick={() => {
                         setSuspendCoach(coach);
@@ -413,10 +471,48 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                     </Button>
                   </TableCell>
 
+                  {/* Evaluation Status */}
+                  {/* <TableCell className="px-2 py-3">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => toggleEvaluation(coach.id)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${coach.evaluation_status === 1
+                          ? "bg-green-500"
+                          : "bg-gray-300"
+                          }`}
+                      >
+                        <span
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ${coach.evaluation_status === 1
+                            ? "translate-x-5"
+                            : "translate-x-1"
+                            }`}
+                        />
+                      </button>
 
 
+                    </div>
+                  </TableCell>
 
-              
+                  <TableCell className="px-2 py-3">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => toggleVideoStatus(coach.id)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${coach.video_status === 1
+                          ? "bg-green-500"
+                          : "bg-gray-300"
+                          }`}
+                      >
+                        <span
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ${coach.video_status === 1
+                            ? "translate-x-5"
+                            : "translate-x-1"
+                            }`}
+                        />
+                      </button>
+
+
+                    </div>
+                  </TableCell> */}
 
                   <TableCell className="px-4 py-3 text-center">
                     <button
@@ -755,9 +851,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                                   setSending(false); // ✅ STOP LOADING
                                 }
                               }}
-                              className={`px-4 py-2 rounded-lg text-white
-    ${sending ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}
-  `}
+                              className={`px-4 py-2 rounded-lg text-white ${sending ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}
                             >
                               {sending ? "Sending..." : "Send"}
                             </button>
@@ -775,10 +869,15 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500">
                     <div className="text-gray-500 dark:text-gray-400">
-                      <div>{dayjs(coach.updated_at).format("DD.MM.YYYY hh:mm A")}</div>
+                      <div>
+                        {coach?.updated_at
+                          ? dayjs(coach.updated_at).format("DD.MM.YYYY hh:mm A")
+                          : "-"}
+                          
+                      </div>
                     </div>
+                    
                   </TableCell>
-
 
                 </TableRow>
               ))}
@@ -786,7 +885,7 @@ const CoachTable: React.FC<CoachTableProps> = ({ data = [], currentPage,
           </Table>
         </div>
 
-      
+
         <Dialog open={isCoachPasswordModalOpen} onOpenChange={setCoachPasswordModalOpen}>
           <DialogContent className="max-w-sm bg-white p-6 rounded-lg shadow-lg">
             <DialogHeader>

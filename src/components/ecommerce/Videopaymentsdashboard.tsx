@@ -58,19 +58,19 @@ const fmt = (n: number, currency = "USD") =>
     minimumFractionDigits: 2,
   }).format(n);
 
-const fmtDate = (d: string | null) =>
-  d
-    ? new Date(d).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    })
-    : "—";
+// const fmtDate = (d: string | null) =>
+//   d
+//     ? new Date(d).toLocaleDateString("en-GB", {
+//       day: "2-digit",
+//       month: "short",
+//       year: "numeric",
+//     })
+//     : "—";
 
 
-const PAGE_SIZE = 10;
-const STATUS_FILTERS = ["All", "authorized", "cancelled", "captured"] as const;
-type StatusFilter = (typeof STATUS_FILTERS)[number];
+// const PAGE_SIZE = 10;
+// const STATUS_FILTERS = ["All", "authorized", "cancelled", "captured"] as const;
+// type StatusFilter = (typeof STATUS_FILTERS)[number];
 
 // ─── Standard Stat Card ───────────────────────────────────────────────────────
 
@@ -165,78 +165,78 @@ function CancellationCard({
 
 // ─── Badge ────────────────────────────────────────────────────────────────────
 
-function Badge({ status }: { status: string }) {
-  const map: Record<string, { dot: string; text: string; bg: string; border: string }> = {
-    authorized: { dot: "bg-violet-500", text: "text-violet-700", bg: "bg-violet-50", border: "border-violet-200" },
-    captured: { dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200" },
-    cancelled: { dot: "bg-red-500", text: "text-red-700", bg: "bg-red-50", border: "border-red-200" },
-    pending: { dot: "bg-amber-500", text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200" },
-    refunded: { dot: "bg-sky-500", text: "text-sky-700", bg: "bg-sky-50", border: "border-sky-200" },
-    failed: { dot: "bg-red-500", text: "text-red-700", bg: "bg-red-50", border: "border-red-200" },
-  };
-  const key = status?.toLowerCase() ?? "";
-  const style = map[key] ?? {
-    dot: "bg-gray-400", text: "text-gray-500", bg: "bg-gray-50", border: "border-gray-200",
-  };
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11px] font-semibold border ${style.bg} ${style.text} ${style.border}`}>
-      <span className={`w-[5px] h-[5px] rounded-full flex-shrink-0 ${style.dot}`} />
-      {status}
-    </span>
-  );
-}
+// function Badge({ status }: { status: string }) {
+//   const map: Record<string, { dot: string; text: string; bg: string; border: string }> = {
+//     authorized: { dot: "bg-violet-500", text: "text-violet-700", bg: "bg-violet-50", border: "border-violet-200" },
+//     captured: { dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200" },
+//     cancelled: { dot: "bg-red-500", text: "text-red-700", bg: "bg-red-50", border: "border-red-200" },
+//     pending: { dot: "bg-amber-500", text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200" },
+//     refunded: { dot: "bg-sky-500", text: "text-sky-700", bg: "bg-sky-50", border: "border-sky-200" },
+//     failed: { dot: "bg-red-500", text: "text-red-700", bg: "bg-red-50", border: "border-red-200" },
+//   };
+//   const key = status?.toLowerCase() ?? "";
+//   const style = map[key] ?? {
+//     dot: "bg-gray-400", text: "text-gray-500", bg: "bg-gray-50", border: "border-gray-200",
+//   };
+//   return (
+//     <span className={`inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11px] font-semibold border ${style.bg} ${style.text} ${style.border}`}>
+//       <span className={`w-[5px] h-[5px] rounded-full flex-shrink-0 ${style.dot}`} />
+//       {status}
+//     </span>
+//   );
+// }
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
 
-function Pagination({ page, total, pageSize, onChange }: {
-  page: number; total: number; pageSize: number; onChange: (p: number) => void;
-}) {
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const pages: (number | "...")[] = [];
-  if (totalPages <= 7) {
-    for (let i = 1; i <= totalPages; i++) pages.push(i);
-  } else {
-    pages.push(1);
-    if (page > 3) pages.push("...");
-    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
-    if (page < totalPages - 2) pages.push("...");
-    pages.push(totalPages);
-  }
-  const btnBase = "h-[28px] min-w-[28px] px-1.5 rounded-lg text-[12px] font-semibold flex items-center justify-center transition-all duration-150";
-  return (
-    <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
-      <p className="text-[12px] text-gray-400">
-        {total === 0
-          ? "No records"
-          : `${Math.min((page - 1) * pageSize + 1, total)}–${Math.min(page * pageSize, total)} of ${total}`}
-      </p>
-      <div className="flex items-center gap-1">
-        <button onClick={() => page > 1 && onChange(page - 1)} disabled={page === 1}
-          className={`${btnBase} border border-gray-200 text-gray-400 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed`}>
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        {pages.map((p, i) =>
-          p === "..." ? (
-            <span key={`e${i}`} className="text-[12px] text-gray-400 px-1">…</span>
-          ) : (
-            <button key={p} onClick={() => onChange(p as number)}
-              className={`${btnBase} ${p === page ? "bg-blue-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100 border border-transparent"}`}>
-              {p}
-            </button>
-          )
-        )}
-        <button onClick={() => page < totalPages && onChange(page + 1)} disabled={page === totalPages}
-          className={`${btnBase} border border-gray-200 text-gray-400 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed`}>
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
-}
+// function Pagination({ page, total, pageSize, onChange }: {
+//   page: number; total: number; pageSize: number; onChange: (p: number) => void;
+// }) {
+//   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+//   const pages: (number | "...")[] = [];
+//   if (totalPages <= 7) {
+//     for (let i = 1; i <= totalPages; i++) pages.push(i);
+//   } else {
+//     pages.push(1);
+//     if (page > 3) pages.push("...");
+//     for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
+//     if (page < totalPages - 2) pages.push("...");
+//     pages.push(totalPages);
+//   }
+//   const btnBase = "h-[28px] min-w-[28px] px-1.5 rounded-lg text-[12px] font-semibold flex items-center justify-center transition-all duration-150";
+//   return (
+//     <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
+//       <p className="text-[12px] text-gray-400">
+//         {total === 0
+//           ? "No records"
+//           : `${Math.min((page - 1) * pageSize + 1, total)}–${Math.min(page * pageSize, total)} of ${total}`}
+//       </p>
+//       <div className="flex items-center gap-1">
+//         <button onClick={() => page > 1 && onChange(page - 1)} disabled={page === 1}
+//           className={`${btnBase} border border-gray-200 text-gray-400 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed`}>
+//           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+//             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+//           </svg>
+//         </button>
+//         {pages.map((p, i) =>
+//           p === "..." ? (
+//             <span key={`e${i}`} className="text-[12px] text-gray-400 px-1">…</span>
+//           ) : (
+//             <button key={p} onClick={() => onChange(p as number)}
+//               className={`${btnBase} ${p === page ? "bg-blue-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100 border border-transparent"}`}>
+//               {p}
+//             </button>
+//           )
+//         )}
+//         <button onClick={() => page < totalPages && onChange(page + 1)} disabled={page === totalPages}
+//           className={`${btnBase} border border-gray-200 text-gray-400 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed`}>
+//           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+//             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+//           </svg>
+//         </button>
+//       </div>
+//     </div>
+//   );
+// }
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
@@ -246,8 +246,8 @@ export default function VideoPaymentsDashboard() {
   const [payments, setPayments] = useState<VideoPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [payPage, setPayPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
+  // const [payPage, setPayPage] = useState(1);
+  // const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
 
   useEffect(() => {
     (async () => {
@@ -255,6 +255,7 @@ export default function VideoPaymentsDashboard() {
         const res = await fetch("/api/video-payments");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data: ApiResponse = await res.json();
+        console.log("API Response:", data);
         if (!data.success) throw new Error("API returned success: false");
         setSummary(data.summary);
         setBookingSummary(data.bookings);
@@ -272,20 +273,20 @@ export default function VideoPaymentsDashboard() {
     .filter((p) => p.status?.toLowerCase() === "cancelled")
     .reduce((sum, p) => sum + parseFloat(p.original_amount ?? "0"), 0);
 
-  const filteredPayments =
-    statusFilter === "All"
-      ? payments
-      : payments.filter((p) => p.status?.toLowerCase() === statusFilter.toLowerCase());
+  // const filteredPayments =
+  //   statusFilter === "All"
+  //     ? payments
+  //     : payments.filter((p) => p.status?.toLowerCase() === statusFilter.toLowerCase());
 
-  const handleFilterChange = (f: StatusFilter) => {
-    setStatusFilter(f);
-    setPayPage(1);
-  };
+  // const handleFilterChange = (f: StatusFilter) => {
+  //   setStatusFilter(f);
+  //   setPayPage(1);
+  // };
 
-  const pagedPayments = filteredPayments.slice(
-    (payPage - 1) * PAGE_SIZE,
-    payPage * PAGE_SIZE
-  );
+  // const pagedPayments = filteredPayments.slice(
+  //   (payPage - 1) * PAGE_SIZE,
+  //   payPage * PAGE_SIZE
+  // );
 
   // ── Loading ──
   if (loading)
@@ -306,7 +307,7 @@ export default function VideoPaymentsDashboard() {
     );
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 py-10 bg-gray-50 min-h-screen">
+    <div className="max-w-[1400px] mx-auto px-6 py-10 bg-gray-50 ">
 
       {/* ── Header ── */}
       <header className="flex items-center gap-3.5 mb-8">
@@ -325,7 +326,7 @@ export default function VideoPaymentsDashboard() {
 
           {/* Video Payments */}
           <StatCard
-            label="Video Payments"
+            label="Video Earnings"
             value={fmt(summary.totalVideoPayment)}
             sub={`${summary.totalRecords} records`}
             iconBg="bg-blue-50" iconColor="text-blue-500"
@@ -339,7 +340,7 @@ export default function VideoPaymentsDashboard() {
 
           {/* Evaluation Payouts */}
           <StatCard
-            label="Evaluation Payouts"
+            label="Evaluation Earnings"
             value={fmt(summary.totalEvaluationPayment)}
             sub="Net to coaches"
             iconBg="bg-emerald-50" iconColor="text-emerald-500"
@@ -360,7 +361,7 @@ export default function VideoPaymentsDashboard() {
 
           {/* Gross Total */}
           <StatCard
-            label="Gross Total"
+            label="Gross Earnings"
             value={fmt(summary.totalCombined)}
             sub="Video + Evaluation"
             iconBg="bg-amber-50" iconColor="text-amber-500"
@@ -375,9 +376,8 @@ export default function VideoPaymentsDashboard() {
       )}
 
       {/* ── Payment Records Table ── */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
 
-        {/* Table header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-wrap gap-3">
           <div className="flex items-center gap-2.5">
             <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -390,7 +390,6 @@ export default function VideoPaymentsDashboard() {
             </span>
           </div>
 
-          {/* Filter pills */}
           <div className="flex items-center gap-1.5 flex-wrap">
             {STATUS_FILTERS.map((f) => {
               const count =
@@ -420,7 +419,6 @@ export default function VideoPaymentsDashboard() {
           </div>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-[13px]">
             <thead>
@@ -451,68 +449,56 @@ export default function VideoPaymentsDashboard() {
                   return (
                     <tr key={p.id} className="hover:bg-gray-50/60 transition-colors">
 
-                      {/* Sr. No */}
                       <td className="px-4 py-3 border-b border-gray-100 align-middle">
                         <span className="font-mono text-[12px] text-gray-400 font-medium">{srNo}</span>
                       </td>
 
-                      {/* Player */}
                       <td className="px-4 py-3 border-b border-gray-100 align-middle">
                         <div className="flex items-center gap-2">
-                         {/*  <Avatar name={p.player_name} variant="blue" /> */}
                           <span className="font-medium text-gray-800 text-[13px]">{p.player_name ?? "—"}</span>
                         </div>
                       </td>
 
-                      {/* Coach */}
                       <td className="px-4 py-3 border-b border-gray-100 align-middle">
                         <div className="flex items-center gap-2">
-                          {/* <Avatar name={p.coach_name} variant="green" /> */}
                           <span className="font-medium text-gray-800 text-[13px]">{p.coach_name ?? "—"}</span>
                         </div>
                       </td>
 
-                      {/* Video Pmt */}
                       <td className="px-4 py-3 border-b border-gray-100 align-middle">
                         <span className="font-mono text-[12px] font-semibold text-blue-600">
                           {fmt(parseFloat(p.original_amount ?? "0"), p.currency)}
                         </span>
                       </td>
 
-                      {/* Eval Pmt */}
                       <td className="px-4 py-3 border-b border-gray-100 align-middle">
                         <span className="font-mono text-[12px] font-semibold text-emerald-600">
                           {fmt(parseFloat(p.amount ?? "0"), p.currency)}
                         </span>
                       </td>
 
-                      {/* Company Amt */}
                       <td className="px-4 py-3 border-b border-gray-100 align-middle">
                         <span className="font-mono text-[12px] text-gray-500">
                           {fmt(parseFloat(p.company_amount ?? "0"), p.currency)}
                         </span>
                       </td>
 
-                      {/* Commission */}
                       <td className="px-4 py-3 border-b border-gray-100 align-middle">
                         <span className="font-mono text-[12px] text-gray-400">
                           {parseFloat(p.commission_rate ?? "0").toFixed(2)}%
                         </span>
                       </td>
 
-                      {/* Status */}
                       <td className="px-4 py-3 border-b border-gray-100 align-middle">
                         <Badge status={p.status} />
                       </td>
 
-                      {/* Currency */}
                       <td className="px-4 py-3 border-b border-gray-100 align-middle">
                         <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-gray-400 bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5">
                           {p.currency}
                         </span>
                       </td>
 
-                      {/* Created */}
                       <td className="px-4 py-3 border-b border-gray-100 align-middle">
                         <span className="font-mono text-[11.5px] text-gray-400">
                           {fmtDate(p.created_at)}
@@ -527,14 +513,13 @@ export default function VideoPaymentsDashboard() {
           </table>
         </div>
 
-        {/* Pagination */}
         <Pagination
           page={payPage}
           total={filteredPayments.length}
           pageSize={PAGE_SIZE}
           onChange={setPayPage}
         />
-      </div>
+      </div> */}
 
     </div>
   );

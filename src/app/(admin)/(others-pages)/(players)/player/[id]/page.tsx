@@ -46,7 +46,10 @@ interface VideoPaymentRecord {
     commission_rate: string;
     player_name: string | null;
     coach_name: string | null;
+    evaluationId: number | null;
+    review_title: string ;
 }
+
 interface Player {
     sportName: string;
     overallAverage: number;
@@ -88,6 +91,8 @@ interface Player {
     countrycode: string;
     earnings: number;
     diamond: number;
+    evaluation_status?: number;
+    video_status?: number;
 }
 interface Coach {
     sportName: string;
@@ -245,7 +250,67 @@ export default function PlayerDetailPage() {
     // const [retryDialog, setRetryDialog] = useState<boolean>(false);
     const [remark, setRemarks] = useState<string>('');
     const [internalRemark, setInternalRemark] = useState<string>('');
+    const togglePlayerEvaluation = async (playerId: number) => {
+        const newStatus = data?.player?.evaluation_status === 1 ? 0 : 1;
 
+        // Optimistically update UI
+        setData((prev) =>
+            prev ? { ...prev, player: { ...prev.player, evaluation_status: newStatus } } : prev
+        );
+
+        try {
+            const res = await fetch(`/api/player/evaluation-status`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ playerId, status: newStatus }),
+            });
+
+            if (!res.ok) {
+                // Revert on failure
+                setData((prev) =>
+                    prev ? { ...prev, player: { ...prev.player, evaluation_status: newStatus === 1 ? 0 : 1 } } : prev
+                );
+                Swal.fire({ icon: "error", title: "Error", text: "Failed to update evaluation status." });
+            }
+        } catch {
+            // Revert on error
+            setData((prev) =>
+                prev ? { ...prev, player: { ...prev.player, evaluation_status: newStatus === 1 ? 0 : 1 } } : prev
+            );
+            Swal.fire({ icon: "error", title: "Error", text: "Something went wrong." });
+        }
+    };
+
+    const togglePlayerVideoStatus = async (playerId: number) => {
+        const newStatus = data?.player?.video_status === 1 ? 0 : 1;
+
+        // Optimistically update UI
+        setData((prev) =>
+            prev ? { ...prev, player: { ...prev.player, video_status: newStatus } } : prev
+        );
+
+        try {
+            const res = await fetch(`/api/player/video-status`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ playerId, status: newStatus }),
+            });
+
+            if (!res.ok) {
+                // Revert on failure
+                setData((prev) =>
+                    prev ? { ...prev, player: { ...prev.player, video_status: newStatus === 1 ? 0 : 1 } } : prev
+                );
+                Swal.fire({ icon: "error", title: "Error", text: "Failed to update video status." });
+            }
+        } catch {
+            // Revert on error
+            setData((prev) =>
+                prev ? { ...prev, player: { ...prev.player, video_status: newStatus === 1 ? 0 : 1 } } : prev
+            );
+            Swal.fire({ icon: "error", title: "Error", text: "Something went wrong." });
+        }
+    };
     useEffect(() => {
         if (selectedPlayerid) {
             (async () => {
@@ -739,6 +804,45 @@ export default function PlayerDetailPage() {
                             {player.status}
                         </span>
                     </div>
+                    {/* Evaluation Status Toggle */}
+                    <div className="flex items-center gap-2">
+                        <strong className="text-gray-700">Evaluation:</strong>
+
+                        <button
+                            onClick={() => togglePlayerEvaluation(player.id)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${player.evaluation_status === 1 ? "bg-green-500" : "bg-gray-300"
+                                }`}
+                        >
+                            <span
+                                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ${player.evaluation_status === 1 ? "translate-x-5" : "translate-x-1"
+                                    }`}
+                            />
+                        </button>
+
+                        {player.evaluation_status === 1 && (
+                            <span className="text-sm text-gray-600">Enabled</span>
+                        )}
+                    </div>
+
+                    {/* Video Status Toggle */}
+                    <div className="flex items-center gap-2">
+                        <strong className="text-gray-700">Video:</strong>
+
+                        <button
+                            onClick={() => togglePlayerVideoStatus(player.id)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${player.video_status === 1 ? "bg-green-500" : "bg-gray-300"
+                                }`}
+                        >
+                            <span
+                                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ${player.video_status === 1 ? "translate-x-5" : "translate-x-1"
+                                    }`}
+                            />
+                        </button>
+
+                        {player.video_status === 1 && (
+                            <span className="text-sm text-gray-600">Enabled</span>
+                        )}
+                    </div>
                     {data?.latestLoginIp && (
                         <div className="mb-2">
                             <strong className="text-gray-700">Latest Login IP:</strong>{" "}
@@ -1045,7 +1149,7 @@ export default function PlayerDetailPage() {
             {/* ── Video Payment Records ── */}
             <section className="p-6 max-w-7xl mx-auto">
                 <h2 className="text-2xl font-semibold mb-4">
-                    Video  Records
+                    Video  Session
                 </h2>
 
                 {videoPaymentsLoading ? (
@@ -1057,7 +1161,7 @@ export default function PlayerDetailPage() {
                         No payment records found.
                     </div>
                 ) : (
-                    <VideoPayments payments={videoPaymentRecords}  viewAs="player"/>
+                    <VideoPayments payments={videoPaymentRecords} viewAs="player" />
                 )}
             </section>
 

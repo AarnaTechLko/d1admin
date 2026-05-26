@@ -6,7 +6,7 @@ import {
   coachaccount,
   countries,
   playerEvaluation,
-  
+
 } from "@/lib/schema";
 import {
   eq,
@@ -31,10 +31,10 @@ export async function GET(req: NextRequest) {
   const timeRange = url.searchParams.get("timeRange") || "";
   const sport = parseInt(url.searchParams.get("sport") || "0", 0);
   /* const crowned = parseInt(url.searchParams.get("crowned") || "1", 0); */
-   const crownedParam = url.searchParams.get("crowned");
-// console.log("crowned data:",crowned);
+  const crownedParam = url.searchParams.get("crowned");
+  // console.log("crowned data:",crowned);
   // 🕒 time filter
-  const now = new Date(); 
+  const now = new Date();
   let timeFilterCondition;
   switch (timeRange) {
     case "24h":
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
     const baseCondition = and(
       isNotNull(coaches.firstName),
       ne(coaches.firstName, ""),
-       eq(coaches.status, 'Active'),
+      eq(coaches.status, 'Active'),
       eq(coaches.suspend, 1),
       eq(coaches.is_deleted, 1),
       eq(coaches.approved_or_denied, 1) // ✅ NEW condition
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
     /* const crownedCondition = crowned !== 0 ? eq(coaches.verified, crowned) : undefined;
  */
 
-     let crownedCondition;
+    let crownedCondition;
     if (crownedParam === "1") {
       crownedCondition = eq(coaches.verified, 1);
     } else if (crownedParam === "0") {
@@ -91,25 +91,25 @@ export async function GET(req: NextRequest) {
     // 🔍 search filters
     const searchCondition = search
       ? or(
-          ilike(coaches.firstName, `%${search}%`),
-          ilike(coaches.lastName, `%${search}%`),
-          ilike(countries.name, `%${search}%`),
-          ilike(coaches.gender, `%${search}%`),
-          ilike(coaches.state, `%${search}%`),
-          ilike(coaches.city, `%${search}%`),
-          ilike(coaches.slug, `%${search}%`),
-          ilike(coaches.status, `%${search}%`)
-        )
+        ilike(coaches.firstName, `%${search}%`),
+        ilike(coaches.lastName, `%${search}%`),
+        ilike(countries.name, `%${search}%`),
+        ilike(coaches.gender, `%${search}%`),
+        ilike(coaches.state, `%${search}%`),
+        ilike(coaches.city, `%${search}%`),
+        ilike(coaches.slug, `%${search}%`),
+        ilike(coaches.status, `%${search}%`)
+      )
       : undefined;
 
     // 📌 final where clause
-   const whereClause = and(
-  baseCondition,
-  ...(searchCondition ? [searchCondition] : []),
-  ...(timeFilterCondition ? [timeFilterCondition] : []),
-  ...(sportCondition ? [sportCondition] : []),
-  ...(crownedCondition ? [crownedCondition] : [])
-);
+    const whereClause = and(
+      baseCondition,
+      ...(searchCondition ? [searchCondition] : []),
+      ...(timeFilterCondition ? [timeFilterCondition] : []),
+      ...(sportCondition ? [sportCondition] : []),
+      ...(crownedCondition ? [crownedCondition] : [])
+    );
     // 📊 main query with aggregations
     const coachesData = await db
       .select({
@@ -135,6 +135,8 @@ export async function GET(req: NextRequest) {
         suspend_days: coaches.suspend_days,
         approved_or_denied: coaches.approved_or_denied,
         is_deleted: coaches.is_deleted,
+        evaluation_status: sql<number>`coaches.evaluation_status`,
+        video_status: sql<number>`coaches.video_status`,
         consumeLicenseCount: sql<number>`COUNT(CASE WHEN ${licenses.status} = 'Consumed' THEN 1 END)`,
         assignedLicenseCount: sql<number>`COUNT(CASE WHEN ${licenses.status} = 'Assigned' THEN 1 END)`,
         earnings: sql<number>`SUM(CASE WHEN ${coachaccount.coach_id} = ${coaches.id} THEN ${coachaccount.amount} ELSE 0 END)`,
@@ -173,7 +175,9 @@ export async function GET(req: NextRequest) {
         coaches.createdAt,
         coaches.updated_at,
         coaches.percentage,
-        coaches.approved_or_denied
+        coaches.approved_or_denied,
+        sql`coaches.evaluation_status`,
+        sql`coaches.video_status`
       )
       .orderBy(desc(coaches.createdAt))
       .limit(limit)
@@ -202,7 +206,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     return NextResponse.json(
-      
+
       {
         message: "Failed to fetch coaches",
         error: error instanceof Error ? error.message : String(error),

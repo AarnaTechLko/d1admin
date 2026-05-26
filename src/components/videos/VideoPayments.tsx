@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import React, { useState } from "react";
+import { Dialog, DialogContent, DialogTitle, DialogHeader } from "../ui/dialog";
 
 interface VideoPayment {
+  review_title: string;
   id: number;
   player_id: number;
   coach_id: number;
@@ -17,12 +20,13 @@ interface VideoPayment {
   intent_id: string;
   charge_id: string;
   is_deleted: boolean;
+  evaluationId: number | null;
   company_amount: string;
   commission_rate: string;
   player_name: string | null;
   coach_name: string | null;
-  start_time?: string | null;   // NEW
-  end_time?: string | null;     // NEW
+  start_time?: string | null;
+  end_time?: string | null;
 }
 
 const fmt = (n: number, currency = "USD") =>
@@ -61,7 +65,7 @@ function Badge({
   label,
 }: {
   label: string;
-  variant:
+  variant?:
     | "completed"
     | "scheduled"
     | "cancelled"
@@ -122,6 +126,7 @@ function Pagination({
     if (page < totalPages - 2) pages.push("...");
     pages.push(totalPages);
   }
+
   return (
     <div className="flex items-center justify-between px-5 py-3.5 border-t border-gray-100">
       <p className="text-xs text-gray-400">
@@ -141,11 +146,7 @@ function Pagination({
             stroke="currentColor"
             strokeWidth={2}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15 19l-7-7 7-7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
         {pages.map((p, i) =>
@@ -179,11 +180,7 @@ function Pagination({
             stroke="currentColor"
             strokeWidth={2}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 5l7 7-7 7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </button>
       </div>
@@ -193,7 +190,7 @@ function Pagination({
 
 interface VideoPaymentsProps {
   payments: VideoPayment[];
-  viewAs?: "player" | "coach"; // NEW — pass "player" from PlayerDetailPage, "coach" from CoachDetailPage
+  viewAs?: "player" | "coach";
 }
 
 export default function VideoPayments({
@@ -202,6 +199,11 @@ export default function VideoPayments({
 }: VideoPaymentsProps) {
   const [payPage, setPayPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
+
+  // Dialog state for cancellation reason
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
   const filteredPayments =
     statusFilter === "All"
@@ -215,12 +217,28 @@ export default function VideoPayments({
     setPayPage(1);
   };
 
+  const handleViewReason = async (bookingId: number) => {
+    setOpen(true);
+    setLoading(true);
+    setReason("");
+    try {
+      // Replace with your actual API endpoint
+      const res = await fetch(`/api/bookings/${bookingId}/cancellation-reason`);
+      const data = await res.json();
+      console.log("Cancellation reason response:", data);
+      setReason(data?.reason ?? "No reason provided.");
+    } catch {
+      setReason("Failed to load cancellation reason.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const pagedPayments = filteredPayments.slice(
     (payPage - 1) * PAGE_SIZE,
     payPage * PAGE_SIZE
   );
 
-  
   const showStartEnd = viewAs === "player" || viewAs === "coach";
 
   const headers = [
@@ -230,167 +248,209 @@ export default function VideoPayments({
     "Video Pmt",
     "Eval Pmt",
     "Company Amt",
-    "Commission",
     "Status",
     "Currency",
     "Created",
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      {/* Header with filter pills */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <div className="flex items-center gap-3">
-          <p className="text-[13px] font-bold text-gray-900">Payment Records</p>
-          <span className="font-mono text-[11px] bg-gray-50 border border-gray-200 rounded-full px-2.5 py-0.5 text-gray-400">
-            {filteredPayments.length} rows
-          </span>
+    <>
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        {/* Header with filter pills */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <p className="text-[13px] font-bold text-gray-900">Video Sessions</p>
+            <span className="font-mono text-[11px] bg-gray-50 border border-gray-200 rounded-full px-2.5 py-0.5 text-gray-400">
+              {filteredPayments.length} rows
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            {STATUS_FILTERS.map((f) => {
+              const count =
+                f === "All"
+                  ? payments.length
+                  : payments.filter(
+                      (p) => p.status?.toLowerCase() === f.toLowerCase()
+                    ).length;
+              const isActive = statusFilter === f;
+              const colorMap: Record<string, string> = {
+                All: isActive
+                  ? "bg-gray-800 text-white"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200",
+                authorized: isActive
+                  ? "bg-violet-500 text-white"
+                  : "bg-violet-50 text-violet-600 hover:bg-violet-100",
+                cancelled: isActive
+                  ? "bg-red-500 text-white"
+                  : "bg-red-50 text-red-600 hover:bg-red-100",
+                captured: isActive
+                  ? "bg-emerald-500 text-white"
+                  : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100",
+              };
+              return (
+                <button
+                  key={f}
+                  onClick={() => handleFilterChange(f)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all duration-150 ${colorMap[f]}`}
+                >
+                  <span className="capitalize">{f}</span>
+                  <span
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                      isActive ? "bg-white/20" : "bg-black/5"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          {STATUS_FILTERS.map((f) => {
-            const count =
-              f === "All"
-                ? payments.length
-                : payments.filter(
-                    (p) => p.status?.toLowerCase() === f.toLowerCase()
-                  ).length;
-            const isActive = statusFilter === f;
-            const colorMap: Record<string, string> = {
-              All: isActive
-                ? "bg-gray-800 text-white"
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200",
-              authorized: isActive
-                ? "bg-violet-500 text-white"
-                : "bg-violet-50 text-violet-600 hover:bg-violet-100",
-              cancelled: isActive
-                ? "bg-red-500 text-white"
-                : "bg-red-50 text-red-600 hover:bg-red-100",
-              captured: isActive
-                ? "bg-emerald-500 text-white"
-                : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100",
-            };
-            return (
-              <button
-                key={f}
-                onClick={() => handleFilterChange(f)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all duration-150 ${colorMap[f]}`}
-              >
-                <span className="capitalize">{f}</span>
-                <span
-                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                    isActive ? "bg-white/20" : "bg-black/5"
-                  }`}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-[13px]">
-          <thead>
-            <tr>
-              {headers.map((h) => (
-                <th
-                  key={h}
-                  className="px-[18px] py-2.5 text-left text-[10.5px] font-bold uppercase tracking-[0.07em] text-gray-400 bg-gray-50/80 border-b border-gray-100 whitespace-nowrap"
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {pagedPayments.length === 0 ? (
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-[13px]">
+            <thead>
               <tr>
-                <td
-                  colSpan={headers.length}
-                  className="px-12 py-12 text-center text-sm text-gray-400"
-                >
-                  No records found
-                </td>
+                {headers.map((h) => (
+                  <th
+                    key={h}
+                    className="px-[18px] py-2.5 text-left text-[10.5px] font-bold uppercase tracking-[0.07em] text-gray-400 bg-gray-50/80 border-b border-gray-100 whitespace-nowrap"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
-            ) : (
-              pagedPayments.map((p) => (
-                <tr
-                  key={p.id}
-                  className="hover:bg-gray-50/70 transition-colors"
-                >
-                  {/* Player name — hidden on player profile */}
-                  {viewAs !== "player" && (
-                    <td className="px-[18px] py-3.5 border-b border-gray-100 text-gray-700 align-middle">
-                      {p.player_name ?? "—"}
-                    </td>
-                  )}
-
-                  {/* Coach name — hidden on coach profile */}
-                  {viewAs !== "coach" && (
-                    <td className="px-[18px] py-3.5 border-b border-gray-100 text-gray-700 align-middle">
-                      {p.coach_name ?? "—"}
-                    </td>
-                  )}
-
-                  {/* Start Time — shown instead of the hidden name column */}
-                  {showStartEnd && (
-                    <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono text-[11px] text-gray-500 align-middle whitespace-nowrap">
-                      {fmtDateTime(p.start_time)}
-                    </td>
-                  )}
-
-                  {/* End Time */}
-                  {showStartEnd && (
-                    <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono text-[11px] text-gray-500 align-middle whitespace-nowrap">
-                      {fmtDateTime(p.end_time)}
-                    </td>
-                  )}
-
-                  <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono font-semibold text-blue-500 align-middle">
-                    {fmt(parseFloat(p.original_amount ?? "0"), p.currency)}
-                  </td>
-                  <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono font-semibold text-emerald-500 align-middle">
-                    {fmt(parseFloat(p.amount ?? "0"), p.currency)}
-                  </td>
-                  <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono text-gray-500 align-middle">
-                    {fmt(parseFloat(p.company_amount ?? "0"), p.currency)}
-                  </td>
-                  <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono text-gray-400 align-middle">
-                    {parseFloat(p.commission_rate ?? "0").toFixed(2)}%
-                  </td>
-                  <td className="px-[18px] py-3.5 border-b border-gray-100 align-middle">
-                    <Badge
-                      label={p.status}
-                      variant={
-                        p.status?.toLowerCase() as
-                          | "authorized"
-                          | "cancelled"
-                          | "captured"
-                      }
-                    />
-                  </td>
-                  <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono text-[11px] uppercase text-gray-400 align-middle">
-                    {p.currency}
-                  </td>
-                  <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono text-[11px] text-gray-400 align-middle">
-                    {fmtDate(p.created_at)}
+            </thead>
+            <tbody>
+              {pagedPayments.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={headers.length}
+                    className="px-12 py-12 text-center text-sm text-gray-400"
+                  >
+                    No records found
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                pagedPayments.map((p) => (
+                  <tr
+                    key={p.id}
+                    className="hover:bg-gray-50/70 transition-colors"
+                  >
+                    {/* Player name — hidden on player profile */}
+                    {viewAs !== "player" && (
+                      <td className="px-[18px] py-3.5 border-b border-gray-100 text-gray-700 align-middle">
+                        {p.player_name ?? "—"}
+                      </td>
+                    )}
+
+                    {/* Coach name — hidden on coach profile */}
+                    {viewAs !== "coach" && (
+                      <td className="px-[18px] py-3.5 border-b border-gray-100 text-gray-700 align-middle">
+                        {p.coach_name ?? "—"}
+                      </td>
+                    )}
+
+                    {/* Start Time */}
+                    {showStartEnd && (
+                      <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono text-[11px] text-gray-500 align-middle whitespace-nowrap">
+                        {fmtDateTime(p.start_time)}
+                      </td>
+                    )}
+
+                    {/* End Time */}
+                    {showStartEnd && (
+                      <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono text-[11px] text-gray-500 align-middle whitespace-nowrap">
+                        {fmtDateTime(p.end_time)}
+                      </td>
+                    )}
+
+                    {/* Video Payment */}
+                    <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono font-semibold text-blue-500 align-middle">
+                      {fmt(parseFloat(p.original_amount ?? "0"), p.currency)}
+                    </td>
+
+                    {/* Eval Payment */}
+                    <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono font-semibold text-emerald-500 align-middle">
+                      {p.review_title ? (
+                        <Link
+                          href={`/evaluationdetails?evaluationId=${p.evaluationId}`}
+                          className="hover:underline cursor-pointer"
+                        >
+                          {p.review_title.length > 20
+                            ? p.review_title.slice(0, 20) + "..."
+                            : p.review_title}
+                        </Link>
+                      ) : (
+                        <span>—</span>
+                      )}
+                    </td>
+
+                    {/* Company Amount */}
+                    <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono text-gray-500 align-middle">
+                      {fmt(parseFloat(p.company_amount ?? "0"), p.currency)}
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-[18px] py-3.5 border-b border-gray-100 align-middle">
+                      <div className="flex items-center gap-3">
+                        <Badge
+                          label={p.status ?? "-"}
+                          variant={
+                            p.status?.toLowerCase() as
+                              | "authorized"
+                              | "cancelled"
+                              | "captured"
+                          }
+                        />
+                        {p.status?.toLowerCase().trim() === "cancelled" && (
+                          <button
+                            onClick={() => handleViewReason(p.booking_id)}
+                            className="px-2 py-1 text-xs font-medium rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition"
+                          >
+                            Reason
+                          </button>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Currency */}
+                    <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono text-[11px] uppercase text-gray-400 align-middle">
+                      {p.currency}
+                    </td>
+
+                    {/* Created */}
+                    <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono text-[11px] text-gray-400 align-middle">
+                      {fmtDate(p.created_at)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <Pagination
+          page={payPage}
+          total={filteredPayments.length}
+          pageSize={PAGE_SIZE}
+          onChange={setPayPage}
+        />
       </div>
 
-      <Pagination
-        page={payPage}
-        total={filteredPayments.length}
-        pageSize={PAGE_SIZE}
-        onChange={setPayPage}
-      />
-    </div>
+      {/* Cancellation Reason Dialog — outside the table */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancellation Reason</DialogTitle>
+          </DialogHeader>
+          <div className="mt-3 text-sm text-gray-700 whitespace-pre-wrap">
+            {loading ? "Loading..." : reason}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

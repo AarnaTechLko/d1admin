@@ -122,6 +122,8 @@ interface Coach {
   countryName: string;
   countrycode: string;
   reviews: Review[];
+    evaluation_status?: number;
+  video_status?: number;
 }
 type RecentMessage = {
   sender_id: string;
@@ -148,8 +150,10 @@ interface VideoPaymentRecord {
   description: string;
   intent_id: string;
   charge_id: string;
+  review_title: string;
   is_deleted: boolean;
   company_amount: string;
+  evaluationId: number | null;
   commission_rate: string;
   player_name: string | null;
   coach_name: string | null;
@@ -159,7 +163,6 @@ export default function CoachDetailsPage() {
   useRoleGuard();
 
   const [loadingDeclineId, setLoadingDeclineId] = useState<number | null>(null);
-
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [selectedCoachid, setSelectedCoachid] = useState<number | null>(null);
   const [refundType, setRefundType] = useState<"full" | "partial" | null>(null);
@@ -230,6 +233,68 @@ export default function CoachDetailsPage() {
 
   const MySwal = withReactContent(Swal);
   const isVerified = coach?.verified === 1;
+const toggleEvaluation = async (coachId: number) => {
+  const newStatus = coach?.evaluation_status === 1 ? 0 : 1;
+
+  // Optimistically update UI
+  setCoach((prev) =>
+    prev ? { ...prev, evaluation_status: newStatus } : prev
+  );
+
+  try {
+    const res = await fetch(`/api/coach/evaluation-status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coachId, status: newStatus }),
+    });
+
+    if (!res.ok) {
+      // Revert on failure
+      setCoach((prev) =>
+        prev ? { ...prev, evaluation_status: newStatus === 1 ? 0 : 1 } : prev
+      );
+      Swal.fire({ icon: "error", title: "Error", text: "Failed to update evaluation status." });
+    }
+  } catch {
+    // Revert on error
+    setCoach((prev) =>
+      prev ? { ...prev, evaluation_status: newStatus === 1 ? 0 : 1 } : prev
+    );
+    Swal.fire({ icon: "error", title: "Error", text: "Something went wrong." });
+  }
+};
+
+const toggleVideoStatus = async (coachId: number) => {
+  const newStatus = coach?.video_status === 1 ? 0 : 1;
+
+  // Optimistically update UI
+  setCoach((prev) =>
+    prev ? { ...prev, video_status: newStatus } : prev
+  );
+
+  try {
+    const res = await fetch(`/api/coach/video-status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coachId, status: newStatus }),
+    });
+
+    if (!res.ok) {
+      // Revert on failure
+      setCoach((prev) =>
+        prev ? { ...prev, video_status: newStatus === 1 ? 0 : 1 } : prev
+      );
+      Swal.fire({ icon: "error", title: "Error", text: "Failed to update video status." });
+    }
+  } catch{
+    // Revert on error
+    setCoach((prev) =>
+      prev ? { ...prev, video_status: newStatus === 1 ? 0 : 1 } : prev
+    );
+    Swal.fire({ icon: "error", title: "Error", text: "Something went wrong." });
+  }
+};
+
 
   // Handle verify button click
   useEffect(() => {
@@ -1046,7 +1111,49 @@ export default function CoachDetailsPage() {
           )}
         </div>
         <div><strong className="text-gray-700 gap-4 text-sm">Qualifications:</strong> {coach.qualifications}</div>
+{/* Evaluation Status */}
+<div className="flex items-center gap-2">
+  <strong className="text-gray-700">Evaluation:</strong>
 
+  <button
+    onClick={() => toggleEvaluation(coach.id)}
+    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${
+      coach.evaluation_status === 1 ? "bg-green-500" : "bg-gray-300"
+    }`}
+  >
+    <span
+      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ${
+        coach.evaluation_status === 1 ? "translate-x-5" : "translate-x-1"
+      }`}
+    />
+  </button>
+
+  {coach.evaluation_status === 1 && (
+    <span className="text-sm text-gray-600">Enabled</span>
+  )}
+</div>
+
+{/* Video Status */}
+<div className="flex items-center gap-2">
+  <strong className="text-gray-700">Video:</strong>
+
+  <button
+    onClick={() => toggleVideoStatus(coach.id)}
+    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${
+      coach.video_status === 1 ? "bg-green-500" : "bg-gray-300"
+    }`}
+  >
+    <span
+      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ${
+        coach.video_status === 1 ? "translate-x-5" : "translate-x-1"
+      }`}
+    />
+  </button>
+
+  {coach.video_status === 1 && (
+    <span className="text-sm text-gray-600">Enabled</span>
+  )}
+</div>
       </div>
 
       <div>  <h2 className="text-lg font-semibold mt-5  bg-customBlue text-black p-4 rounded-lg">
@@ -1210,11 +1317,10 @@ export default function CoachDetailsPage() {
           </div>
         </div>
       </section >
-
       {/* ── Video Payment Records ── */}
       <section className="p-2 max-w-7xl mx-auto">
         <h2 className="text-2xl font-semibold mb-4">
-          Video  Records
+          Video  Session
         </h2>
 
         {videoPaymentsLoading ? (

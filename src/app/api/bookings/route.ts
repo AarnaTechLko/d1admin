@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { bookings } from "@/lib/schema";
 import { coaches, users, playerEvaluation } from "@/lib/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql ,desc} from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -23,7 +23,8 @@ export async function GET() {
       .leftJoin(coaches, eq(bookings.coach_id, coaches.id))
       .leftJoin(users, eq(bookings.player_id, users.id))
       .leftJoin(playerEvaluation, eq(bookings.evaluation_id, playerEvaluation.id))
-      .orderBy(bookings.id);
+      .orderBy(desc(bookings.id)); // latest first
+
 
     return NextResponse.json({ success: true, bookings: result });
   } catch (error) {
