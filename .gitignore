@@ -8,3 +8,5 @@ app/api/auth/[...nextauth]/route.ts.DS_Store.env
 .historyidea.zip
 .history/public.zip
 public.zip
+*.zip
+public.zip
