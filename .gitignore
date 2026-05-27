@@ -9,4 +9,4 @@ app/api/auth/[...nextauth]/route.ts.DS_Store.env
 .history/public.zip
 public.zip
 *.zip
-public.zip
+public.zippublic.zip
