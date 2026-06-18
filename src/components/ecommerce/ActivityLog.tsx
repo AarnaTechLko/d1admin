@@ -8,11 +8,35 @@ import OrganizationTable from "@/components/tables/OrganizationTable";
 import TicketTable from "@/components/tables/TicketTable";
 import EvaluationTable, { Evaluation } from "../tables/EvaluationTable";
 import PaymentTable from "../tables/PaymentTable";
+import VideoPayments from "@/components/videos/VideoPayments";
 import { Payment } from "../types/types";
 import { Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
 import Image from "next/image";
-
+interface VideoPayment {
+  review_title: string;
+  id: number;
+  player_id: number;
+  coach_id: number;
+  booking_id: number;
+  amount: string;
+  original_amount: string;
+  status: string;
+  currency: string;
+  payment_info: string;
+  created_at: string;
+  description: string;
+  intent_id: string;
+  charge_id: string;
+  is_deleted: boolean;
+  evaluationId: number | null;
+  company_amount: string;
+  commission_rate: string;
+  player_name: string | null;
+  coach_name: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+}
 const tabs = [
   "Player",
   "Coach",
@@ -20,6 +44,7 @@ const tabs = [
   "Team",
   "Ticket",
   "Payment",
+  "Video", // Added Video Session Tab
   "Evaluation",
 ] as const;
 
@@ -31,150 +56,97 @@ export default function TabbedDataView() {
   const [activeTab, setActiveTab] = useState<TabType>("Player");
   const [data, setData] = useState<GenericData[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [videoPayments, setVideoPayments] = useState<VideoPayment[]>([]); // New state for video payments
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [timeRange, setTimeRange] = useState<TimeRange>("24h");
 
-  // ----------------------------------------------------
-  // FETCH DATA FIXED VERSION
-  // ----------------------------------------------------
-  // const fetchData = async (tab: TabType, page: number, range: TimeRange) => {
-  //   setLoading(true);
-
-  //   try {
-  //     const endpointMap: Record<TabType, string> = {
-  //       Player: "player",
-  //       Coach: "coach",
-  //       Organization: "organization",
-  //       Team: "teams",
-  //       Ticket: "tickets",
-  //       Payment: "payments",
-  //       Evaluation: "evaluations",
-  //     };
-
-  //     const endpoint = endpointMap[tab];
-
-  //     const res = await fetch(
-  //       `/api/${endpoint}?page=${page}&limit=10&timeRange=${range}`
-  //     );
-
-  //     const json = await res.json();
-  //     console.log("Fetched:", json);
-
-  //     if (tab === "Payment") {
-  //       setPayments(json.data || []);
-  //     } else if (tab === "Evaluation") {
-  //       setEvaluations(json.data || []);
-  //     } else {
-  //       const payload =
-  //         json.data ||
-  //         json.coaches ||
-  //         json.enterprises ||
-  //         json.payments ||
-  //         json.tickets ||
-  //         json.teams ||
-  //         json.evaluations ||
-  //         json[tab.toLowerCase()] ||
-  //         [];
-
-  //       setData(payload);
-
-  //     }
-
-  //     // setTotalPages(json.totalPages || 1);
-  //     setTotalPages(json.pagination?.totalPages || 1);
-
-  //   } catch (err) {
-  //     console.error(`Failed to fetch ${tab} data:`, err);
-
-  //     if (tab === "Payment") setPayments([]);
-  //     else if (tab === "Evaluation") setEvaluations([]);
-  //     else setData([]);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const fetchData = async (tab: TabType, page: number, range: TimeRange) => {
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const endpointMap: Record<TabType, string> = {
-      Player: "player",
-      Coach: "coach",
-      Organization: "organization",
-      Team: "teams",
-      Ticket: "tickets",
-      Payment: "payments",
-      Evaluation: "evaluations",
-    };
+    try {
+      const endpointMap: Record<TabType, string> = {
+        Player: "player",
+        Coach: "coach",
+        Organization: "organization",
+        Team: "teams",
+        Ticket: "tickets",
+        Payment: "payments",
+        Video: "video-payments", // Map to your correct video sessions API endpoint
+        Evaluation: "evaluations",
+      };
 
-    const endpoint = endpointMap[tab];
+      const endpoint = endpointMap[tab];
 
-    const res = await fetch(
-      `/api/${endpoint}?page=${page}&limit=10&timeRange=${range}`
-    );
+      const res = await fetch(
+        `/api/${endpoint}?page=${page}&limit=10&timeRange=${range}`
+      );
 
-    const json = await res.json();
-    console.log("Fetched:", json);
+      const json = await res.json();
+      console.log("Fetched:", json);
 
-    // ---------------- PAYMENT ----------------
-    if (tab === "Payment") {
-      setPayments(json.data ?? []);
+      // ---------------- PAYMENT ----------------
+      if (tab === "Payment") {
+        setPayments(json.data ?? []);
+        setTotalPages(json.pagination?.totalPages ?? 1);
+        return;
+      }
+
+      // ---------------- VIDEO SESSION ----------------
+   
+// ---------------- VIDEO SESSION ----------------
+if (tab === "Video") {
+  // Checks all possible variations of the video data key from your API response
+  const videoData = json.payments ?? json.video_payments ?? json.videoPayments ?? json.data ?? [];
+  console.log("Video Payments Data:", videoData);
+  setVideoPayments(videoData);
+  
+  // Correctly handling page allocation calculations for the video layout response
+  setTotalPages(json.totalPages ?? json.pagination?.totalPages ?? 1); 
+  return;
+}
+      // ---------------- EVALUATION ----------------
+      if (tab === "Evaluation") {
+        setEvaluations(json.data ?? []);
+        setTotalPages(json.pagination?.totalPages ?? 1);
+        return;
+      }
+
+      // ---------------- OTHERS ----------------
+      const payload =
+        json.data ||
+        json.coaches ||
+        json.enterprises ||
+        json.tickets ||
+        json.teams ||
+        json.evaluations ||
+        json["video-payments"] ||
+        json[tab.toLowerCase()] ||
+        [];
+
+      setData(payload);
       setTotalPages(json.pagination?.totalPages ?? 1);
-      return;
+
+    } catch (err) {
+      console.error(`Failed to fetch ${tab} data:`, err);
+
+      if (tab === "Payment") setPayments([]);
+      else if (tab === "Video") setVideoPayments([]);
+      else if (tab === "Evaluation") setEvaluations([]);
+      else setData([]);
+
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
     }
-
-    // ---------------- EVALUATION ----------------
-    if (tab === "Evaluation") {
-      setEvaluations(json.data ?? []);
-      setTotalPages(json.pagination?.totalPages ?? 1);
-      return;
-    }
-
-    // ---------------- OTHERS ----------------
-    const payload =
-      json.data ||
-      json.coaches ||
-      json.enterprises ||
-      json.tickets ||
-      json.teams ||
-      json.evaluations ||
-      json[tab.toLowerCase()] ||
-      [];
-
-    setData(payload);
-    setTotalPages(json.pagination?.totalPages ?? 1);
-
-  } catch (err) {
-    console.error(`Failed to fetch ${tab} data:`, err);
-
-    if (tab === "Payment") setPayments([]);
-    else if (tab === "Evaluation") setEvaluations([]);
-    else setData([]);
-
-    setTotalPages(1);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // Auto fetch on tab/page change
   useEffect(() => {
     fetchData(activeTab, currentPage, timeRange);
   }, [activeTab, currentPage, timeRange]);
-
-  // ---------------- Ticket Actions ----------------
-  // const handleAssignClick = (ticket: Ticket) => {
-  //   console.log("Assign clicked:", ticket);
-  // };
-
-  // const handleReplyClick = (ticket: Ticket) => {
-  //   console.log("Reply clicked:", ticket);
-  // };
 
   // ---------------- Payment Actions ----------------
   const handleHidePayment = async (evaluationId: number) => {
@@ -237,10 +209,6 @@ export default function TabbedDataView() {
     }
   };
 
-  // ----------------------------------------------------
-  // FRONTEND RENDER
-  // ----------------------------------------------------
-
   return (
     <div className="p-6 w-full mx-auto">
       {/* Header */}
@@ -274,10 +242,11 @@ export default function TabbedDataView() {
               setActiveTab(tab);
               setCurrentPage(1);
             }}
-            className={`flex-1 min-w-[120px] text-center px-6 py-3 rounded-md font-medium text-sm transition-all duration-200 ${activeTab === tab
+            className={`flex-1 min-w-[100px] text-center px-2 py-3 rounded-md font-medium text-sm transition-all duration-200 ${
+              activeTab === tab
                 ? "bg-blue-600 text-white"
                 : "bg-gray-200 text-gray-800"
-              }`}
+            }`}
           >
             {tab}
           </button>
@@ -301,8 +270,6 @@ export default function TabbedDataView() {
             currentPage={currentPage}
             totalPages={totalPages}
             setCurrentPage={setCurrentPage}
-          /// onAssignClick={handleAssignClick}
-          //onReplyClick={handleReplyClick}
           />
         ) : activeTab === "Player" ? (
           <PlayerTable
@@ -343,7 +310,6 @@ export default function TabbedDataView() {
                     <th className="p-2 border">Status</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {(data as Team[]).map((team) => (
                     <tr key={team.id}>
@@ -360,28 +326,13 @@ export default function TabbedDataView() {
                           <span>No Logo</span>
                         )}
                       </td>
-
-                      <td className="p-2 border text-center">
-                        {team.team_name}
-                      </td>
-                      <td className="p-2 border text-center">
-                        {team.organisation_name || "N/A"}
-                      </td>
-                      <td className="p-2 border text-center">
-                        {team.totalPlayers}
-                      </td>
-                      <td className="p-2 border text-center">
-                        {team.totalCoaches}
-                      </td>
-                      <td className="p-2 border text-center">
-                        {team.team_type}
-                      </td>
-                      <td className="p-2 border text-center">
-                        {team.team_year}
-                      </td>
-                      <td className="p-2 border text-center">
-                        {team.status}
-                      </td>
+                      <td className="p-2 border text-center">{team.team_name}</td>
+                      <td className="p-2 border text-center">{team.organisation_name || "N/A"}</td>
+                      <td className="p-2 border text-center">{team.totalPlayers}</td>
+                      <td className="p-2 border text-center">{team.totalCoaches}</td>
+                      <td className="p-2 border text-center">{team.team_type}</td>
+                      <td className="p-2 border text-center">{team.team_year}</td>
+                      <td className="p-2 border text-center">{team.status}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -405,6 +356,9 @@ export default function TabbedDataView() {
             onHide={handleHidePayment}
             onRevert={handleRevertPayment}
           />
+        ) : activeTab === "Video" ? (
+          /* Render the VideoPayments Table Component inside the layout wrapper */
+          <VideoPayments payments={videoPayments} />
         ) : (
           <p>No recent {activeTab} data found.</p>
         )}

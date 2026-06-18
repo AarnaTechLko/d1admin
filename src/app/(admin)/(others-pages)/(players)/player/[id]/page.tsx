@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FacebookIcon, Instagram, Youtube, Linkedin, Twitter } from "lucide-react";
-
 import { NEXT_PUBLIC_AWS_S3_BUCKET_LINK } from '@/lib/constants';
 // import { FaTwitter, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
 import Swal from 'sweetalert2';
@@ -20,7 +19,7 @@ import Button from '@/components/ui/button/Button';
 import Input from '@/components/form/input/InputField';
 import { PaymentStatus } from '@/app/types/types';
 import VideoPayments from '@/components/videos/VideoPayments';
-
+import FinanceCards from '@/components/finance/FinanceCard';
 type RecentMessage = {
     id: number;
     message: string;
@@ -47,7 +46,7 @@ interface VideoPaymentRecord {
     player_name: string | null;
     coach_name: string | null;
     evaluationId: number | null;
-    review_title: string ;
+    review_title: string;
 }
 
 interface Player {
@@ -169,6 +168,7 @@ interface Payment {
     coach_id: string;
     evaluation_id: number;
     amount: number;
+    original_amount: number;
     payment_info: string;
     status: PaymentStatus;
     currency: string;
@@ -252,6 +252,20 @@ export default function PlayerDetailPage() {
     const [internalRemark, setInternalRemark] = useState<string>('');
     const togglePlayerEvaluation = async (playerId: number) => {
         const newStatus = data?.player?.evaluation_status === 1 ? 0 : 1;
+        const action = newStatus === 1 ? "enable" : "disable";
+
+        const confirm = await Swal.fire({
+            title: "Are you sure?",
+            text: `Do you want to ${action} evaluation for this player?`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: `Yes, ${action} it!`,
+            cancelButtonText: "Cancel",
+        });
+
+        if (!confirm.isConfirmed) return;
 
         // Optimistically update UI
         setData((prev) =>
@@ -271,6 +285,8 @@ export default function PlayerDetailPage() {
                     prev ? { ...prev, player: { ...prev.player, evaluation_status: newStatus === 1 ? 0 : 1 } } : prev
                 );
                 Swal.fire({ icon: "error", title: "Error", text: "Failed to update evaluation status." });
+            } else {
+                Swal.fire({ icon: "success", title: "Updated!", text: `Evaluation has been ${action}d.`, timer: 1500, showConfirmButton: false });
             }
         } catch {
             // Revert on error
@@ -283,6 +299,20 @@ export default function PlayerDetailPage() {
 
     const togglePlayerVideoStatus = async (playerId: number) => {
         const newStatus = data?.player?.video_status === 1 ? 0 : 1;
+        const action = newStatus === 1 ? "enable" : "disable";
+
+        const confirm = await Swal.fire({
+            title: "Are you sure?",
+            text: `Do you want to ${action} video status for this player?`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: `Yes, ${action} it!`,
+            cancelButtonText: "Cancel",
+        });
+
+        if (!confirm.isConfirmed) return;
 
         // Optimistically update UI
         setData((prev) =>
@@ -302,6 +332,8 @@ export default function PlayerDetailPage() {
                     prev ? { ...prev, player: { ...prev.player, video_status: newStatus === 1 ? 0 : 1 } } : prev
                 );
                 Swal.fire({ icon: "error", title: "Error", text: "Failed to update video status." });
+            } else {
+                Swal.fire({ icon: "success", title: "Updated!", text: `Video status has been ${action}d.`, timer: 1500, showConfirmButton: false });
             }
         } catch {
             // Revert on error
@@ -442,7 +474,20 @@ export default function PlayerDetailPage() {
             console.log(error, 'Error >>>>');
         }
     };
+    // Calculate the sum of all payments safely
+    const totalSpend = data?.payments
+        ? data.payments.reduce((sum, payment) => {
+            // If it's a number, use it; otherwise fallback to 0
+            const amountNum = typeof payment.amount === 'number' ? payment.amount : Number(payment.amount ?? 0);
+            return sum + (isNaN(amountNum) ? 0 : amountNum);
+        }, 0)
+        : 0;
 
+    // Format the total spend as currency (e.g., $150.00)
+    const formattedTotalSpend = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+    }).format(totalSpend);
 
     const handleRefundClick = (payment: Payment) => {
         setSelectedPayment(payment);
@@ -728,6 +773,7 @@ export default function PlayerDetailPage() {
                 </div>
             </div>
 
+            <FinanceCards playerId={player?.id} />
 
             {/* Player Info Card */}
             <div className="p-6 max-w-7xl mx-auto space-y-8">
@@ -802,6 +848,12 @@ export default function PlayerDetailPage() {
                         <strong className="text-gray-700">Status:</strong>
                         <span className={`ml-2 px-2 py-1 rounded-full text-white text-xs ${player.status === 'Active' ? 'bg-green-500' : 'bg-yellow-500'}`}>
                             {player.status}
+                        </span>
+                    </div>
+                    <div>
+                        <strong className="text-gray-700">Total spend:</strong>
+                        <span className={`ml-2 px-2 py-1 rounded-full text-white text-xs ${data?.player?.status === 'Active' ? 'bg-green-500' : 'bg-yellow-500'}`}>
+                            {formattedTotalSpend}
                         </span>
                     </div>
                     {/* Evaluation Status Toggle */}

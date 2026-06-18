@@ -1188,6 +1188,7 @@ export const video_payments = pgTable(
     company_amount: decimal("company_amount"),
     commission_rate: decimal("commission_rate"),
     created_at: timestamp("created_at").defaultNow().notNull(),
+    updated_at: timestamp("updated_at").defaultNow().notNull(),
   }
 );
 
@@ -1244,4 +1245,34 @@ export const bookingStatusLogs = pgTable("booking_status_logs", {
 
   created_at: timestamp("created_at")
     .defaultNow(),
+});
+export const availability = pgTable("availability", {
+  id: serial("id").primaryKey(),
+
+  coachId: integer("coach_id")
+    .references(() => coaches.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+
+  date: varchar("date", { length: 10 }).notNull(),
+
+  startTime: timestamp("start_time", {
+    withTimezone: true,
+  }).notNull(),
+
+  endTime: timestamp("end_time", {
+    withTimezone: true,
+  }).notNull(),
+
+  timezone: varchar("timezone", {
+    length: 50,
+  }).notNull(),
+
+  createdAt: timestamp("created_at")
+    .defaultNow()
+    .notNull(),
+    updatedAt: timestamp("updated_at")
+  .defaultNow()
+  .notNull(),
 });

@@ -19,6 +19,7 @@ import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import { PaymentStatus } from "@/app/types/types";
 import VideoPayments from "@/components/videos/VideoPayments";
+import FinanceCards from "@/components/finance/FinanceCard";
 interface Evaluation {
   id: string;
   evaluationId: number;
@@ -122,7 +123,7 @@ interface Coach {
   countryName: string;
   countrycode: string;
   reviews: Review[];
-    evaluation_status?: number;
+  evaluation_status?: number;
   video_status?: number;
 }
 type RecentMessage = {
@@ -233,68 +234,111 @@ export default function CoachDetailsPage() {
 
   const MySwal = withReactContent(Swal);
   const isVerified = coach?.verified === 1;
-const toggleEvaluation = async (coachId: number) => {
-  const newStatus = coach?.evaluation_status === 1 ? 0 : 1;
+  const toggleEvaluation = async (coachId: number) => {
+    const newStatus = coach?.evaluation_status === 1 ? 0 : 1;
+    const action = newStatus === 1 ? "enable" : "disable";
 
-  // Optimistically update UI
-  setCoach((prev) =>
-    prev ? { ...prev, evaluation_status: newStatus } : prev
-  );
-
-  try {
-    const res = await fetch(`/api/coach/evaluation-status`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coachId, status: newStatus }),
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: `Do you want to ${action} evaluation for this coach?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: newStatus === 1 ? "#22c55e" : "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: `Yes, ${action} it!`,
+      cancelButtonText: "Cancel",
     });
 
-    if (!res.ok) {
-      // Revert on failure
+    if (!result.isConfirmed) return;
+
+    // Optimistically update UI
+    setCoach((prev) =>
+      prev ? { ...prev, evaluation_status: newStatus } : prev
+    );
+
+    try {
+      const res = await fetch(`/api/coach/evaluation-status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coachId, status: newStatus }),
+      });
+
+      if (!res.ok) {
+        // Revert on failure
+        setCoach((prev) =>
+          prev ? { ...prev, evaluation_status: newStatus === 1 ? 0 : 1 } : prev
+        );
+        Swal.fire({ icon: "error", title: "Error", text: "Failed to update evaluation status." });
+      } else {
+        Swal.fire({
+          icon: "success",
+          title: "Updated!",
+          text: `Evaluation has been ${action}d.`,
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
+    } catch {
+      // Revert on error
       setCoach((prev) =>
         prev ? { ...prev, evaluation_status: newStatus === 1 ? 0 : 1 } : prev
       );
-      Swal.fire({ icon: "error", title: "Error", text: "Failed to update evaluation status." });
+      Swal.fire({ icon: "error", title: "Error", text: "Something went wrong." });
     }
-  } catch {
-    // Revert on error
-    setCoach((prev) =>
-      prev ? { ...prev, evaluation_status: newStatus === 1 ? 0 : 1 } : prev
-    );
-    Swal.fire({ icon: "error", title: "Error", text: "Something went wrong." });
-  }
-};
+  };
 
-const toggleVideoStatus = async (coachId: number) => {
-  const newStatus = coach?.video_status === 1 ? 0 : 1;
+  const toggleVideoStatus = async (coachId: number) => {
+    const newStatus = coach?.video_status === 1 ? 0 : 1;
+    const action = newStatus === 1 ? "enable" : "disable";
 
-  // Optimistically update UI
-  setCoach((prev) =>
-    prev ? { ...prev, video_status: newStatus } : prev
-  );
-
-  try {
-    const res = await fetch(`/api/coach/video-status`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coachId, status: newStatus }),
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: `Do you want to ${action} video for this coach?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: newStatus === 1 ? "#22c55e" : "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: `Yes, ${action} it!`,
+      cancelButtonText: "Cancel",
     });
 
-    if (!res.ok) {
-      // Revert on failure
+    if (!result.isConfirmed) return;
+
+    // Optimistically update UI
+    setCoach((prev) =>
+      prev ? { ...prev, video_status: newStatus } : prev
+    );
+
+    try {
+      const res = await fetch(`/api/coach/video-status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coachId, status: newStatus }),
+      });
+
+      if (!res.ok) {
+        // Revert on failure
+        setCoach((prev) =>
+          prev ? { ...prev, video_status: newStatus === 1 ? 0 : 1 } : prev
+        );
+        Swal.fire({ icon: "error", title: "Error", text: "Failed to update video status." });
+      } else {
+        Swal.fire({
+          icon: "success",
+          title: "Updated!",
+          text: `Video has been ${action}d.`,
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
+    } catch {
+      // Revert on error
       setCoach((prev) =>
         prev ? { ...prev, video_status: newStatus === 1 ? 0 : 1 } : prev
       );
-      Swal.fire({ icon: "error", title: "Error", text: "Failed to update video status." });
+      Swal.fire({ icon: "error", title: "Error", text: "Something went wrong." });
     }
-  } catch{
-    // Revert on error
-    setCoach((prev) =>
-      prev ? { ...prev, video_status: newStatus === 1 ? 0 : 1 } : prev
-    );
-    Swal.fire({ icon: "error", title: "Error", text: "Something went wrong." });
-  }
-};
-
+  };
 
   // Handle verify button click
   useEffect(() => {
@@ -311,25 +355,25 @@ const toggleVideoStatus = async (coachId: number) => {
   }, [selectedCoachid]);
 
   useEffect(() => {
-  const coachId = coach?.id;
+    const coachId = coach?.id;
 
-  if (!coachId) return;
+    if (!coachId) return;
 
-  setVideoPaymentsLoading(true);
+    setVideoPaymentsLoading(true);
 
-  fetch(`/api/video-payments/coach/${coachId}`)
-    .then((r) => r.json())
-    .then((d) => {
-      console.log("VIDEO PAYMENTS:", d);
-      setVideoPaymentRecords(d.payments ?? []);
-    })
-    .catch((err) => {
-      console.error("VIDEO PAYMENT ERROR:", err);
-    })
-    .finally(() => {
-      setVideoPaymentsLoading(false);
-    });
-}, [coach?.id]);
+    fetch(`/api/video-payments/coach/${coachId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        console.log("VIDEO PAYMENTS:", d);
+        setVideoPaymentRecords(d.payments ?? []);
+      })
+      .catch((err) => {
+        console.error("VIDEO PAYMENT ERROR:", err);
+      })
+      .finally(() => {
+        setVideoPaymentsLoading(false);
+      });
+  }, [coach?.id]);
 
   const handleVerify = async () => {
     if (!coach?.id) return;
@@ -1077,7 +1121,7 @@ const toggleVideoStatus = async (coachId: number) => {
 
       </div>
 
-
+<FinanceCards coachId={coach?.id} />
       {/* Coach Info Card */}
       <div className="bg-white shadow-md rounded-2xl p-6 border border-gray-200">
         <div className=" grid grid-cols-1 md:grid-cols-3 gap-4 text-sm ">
@@ -1102,60 +1146,65 @@ const toggleVideoStatus = async (coachId: number) => {
             <span className='ml-2 px-2 py-1 rounded-full  text-xs bg-blue-200 '>
               ${(coach?.payments ?? []).filter((p: Payment) => p.is_deleted !== 0)
                 .reduce((sum, p) => sum + Number(p.amount), 0)
-                .toFixed(2)}</span></div>
+                .toFixed(2)}
+            </span>
+          </div>
+          {/* Evaluation Status */}
+          <div className="flex items-center gap-2">
+            <strong className="text-gray-700">Evaluation:</strong>
+
+            <button
+              onClick={() => toggleEvaluation(coach.id)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${coach.evaluation_status === 1 ? "bg-green-500" : "bg-gray-300"
+                }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ${coach.evaluation_status === 1 ? "translate-x-5" : "translate-x-1"
+                  }`}
+              />
+            </button>
+
+            {coach.evaluation_status === 1 && (
+              <span className="text-sm text-gray-600">Enabled</span>
+            )}
+          </div>
+
+          {/* Video Status */}
+          <div className="flex items-center gap-2">
+            <strong className="text-gray-700">Video:</strong>
+
+            <button
+              onClick={() => toggleVideoStatus(coach.id)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${coach.video_status === 1 ? "bg-green-500" : "bg-gray-300"
+                }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ${coach.video_status === 1 ? "translate-x-5" : "translate-x-1"
+                  }`}
+              />
+            </button>
+
+            {coach.video_status === 1 && (
+              <span className="text-sm text-gray-600">Enabled</span>
+            )}
+          </div>
           {coach?.latestLoginIp && (
             <div className="mb-2">
               <strong className="text-gray-700">Latest Login IP:</strong>{" "}
               <span className="text-black">{coach.latestLoginIp}</span>
             </div>
           )}
+
+
+
         </div>
-        <div><strong className="text-gray-700 gap-4 text-sm">Qualifications:</strong> {coach.qualifications}</div>
-{/* Evaluation Status */}
-<div className="flex items-center gap-2">
-  <strong className="text-gray-700">Evaluation:</strong>
-
-  <button
-    onClick={() => toggleEvaluation(coach.id)}
-    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${
-      coach.evaluation_status === 1 ? "bg-green-500" : "bg-gray-300"
-    }`}
-  >
-    <span
-      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ${
-        coach.evaluation_status === 1 ? "translate-x-5" : "translate-x-1"
-      }`}
-    />
-  </button>
-
-  {coach.evaluation_status === 1 && (
-    <span className="text-sm text-gray-600">Enabled</span>
-  )}
-</div>
-
-{/* Video Status */}
-<div className="flex items-center gap-2">
-  <strong className="text-gray-700">Video:</strong>
-
-  <button
-    onClick={() => toggleVideoStatus(coach.id)}
-    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${
-      coach.video_status === 1 ? "bg-green-500" : "bg-gray-300"
-    }`}
-  >
-    <span
-      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ${
-        coach.video_status === 1 ? "translate-x-5" : "translate-x-1"
-      }`}
-    />
-  </button>
-
-  {coach.video_status === 1 && (
-    <span className="text-sm text-gray-600">Enabled</span>
-  )}
-</div>
+        <div>
+          <strong className="text-gray-700 gap-4 text-sm">Qualifications:</strong>
+          <span className="text-sm text-gray-600">
+            {coach.qualifications}
+          </span>
+        </div>
       </div>
-
       <div>  <h2 className="text-lg font-semibold mt-5  bg-customBlue text-black p-4 rounded-lg">
         Background
       </h2>

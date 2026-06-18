@@ -1,375 +1,11 @@
-/* // app/api/video-payments/route.ts
-
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { db } from "@/lib/db";
-
 import {
   video_payments,
   bookings,
-} from "@/lib/schema";
-
-import {
-  eq,
-  desc,
-} from "drizzle-orm";
-
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
-
-const num = (v: unknown) => Number(v ?? 0);
-
-// ─────────────────────────────────────────────
-// GET /api/video-payments
-// ─────────────────────────────────────────────
-
-export async function GET() {
-  try {
-    // ─────────────────────────────────────────
-    // 1. Fetch active payments
-    // ─────────────────────────────────────────
-    const payments = await db
-      .select()
-      .from(video_payments)
-      .where(eq(video_payments.is_deleted, false))
-      .orderBy(desc(video_payments.created_at));
-
-    // ─────────────────────────────────────────
-    // 2. Revenue summary
-    // ─────────────────────────────────────────
-    let totalVideoPayment = 0;
-    let totalEvaluationPayment = 0;
-    let totalCompanyRevenue = 0;
-
-    payments.forEach((payment) => {
-      totalVideoPayment += num(
-        payment.original_amount
-      );
-
-      totalEvaluationPayment += num(
-        payment.amount
-      );
-
-      totalCompanyRevenue += num(
-        payment.company_amount
-      );
-    });
-
-    const totalCombined =
-      totalVideoPayment +
-      totalEvaluationPayment;
-
-    const totalRecords = payments.length;
-
-    // ─────────────────────────────────────────
-    // 3. Fetch bookings
-    // ─────────────────────────────────────────
-    const allBookings = await db
-      .select()
-      .from(bookings)
-      .orderBy(desc(bookings.created_at));
-
-    // ─────────────────────────────────────────
-    // 4. Booking stats
-    // ─────────────────────────────────────────
-    const completedBookings =
-      allBookings.filter(
-        (b) => b.status === "completed"
-      );
-
-    const scheduledBookings =
-      allBookings.filter(
-        (b) => b.status === "scheduled"
-      );
-
-    const cancelledBookings =
-      allBookings.filter(
-        (b) => b.status === "cancelled"
-      );
-
-    const totalBookings =
-      allBookings.length;
-
-    const cancellationRate =
-      totalBookings > 0
-        ? parseFloat(
-            (
-              (cancelledBookings.length /
-                totalBookings) *
-              100
-            ).toFixed(2)
-          )
-        : 0;
-
-    // ─────────────────────────────────────────
-    // 5. Payment lookup by booking_id
-    // ─────────────────────────────────────────
-    const paymentByBookingId =
-      new Map<
-        number,
-        (typeof payments)[0]
-      >();
-
-    payments.forEach((p) => {
-      // ✅ FIX NULL ISSUE
-      if (
-        p.booking_id !== null &&
-        p.booking_id !== undefined
-      ) {
-        paymentByBookingId.set(
-          p.booking_id,
-          p
-        );
-      }
-    });
-
-    // ─────────────────────────────────────────
-    // 6. Player aggregation
-    // ─────────────────────────────────────────
-    const playerMap = new Map<
-      number,
-      {
-        player_id: number;
-        total_bookings: number;
-        completed_bookings: number;
-        scheduled_bookings: number;
-        cancelled_bookings: number;
-        cancellation_rate: number;
-        total_video_spent: number;
-        total_eval_received: number;
-
-        booking_flow: Array<{
-          booking_id: number;
-          status: string | null;
-          created_at: string | null;
-
-          has_evaluation: boolean;
-
-          evaluation_amount:
-            | string
-            | null;
-
-          video_amount:
-            | string
-            | null;
-
-          payment_status:
-            | string
-            | null;
-
-          payment_created_at:
-            | string
-            | null;
-        }>;
-      }
-    >();
-
-    allBookings.forEach((booking) => {
-      // ✅ FIX NULL ISSUE
-      if (
-        booking.player_id === null ||
-        booking.player_id === undefined
-      ) {
-        return;
-      }
-
-      const playerId =
-        booking.player_id;
-
-      // Create player bucket
-      if (!playerMap.has(playerId)) {
-        playerMap.set(playerId, {
-          player_id: playerId,
-
-          total_bookings: 0,
-
-          completed_bookings: 0,
-
-          scheduled_bookings: 0,
-
-          cancelled_bookings: 0,
-
-          cancellation_rate: 0,
-
-          total_video_spent: 0,
-
-          total_eval_received: 0,
-
-          booking_flow: [],
-        });
-      }
-
-      const player =
-        playerMap.get(playerId)!;
-
-      player.total_bookings++;
-
-      // Status counts
-      if (
-        booking.status === "completed"
-      ) {
-        player.completed_bookings++;
-      }
-
-      if (
-        booking.status === "scheduled"
-      ) {
-        player.scheduled_bookings++;
-      }
-
-      if (
-        booking.status === "cancelled"
-      ) {
-        player.cancelled_bookings++;
-      }
-
-      // Payment data
-      const payment =
-        paymentByBookingId.get(
-          booking.id
-        );
-
-      if (payment) {
-        player.total_video_spent +=
-          num(
-            payment.original_amount
-          );
-
-        player.total_eval_received +=
-          num(payment.amount);
-      }
-
-      // Booking flow
-      if (
-        booking.status ===
-          "scheduled" ||
-        booking.status ===
-          "completed"
-      ) {
-        player.booking_flow.push({
-          booking_id: booking.id,
-
-          status:
-            booking.status ?? null,
-
-          created_at:
-            booking.created_at
-              ? String(
-                  booking.created_at
-                )
-              : null,
-
-          has_evaluation:
-            !!payment,
-
-          evaluation_amount:
-            payment?.amount ?? null,
-
-          video_amount:
-            payment?.original_amount ??
-            null,
-
-          payment_status:
-            payment?.status ?? null,
-
-          payment_created_at:
-            payment?.created_at
-              ? String(
-                  payment.created_at
-                )
-              : null,
-        });
-      }
-    });
-
-    // ─────────────────────────────────────────
-    // 7. Player cancellation %
-    // ─────────────────────────────────────────
-    playerMap.forEach((player) => {
-      player.cancellation_rate =
-        player.total_bookings > 0
-          ? parseFloat(
-              (
-                (player.cancelled_bookings /
-                  player.total_bookings) *
-                100
-              ).toFixed(2)
-            )
-          : 0;
-    });
-
-    const playerStats =
-      Array.from(
-        playerMap.values()
-      ).sort(
-        (a, b) =>
-          b.total_bookings -
-          a.total_bookings
-      );
-
-    // ─────────────────────────────────────────
-    // Final Response
-    // ─────────────────────────────────────────
-    return NextResponse.json({
-      success: true,
-
-      summary: {
-        totalVideoPayment,
-
-        totalEvaluationPayment,
-
-        totalCombined,
-
-        totalCompanyRevenue,
-
-        totalRecords,
-      },
-
-      bookings: {
-        total: totalBookings,
-
-        completed:
-          completedBookings.length,
-
-        scheduled:
-          scheduledBookings.length,
-
-        cancelled:
-          cancelledBookings.length,
-
-        cancellationRate,
-      },
-
-      playerStats,
-
-      payments,
-    });
-  } catch (error) {
-    console.error(
-      "[video-payments] GET error:",
-      error
-    );
-
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Failed to fetch video payments",
-      },
-      {
-        status: 500,
-      }
-    );
-  }
-} */
-
-
-// app/api/video-payments/route.ts
-
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import {
-  video_payments, bookings, users, coaches, playerEvaluation,
+  users,
+  coaches,
+  playerEvaluation,
 } from "@/lib/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
@@ -399,13 +35,30 @@ type PlayerData = {
   booking_flow: BookingFlowItem[];
 };
 
-export async function GET() {
+// ✅ Fix 1: Accept NextRequest so req.nextUrl is available
+export async function GET(req: NextRequest) {
   try {
     const playerUser = alias(users, "player_user");
 
+    // ✅ Fix 2: Parse pagination params from req (was missing req entirely)
+    const searchParams = req.nextUrl.searchParams;
+    const page = Math.max(1, Number(searchParams.get("page") || 1));
+    const limit = Math.max(1, Number(searchParams.get("limit") || 10));
+    const offset = (page - 1) * limit;
+
     // ─────────────────────────────────────────
-    // 1. Fetch payments with player & coach names
+    // 1. Total count for pagination
     // ─────────────────────────────────────────
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(video_payments)
+      .where(eq(video_payments.is_deleted, false));
+
+    // ─────────────────────────────────────────
+    // 2. Paginated payments with player & coach names
+    // ─────────────────────────────────────────
+    // ✅ Fix 3: Removed stray semicolon that was breaking the method chain;
+    //           .limit() and .offset() are now properly chained
     const payments = await db
       .select({
         id: video_payments.id,
@@ -424,46 +77,44 @@ export async function GET() {
         is_deleted: video_payments.is_deleted,
         review_title: playerEvaluation.review_title,
         evaluationId: bookings.evaluation_id,
-
         company_amount: video_payments.company_amount,
         commission_rate: video_payments.commission_rate,
         player_name: sql<string>`concat(${playerUser.first_name}, ' ', ${playerUser.last_name})`,
         coach_name: sql<string>`concat(${coaches.firstName}, ' ', ${coaches.lastName})`,
       })
       .from(video_payments)
-      .leftJoin(
-        bookings,
-        eq(video_payments.booking_id, bookings.id)
-      )
-      // ✅ THEN join evaluation
-      .leftJoin(
-        playerEvaluation,
-        eq(bookings.evaluation_id, playerEvaluation.id)
-      )
-
+      .leftJoin(bookings, eq(video_payments.booking_id, bookings.id))
+      .leftJoin(playerEvaluation, eq(bookings.evaluation_id, playerEvaluation.id))
       .leftJoin(playerUser, eq(video_payments.player_id, playerUser.id))
       .leftJoin(coaches, eq(video_payments.coach_id, coaches.id))
       .where(eq(video_payments.is_deleted, false))
-      .orderBy(desc(video_payments.created_at));
+      .orderBy(desc(video_payments.created_at))
+      .limit(limit)
+      .offset(offset);
 
     // ─────────────────────────────────────────
-    // 2. Revenue summary
+    // 3. Revenue summary — computed over ALL payments (not just current page)
+    //    ✅ Fix 4: Use a dedicated aggregate query so totals are not limited
+    //             to the current page's subset of records
     // ─────────────────────────────────────────
-    let totalVideoPayment = 0;
-    let totalEvaluationPayment = 0;
-    let totalCompanyRevenue = 0;
+    const [revenueTotals] = await db
+      .select({
+        totalVideoPayment: sql<number>`coalesce(sum(${video_payments.original_amount}::numeric), 0)`,
+        totalEvaluationPayment: sql<number>`coalesce(sum(${video_payments.amount}::numeric), 0)`,
+        totalCompanyRevenue: sql<number>`coalesce(sum(${video_payments.company_amount}::numeric), 0)`,
+        totalRecords: sql<number>`count(*)`,
+      })
+      .from(video_payments)
+      .where(eq(video_payments.is_deleted, false));
 
-    payments.forEach((p) => {
-      totalVideoPayment += num(p.original_amount);
-      totalEvaluationPayment += num(p.amount);
-      totalCompanyRevenue += num(p.company_amount);
-    });
-
+    const totalVideoPayment = num(revenueTotals.totalVideoPayment);
+    const totalEvaluationPayment = num(revenueTotals.totalEvaluationPayment);
+    const totalCompanyRevenue = num(revenueTotals.totalCompanyRevenue);
+    const totalRecords = Number(revenueTotals.totalRecords);
     const totalCombined = totalVideoPayment + totalEvaluationPayment;
-    const totalRecords = payments.length;
 
     // ─────────────────────────────────────────
-    // 3. All bookings
+    // 4. All bookings (for player stats)
     // ─────────────────────────────────────────
     const allBookings = await db
       .select()
@@ -471,7 +122,7 @@ export async function GET() {
       .orderBy(desc(bookings.created_at));
 
     // ─────────────────────────────────────────
-    // 4. Overall booking stats
+    // 5. Overall booking stats
     // ─────────────────────────────────────────
     const completedBookings = allBookings.filter((b) => b.status === "completed");
     const scheduledBookings = allBookings.filter((b) => b.status === "scheduled");
@@ -484,23 +135,25 @@ export async function GET() {
         : 0;
 
     // ─────────────────────────────────────────
-    // 5. ✅ Video-specific cancellation stats
-    //    — directly from video_payments table
-    //    — NOT from bookings table
+    // 6. Video-specific cancellation stats (from video_payments, across all records)
     // ─────────────────────────────────────────
-    const videoCancelledCount = payments.filter(
-      (p) => p.status?.toLowerCase() === "cancelled"
-    ).length;
+    const [videoCancelStats] = await db
+      .select({
+        videoCancelledCount: sql<number>`count(*) filter (where lower(${video_payments.status}) = 'cancelled')`,
+        videoBookingsTotal: sql<number>`count(*)`,
+      })
+      .from(video_payments)
+      .where(eq(video_payments.is_deleted, false));
 
-    const videoBookingsTotal = payments.length; // total video payment records
-
+    const videoCancelledCount = Number(videoCancelStats.videoCancelledCount);
+    const videoBookingsTotal = Number(videoCancelStats.videoBookingsTotal);
     const videoCancellationRate =
       videoBookingsTotal > 0
         ? parseFloat(((videoCancelledCount / videoBookingsTotal) * 100).toFixed(2))
         : 0;
 
     // ─────────────────────────────────────────
-    // 6. Payment lookup by booking_id
+    // 7. Payment lookup by booking_id (using current page payments)
     // ─────────────────────────────────────────
     const paymentByBookingId = new Map<number, (typeof payments)[0]>();
     payments.forEach((p) => {
@@ -510,7 +163,7 @@ export async function GET() {
     });
 
     // ─────────────────────────────────────────
-    // 7. Player aggregation
+    // 8. Player aggregation
     // ─────────────────────────────────────────
     const playerMap = new Map<number, PlayerData>();
 
@@ -562,7 +215,7 @@ export async function GET() {
     });
 
     // ─────────────────────────────────────────
-    // 8. Player cancellation %
+    // 9. Player cancellation rates
     // ─────────────────────────────────────────
     playerMap.forEach((player) => {
       player.cancellation_rate =
@@ -577,9 +230,17 @@ export async function GET() {
 
     // ─────────────────────────────────────────
     // Final Response
+    // ✅ Fix 5: Single well-formed object passed to NextResponse.json()
+    //           (was split across two separate return statements)
     // ─────────────────────────────────────────
     return NextResponse.json({
       success: true,
+      pagination: {
+        page,
+        limit,
+        total: Number(count),
+        totalPages: Math.ceil(Number(count) / limit),
+      },
       summary: {
         totalVideoPayment,
         totalEvaluationPayment,
@@ -593,14 +254,13 @@ export async function GET() {
         scheduled: scheduledBookings.length,
         cancelled: cancelledBookings.length,
         cancellationRate,
-        videoCancellationRate,  // ✅ from video_payments
-        videoCancelledCount,    // ✅ from video_payments
-        videoBookingsTotal,     // ✅ from video_payments
+        videoCancellationRate,
+        videoCancelledCount,
+        videoBookingsTotal,
       },
       playerStats,
       payments,
     });
-
   } catch (error) {
     console.error("[video-payments] GET error:", error);
     return NextResponse.json(

@@ -7,6 +7,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
+import { CancelBookingButton } from "../CancelBookingButton";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { RescheduleBookingButton } from "../RescheduleBookingButton";
+
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Booking {
@@ -20,6 +26,7 @@ interface Booking {
   coach_name: string | null;
   player_name: string | null;
   evaluation_title: string | null;
+  
 }
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -197,8 +204,8 @@ function Pagination({
               key={p}
               onClick={() => onChange(p as number)}
               className={`h-8 min-w-[32px] px-2 rounded-lg text-xs font-semibold transition-all duration-150 ${p === page
-                  ? "bg-blue-500 text-white shadow-sm"
-                  : "text-gray-500 hover:bg-white hover:shadow-sm hover:border-gray-200 border border-transparent"
+                ? "bg-blue-500 text-white shadow-sm"
+                : "text-gray-500 hover:bg-white hover:shadow-sm hover:border-gray-200 border border-transparent"
                 }`}
             >
               {p}
@@ -238,7 +245,8 @@ interface ViewVideosProps {
 export default function ViewVideos({ bookings = [] }: ViewVideosProps) {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
-
+const router = useRouter();
+const { data: session } = useSession();
   // Dialog state — defined here in the main component (not inside Pagination)
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -333,6 +341,9 @@ export default function ViewVideos({ bookings = [] }: ViewVideosProps) {
                 <th className="px-4 py-2 text-left text-[10.5px] font-bold uppercase tracking-[0.08em] text-gray-400 border-b border-gray-100 w-16">
                   Sr.No
                 </th>
+                <th className="px-4 py-2 text-left text-[10.5px] font-bold uppercase tracking-[0.08em] text-gray-400 border-b border-gray-100 w-16">
+                  Booking ID
+                </th>
                 <th className="px-4 py-2 text-left text-[10.5px] font-bold uppercase tracking-[0.08em] text-gray-400 border-b border-gray-100">
                   Player
                 </th>
@@ -345,8 +356,11 @@ export default function ViewVideos({ bookings = [] }: ViewVideosProps) {
                 <th className="px-4 py-2 text-left text-[10.5px] font-bold uppercase tracking-[0.08em] text-gray-400 border-b border-gray-100">
                   Schedule
                 </th>
-                <th className="px-4 py-2 text-left text-[10.5px] font-bold uppercase tracking-[0.08em] text-gray-400 border-b border-gray-100">
+                <th className="px-4 py-2 text-center text-[10.5px] font-bold uppercase tracking-[0.08em] text-gray-400 border-b border-gray-100">
                   Status
+                </th>
+                <th className="px-4 py-2 text-center text-[10.5px] font-bold uppercase tracking-[0.08em] text-gray-400 border-b border-gray-100">
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -393,6 +407,13 @@ export default function ViewVideos({ bookings = [] }: ViewVideosProps) {
                       </span>
                     </td>
 
+                    {/* Booking ID */}
+                    <td className="px-4 py-2 align-middle">
+                      <span className="font-mono text-[12px] font-semibold text-gray-500">
+                        {b.id}
+                      </span>
+                    </td>
+
                     {/* Player */}
                     <td className="px-4 py-2 align-middle">
                       <span className="text-[13px] font-medium text-gray-800 whitespace-nowrap">
@@ -408,7 +429,7 @@ export default function ViewVideos({ bookings = [] }: ViewVideosProps) {
                     </td>
 
                     {/* Evaluation */}
-                    <td className="px-4 py-2 align-middle max-w-[220px]">
+                    {/* <td className="px-4 py-2 align-middle max-w-[220px]">
                       {b.evaluation_title ? (
                         <Link
                           href={`/evaluationdetails?evaluationId=${b.evaluation_id}`}
@@ -421,6 +442,32 @@ export default function ViewVideos({ bookings = [] }: ViewVideosProps) {
                         </Link>
                       ) : (
                         <span className="text-[13px] text-gray-400">—</span>
+                      )}
+                    </td> */}
+                      <td className="px-[18px] py-3.5 border-b border-gray-100 align-middle">
+                      {b.evaluation_title ? (
+                        <Link
+                          href={`/evaluationdetails?evaluationId=${b.evaluation_id}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 rounded-md transition-colors duration-150 cursor-pointer"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-3.5 h-3.5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
+                          Open
+                        </Link>
+                      ) : (
+                        <span className="text-gray-300">—</span>
                       )}
                     </td>
 
@@ -473,6 +520,25 @@ export default function ViewVideos({ bookings = [] }: ViewVideosProps) {
                           )}
                       </div>
                     </td>
+                    {/* Actions */}
+           
+<td className="px-4 py-2 align-middle">
+  <div className="flex items-center gap-2">
+    <CancelBookingButton
+      bookingId={b.id}
+      previousStatus={b.status ?? ""}
+      adminUserId={Number(session?.user?.id)}
+      onCancelled={() => router.refresh()}
+    />
+    <RescheduleBookingButton
+      bookingId={b.id}
+      coachId={b.coach_id}
+      previousStatus={b.status ?? ""}
+      adminUserId={Number(session?.user?.id)}
+      onRescheduled={() => router.refresh()}
+    />
+  </div>
+</td>
                   </tr>
                 ))
               )}

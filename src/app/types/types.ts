@@ -260,8 +260,10 @@ export interface Payment {
   playerImage: string;
   coachName: string;
   coachImage: string;
+  description: string;
   evalId: number;
   amount: number | string;
+  original_amount: number | string;
   status: PaymentStatus;
   created_at: string;
   updated_at: string;
@@ -270,7 +272,19 @@ export interface Payment {
   processed_amount?: number;
   refund_id?: number;
 }
-
+export interface Earnings {
+    id: string;
+    review_title: string;
+    evaluation_title: string;
+    jerseyColorOne: string;
+    company_amount: number;
+    commision_rate: number;
+    commision_amount: number;
+    discount_amount: number;
+    coupon: string;
+    status: string;
+    created_at: string;
+}
 
 export interface AdminLogs{
   id: number;

@@ -246,7 +246,7 @@ export default function VideoPayments({
     ...(viewAs !== "coach" ? ["Coach"] : []),
     ...(showStartEnd ? ["Start Time", "End Time"] : []),
     "Video Pmt",
-    "Eval Pmt",
+    "Evaluation",
     "Company Amt",
     "Status",
     "Currency",
@@ -373,20 +373,32 @@ export default function VideoPayments({
                     </td>
 
                     {/* Eval Payment */}
-                    <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono font-semibold text-emerald-500 align-middle">
-                      {p.review_title ? (
-                        <Link
-                          href={`/evaluationdetails?evaluationId=${p.evaluationId}`}
-                          className="hover:underline cursor-pointer"
-                        >
-                          {p.review_title.length > 20
-                            ? p.review_title.slice(0, 20) + "..."
-                            : p.review_title}
-                        </Link>
-                      ) : (
-                        <span>—</span>
-                      )}
-                    </td>
+                <td className="px-[18px] py-3.5 border-b border-gray-100 align-middle">
+  {p.review_title ? (
+    <Link
+      href={`/evaluationdetails?evaluationId=${p.evaluationId}`}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 rounded-md transition-colors duration-150 cursor-pointer"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-3.5 h-3.5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+        <polyline points="15 3 21 3 21 9" />
+        <line x1="10" y1="14" x2="21" y2="3" />
+      </svg>
+      Open
+    </Link>
+  ) : (
+    <span className="text-gray-300">—</span>
+  )}
+</td>
 
                     {/* Company Amount */}
                     <td className="px-[18px] py-3.5 border-b border-gray-100 font-mono text-gray-500 align-middle">

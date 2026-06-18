@@ -339,7 +339,7 @@ function MonthlyYearlyCombinedChart({
   const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
   const series = [
-    { name: "Sales", data: salesDataForVideoYear },
+    { name: "Eval", data: salesDataForVideoYear },
     { name: "Video", data: monthlyVideoData.video },
   ];
 

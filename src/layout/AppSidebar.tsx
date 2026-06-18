@@ -209,7 +209,7 @@ const AppSidebar: React.FC = () => {
             icon: <FaVideo />,
             subItems: [
               { name: "Video Payments", path: "/videos" },
-              { name: "View Videos", path: "/viewvideos" },
+              { name: "Bookings", path: "/viewvideos" },
               // ── NEW: manage per-coach video access & fees
               { name: "Coach Video Settings", path: "/coachvideosettings" },
             ],
